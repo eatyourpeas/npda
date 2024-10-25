@@ -120,8 +120,7 @@ def test_fake_patient_creator_ages_all_appropriate(age_range_enum):
 
 @pytest.mark.django_db
 def test_example_use_fake_patient_creator():
-    """Tests that the ages of all fake patients fall into the appropriate
-    age range.
+    """Example use to create just fake patients and visits
 
     NOTE:
     We initialise the FakePatientCreator with a specific audit period as
@@ -169,6 +168,12 @@ def test_example_use_fake_patient_creator():
     assert len(pts) == 10
     assert len(visits) == 120  # 10 patients * 12 visits
 
+@pytest.mark.skip(reason="not finished")
+@pytest.mark.django_db
+def test_example_use_fake_patient_creator_with_submission():
+    """Example use to associate fake patients with submissions
+    """
+    pass
 
 # pytest project/npda/tests/factories/test_fake_patient_builder.py::test_performance_check_for_fake_patient_creator
 @pytest.mark.skip(reason="only for performance checking")
