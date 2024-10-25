@@ -92,13 +92,13 @@ class AsyncModelForm(ModelForm):
     def _clean_fields(self):
         async def wrapper():
             async with httpx.AsyncClient() as async_client:
-                return self.aclean_fields(async_client)
+                await self._aclean_fields(async_client)
 
         return async_to_sync(wrapper)()
     
     def _clean_form(self):
         async def wrapper():
             async with httpx.AsyncClient() as async_client:
-                return self.aclean_form(async_client)
+                await self._aclean_form(async_client)
         
         return async_to_sync(wrapper)()
