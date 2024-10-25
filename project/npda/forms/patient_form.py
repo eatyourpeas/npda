@@ -167,8 +167,6 @@ class PatientForm(AsyncModelForm):
 
         if gp_practice_ods_code is None and gp_practice_postcode is None:
             self.add_error("gp_practice_ods_code", ValidationError("'GP Practice ODS code' and 'GP Practice postcode' cannot both be empty"))
-        
-        return cleaned_data
 
         if gp_practice_postcode:
             try:
