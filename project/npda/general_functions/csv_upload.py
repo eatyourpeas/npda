@@ -288,15 +288,14 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return instance
 
-    async def validate_rows_in_parallel(rows_by_patient):
+    async def validate_rows_in_parallel(rows_by_patient, async_client):
         # TODO MRB: ensure a single unhandled error doesn't stop the whole process
         tasks = []
 
-        async with httpx.AsyncClient() as async_client:
-            async with asyncio.TaskGroup() as tg:
-                for _, rows in visits_by_patient:
-                    task = tg.create_task(validate_rows(rows, async_client))
-                    tasks.append(task)
+        async with asyncio.TaskGroup() as tg:
+            for _, rows in visits_by_patient:
+                task = tg.create_task(validate_rows(rows, async_client))
+                tasks.append(task)
 
         return [task.result() for task in tasks]
 
@@ -308,29 +307,30 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
     errors_to_return = {}
 
-    validation_results_by_patient = await validate_rows_in_parallel(visits_by_patient)
+    async with httpx.AsyncClient() as async_client:
+        validation_results_by_patient = await validate_rows_in_parallel(visits_by_patient, async_client)
 
-    for (patient_form, transfer_fields, visits) in validation_results_by_patient:
-        errors_to_return = errors_to_return | gather_errors(patient_form)
-
-        for visit_form in visits:
-            errors_to_return = errors_to_return | gather_errors(visit_form)
-
-        if not has_error_that_would_fail_save(errors_to_return):
-            patient = create_instance(Patient, patient_form)
-            await patient.asave()
-
-            # add the patient to a new Transfer instance
-            transfer_fields["paediatric_diabetes_unit"] = pdu
-            transfer_fields["patient"] = patient
-            await Transfer.objects.acreate(**transfer_fields)
-
-            await new_submission.patients.aadd(patient)
+        for (patient_form, transfer_fields, visits) in validation_results_by_patient:
+            errors_to_return = errors_to_return | gather_errors(patient_form)
 
             for visit_form in visits:
-                visit = create_instance(Visit, visit_form)
-                visit.patient = patient
-                await visit.asave()
+                errors_to_return = errors_to_return | gather_errors(visit_form)
 
-    if errors_to_return:
-        raise ValidationError(errors_to_return)
+            if not has_error_that_would_fail_save(errors_to_return):
+                patient = create_instance(Patient, patient_form)
+                await patient.asave(async_client)
+
+                # add the patient to a new Transfer instance
+                transfer_fields["paediatric_diabetes_unit"] = pdu
+                transfer_fields["patient"] = patient
+                await Transfer.objects.acreate(**transfer_fields)
+
+                await new_submission.patients.aadd(patient)
+
+                for visit_form in visits:
+                    visit = create_instance(Visit, visit_form)
+                    visit.patient = patient
+                    await visit.asave()
+
+        if errors_to_return:
+            raise ValidationError(errors_to_return)

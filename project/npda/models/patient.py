@@ -25,6 +25,7 @@ from ...constants import (
 from ..general_functions import (
     stringify_time_elapsed,
     imd_for_postcode,
+    aimd_for_postcode
 )
 
 # Logging
@@ -141,8 +142,26 @@ class Patient(models.Model):
             today_date = self.get_todays_date()
         return stringify_time_elapsed(self.date_of_birth, today_date)
 
-    def save(self, *args, **kwargs) -> None:
+    async def asave(self, async_client, *args, **kwargs):
         if self.postcode:
+            try:
+                self.index_of_multiple_deprivation_quantile = await aimd_for_postcode(
+                    self.postcode, async_client
+                )
+            except HTTPError as err:
+                logger.warning(
+                    f"Cannot calculate deprivation score for {self.postcode} {err}"
+                )
+        
+        # HACK: as asave calls save internally and we don't want to call imd_for_postcode twice
+        self.skip_imd = True
+        await super().asave(*args, **kwargs)
+        self.skip_imd = False
+
+    def save(self, *args, **kwargs) -> None:
+        skip_imd = getattr(self, "skip_imd", False)
+
+        if self.postcode and not skip_imd:
             try:
                 self.index_of_multiple_deprivation_quintile = imd_for_postcode(
                     self.postcode
