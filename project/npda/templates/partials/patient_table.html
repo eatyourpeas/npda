@@ -25,9 +25,10 @@
 {% endif %}
 
 {% if patient_list %}
-<table class="mt-2 table table-md w-full text-sm text-left rtl:text-right  text-gray-400 mb-5 font-montserrat">
+<div class="w-full overflow-x-scroll ">
+<table class="mt-2 table table-md text-sm text-left rtl:text-right  text-gray-400 mb-5 font-montserrat">
     <thead class="text-xs uppercase  bg-rcpch_dark_blue text-white">
-            <tr>
+            <tr class="snap-x">
                 <th scope="col" class="px-2 py-3 text-center">
                      <span class="flex flex-row">
                         <div id="npda_id_sort_label"  hx-preserve  class="swap swap-rotate">
@@ -268,6 +269,7 @@
                 </tr>
             </tfoot>
     </table>
-{% else %}
+</div>
+    {% else %}
     <h5 class="mb-5 font-montserrat font-semibold">No patients yet!</h5>
 {% endif %}
