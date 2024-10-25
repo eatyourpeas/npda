@@ -285,6 +285,7 @@ class PatientUpdateView(
         patient = form.save(commit=False)
         patient.is_valid = True
         patient.errors = None
+        # TODO MRB: this calls patient.save twice. super.form_valid calls it too
         patient.save()
         return super().form_valid(form)
 
