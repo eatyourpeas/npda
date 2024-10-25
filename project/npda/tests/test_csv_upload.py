@@ -1,5 +1,5 @@
 from functools import partial
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, patch
 
 from asgiref.sync import sync_to_async
 
@@ -9,7 +9,6 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from requests import RequestException
 from httpx import HTTPError
 
 from project.npda.general_functions.csv_upload import csv_upload, read_csv
@@ -21,10 +20,10 @@ from project.npda.tests.factories.patient_factory import (
 # We don't want to call remote services in unit tests
 @pytest.fixture(autouse=True)
 def mock_remote_calls():
-    with patch("project.npda.forms.patient_form.validate_postcode", Mock(return_value={"normalised_postcode": VALID_FIELDS["postcode"]})):
-        with patch("project.npda.forms.patient_form.gp_ods_code_for_postcode", Mock(return_value = "G85023")):
-            with patch("project.npda.forms.patient_form.gp_details_for_ods_code", Mock(return_value = True)):
-                with patch("project.npda.models.patient.imd_for_postcode", Mock(return_value = INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE)):
+    with patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value={"normalised_postcode": VALID_FIELDS["postcode"]})):
+        with patch("project.npda.forms.patient_form.gp_ods_code_for_postcode", AsyncMock(return_value = "G85023")):
+            with patch("project.npda.forms.patient_form.gp_details_for_ods_code", AsyncMock(return_value = True)):
+                with patch("project.npda.models.patient.aimd_for_postcode", AsyncMock(return_value = INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE)):
                     yield None
 
 
@@ -397,7 +396,7 @@ async def test_death_date_before_date_of_birth(test_user, single_row_valid_df):
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.validate_postcode", Mock(return_value=None))
+@patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value=None))
 async def test_invalid_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "not a postcode"
 
@@ -411,7 +410,7 @@ async def test_invalid_postcode(test_user, single_row_valid_df):
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.validate_postcode", Mock(side_effect=RequestException("oopsie!")))
+@patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(side_effect=HTTPError("oopsie!")))
 async def test_error_validating_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "WC1X 8SH"
 
@@ -422,7 +421,7 @@ async def test_error_validating_postcode(test_user, single_row_valid_df):
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.gp_details_for_ods_code", Mock(return_value=None))
+@patch("project.npda.forms.patient_form.gp_details_for_ods_code", AsyncMock(return_value=None))
 async def test_invalid_gp_ods_code(test_user, single_row_valid_df):
     single_row_valid_df["GP Practice Code"] = "not a GP code"
 
@@ -436,7 +435,7 @@ async def test_invalid_gp_ods_code(test_user, single_row_valid_df):
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.gp_details_for_ods_code", Mock(side_effect=RequestException("oopsie!")))
+@patch("project.npda.forms.patient_form.gp_details_for_ods_code", AsyncMock(side_effect=HTTPError("oopsie!")))
 async def test_error_validating_gp_ods_code(test_user, single_row_valid_df):
     single_row_valid_df["GP Practice Code"] = "G85023"
 
@@ -455,7 +454,7 @@ async def test_lookup_index_of_multiple_deprivation(test_user, single_row_valid_
 
 
 @pytest.mark.django_db
-@patch("project.npda.models.patient.imd_for_postcode", Mock(side_effect=HTTPError("oopsie!")))
+@patch("project.npda.models.patient.imd_for_postcode", AsyncMock(side_effect=HTTPError("oopsie!")))
 async def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_valid_df):
     await csv_upload(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
 

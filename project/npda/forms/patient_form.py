@@ -15,7 +15,7 @@ from httpx import HTTPError
 
 from ...constants.styles.form_styles import *
 from ..general_functions import (gp_details_for_ods_code,
-                                 gp_ods_code_for_postcode, imd_for_postcode,
+                                 gp_ods_code_for_postcode,
                                  validate_postcode)
 from ..models import Patient
 from ..validators import not_in_the_future_validator
