@@ -26,6 +26,9 @@ from .decorators import login_and_otp_required
 # Logging
 logger = logging.getLogger(__name__)
 
+# csv processing imports
+import csv
+
 
 def error_list(wrapper_error: ValidationError):
     ret = []
@@ -42,6 +45,12 @@ def error_list(wrapper_error: ValidationError):
 
     return ret
 
+def get_expected_headers():
+    template_path = 'static/npda_base.csv'
+    with open(template_path, mode='r', newline="", encoding="utf-8") as file:
+        reader = csv.reader(file)
+        headers = next(reader, None)
+    return headers
 
 @login_and_otp_required()
 def home(request):
