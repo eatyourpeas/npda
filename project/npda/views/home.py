@@ -76,7 +76,7 @@ def home(request):
 
         if user_headers != template_headers:
             list_diff = [header for header in user_headers if header not in template_headers]
-            error_string = f'CSV headers do not match the expected format/order. Please ensure you are using the template csv provided. Headers affected, or those present in your file but not the template, are: {list_diff}. The headers uploaded must be exactly the same as the template headers, including whitespace and capital letters.'
+            error_string = f'CSV headers do not match the expected format/order. Please ensure you are using the template csv provided. Headers affected, or those present in your file but not the template, are: {list_diff}. The headers uploaded must be exactly the same as the template headers, including whitespace, capital letters and ordering.'
             messages.error(request, error_string)
             return render(request, "home.html", {
                     "file_uploaded": False,
