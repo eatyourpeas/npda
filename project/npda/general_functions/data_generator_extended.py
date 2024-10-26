@@ -226,16 +226,15 @@ class FakePatientCreator:
         # Use a transaction to speed up bulk insertions
         with transaction.atomic():
             # Step 1: Create `n` patients in batch
-            patients = self.build_fake_patients(
-                n=n,
+            # Need to ensure we use the .create method so related factories 
+            # Transfer and PDU are made.
+            patients = PatientFactory.create_batch(
+                size=n,
                 age_range=age_range,
                 # We're going to manually create visits for each patient
                 visit=None,
                 **patient_kwargs,
             )
-
-            # Save them
-            Patient.objects.bulk_create(patients)
 
             # Step 2: Build visits
             visits = self.build_fake_visits(
