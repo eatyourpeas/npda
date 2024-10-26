@@ -24,6 +24,7 @@ Example use:
 from datetime import datetime, timezone
 from django.core.management.base import BaseCommand
 
+from project.npda.general_functions.data_generator_extended import VisitType
 from project.npda.models.npda_user import NPDAUser
 
 class Command(BaseCommand):
@@ -58,7 +59,8 @@ class Command(BaseCommand):
             '--visits', 
             type=str, 
             required=True, 
-            help="Visit types (e.g., 'CDCD DHPC ACDC CDCD'). Can have whitespaces, these will be stripped"
+            help="Visit types (e.g., 'CDCD DHPC ACDC CDCD'). Can have whitespaces, these will be "
+            "ignored"
         )
 
     def handle(self, *args, **options):
@@ -77,7 +79,7 @@ class Command(BaseCommand):
         submission_date_str = options.get('submission_date')
         if submission_date_str:
             try:
-                submission_date = datetime.datetime.strptime(submission_date_str, "%Y-%m-%d").date()
+                submission_date = datetime.strptime(submission_date_str, "%Y-%m-%d").date()
             except ValueError:
                 self.print_error("Invalid submission_date format. Use YYYY-MM-DD.")
                 return
@@ -91,8 +93,30 @@ class Command(BaseCommand):
 
         # Visit types
         visits = options['visits']
-        self.print_success(f"Visit types provided: {visits}")
+        self.print_success(f"Visit types provided: {self._map_visit_type_letters_to_names(visits)}")
 
         # Start seeding logic
 
         self.print_success("Submissions have been seeded successfully.")
+    
+    def _map_visit_type_letters_to_names(self, vt_letters:str)->str:
+        rendered_vt_names: list[str] = []
+        letter_name_map = {
+            "C" : VisitType.CLINIC.name,
+            "A" : VisitType.ANNUAL_REVIEW.name,
+            "D" : VisitType.DIETICIAN.name,
+            "P" : VisitType.PSYCHOLOGY.name,
+            "H" : VisitType.HOSPITAL_ADMISSION.name,
+        }
+        for letter in vt_letters:
+            if letter == " ":
+                rendered_vt_names.append("\n\t")
+                continue
+            if letter.upper() not in "CADPH":
+                self.print_error("INVALID VISIT TYPE LETTER: " + letter)
+            
+            rendered_vt_names.append(f"\n\t{letter_name_map[letter]}")
+        
+        return "".join(rendered_vt_names)
+            
+            
