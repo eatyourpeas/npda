@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.conf import settings
 
 
 # HTMX imports
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 # csv processing imports
 import csv
+import difflib
 
 
 def error_list(wrapper_error: ValidationError):
@@ -60,20 +62,35 @@ def home(request):
     """
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
-        file = request.FILES["csv_upload"]
+        user_csv = request.FILES["csv_upload"]
         pz_code = request.session.get("pz_code")
 
-        # summary = csv_summarize(csv_file=file)
+        # You can't read the same file twice without resetting it
+        user_csv.seek(0)
+        reader = csv.reader(user_csv.read().decode("utf-8").splitlines())
+        user_headers = next(reader, None)
+
+        template_headers = get_expected_headers()
+        logger.debug(template_headers)
+        logger.debug(user_headers)
+
+        if user_headers != template_headers:
+            messages.error(request, 'CSV headers do not match the expected format. Please ensure you are using the template csv provided')
+            return render(request, "home.html", {
+                    "file_uploaded": False,
+                    "form": form,
+                    "errors": ["CSV headers do not match the expected format. Please ensure you are using the template csv provided"]
+            })
 
         # You can't read the same file twice without resetting it
-        file.seek(0)
+        user_csv.seek(0)
         errors = []
 
         try:
             csv_upload(
                 user=request.user,
-                dataframe=read_csv(file),
-                csv_file=file,
+                dataframe=read_csv(user_csv),
+                csv_file=user_csv,
                 pdu_pz_code=pz_code,
             )
             messages.success(
