@@ -71,15 +71,17 @@ def home(request):
         user_headers = next(reader, None)
 
         template_headers = get_expected_headers()
-        logger.debug(template_headers)
-        logger.debug(user_headers)
+
+        # Next localise headers so have list and say 'these are the headers affected'
 
         if user_headers != template_headers:
-            messages.error(request, 'CSV headers do not match the expected format. Please ensure you are using the template csv provided')
+            list_diff = [header for header in user_headers if header not in template_headers]
+            error_string = f'CSV headers do not match the expected format/order. Please ensure you are using the template csv provided. Headers affected, or those present in your file but not the template, are: {list_diff}. The headers uploaded must be exactly the same as the template headers, including whitespace and capital letters.'
+            messages.error(request, error_string)
             return render(request, "home.html", {
                     "file_uploaded": False,
                     "form": form,
-                    "errors": ["CSV headers do not match the expected format. Please ensure you are using the template csv provided"]
+                    "errors": [error_string]
             })
 
         # You can't read the same file twice without resetting it
