@@ -8,6 +8,11 @@ Visit type options:
     - P (PSYCHOLOGY)
     - H (HOSPITAL_ADMISSION)
 
+HBA1C Target options:
+    - T (TARGET)
+    - A (ABOVE)
+    - W (WELL_ABOVE)
+
 Example use:
 
     python manage.py seed_submission \
@@ -15,6 +20,7 @@ Example use:
         --submission_date="2024-10-18" \
         --pts=50 \
         --visits="CDCD DHPC ACDC CDCD"
+        --hb_target=T
     
     will generate a submission for User.pk=1 that includes 50 patients, each of whom will have
     12 Visits evenly spread throughout the audit year's quarters, with types Clinic, Dietician, ...,
@@ -23,14 +29,33 @@ Example use:
 
 from datetime import datetime, timezone
 from django.core.management.base import BaseCommand
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from project.npda.general_functions.audit_period import get_audit_period_for_date
-from project.npda.general_functions.data_generator_extended import FakePatientCreator, VisitType
-from project.npda.models.npda_user import NPDAUser
+from project.npda.general_functions.data_generator_extended import AgeRange, FakePatientCreator, HbA1cTargetRange, VisitType
+from project.npda.models import (
+    NPDAUser,
+    Patient,
+    Submission,
+    OrganisationEmployer,
+)
+
+letter_name_map = {
+            "C" : VisitType.CLINIC,
+            "A" : VisitType.ANNUAL_REVIEW,
+            "D" : VisitType.DIETICIAN,
+            "P" : VisitType.PSYCHOLOGY,
+            "H" : VisitType.HOSPITAL_ADMISSION,
+        }
+hb_target_map = {
+    "T" : HbA1cTargetRange.TARGET,
+    "A": HbA1cTargetRange.ABOVE,
+    "W" : HbA1cTargetRange.WELL_ABOVE,
+}
 
 class Command(BaseCommand):
-    help = "Seeds submissions with specific user, submission date, number of patients, and visit types."
-
+    help = "Seeds submission with specific user, submission date, number of patients, and visit types."
+    
 
     def print_success(self, message: str):
         self.stdout.write(self.style.SUCCESS(message))
@@ -63,6 +88,13 @@ class Command(BaseCommand):
             help="Visit types (e.g., 'CDCD DHPC ACDC CDCD'). Can have whitespaces, these will be "
             "ignored"
         )
+        parser.add_argument(
+            "--hb_target",
+            type=str,
+            required=True,
+            choices=["T","A","W"],
+            help="HBA1C Target range for visit seeding."
+        )
 
     def handle(self, *args, **options):
         
@@ -74,6 +106,11 @@ class Command(BaseCommand):
                 self.print_error("No superuser found to default user_pk.")
                 return
             user_pk = user.pk
+        
+        if not (submission_by := NPDAUser.objects.filter(pk=user_pk).first()):
+            self.print_error(f"Could not find user with pk {user_pk}")
+            return
+        
         self.print_success(f"Using user_pk: {user_pk}")
 
         # Handle submission_date with default to today's date if not provided
@@ -91,33 +128,65 @@ class Command(BaseCommand):
         self.print_success(f"Using submission_date: {submission_date} ({audit_start_date=})  ({audit_end_date=})")
 
         # Number of patients to seed (pts)
-        pts = options['pts']
-        self.print_success(f"Number of patients to seed: {pts}")
+        n_pts_to_seed = options['pts']
+        self.print_success(f"Number of patients to seed: {n_pts_to_seed}")
 
         # Visit types
-        visits = options['visits']
+        visits: str = options['visits']
         self.print_success(f"Visit types provided: {self._map_visit_type_letters_to_names(visits)}")
+        
+        # Map to actual VisitType
+        # NOTE: `_map_visit_type_letters_to_names` already did some basic validation 
+        visit_types = list(map(lambda letter: letter_name_map[letter], visits.replace(" ",""),))
 
+        # hba1c target
+        hba1c_target = hb_target_map[options['hb_target']]
+        
+            
+        
         # Start seeding logic
         
         # First create patients
-        
         fake_patient_creator = FakePatientCreator(
             audit_start_date=audit_start_date,
             audit_end_date=audit_end_date,
         )
+        new_pts = fake_patient_creator.create_and_save_fake_patients(
+            n=n_pts_to_seed,
+            age_range=AgeRange.AGE_11_15,
+            hb1ac_target_range=hba1c_target,
+            visit_types=visit_types,
+        )
+        
+        
+        # Now create the submission
+        # Associate submission's PDU with user
+        primary_pdu_for_user = OrganisationEmployer.objects.filter(npda_user=submission_by, is_primary_employer=True).first().paediatric_diabetes_unit
+        
+        # Need a mock csv
+        with open("project/npda/dummy_sheets/dummy_sheet.csv", "rb") as f:
+            mock_csv = SimpleUploadedFile(
+                name='dummy_sheet.csv',
+                content=f.read(),
+                content_type='text/csv'
+            )
+        new_submission = Submission.objects.create(
+            paediatric_diabetes_unit=primary_pdu_for_user,
+            audit_year=audit_start_date.year,
+            submission_date=submission_date,
+            submission_by=submission_by, 
+            submission_active=True,
+            csv_file=mock_csv,
+        )
+        
+        # Add patients to submission
+        new_submission.patients.add(*new_pts)
 
-        self.print_success("Submissions have been seeded successfully.")
+        self.print_success(f"Submission has been seeded successfully: {new_submission}",)
     
     def _map_visit_type_letters_to_names(self, vt_letters:str)->str:
         rendered_vt_names: list[str] = []
-        letter_name_map = {
-            "C" : VisitType.CLINIC.name,
-            "A" : VisitType.ANNUAL_REVIEW.name,
-            "D" : VisitType.DIETICIAN.name,
-            "P" : VisitType.PSYCHOLOGY.name,
-            "H" : VisitType.HOSPITAL_ADMISSION.name,
-        }
+        
         for letter in vt_letters:
             if letter == " ":
                 rendered_vt_names.append("\n\t")
