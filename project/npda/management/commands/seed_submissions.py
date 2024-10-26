@@ -24,7 +24,8 @@ Example use:
 from datetime import datetime, timezone
 from django.core.management.base import BaseCommand
 
-from project.npda.general_functions.data_generator_extended import VisitType
+from project.npda.general_functions.audit_period import get_audit_period_for_date
+from project.npda.general_functions.data_generator_extended import FakePatientCreator, VisitType
 from project.npda.models.npda_user import NPDAUser
 
 class Command(BaseCommand):
@@ -85,7 +86,9 @@ class Command(BaseCommand):
                 return
         else:
             submission_date = timezone.now().date()
-        self.print_success(f"Using submission_date: {submission_date}")
+        
+        audit_start_date, audit_end_date = get_audit_period_for_date(submission_date)
+        self.print_success(f"Using submission_date: {submission_date} ({audit_start_date=})  ({audit_end_date=})")
 
         # Number of patients to seed (pts)
         pts = options['pts']
@@ -96,6 +99,13 @@ class Command(BaseCommand):
         self.print_success(f"Visit types provided: {self._map_visit_type_letters_to_names(visits)}")
 
         # Start seeding logic
+        
+        # First create patients
+        
+        fake_patient_creator = FakePatientCreator(
+            audit_start_date=audit_start_date,
+            audit_end_date=audit_end_date,
+        )
 
         self.print_success("Submissions have been seeded successfully.")
     
