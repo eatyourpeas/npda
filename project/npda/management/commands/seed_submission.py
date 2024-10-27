@@ -88,12 +88,19 @@ hb_target_map = {
     "W": HbA1cTargetRange.WELL_ABOVE,
 }
 
+# ANSI Colour Codes
+CYAN = "\033[96m"
+RESET = "\033[0m"
+
 
 class Command(BaseCommand):
     help = "Seeds submission with specific user, submission date, number of patients, and visit types."
 
     def print_success(self, message: str):
         self.stdout.write(self.style.SUCCESS(message))
+
+    def print_info(self, message: str):
+        self.stdout.write(self.style.WARNING(message))
 
     def print_error(self, message: str):
         self.stdout.write(self.style.ERROR(f"ERROR: {message}"))
@@ -148,14 +155,14 @@ class Command(BaseCommand):
             self.print_error(f"Could not find user with pk {user_pk}")
             return
 
-        self.print_success(f"Using user_pk: {user_pk}")
+        self.print_info(f"Using user_pk: {CYAN}{user_pk}{RESET}\n")
 
         # Handle submission_date with default to today's date if not provided
         submission_date_str = options.get("submission_date")
         if submission_date_str:
             try:
-                submission_date = datetime.strptime(
-                    submission_date_str, "%Y-%m-%d"
+                submission_date = timezone.make_aware(
+                    datetime.strptime(submission_date_str, "%Y-%m-%d")
                 ).date()
             except ValueError:
                 self.print_error(
@@ -168,19 +175,27 @@ class Command(BaseCommand):
         audit_start_date, audit_end_date = get_audit_period_for_date(
             submission_date
         )
-        self.print_success(
-            f"Using submission_date: {submission_date} ({audit_start_date=})  ({audit_end_date=})"
+        self.print_info(
+            f"Using submission_date: {CYAN}{submission_date}{RESET}\n"
+            f"Audit period: Start Date - {CYAN}{audit_start_date}{RESET}, "
+            f"End Date - {CYAN}{audit_end_date}{RESET}\n"
         )
 
         # Number of patients to seed (pts)
         n_pts_to_seed = options["pts"]
-        self.print_success(f"Number of patients to seed: {n_pts_to_seed}")
+        self.print_info(
+            f"Number of patients to seed: {CYAN}{n_pts_to_seed}{RESET}\n"
+        )
 
         # Visit types
         visits: str = options["visits"]
-        self.print_success(
-            f"Visit types provided: {self._map_visit_type_letters_to_names(visits)}"
+        formatted_visits = "\n    ".join(
+            f"{CYAN}{visit_type}{RESET}"
+            for visit_type in self._map_visit_type_letters_to_names(
+                visits
+            ).split("\n")
         )
+        self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
 
         # Map to actual VisitType
         # NOTE: `_map_visit_type_letters_to_names` already did some basic validation
@@ -193,6 +208,7 @@ class Command(BaseCommand):
 
         # hba1c target
         hba1c_target = hb_target_map[options["hb_target"]]
+        self.print_info(f"HbA1c target: {CYAN}{hba1c_target.name}{RESET}\n")
 
         # Start seeding logic
 
