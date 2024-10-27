@@ -139,6 +139,93 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
+        if not (parsed_values := self._parse_values_from_options(**options)):
+            return
+
+        audit_start_date = parsed_values["audit_start_date"]
+        audit_end_date = parsed_values["audit_end_date"]
+        n_pts_to_seed = parsed_values["n_pts_to_seed"]
+        hba1c_target = parsed_values["hba1c_target"]
+        visits = parsed_values["visits"]
+        visit_types = parsed_values["visit_types"]
+        user_pk = parsed_values["user_pk"]
+        submission_by = parsed_values["submission_by"]
+        submission_date = parsed_values["submission_date"]
+
+        # Associate submission's PDU with user
+        primary_pdu_for_user = (
+            OrganisationEmployer.objects.filter(
+                npda_user=submission_by, is_primary_employer=True
+            )
+            .first()
+            .paediatric_diabetes_unit
+        )
+
+        # Print out the parsed values
+        self.print_info(
+            f"Using user_pk: {CYAN}{user_pk} ({submission_by}){RESET}\n"
+        )
+        self.print_info(
+            f"Submission PDU: {CYAN}{primary_pdu_for_user}{RESET}\n"
+        )
+        self.print_info(
+            f"Using submission_date: {CYAN}{submission_date}{RESET}\n"
+            f"Audit period: Start Date - {CYAN}{audit_start_date}{RESET}, "
+            f"End Date - {CYAN}{audit_end_date}{RESET}\n"
+        )
+        self.print_info(
+            f"Number of patients to seed: {CYAN}{n_pts_to_seed}{RESET}\n"
+        )
+        formatted_visits = "\n    ".join(
+            f"{CYAN}{visit_type}{RESET}"
+            for visit_type in self._map_visit_type_letters_to_names(
+                visits
+            ).split("\n")
+        )
+        self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
+
+        # Start seeding logic
+
+        # First create patients
+        fake_patient_creator = FakePatientCreator(
+            audit_start_date=audit_start_date,
+            audit_end_date=audit_end_date,
+        )
+        new_pts = fake_patient_creator.create_and_save_fake_patients(
+            n=n_pts_to_seed,
+            age_range=AgeRange.AGE_11_15,
+            hb1ac_target_range=hba1c_target,
+            visit_types=visit_types,
+            visit_kwargs={"is_valid": True},
+        )
+
+        # Now create the submission
+        self.print_info(f"HbA1c target: {CYAN}{hba1c_target.name}{RESET}\n")
+
+        # Need a mock csv
+        with open("project/npda/dummy_sheets/dummy_sheet.csv", "rb") as f:
+            mock_csv = SimpleUploadedFile(
+                name="dummy_sheet.csv",
+                content=f.read(),
+                content_type="text/csv",
+            )
+        new_submission = Submission.objects.create(
+            paediatric_diabetes_unit=primary_pdu_for_user,
+            audit_year=audit_start_date.year,
+            submission_date=submission_date,
+            submission_by=submission_by,
+            submission_active=True,
+            csv_file=mock_csv,
+        )
+
+        # Add patients to submission
+        new_submission.patients.add(*new_pts)
+
+        self.print_success(
+            f"Submission has been seeded successfully: {new_submission}",
+        )
+
+    def _parse_values_from_options(self, **options):
         # Get user_pk with default to a superuser's pk if not provided
         user_pk = options.get("user_pk")
         if not user_pk:
@@ -179,13 +266,6 @@ class Command(BaseCommand):
 
         # Visit types
         visits: str = options["visits"]
-        formatted_visits = "\n    ".join(
-            f"{CYAN}{visit_type}{RESET}"
-            for visit_type in self._map_visit_type_letters_to_names(
-                visits
-            ).split("\n")
-        )
-
         # Map to actual VisitType
         # NOTE: `_map_visit_type_letters_to_names` already did some basic validation
         visit_types = list(
@@ -198,70 +278,17 @@ class Command(BaseCommand):
         # hba1c target
         hba1c_target = hb_target_map[options["hb_target"]]
 
-        # Start seeding logic
-
-        # First create patients
-        fake_patient_creator = FakePatientCreator(
-            audit_start_date=audit_start_date,
-            audit_end_date=audit_end_date,
-        )
-        new_pts = fake_patient_creator.create_and_save_fake_patients(
-            n=n_pts_to_seed,
-            age_range=AgeRange.AGE_11_15,
-            hb1ac_target_range=hba1c_target,
-            visit_types=visit_types,
-            visit_kwargs={"is_valid": True},
-        )
-
-        # Now create the submission
-        # Associate submission's PDU with user
-        primary_pdu_for_user = (
-            OrganisationEmployer.objects.filter(
-                npda_user=submission_by, is_primary_employer=True
-            )
-            .first()
-            .paediatric_diabetes_unit
-        )
-
-        self.print_info(
-            f"Using user_pk: {CYAN}{user_pk} ({submission_by}){RESET}\n"
-        )
-        self.print_info(
-            f"Submission PDU: {CYAN}{primary_pdu_for_user}{RESET}\n"
-        )
-        self.print_info(
-            f"Using submission_date: {CYAN}{submission_date}{RESET}\n"
-            f"Audit period: Start Date - {CYAN}{audit_start_date}{RESET}, "
-            f"End Date - {CYAN}{audit_end_date}{RESET}\n"
-        )
-        self.print_info(
-            f"Number of patients to seed: {CYAN}{n_pts_to_seed}{RESET}\n"
-        )
-        self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
-        self.print_info(f"HbA1c target: {CYAN}{hba1c_target.name}{RESET}\n")
-
-        # Need a mock csv
-        with open("project/npda/dummy_sheets/dummy_sheet.csv", "rb") as f:
-            mock_csv = SimpleUploadedFile(
-                name="dummy_sheet.csv",
-                content=f.read(),
-                content_type="text/csv",
-            )
-        new_submission = Submission.objects.create(
-            paediatric_diabetes_unit=primary_pdu_for_user,
-            audit_year=audit_start_date.year,
-            submission_date=submission_date,
-            submission_by=submission_by,
-            submission_active=True,
-            csv_file=mock_csv,
-        )
-
-        # Add patients to submission
-        new_submission.patients.add(*new_pts)
-
-        self.print_success(
-            f"Submission has been seeded successfully: {new_submission}",
-        )
+        return {
+            "n_pts_to_seed": n_pts_to_seed,
+            "audit_start_date": audit_start_date,
+            "audit_end_date": audit_end_date,
+            "hba1c_target": hba1c_target,
+            "visits": visits,
+            "visit_types": visit_types,
+            "submission_by": submission_by,
+            "user_pk": user_pk,
+            "submission_date": submission_date,
+        }
 
     def _map_visit_type_letters_to_names(self, vt_letters: str) -> str:
         rendered_vt_names: list[str] = []
