@@ -11,7 +11,7 @@ Example use:
         --submission_date="2024-10-18" \
 
     This will generate a submission for User.pk=1 that includes 50 patients,
-    each of whom will have 12 Visits evenly spread throughout the audit
+    each of whom will have 16 Visits evenly spread throughout the audit
     year's quarters, with types Clinic, Dietician, ..., Clinic, Dietician,
     all with HbA1c target range as TARGET.
 
