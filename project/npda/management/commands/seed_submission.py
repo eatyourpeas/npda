@@ -1,38 +1,73 @@
-"""CLI for seeding Submissions for a given User (and that user's PDU). Will additionally create 
-Patients and Visits.
-
-Visit type options:
-    - C (CLINIC)
-    - A (ANNUAL_REVIEW)
-    - D (DIETICIAN)
-    - P (PSYCHOLOGY)
-    - H (HOSPITAL_ADMISSION)
-
-HBA1C Target options:
-    - T (TARGET)
-    - A (ABOVE)
-    - W (WELL_ABOVE)
+"""
+CLI for seeding Submissions for a given User (and that user's PDU). Will
+additionally create Patients and Visits.
 
 Example use:
-
     python manage.py seed_submission \
+        --pts=50 \
+        --visits="CDCD DHPC ACDC CDCD" \
+        --hb_target=T
         --user_pk=1 \
         --submission_date="2024-10-18" \
-        --pts=50 \
-        --visits="CDCD DHPC ACDC CDCD"
-        --hb_target=T
-    
-    will generate a submission for User.pk=1 that includes 50 patients, each of whom will have
-    12 Visits evenly spread throughout the audit year's quarters, with types Clinic, Dietician, ...,
-    Clinic, Dietician.
+
+    This will generate a submission for User.pk=1 that includes 50 patients,
+    each of whom will have 12 Visits evenly spread throughout the audit
+    year's quarters, with types Clinic, Dietician, ..., Clinic, Dietician,
+    all with HbA1c target range as TARGET.
+
+Options:
+
+    --pts (int, required):
+        The number of patients to seed for this submission.
+
+    --visits (str, required):
+        A string encoding the VisitTypes each patient should have. Use
+        visit type abbreviations. Can use whitespace (ignored)
+        (e.g., "CDCD DHPC ACDC CDCD").
+        Each patient will have associated Visits in the sequence provided.
+
+        Visit type options:
+            - C (CLINIC)
+            - A (ANNUAL_REVIEW)
+            - D (DIETICIAN)
+            - P (PSYCHOLOGY)
+            - H (HOSPITAL_ADMISSION)
+
+    --hb_target (str, required):
+        Character setting for HbA1c target range per visit:
+            - T (TARGET)
+            - A (ABOVE)
+            - W (WELL_ABOVE)
+    --user_pk (int, optional):
+        The primary key of the user for whom the submission is created.
+        Defaults to the seeded SuperuserAda. Note that Submission.pdu is set
+        to this user's primary organisation_employer.
+
+    --submission_date (str, optional):
+        The submission date in YYYY-MM-DD format. Defaults to today. This
+        date is used to set the audit period's start and end dates.
+
+
+Notes:
+    - Submission requires an associated `csv_file`. A dummy value is set to
+      project/npda/dummy_sheets/dummy_sheet.csv.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
+
+from django.utils import timezone
 from django.core.management.base import BaseCommand
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from project.npda.general_functions.audit_period import get_audit_period_for_date
-from project.npda.general_functions.data_generator_extended import AgeRange, FakePatientCreator, HbA1cTargetRange, VisitType
+from project.npda.general_functions.audit_period import (
+    get_audit_period_for_date,
+)
+from project.npda.general_functions.data_generator_extended import (
+    AgeRange,
+    FakePatientCreator,
+    HbA1cTargetRange,
+    VisitType,
+)
 from project.npda.models import (
     NPDAUser,
     Patient,
@@ -41,111 +76,126 @@ from project.npda.models import (
 )
 
 letter_name_map = {
-            "C" : VisitType.CLINIC,
-            "A" : VisitType.ANNUAL_REVIEW,
-            "D" : VisitType.DIETICIAN,
-            "P" : VisitType.PSYCHOLOGY,
-            "H" : VisitType.HOSPITAL_ADMISSION,
-        }
-hb_target_map = {
-    "T" : HbA1cTargetRange.TARGET,
-    "A": HbA1cTargetRange.ABOVE,
-    "W" : HbA1cTargetRange.WELL_ABOVE,
+    "C": VisitType.CLINIC,
+    "A": VisitType.ANNUAL_REVIEW,
+    "D": VisitType.DIETICIAN,
+    "P": VisitType.PSYCHOLOGY,
+    "H": VisitType.HOSPITAL_ADMISSION,
 }
+hb_target_map = {
+    "T": HbA1cTargetRange.TARGET,
+    "A": HbA1cTargetRange.ABOVE,
+    "W": HbA1cTargetRange.WELL_ABOVE,
+}
+
 
 class Command(BaseCommand):
     help = "Seeds submission with specific user, submission date, number of patients, and visit types."
-    
 
     def print_success(self, message: str):
         self.stdout.write(self.style.SUCCESS(message))
-
 
     def print_error(self, message: str):
         self.stdout.write(self.style.ERROR(f"ERROR: {message}"))
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--user_pk', 
-            type=int, 
-            help="User primary key (optional, defaults to SuperuserAda's PJ if not provided)."
+            "--user_pk",
+            type=int,
+            help="User primary key (optional, defaults to SuperuserAda's PK if not provided).",
         )
         parser.add_argument(
-            '--submission_date', 
-            type=str, 
-            help="Submission date in YYYY-MM-DD format (optional, defaults to today)."
+            "--submission_date",
+            type=str,
+            help="Submission date in YYYY-MM-DD format (optional, defaults to today).",
         )
         parser.add_argument(
-            '--pts', 
-            type=int, 
-            required=True, 
-            help="Number of patients to seed."
+            "--pts",
+            type=int,
+            required=True,
+            help="Number of patients to seed.",
         )
         parser.add_argument(
-            '--visits', 
-            type=str, 
-            required=True, 
+            "--visits",
+            type=str,
+            required=True,
             help="Visit types (e.g., 'CDCD DHPC ACDC CDCD'). Can have whitespaces, these will be "
-            "ignored"
+            "ignored",
         )
         parser.add_argument(
             "--hb_target",
             type=str,
             required=True,
-            choices=["T","A","W"],
-            help="HBA1C Target range for visit seeding."
+            choices=["T", "A", "W"],
+            help="HBA1C Target range for visit seeding.",
         )
 
     def handle(self, *args, **options):
-        
+
         # Get user_pk with default to a superuser's pk if not provided
-        user_pk = options.get('user_pk')
+        user_pk = options.get("user_pk")
         if not user_pk:
-            user = NPDAUser.objects.filter(is_superuser=True, first_name="SuperuserAda",).first()
+            user = NPDAUser.objects.filter(
+                is_superuser=True,
+                first_name="SuperuserAda",
+            ).first()
             if not user:
                 self.print_error("No superuser found to default user_pk.")
                 return
             user_pk = user.pk
-        
+
         if not (submission_by := NPDAUser.objects.filter(pk=user_pk).first()):
             self.print_error(f"Could not find user with pk {user_pk}")
             return
-        
+
         self.print_success(f"Using user_pk: {user_pk}")
 
         # Handle submission_date with default to today's date if not provided
-        submission_date_str = options.get('submission_date')
+        submission_date_str = options.get("submission_date")
         if submission_date_str:
             try:
-                submission_date = datetime.strptime(submission_date_str, "%Y-%m-%d").date()
+                submission_date = datetime.strptime(
+                    submission_date_str, "%Y-%m-%d"
+                ).date()
             except ValueError:
-                self.print_error("Invalid submission_date format. Use YYYY-MM-DD.")
+                self.print_error(
+                    "Invalid submission_date format. Use YYYY-MM-DD."
+                )
                 return
         else:
             submission_date = timezone.now().date()
-        
-        audit_start_date, audit_end_date = get_audit_period_for_date(submission_date)
-        self.print_success(f"Using submission_date: {submission_date} ({audit_start_date=})  ({audit_end_date=})")
+
+        audit_start_date, audit_end_date = get_audit_period_for_date(
+            submission_date
+        )
+        self.print_success(
+            f"Using submission_date: {submission_date} ({audit_start_date=})  ({audit_end_date=})"
+        )
 
         # Number of patients to seed (pts)
-        n_pts_to_seed = options['pts']
+        n_pts_to_seed = options["pts"]
         self.print_success(f"Number of patients to seed: {n_pts_to_seed}")
 
         # Visit types
-        visits: str = options['visits']
-        self.print_success(f"Visit types provided: {self._map_visit_type_letters_to_names(visits)}")
-        
+        visits: str = options["visits"]
+        self.print_success(
+            f"Visit types provided: {self._map_visit_type_letters_to_names(visits)}"
+        )
+
         # Map to actual VisitType
-        # NOTE: `_map_visit_type_letters_to_names` already did some basic validation 
-        visit_types = list(map(lambda letter: letter_name_map[letter], visits.replace(" ",""),))
+        # NOTE: `_map_visit_type_letters_to_names` already did some basic validation
+        visit_types = list(
+            map(
+                lambda letter: letter_name_map[letter],
+                visits.replace(" ", ""),
+            )
+        )
 
         # hba1c target
-        hba1c_target = hb_target_map[options['hb_target']]
-        
-            
-        
+        hba1c_target = hb_target_map[options["hb_target"]]
+
         # Start seeding logic
-        
+
         # First create patients
         fake_patient_creator = FakePatientCreator(
             audit_start_date=audit_start_date,
@@ -157,45 +207,50 @@ class Command(BaseCommand):
             hb1ac_target_range=hba1c_target,
             visit_types=visit_types,
         )
-        
-        
+
         # Now create the submission
         # Associate submission's PDU with user
-        primary_pdu_for_user = OrganisationEmployer.objects.filter(npda_user=submission_by, is_primary_employer=True).first().paediatric_diabetes_unit
-        
-        # Need a mock csv
+        primary_pdu_for_user = (
+            OrganisationEmployer.objects.filter(
+                npda_user=submission_by, is_primary_employer=True
+            )
+            .first()
+            .paediatric_diabetes_unit
+        )
+
+        # Need a mock csv
         with open("project/npda/dummy_sheets/dummy_sheet.csv", "rb") as f:
             mock_csv = SimpleUploadedFile(
-                name='dummy_sheet.csv',
+                name="dummy_sheet.csv",
                 content=f.read(),
-                content_type='text/csv'
+                content_type="text/csv",
             )
         new_submission = Submission.objects.create(
             paediatric_diabetes_unit=primary_pdu_for_user,
             audit_year=audit_start_date.year,
             submission_date=submission_date,
-            submission_by=submission_by, 
+            submission_by=submission_by,
             submission_active=True,
             csv_file=mock_csv,
         )
-        
+
         # Add patients to submission
         new_submission.patients.add(*new_pts)
 
-        self.print_success(f"Submission has been seeded successfully: {new_submission}",)
-    
-    def _map_visit_type_letters_to_names(self, vt_letters:str)->str:
+        self.print_success(
+            f"Submission has been seeded successfully: {new_submission}",
+        )
+
+    def _map_visit_type_letters_to_names(self, vt_letters: str) -> str:
         rendered_vt_names: list[str] = []
-        
+
         for letter in vt_letters:
             if letter == " ":
                 rendered_vt_names.append("\n\t")
                 continue
             if letter.upper() not in "CADPH":
                 self.print_error("INVALID VISIT TYPE LETTER: " + letter)
-            
+
             rendered_vt_names.append(f"\n\t{letter_name_map[letter]}")
-        
+
         return "".join(rendered_vt_names)
-            
-            
