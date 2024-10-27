@@ -155,8 +155,6 @@ class Command(BaseCommand):
             self.print_error(f"Could not find user with pk {user_pk}")
             return
 
-        self.print_info(f"Using user_pk: {CYAN}{user_pk}{RESET}\n")
-
         # Handle submission_date with default to today's date if not provided
         submission_date_str = options.get("submission_date")
         if submission_date_str:
@@ -175,17 +173,9 @@ class Command(BaseCommand):
         audit_start_date, audit_end_date = get_audit_period_for_date(
             submission_date
         )
-        self.print_info(
-            f"Using submission_date: {CYAN}{submission_date}{RESET}\n"
-            f"Audit period: Start Date - {CYAN}{audit_start_date}{RESET}, "
-            f"End Date - {CYAN}{audit_end_date}{RESET}\n"
-        )
 
         # Number of patients to seed (pts)
         n_pts_to_seed = options["pts"]
-        self.print_info(
-            f"Number of patients to seed: {CYAN}{n_pts_to_seed}{RESET}\n"
-        )
 
         # Visit types
         visits: str = options["visits"]
@@ -195,7 +185,6 @@ class Command(BaseCommand):
                 visits
             ).split("\n")
         )
-        self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
 
         # Map to actual VisitType
         # NOTE: `_map_visit_type_letters_to_names` already did some basic validation
@@ -208,7 +197,6 @@ class Command(BaseCommand):
 
         # hba1c target
         hba1c_target = hb_target_map[options["hb_target"]]
-        self.print_info(f"HbA1c target: {CYAN}{hba1c_target.name}{RESET}\n")
 
         # Start seeding logic
 
@@ -222,6 +210,7 @@ class Command(BaseCommand):
             age_range=AgeRange.AGE_11_15,
             hb1ac_target_range=hba1c_target,
             visit_types=visit_types,
+            visit_kwargs={"is_valid": True},
         )
 
         # Now create the submission
@@ -233,6 +222,23 @@ class Command(BaseCommand):
             .first()
             .paediatric_diabetes_unit
         )
+
+        self.print_info(
+            f"Using user_pk: {CYAN}{user_pk} ({submission_by}){RESET}\n"
+        )
+        self.print_info(
+            f"Submission PDU: {CYAN}{primary_pdu_for_user}{RESET}\n"
+        )
+        self.print_info(
+            f"Using submission_date: {CYAN}{submission_date}{RESET}\n"
+            f"Audit period: Start Date - {CYAN}{audit_start_date}{RESET}, "
+            f"End Date - {CYAN}{audit_end_date}{RESET}\n"
+        )
+        self.print_info(
+            f"Number of patients to seed: {CYAN}{n_pts_to_seed}{RESET}\n"
+        )
+        self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
+        self.print_info(f"HbA1c target: {CYAN}{hba1c_target.name}{RESET}\n")
 
         # Need a mock csv
         with open("project/npda/dummy_sheets/dummy_sheet.csv", "rb") as f:
