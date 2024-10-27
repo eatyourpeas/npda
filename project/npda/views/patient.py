@@ -22,19 +22,28 @@ from django.urls import reverse_lazy
 from project.npda.general_functions import (
     organisations_adapter,
 )
-from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
+from project.npda.general_functions.quarter_for_date import (
+    retrieve_quarter_for_date,
+)
 from project.npda.models import NPDAUser
 
 # RCPCH imports
 from ..models import Patient
 from ..forms.patient_form import PatientForm
-from .mixins import CheckPDUInstanceMixin, CheckPDUListMixin, LoginAndOTPRequiredMixin
+from .mixins import (
+    CheckPDUInstanceMixin,
+    CheckPDUListMixin,
+    LoginAndOTPRequiredMixin,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class PatientListView(
-    LoginAndOTPRequiredMixin, CheckPDUListMixin, PermissionRequiredMixin, ListView
+    LoginAndOTPRequiredMixin,
+    CheckPDUListMixin,
+    PermissionRequiredMixin,
+    ListView,
 ):
     permission_required = "npda.view_patient"
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."
@@ -50,8 +59,12 @@ class PatientListView(
         """
         patient_queryset = super().get_queryset()
         # sort the queryset by the user'selection
-        sort_by = self.request.GET.get("sort_by", "pk")  # Default sort by npda_id
-        sort = self.request.GET.get("sort", "asc")  # Default sort by ascending order
+        sort_by = self.request.GET.get(
+            "sort_by", "pk"
+        )  # Default sort by npda_id
+        sort = self.request.GET.get(
+            "sort", "asc"
+        )  # Default sort by ascending order
         if sort_by in ["pk", "nhs_number"]:
             if sort == "asc":
                 sort_by = sort_by
@@ -78,7 +91,9 @@ class PatientListView(
             patient_queryset.filter(filtered_patients)
             .annotate(
                 audit_year=F("submissions__audit_year"),
-                visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
+                visit_error_count=Count(
+                    Case(When(visit__is_valid=False, then=1))
+                ),
                 last_upload_date=Max("submissions__submission_date"),
                 most_recent_visit_date=Max("visit__visit_date"),
             )
@@ -109,10 +124,12 @@ class PatientListView(
         total_valid_patients = (
             Patient.objects.filter(submissions__submission_active=True)
             .annotate(
-                visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
+                visit_error_count=Count(
+                    Case(When(visit__is_valid=False, then=1))
+                ),
             )
             .order_by("is_valid", "visit_error_count", "pk")
-            .filter(is_valid=True, visit_error_count__lt=1)
+            .filter(visit__is_valid=True, visit_error_count__lt=1)
             .count()
         )
         context["pz_code"] = self.request.session.get("pz_code")
@@ -124,7 +141,8 @@ class PatientListView(
         context["index_of_first_invalid_patient"] = total_valid_patients + 1
         context["pdu_choices"] = (
             organisations_adapter.paediatric_diabetes_units_to_populate_select_field(
-                requesting_user=self.request.user, user_instance=self.request.user
+                requesting_user=self.request.user,
+                user_instance=self.request.user,
             )
         )
         context["chosen_pdu"] = self.request.session.get("pz_code")
@@ -156,12 +174,17 @@ class PatientListView(
             context["is_paginated"] = is_paginated
             context["patient_list"] = queryset
 
-            return render(request, "partials/patient_table.html", context=context)
+            return render(
+                request, "partials/patient_table.html", context=context
+            )
         return response
 
 
 class PatientCreateView(
-    LoginAndOTPRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, CreateView
+    LoginAndOTPRequiredMixin,
+    PermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
 ):
     """
     Handle creation of new patient in audit - should link the patient to the current audit year and the logged in user's PDU
@@ -175,7 +198,9 @@ class PatientCreateView(
     success_url = reverse_lazy("patients")
 
     def get_context_data(self, **kwargs):
-        PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+        PaediatricDiabetesUnit = apps.get_model(
+            "npda", "PaediatricDiabetesUnit"
+        )
         pz_code = self.request.session.get("pz_code")
         pdu = PaediatricDiabetesUnit.objects.get(pz_code=pz_code)
         context = super().get_context_data(**kwargs)
@@ -198,7 +223,9 @@ class PatientCreateView(
 
         # add the PDU to the patient record
         # get or create the paediatric diabetes unit object
-        PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+        PaediatricDiabetesUnit = apps.get_model(
+            "npda", "PaediatricDiabetesUnit"
+        )
         paediatric_diabetes_unit = PaediatricDiabetesUnit.objects.get(
             pz_code=self.request.session.get("pz_code"),
         )
@@ -207,7 +234,9 @@ class PatientCreateView(
         if Transfer.objects.filter(patient=patient).exists():
             # the patient is being transferred from another PDU. Update the previous_pz_code field
             transfer = Transfer.objects.get(patient=patient)
-            transfer.previous_pz_code = transfer.paediatric_diabetes_unit.pz_code
+            transfer.previous_pz_code = (
+                transfer.paediatric_diabetes_unit.pz_code
+            )
             transfer.paediatric_diabetes_unit = paediatric_diabetes_unit
             transfer.date_leaving_service = (
                 form.cleaned_data.get("date_leaving_service"),
@@ -268,9 +297,13 @@ class PatientUpdateView(
         patient = Patient.objects.get(pk=self.kwargs["pk"])
         transfer = Transfer.objects.get(patient=patient)
         context = super().get_context_data(**kwargs)
-        PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+        PaediatricDiabetesUnit = apps.get_model(
+            "npda", "PaediatricDiabetesUnit"
+        )
         pdu = PaediatricDiabetesUnit.objects.get(pz_code=pz_code)
-        title = f"Edit Child Details in {pdu.lead_organisation_name}  ({pz_code})"
+        title = (
+            f"Edit Child Details in {pdu.lead_organisation_name}  ({pz_code})"
+        )
         if (
             transfer.paediatric_diabetes_unit.parent_name is not None
         ):  # if the PDU has a parent, include the parent name in the title
