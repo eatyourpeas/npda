@@ -200,7 +200,8 @@ class FakePatientCreator:
         age_range: AgeRange,
         hb1ac_target_range: HbA1cTargetRange = HbA1cTargetRange.TARGET,
         visit_types: list[VisitType] = DEFAULT_VISIT_TYPE,
-        **patient_kwargs,
+        patient_kwargs: dict = None,
+        visit_kwargs: dict = None,
     ):
         """Creates and saves `n` fake patients, with the given `age_range` to
         the db.
@@ -223,6 +224,11 @@ class FakePatientCreator:
         *patient_kwargs -> Any additional kwargs to pass to the PatientFactory
         """
 
+        if patient_kwargs is None:
+            patient_kwargs = {}
+        if visit_kwargs is None:
+            visit_kwargs = {}
+
         # Use a transaction to speed up bulk insertions
         with transaction.atomic():
             # Step 1: Create `n` patients in batch
@@ -242,6 +248,7 @@ class FakePatientCreator:
                 age_range=age_range,
                 hb1ac_target_range=hb1ac_target_range,
                 visit_types=visit_types,
+                **visit_kwargs,
             )
 
             # Step 3: Bulk create all visits at once
