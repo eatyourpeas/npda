@@ -226,7 +226,7 @@ class FakePatientCreator:
         # Use a transaction to speed up bulk insertions
         with transaction.atomic():
             # Step 1: Create `n` patients in batch
-            # Need to ensure we use the .create method so related factories 
+            # Need to ensure we use the .create method so related factories
             # Transfer and PDU are made.
             patients = PatientFactory.create_batch(
                 size=n,
@@ -271,6 +271,12 @@ class FakePatientCreator:
                 visit_date=visit_date,
             ),
             VisitType.DIETICIAN: self._dietician_observations(
+                visit_date=visit_date,
+            ),
+            VisitType.PSYCHOLOGY: self._psychological_observations(
+                visit_date=visit_date,
+            ),
+            VisitType.HOSPITAL_ADMISSION: self._hospital_admission_observations(
                 visit_date=visit_date,
             ),
         }
@@ -425,6 +431,49 @@ class FakePatientCreator:
         return {
             "dietician_additional_appointment_offered": dietician_additional_appointment_offered,
             "dietician_additional_appointment_date": dietician_additional_appointment_date,
+        }
+
+    def _psychological_observations(self, visit_date: date):
+        """
+        Generates random psychological screening observations for a child.
+        Allocate the visit date to the date of the observation.
+
+        Returns tuple of:
+            psychological_screening_assessment_date: date
+            psychological_additional_support_status: int
+        """
+        psychological_screening_assessment_date = visit_date
+        psychological_additional_support_status = random.choice(
+            YES_NO_UNKNOWN
+        )[0]
+        return {
+            "psychological_screening_assessment_date": psychological_screening_assessment_date,
+            "psychological_additional_support_status": psychological_additional_support_status,
+        }
+
+    def _hospital_admission_observations(
+        self,
+        visit_date: date,
+    ):
+        """
+        Generates random hospital admission observations for a child.
+        Allocate the visit date to the date of the observation.
+
+        Returns tuple of:
+        """
+        hospital_admission_date = visit_date
+        hospital_discharge_date = visit_date
+        hospital_admission_reason = random.choice(HOSPITAL_ADMISSION_REASONS)[
+            0
+        ]
+        dka_additional_therapies = random.choice(DKA_ADDITIONAL_THERAPIES)[0]
+        hospital_admission_other = None
+        return {
+            "hospital_admission_date": hospital_admission_date,
+            "hospital_discharge_date": hospital_discharge_date,
+            "hospital_admission_reason": hospital_admission_reason,
+            "dka_additional_therapies": dka_additional_therapies,
+            "hospital_admission_other": hospital_admission_other,
         }
 
     def _height_weight_observations(
@@ -647,24 +696,6 @@ class FakePatientCreator:
         gluten_free_diet = random.choice(YES_NO_UNKNOWN)[0]
         return coeliac_screen_date, gluten_free_diet
 
-    def _psychological_observations(self, visit_date: date):
-        """
-        Generates random psychological screening observations for a child.
-        Allocate the visit date to the date of the observation.
-
-        Returns tuple of:
-            psychological_screening_assessment_date: date
-            psychological_additional_support_status: int
-        """
-        psychological_screening_assessment_date = visit_date
-        psychological_additional_support_status = random.choice(
-            YES_NO_UNKNOWN
-        )[0]
-        return (
-            psychological_screening_assessment_date,
-            psychological_additional_support_status,
-        )
-
     def _smoking_observations(self, visit_date: date):
         """
         Generates random smoking status observations for a child.
@@ -719,28 +750,3 @@ class FakePatientCreator:
         """
         sick_day_rules_training_date = visit_date
         return sick_day_rules_training_date
-
-    def _hospital_admission_observations(
-        self,
-        visit_date: date,
-    ):
-        """
-        Generates random hospital admission observations for a child.
-        Allocate the visit date to the date of the observation.
-
-        Returns tuple of:
-        """
-        hospital_admission_date = visit_date
-        hospital_discharge_date = visit_date
-        hospital_admission_reason = random.choice(HOSPITAL_ADMISSION_REASONS)[
-            0
-        ]
-        dka_additional_therapies = random.choice(DKA_ADDITIONAL_THERAPIES)[0]
-        hospital_admission_other = None
-        return (
-            hospital_admission_date,
-            hospital_discharge_date,
-            hospital_admission_reason,
-            dka_additional_therapies,
-            hospital_admission_other,
-        )
