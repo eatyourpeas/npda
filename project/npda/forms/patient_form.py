@@ -163,8 +163,13 @@ class PatientForm(forms.ModelForm):
         
         for key in ["postcode", "gp_practice_ods_code", "gp_practice_postcode"]:
             self.handle_async_validation_result(key)
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
 
-        index_of_multiple_deprivation_quantile = self.async_validation_results.index_of_multiple_deprivation_quantile
+        instance.index_of_multiple_deprivation_quintile = self.async_validation_results.index_of_multiple_deprivation_quintile
 
-        if index_of_multiple_deprivation_quantile:
-            cleaned_data["index_of_multiple_deprivation_quantile"] = index_of_multiple_deprivation_quantile
+        if commit:
+            instance.save()
+
+        return instance

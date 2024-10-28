@@ -20,7 +20,7 @@ class PatientExternalValidationResult:
     postcode: str | ValidationError | None
     gp_practice_ods_code: str | ValidationError | None
     gp_practice_postcode: str | ValidationError | None
-    index_of_multiple_deprivation_quantile: str | None 
+    index_of_multiple_deprivation_quintile: str | None 
 
 
 # Run lookups to external APIs asynchronously to speed up CSV upload by processing patients in parallel
@@ -45,7 +45,7 @@ async def validate_patient_async(patient_data: dict, async_client: AsyncClient) 
             logger.warning(f"Error validating postcode {err}")
         
         try:
-            ret.index_of_multiple_deprivation_quantile = await imd_for_postcode(
+            ret.index_of_multiple_deprivation_quintile = await imd_for_postcode(
                 postcode, async_client
             )
         except HTTPError as err:

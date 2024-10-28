@@ -319,6 +319,10 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
             if not has_error_that_would_fail_save(errors_to_return):
                 patient = create_instance(Patient, patient_form)
+
+                # We don't call PatientForm.save as there's no async version so we have to set this manually
+                patient.index_of_multiple_deprivation_quintile = patient_form.async_validation_results.index_of_multiple_deprivation_quintile
+
                 await patient.asave()
 
                 # add the patient to a new Transfer instance
