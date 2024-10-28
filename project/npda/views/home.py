@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.http import HttpResponse
 from django.conf import settings
 
 
@@ -118,6 +119,18 @@ def home(request):
     context = {"file_uploaded": False, "form": form}
     template = "home.html"
     return render(request=request, template_name=template, context=context)
+
+def download_template(request):
+    """
+    Creates the template csv for users to fill out and upload into NPDA
+    """
+    response = HttpResponse(
+        content_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="npda_template.csv"'},
+    )
+    writer = csv.writer(response)
+    writer.writerow(HEADINGS_LIST)
+    return response
 
 
 def view_preference(request):
