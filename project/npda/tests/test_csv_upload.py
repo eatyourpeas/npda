@@ -1,4 +1,5 @@
 from functools import partial
+import dataclasses
 from unittest.mock import AsyncMock, patch
 
 from asgiref.sync import sync_to_async
@@ -15,16 +16,24 @@ from project.npda.general_functions.csv_upload import csv_upload, read_csv
 from project.npda.models import NPDAUser, Patient, Visit
 from project.npda.tests.factories.patient_factory import (
     INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE, TODAY, VALID_FIELDS)
+from project.npda.forms.external_patient_validators import PatientExternalValidationResult
 
+
+MOCK_EXTERNAL_VALIDATION_RESULT = PatientExternalValidationResult(
+    postcode=VALID_FIELDS["postcode"],
+    gp_practice_ods_code=VALID_FIELDS["gp_practice_ods_code"],
+    gp_practice_postcode=None,
+    index_of_multiple_deprivation_quintile=INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE
+)
+
+def mock_external_validation_result(**kwargs):
+    return AsyncMock(return_value=dataclasses.replace(MOCK_EXTERNAL_VALIDATION_RESULT, **kwargs))
 
 # We don't want to call remote services in unit tests
 @pytest.fixture(autouse=True)
 def mock_remote_calls():
-    with patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value={"normalised_postcode": VALID_FIELDS["postcode"]})):
-        with patch("project.npda.forms.patient_form.gp_ods_code_for_postcode", AsyncMock(return_value = "G85023")):
-            with patch("project.npda.forms.patient_form.gp_details_for_ods_code", AsyncMock(return_value = True)):
-                with patch("project.npda.models.patient.aimd_for_postcode", AsyncMock(return_value = INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE)):
-                    yield None
+    with patch("project.npda.general_functions.csv_upload.validate_patient_async", AsyncMock(return_value=MOCK_EXTERNAL_VALIDATION_RESULT)):
+        yield None
 
 
 ALDER_HEY_PZ_CODE = "PZ074"
@@ -396,7 +405,7 @@ async def test_death_date_before_date_of_birth(test_user, single_row_valid_df):
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value=None))
+@patch("project.npda.general_functions.csv_upload.validate_patient_async", mock_external_validation_result(postcode=ValidationError("Invalid postcode")))
 async def test_invalid_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "not a postcode"
 
@@ -410,7 +419,7 @@ async def test_invalid_postcode(test_user, single_row_valid_df):
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(side_effect=HTTPError("oopsie!")))
+@patch("project.npda.general_functions.csv_upload.validate_patient_async", mock_external_validation_result(postcode=None))
 async def test_error_validating_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "WC1X 8SH"
 
@@ -421,7 +430,7 @@ async def test_error_validating_postcode(test_user, single_row_valid_df):
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.gp_details_for_ods_code", AsyncMock(return_value=None))
+@patch("project.npda.general_functions.csv_upload.validate_patient_async", mock_external_validation_result(gp_practice_ods_code=ValidationError("Invalid ODS code")))
 async def test_invalid_gp_ods_code(test_user, single_row_valid_df):
     single_row_valid_df["GP Practice Code"] = "not a GP code"
 
@@ -435,7 +444,7 @@ async def test_invalid_gp_ods_code(test_user, single_row_valid_df):
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.gp_details_for_ods_code", AsyncMock(side_effect=HTTPError("oopsie!")))
+@patch("project.npda.general_functions.csv_upload.validate_patient_async", mock_external_validation_result(postcode=None))
 async def test_error_validating_gp_ods_code(test_user, single_row_valid_df):
     single_row_valid_df["GP Practice Code"] = "G85023"
 
@@ -454,7 +463,7 @@ async def test_lookup_index_of_multiple_deprivation(test_user, single_row_valid_
 
 
 @pytest.mark.django_db
-@patch("project.npda.models.patient.imd_for_postcode", AsyncMock(side_effect=HTTPError("oopsie!")))
+@patch("project.npda.general_functions.csv_upload.validate_patient_async", mock_external_validation_result(index_of_multiple_deprivation_quintile=None))
 async def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_valid_df):
     await csv_upload(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
 
