@@ -159,7 +159,11 @@ class PatientForm(forms.ModelForm):
             self.add_error("gp_practice_ods_code", ValidationError("'GP Practice ODS code' and 'GP Practice postcode' cannot both be empty"))
         
         if not getattr(self, "async_validation_results", None):
-            self.async_validation_results = validate_patient_sync(self.cleaned_data)
+            self.async_validation_results = validate_patient_sync(
+                postcode=self.cleaned_data["postcode"],
+                gp_practice_ods_code=self.cleaned_data.get("gp_practice_ods_code"),
+                gp_practice_postcode=self.cleaned_data.get("gp_practice_postcode")
+            )
         
         for key in ["postcode", "gp_practice_ods_code", "gp_practice_postcode"]:
             self.handle_async_validation_result(key)

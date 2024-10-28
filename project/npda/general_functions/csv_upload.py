@@ -177,7 +177,12 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         )
         
         form = PatientForm(fields)
-        form.async_validation_results = await validate_patient_async(fields, async_client)
+        form.async_validation_results = await validate_patient_async(
+                postcode=fields["postcode"],
+                gp_practice_ods_code=fields["gp_practice_ods_code"],
+                gp_practice_postcode=None,
+                async_client=async_client
+        )
 
         assign_original_row_indices_to_errors(form, row)
         return form

@@ -24,12 +24,8 @@ class PatientExternalValidationResult:
 
 
 # Run lookups to external APIs asynchronously to speed up CSV upload by processing patients in parallel
-async def validate_patient_async(patient_data: dict, async_client: AsyncClient) -> PatientExternalValidationResult:
+async def validate_patient_async(postcode: str, gp_practice_ods_code: str | None, gp_practice_postcode: str | None, async_client: AsyncClient) -> PatientExternalValidationResult:
     ret = PatientExternalValidationResult(None, None, None, None)
-
-    postcode = patient_data.get("postcode")
-    gp_practice_ods_code = patient_data.get("gp_practice_ods_code")
-    gp_practice_postcode = patient_data.get("gp_practice_postcode")
 
     if postcode:
         try:
@@ -83,7 +79,7 @@ async def validate_patient_async(patient_data: dict, async_client: AsyncClient) 
 
     return ret
 
-def validate_patient_sync(patient_data: dict) -> PatientExternalValidationResult:
+def validate_patient_sync(postcode: str, gp_practice_ods_code: str | None, gp_practice_postcode: str | None) -> PatientExternalValidationResult:
     async def wrapper():
         async with AsyncClient() as client:
             ret = await validate_patient_async(patient_data, client)

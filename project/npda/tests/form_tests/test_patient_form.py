@@ -2,7 +2,7 @@
 from enum import Enum
 import pytest
 import logging
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 # 3rd Party imports
 from django.core.exceptions import ValidationError
@@ -12,6 +12,7 @@ from httpx import HTTPError
 # NPDA Imports
 from project.npda.models.patient import Patient
 from project.npda.forms.patient_form import PatientForm
+from project.npda.forms.external_patient_validators import PatientExternalValidationResult
 from project.npda import general_functions
 from project.npda.tests.factories.patient_factory import (
     TODAY,
@@ -27,14 +28,18 @@ from project.npda.tests.factories.patient_factory import (
 logger = logging.getLogger(__name__)
 
 
+MOCK_EXTERNAL_VALIDATION_RESULT = PatientExternalValidationResult(
+    postcode=VALID_FIELDS["postcode"],
+    gp_practice_ods_code=VALID_FIELDS["gp_practice_ods_code"],
+    gp_practice_postcode=VALID_FIELDS_WITH_GP_POSTCODE["gp_practice_postcode"],
+    index_of_multiple_deprivation_quintile=INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE
+)
+
 # We don't want to call remote services in unit tests
 @pytest.fixture(autouse=True)
 def mock_remote_calls():
-    with patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value={"normalised_postcode":VALID_FIELDS["postcode"]})):
-        with patch("project.npda.forms.patient_form.gp_ods_code_for_postcode", AsyncMock(return_value = "G85023")):
-            with patch("project.npda.forms.patient_form.gp_details_for_ods_code", AsyncMock(return_value = True)):
-                with patch("project.npda.models.patient.imd_for_postcode", Mock(return_value = INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE)):
-                    yield None
+    with patch("project.npda.forms.patient_form.validate_patient_sync", Mock(return_value=MOCK_EXTERNAL_VALIDATION_RESULT)):
+        yield None
 
 
 @pytest.mark.django_db
@@ -204,28 +209,34 @@ def test_multiple_date_validation_errors_returned():
 
 @pytest.mark.django_db
 def test_spaces_removed_from_postcode():
-    with patch("project.npda.forms.patient_form.validate_postcode") as mock_validate_postcode:
+    with patch("project.npda.forms.patient_form.validate_patient_sync") as mock_validate_patient_sync:
         form = PatientForm(VALID_FIELDS | {
             "postcode": "WC1X 8SH",
         })
 
         form.is_valid()
     
-        assert(len(mock_validate_postcode.call_args_list) == 1)
-        assert(mock_validate_postcode.call_args_list[0][0][0] == "WC1X8SH")
+        mock_validate_patient_sync.assert_called_once_with(
+            postcode="WC1X8SH",
+            gp_practice_ods_code=VALID_FIELDS["gp_practice_ods_code"],
+            gp_practice_postcode=None
+        )
 
 
 @pytest.mark.django_db
 def test_dashes_removed_from_postcode():
-    with patch("project.npda.forms.patient_form.validate_postcode") as mock_validate_postcode:
+    with patch("project.npda.forms.patient_form.validate_patient_sync") as mock_validate_patient_sync:
         form = PatientForm(VALID_FIELDS | {
             "postcode": "WC1X-8SH",
         })
 
         form.is_valid()
     
-        assert(len(mock_validate_postcode.call_args_list) == 1)
-        assert(mock_validate_postcode.call_args_list[0][0][0] == "WC1X8SH")
+        mock_validate_patient_sync.assert_called_once_with(
+            postcode="WC1X8SH",
+            gp_practice_ods_code=VALID_FIELDS["gp_practice_ods_code"],
+            gp_practice_postcode=None
+        )
 
 
 @pytest.mark.django_db
