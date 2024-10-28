@@ -2,6 +2,7 @@
 from enum import Enum
 import pytest
 import logging
+import dataclasses
 from unittest.mock import AsyncMock, Mock, patch
 
 # 3rd Party imports
@@ -34,6 +35,9 @@ MOCK_EXTERNAL_VALIDATION_RESULT = PatientExternalValidationResult(
     gp_practice_postcode=VALID_FIELDS_WITH_GP_POSTCODE["gp_practice_postcode"],
     index_of_multiple_deprivation_quintile=INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE
 )
+
+def mock_external_validation_result(**kwargs):
+    return Mock(return_value=dataclasses.replace(MOCK_EXTERNAL_VALIDATION_RESULT, **kwargs))
 
 # We don't want to call remote services in unit tests
 @pytest.fixture(autouse=True)
@@ -240,7 +244,7 @@ def test_dashes_removed_from_postcode():
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value={"normalised_postcode":"W1A 1AA"}))
+@patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(postcode="W1A 1AA"))
 def test_normalised_postcode_saved():
     form = PatientForm(VALID_FIELDS)
     form.is_valid()
@@ -249,7 +253,7 @@ def test_normalised_postcode_saved():
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value=None))
+@patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(postcode=ValidationError("Invalid postcode")))
 def test_invalid_postcode():
     form = PatientForm(VALID_FIELDS)
     form.is_valid()
@@ -258,8 +262,7 @@ def test_invalid_postcode():
 
 
 @pytest.mark.django_db
-
-@patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(side_effect=HTTPError("oopsie!")))
+@patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(postcode=None))
 def test_error_validating_postcode():
     # TODO MRB: report this back somehow rather than just eat it in the log?
     form = PatientForm(VALID_FIELDS)
@@ -269,7 +272,7 @@ def test_error_validating_postcode():
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.gp_ods_code_for_postcode", AsyncMock(return_value=None))
+@patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(gp_practice_postcode=ValidationError("Invalid postcode")))
 def test_invalid_gp_postcode():
     form = PatientForm(VALID_FIELDS_WITH_GP_POSTCODE)
     form.is_valid()
@@ -278,7 +281,7 @@ def test_invalid_gp_postcode():
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.gp_ods_code_for_postcode", AsyncMock(side_effect=HTTPError("oopsie!")))
+@patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(gp_practice_postcode=None))
 def test_error_validating_gp_postcode():
     # TODO MRB: report this back somehow rather than just eat it in the log?
     form = PatientForm(VALID_FIELDS_WITH_GP_POSTCODE)
@@ -287,23 +290,24 @@ def test_error_validating_gp_postcode():
     assert(len(form.errors.as_data()) == 0)
 
 
+# TODO MRB: move this to a unit test on external_patient_validators
+# @pytest.mark.django_db
+# def test_normalised_postcode_used_for_call_to_nhs_spine():
+#     # The NHS API only returns results if you have a space between the parts of the postcode
+#     with patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value={"normalised_postcode":GP_POSTCODE_WITH_SPACES})):
+#         with patch("project.npda.forms.patient_form.gp_ods_code_for_postcode") as mock_gp_ods_code_for_postcode:
+#             form = PatientForm(VALID_FIELDS_WITH_GP_POSTCODE | {
+#                 "gp_practice_postcode": GP_POSTCODE_NO_SPACES
+#             })
+
+#             form.is_valid()
+
+#             assert(len(mock_gp_ods_code_for_postcode.call_args_list) == 1)
+#             assert(mock_gp_ods_code_for_postcode.call_args_list[0][0][0] == GP_POSTCODE_WITH_SPACES)
+
+
 @pytest.mark.django_db
-def test_normalised_postcode_used_for_call_to_nhs_spine():
-    # The NHS API only returns results if you have a space between the parts of the postcode
-    with patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value={"normalised_postcode":GP_POSTCODE_WITH_SPACES})):
-        with patch("project.npda.forms.patient_form.gp_ods_code_for_postcode") as mock_gp_ods_code_for_postcode:
-            form = PatientForm(VALID_FIELDS_WITH_GP_POSTCODE | {
-                "gp_practice_postcode": GP_POSTCODE_NO_SPACES
-            })
-
-            form.is_valid()
-
-            assert(len(mock_gp_ods_code_for_postcode.call_args_list) == 1)
-            assert(mock_gp_ods_code_for_postcode.call_args_list[0][0][0] == GP_POSTCODE_WITH_SPACES)
-
-
-@pytest.mark.django_db
-@patch("project.npda.forms.patient_form.gp_details_for_ods_code", AsyncMock(return_value=None))
+@patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(gp_practice_ods_code=ValidationError("Invalid ODS code")))
 def test_invalid_gp_ods_code():
     form = PatientForm(VALID_FIELDS)
     form.is_valid()
@@ -312,7 +316,7 @@ def test_invalid_gp_ods_code():
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.patient_form.gp_details_for_ods_code", AsyncMock(side_effect=HTTPError("oopsie!")))
+@patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(gp_practice_ods_code=None))
 def test_error_validating_gp_ods_code():
     # TODO MRB: report this back somehow rather than just eat it in the log?
     form = PatientForm(VALID_FIELDS)
@@ -333,7 +337,7 @@ def test_lookup_index_of_multiple_deprivation():
 
 
 @pytest.mark.django_db
-@patch("project.npda.models.patient.imd_for_postcode", Mock(side_effect=HTTPError("oopsie!")))
+@patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(index_of_multiple_deprivation_quintile=None))
 def test_error_looking_up_index_of_multiple_deprivation():
     # TODO MRB: report this back somehow rather than just eat it in the log?
     form = PatientForm(VALID_FIELDS)
