@@ -80,6 +80,34 @@ VISIT_FIELDS = (
     (VisitCategories.HOSPITAL_ADMISSION, HOSPITAL_ADMISSION_FIELDS),
 )
 
+CLINIC_VISIT_FIELDS = (  # These tend to be addressed at all clinic visits
+    (VisitCategories.MEASUREMENT, MEASUREMENT_FIELDS),
+    (VisitCategories.HBA1, HBA1_FIELDS),
+    (VisitCategories.TREATMENT, TREATMENT_FIELDS),
+    (VisitCategories.CGM, CGM_FIELDS),
+    (VisitCategories.BP, BP_FIELDS),
+)
+
+ANNUAL_REVIEW_FIELDS = (  # These fields are only required once a year and tend to be done at the same time
+    (VisitCategories.FOOT, FOOT_FIELDS),
+    (VisitCategories.DECS, DECS_FIELDS),
+    (VisitCategories.ACR, ACR_FIELDS),
+    (VisitCategories.CHOLESTEROL, CHOLESTEROL_FIELDS),
+    (VisitCategories.THYROID, THYROID_FIELDS),
+    (VisitCategories.COELIAC, COELIAC_FIELDS),
+    (VisitCategories.PSYCHOLOGY, PSYCHOLOGY_FIELDS),
+    (VisitCategories.SMOKING, SMOKING_FIELDS),
+    (VisitCategories.SICK_DAY, SICK_DAY_FIELDS),
+    (VisitCategories.FLU, FLU_FIELDS),
+)
+
+EXTRA_VISIT_FIELDS = (  # These fields are not always part of annual review and are not always addressed in clinic visits
+    (VisitCategories.DIETETIAN, DIETETIAN_FIELDS),
+    (VisitCategories.PSYCHOLOGY, PSYCHOLOGY_FIELDS),
+    (VisitCategories.HOSPITAL_ADMISSION, HOSPITAL_ADMISSION_FIELDS),
+)
+
+
 VISIT_CATEGORY_COLOURS = (
     (VisitCategories.HBA1, "rcpch_dark_grey"),
     (VisitCategories.MEASUREMENT, "rcpch_yellow"),
