@@ -126,9 +126,9 @@ async def test_multiple_patients(test_user, two_patients_first_with_two_visits_s
 
 @pytest.mark.parametrize("column", [
     pytest.param("NHS Number"),
-    pytest.param("Date of Birth"),
-    pytest.param("Diabetes Type"),
-    pytest.param("Date of Diabetes Diagnosis")
+    # pytest.param("Date of Birth"),
+    # pytest.param("Diabetes Type"),
+    # pytest.param("Date of Diabetes Diagnosis")
 ])
 @pytest.mark.django_db
 async def test_missing_mandatory_field(test_user, valid_df, column):

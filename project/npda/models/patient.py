@@ -22,11 +22,7 @@ from ...constants import (
     CAN_UNLOCK_CHILD_PATIENT_DATA_FROM_EDITING,
     CAN_OPT_OUT_CHILD_FROM_INCLUSION_IN_AUDIT,
 )
-from ..general_functions import (
-    stringify_time_elapsed,
-    imd_for_postcode,
-    aimd_for_postcode
-)
+from ..general_functions import stringify_time_elapsed
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -141,34 +137,3 @@ class Patient(models.Model):
         if today_date is None:
             today_date = self.get_todays_date()
         return stringify_time_elapsed(self.date_of_birth, today_date)
-
-    async def asave(self, async_client, *args, **kwargs):
-        if self.postcode:
-            try:
-                self.index_of_multiple_deprivation_quantile = await aimd_for_postcode(
-                    self.postcode, async_client
-                )
-            except HTTPError as err:
-                logger.warning(
-                    f"Cannot calculate deprivation score for {self.postcode} {err}"
-                )
-        
-        # HACK: as asave calls save internally and we don't want to call imd_for_postcode twice
-        self.skip_imd = True
-        await super().asave(*args, **kwargs)
-        self.skip_imd = False
-
-    def save(self, *args, **kwargs) -> None:
-        skip_imd = getattr(self, "skip_imd", False)
-
-        if self.postcode and not skip_imd:
-            try:
-                self.index_of_multiple_deprivation_quintile = imd_for_postcode(
-                    self.postcode
-                )
-            except HTTPError as err:
-                logger.warning(
-                    f"Cannot calculate deprivation score for {self.postcode} {err}"
-                )
-
-        return super().save(*args, **kwargs)

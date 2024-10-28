@@ -22,6 +22,7 @@ from ...constants import (
 logger = logging.getLogger(__name__)
 from ..forms.patient_form import PatientForm
 from ..forms.visit_form import VisitForm
+from ..forms.external_patient_validators import validate_patient_async
 
 
 def read_csv(csv_file):
@@ -176,7 +177,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         )
         
         form = PatientForm(fields)
-        await form.afull_clean(async_client) 
+        form.async_validation_results = await validate_patient_async(fields, async_client)
 
         assign_original_row_indices_to_errors(form, row)
         return form
@@ -318,7 +319,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
             if not has_error_that_would_fail_save(errors_to_return):
                 patient = create_instance(Patient, patient_form)
-                await patient.asave(async_client)
+                await patient.asave()
 
                 # add the patient to a new Transfer instance
                 transfer_fields["paediatric_diabetes_unit"] = pdu

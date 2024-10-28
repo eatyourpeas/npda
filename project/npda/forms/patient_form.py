@@ -19,7 +19,7 @@ from ..general_functions import (gp_details_for_ods_code,
                                  validate_postcode)
 from ..models import Patient
 from ..validators import not_in_the_future_validator
-from .async_model_form import AsyncModelForm
+from .external_patient_validators import validate_patient_sync
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class PostcodeField(forms.CharField):
         if postcode:
             return postcode.upper().replace(" ", "").replace("-", "")
 
-class PatientForm(AsyncModelForm):
+class PatientForm(forms.ModelForm):
 
     class Meta:
         model = Patient
@@ -101,24 +101,6 @@ class PatientForm(AsyncModelForm):
 
         return date_of_birth
 
-    async def aclean_postcode(self, async_client):
-        postcode = self.cleaned_data["postcode"]
-
-        try:
-            result = await validate_postcode(postcode, async_client)
-
-            if not result:
-                self.add_error("postcode", ValidationError(
-                    "Invalid postcode %(postcode)s", params={"postcode":postcode}
-                ))
-
-                return postcode
-            else:
-                return result["normalised_postcode"]
-        except HTTPError as err:
-            logger.warning(f"Error validating postcode {err}")
-            return postcode
-
     def clean_diagnosis_date(self):
         diagnosis_date = self.cleaned_data["diagnosis_date"]
         not_in_the_future_validator(diagnosis_date)
@@ -131,7 +113,15 @@ class PatientForm(AsyncModelForm):
 
         return death_date
     
-    async def aclean(self, async_client):
+    def handle_async_validation_result(self, key):
+        value = getattr(self.async_validation_results, key)
+
+        if type(value) is ValidationError:
+            self.add_error(key, value)
+        elif value:
+            self.cleaned_data[key] = value
+
+    def clean(self):
         cleaned_data = self.cleaned_data
 
         date_of_birth = cleaned_data.get("date_of_birth")
@@ -167,31 +157,14 @@ class PatientForm(AsyncModelForm):
 
         if gp_practice_ods_code is None and gp_practice_postcode is None:
             self.add_error("gp_practice_ods_code", ValidationError("'GP Practice ODS code' and 'GP Practice postcode' cannot both be empty"))
+        
+        if not getattr(self, "async_validation_results", None):
+            self.async_validation_results = validate_patient_sync(self.cleaned_data)
+        
+        for key in ["postcode", "gp_practice_ods_code", "gp_practice_postcode"]:
+            self.handle_async_validation_result(key)
 
-        if gp_practice_postcode:
-            try:
-                validation_result = await validate_postcode(gp_practice_postcode, async_client)
-                normalised_postcode = validation_result["normalised_postcode"]
+        index_of_multiple_deprivation_quantile = self.async_validation_results.index_of_multiple_deprivation_quantile
 
-                ods_code = await gp_ods_code_for_postcode(normalised_postcode, async_client)
-
-                if not ods_code:
-                    self.add_error("gp_practice_postcode", ValidationError(
-                        "Could not find GP practice with postcode %(postcode)s",
-                        params={"postcode":gp_practice_postcode}
-                    ))
-                else:
-                    self.cleaned_data["gp_practice_ods_code"] = ods_code
-                    self.cleaned_data["gp_practice_postcode"] = normalised_postcode
-            except HTTPError as err:
-                logger.warning(f"Error looking up GP practice by postcode {err}")
-
-        elif gp_practice_ods_code:
-            try:
-                if not await gp_details_for_ods_code(gp_practice_ods_code, async_client):
-                    self.add_error("gp_practice_ods_code", ValidationError(
-                        "Could not find GP practice with ODS code %(ods_code)s",
-                        params={"ods_code":gp_practice_ods_code}
-                    ))
-            except HTTPError as err:
-                logger.warning(f"Error looking up GP practice by ODS code {err}")
+        if index_of_multiple_deprivation_quantile:
+            cleaned_data["index_of_multiple_deprivation_quantile"] = index_of_multiple_deprivation_quantile

@@ -17,7 +17,7 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-async def aimd_for_postcode(user_postcode: str, async_client: httpx.AsyncClient) -> int:
+async def imd_for_postcode(user_postcode: str, async_client: httpx.AsyncClient) -> int:
     """
     Makes an API call to the RCPCH Census Platform with postcode and quantile_type
     Postcode - can have spaces or not - this is processed by the API
@@ -37,13 +37,3 @@ async def aimd_for_postcode(user_postcode: str, async_client: httpx.AsyncClient)
         return None
 
     return response.json()["result"]["data_quantile"]
-
-
-# TODO MRB: call this directly from csv_upload? or override asave but passing async_client?
-def imd_for_postcode(postcode):
-    async def wrapper():
-        async with httpx.AsyncClient() as client:
-            imd = await aimd_for_postcode(postcode, client)
-            return imd
-
-    return async_to_sync(wrapper)()
