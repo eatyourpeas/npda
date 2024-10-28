@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 # csv processing imports
 import csv
-import difflib
 
 
 def error_list(wrapper_error: ValidationError):
