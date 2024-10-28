@@ -35,3 +35,16 @@ def retrieve_quarter_for_date(date_instance: date) -> int:
         return 3
     else:
         return 4
+
+
+def current_audit_year_start_date(date_instance: date) -> date:
+    """
+    Returns the start date of the current audit year for a given submission date (today)
+
+    **The audit year starts on the 1st of April and ends on the 31st of March the following year**
+    """
+    audit_start_date = date(date_instance.year, 4, 1)
+    if date_instance < audit_start_date:
+        return date(date_instance.year - 1, 4, 1)
+    else:
+        return date(date_instance.year, 4, 1)
