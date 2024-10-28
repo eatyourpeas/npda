@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 # csv processing imports
 import csv
+from ...constants.csv_headings import CSV_HEADINGS
 
 
 def error_list(wrapper_error: ValidationError):
@@ -47,10 +48,7 @@ def error_list(wrapper_error: ValidationError):
     return ret
 
 def get_expected_headers():
-    template_path = 'static/npda_base.csv'
-    with open(template_path, mode='r', newline="", encoding="utf-8") as file:
-        reader = csv.reader(file)
-        headers = next(reader, None)
+    headers = [item["heading"] for item in CSV_HEADINGS]
     return headers
 
 @login_and_otp_required()
