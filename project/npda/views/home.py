@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # csv processing imports
 import csv
-from ...constants.csv_headings import CSV_HEADINGS
+from ...constants.csv_headings import HEADINGS_LIST
 
 
 def error_list(wrapper_error: ValidationError):
@@ -47,10 +47,6 @@ def error_list(wrapper_error: ValidationError):
 
     return ret
 
-def get_expected_headers():
-    headers = [item["heading"] for item in CSV_HEADINGS]
-    return headers
-
 @login_and_otp_required()
 def home(request):
     """
@@ -67,7 +63,7 @@ def home(request):
         reader = csv.reader(user_csv.read().decode("utf-8").splitlines())
         user_headers = next(reader, None)
 
-        template_headers = get_expected_headers()
+        template_headers = HEADINGS_LIST
 
         # Next localise headers so have list and say 'these are the headers affected'
 
