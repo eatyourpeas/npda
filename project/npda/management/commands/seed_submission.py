@@ -183,6 +183,8 @@ class Command(BaseCommand):
             ).split("\n")
         )
         self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
+        # Now create the submission
+        self.print_info(f"HbA1c target: {CYAN}{hba1c_target.name}{RESET}\n")
 
         # Start seeding logic
 
@@ -199,8 +201,7 @@ class Command(BaseCommand):
             visit_kwargs={"is_valid": True},
         )
 
-        # Now create the submission
-        self.print_info(f"HbA1c target: {CYAN}{hba1c_target.name}{RESET}\n")
+        
 
         # Need a mock csv
         with open("project/npda/dummy_sheets/dummy_sheet.csv", "rb") as f:
