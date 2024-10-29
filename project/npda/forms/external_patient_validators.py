@@ -84,7 +84,7 @@ async def validate_patient_async(postcode: str, gp_practice_ods_code: str | None
 def validate_patient_sync(postcode: str, gp_practice_ods_code: str | None, gp_practice_postcode: str | None) -> PatientExternalValidationResult:
     async def wrapper():
         async with AsyncClient() as client:
-            ret = await validate_patient_async(patient_data, client)
+            ret = await validate_patient_async(postcode, gp_practice_ods_code, gp_practice_postcode, client)
             return ret
 
     return async_to_sync(wrapper)()
