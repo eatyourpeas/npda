@@ -2,19 +2,15 @@
 import logging
 
 # django
-
-# third party libraries
-import requests
-from requests.exceptions import HTTPError
-
-# npda imports
 from django.conf import settings
 
-# Logging
-logger = logging.getLogger(__name__)
+# third party libraries
+import httpx
+
+# npda imports
 
 
-def validate_postcode(postcode):
+async def validate_postcode(postcode: str, async_client: httpx.AsyncClient):
     """
     Tests if postcode is valid
     Returns boolean
@@ -22,18 +18,12 @@ def validate_postcode(postcode):
 
     request_url = f"{settings.POSTCODE_API_BASE_URL}/postcodes/{postcode}.json"
 
-    try:
-        response = requests.get(
-            url=request_url,
-            timeout=10,  # times out after 10 seconds
-        )
-        response.raise_for_status()
-        
-        return {
-            "normalised_postcode": response.json()["data"]["id"]
-        }
-    except HTTPError as e:
-        logger.error(e.response.text)
-        return None
+    response = await async_client.get(
+        url=request_url,
+        timeout=10,  # times out after 10 seconds
+    )
+    response.raise_for_status()
 
-    return True
+    return {
+        "normalised_postcode": response.json()["data"]["id"]
+    }

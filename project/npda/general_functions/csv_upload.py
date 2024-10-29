@@ -1,6 +1,7 @@
 # python imports
 from datetime import date
 import logging
+import asyncio
 
 # django imports
 from django.apps import apps
@@ -10,6 +11,7 @@ from django.core.exceptions import ValidationError
 # third part imports
 import pandas as pd
 import numpy as np
+import httpx
 
 # RCPCH imports
 from ...constants import (
@@ -20,6 +22,7 @@ from ...constants import (
 logger = logging.getLogger(__name__)
 from ..forms.patient_form import PatientForm
 from ..forms.visit_form import VisitForm
+from ..forms.external_patient_validators import validate_patient_async
 
 
 def read_csv(csv_file):
@@ -27,7 +30,7 @@ def read_csv(csv_file):
         csv_file, parse_dates=ALL_DATES, dayfirst=True, date_format="%d/%m/%Y"
     )
 
-def csv_upload(user, dataframe, csv_file, pdu_pz_code):
+async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     """
     Processes standardised NPDA csv file and persists results in NPDA tables
 
@@ -43,28 +46,26 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
     # get the PDU object
     # TODO #249 MRB: handle case where PDU does not exist
-    pdu = PaediatricDiabetesUnit.objects.get(pz_code=pdu_pz_code)
+    pdu = await PaediatricDiabetesUnit.objects.aget(pz_code=pdu_pz_code)
 
     # Set previous submission to inactive
-    if Submission.objects.filter(
+    if await Submission.objects.filter(
         paediatric_diabetes_unit__pz_code=pdu.pz_code,
         audit_year=date.today().year,
         submission_active=True,
-    ).exists():
-        original_submission = Submission.objects.filter(
+    ).aexists():
+        original_submission = await Submission.objects.filter(
             submission_active=True,
             paediatric_diabetes_unit__pz_code=pdu.pz_code,
             audit_year=date.today().year,
-        ).get()  # there can be only one of these - store it in a variable in case we need to revert
+        ).aget()  # there can be only one of these - store it in a variable in case we need to revert
     else:
         original_submission = None
-
-    print(f"Original submission: {original_submission}")
 
     # Create new submission for the audit year
     # It is not possble to create submissions in years other than the current year
     try:
-        new_submission = Submission.objects.create(
+        new_submission = await Submission.objects.acreate(
             paediatric_diabetes_unit=pdu,
             audit_year=date.today().year,
             submission_date=timezone.now(),
@@ -75,9 +76,12 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         if csv_file:
             # save the csv file with a custom name
             new_filename = f"{pdu.pz_code}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            new_submission.csv_file.save(new_filename, csv_file)
+
+            # save=False so it doesn't try to save the parent, which would cause an error in an async context
+            # we save immediately after this anyway
+            new_submission.csv_file.save(new_filename, csv_file, save=False)
         
-        new_submission.save()
+        await new_submission.asave()
 
     except Exception as e:
         logger.error(f"Error creating new submission: {e}")
@@ -91,10 +95,11 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     # now can delete all patients and visits from the previous active submission
     if original_submission:
         try:
+            original_submission_patient_count = await Patient.objects.filter(submissions=original_submission).acount()
             print(
-                f"Deleting patients from previous submission: {Patient.objects.filter(submissions=original_submission).count()}"
+                f"Deleting patients from previous submission: {original_submission_patient_count}"
             )
-            Patient.objects.filter(submissions=original_submission).delete()
+            await Patient.objects.filter(submissions=original_submission).adelete()
         except Exception as e:
             raise ValidationError(
                 {"csv_upload": "Error deleting patients from previous submission"}
@@ -106,7 +111,7 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     if original_submission:
         original_submission.submission_active = False
         try:
-            original_submission.save()  # this action will delete the csv file also as per the save method in the model
+            await original_submission.asave()  # this action will delete the csv file also as per the save method in the model
         except Exception as e:
             raise ValidationError(
                 {"csv_upload": "Error deactivating previous submission"}
@@ -143,7 +148,6 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         }
 
     def validate_transfer(row):
-        # TODO MRB: do something with transfer_errors
         return row_to_dict(
             row,
             Transfer,
@@ -153,7 +157,7 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             },
         ) | {"paediatric_diabetes_unit": pdu}
 
-    def validate_patient_using_form(row):
+    async def validate_patient_using_form(row, async_client):
 
         fields = row_to_dict(
             row,
@@ -170,7 +174,15 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 "death_date": "Death Date",
             },
         )
+        
         form = PatientForm(fields)
+        form.async_validation_results = await validate_patient_async(
+                postcode=fields["postcode"],
+                gp_practice_ods_code=fields["gp_practice_ods_code"],
+                gp_practice_postcode=None,
+                async_client=async_client
+        )
+
         assign_original_row_indices_to_errors(form, row)
         return form
 
@@ -231,11 +243,11 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             for error in errors:
                 error.original_row_index = row["row_index"]
 
-    def validate_rows(rows):
+    async def validate_rows(rows, async_client):
         first_row = rows.iloc[0]
 
         transfer_fields = validate_transfer(first_row)
-        patient_form = validate_patient_using_form(first_row)
+        patient_form = await validate_patient_using_form(first_row, async_client)
 
         visits = rows.apply(
             lambda row: validate_visit_using_form(patient_form.instance, row),
@@ -281,6 +293,16 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return instance
 
+    async def validate_rows_in_parallel(rows_by_patient, async_client):
+        tasks = []
+
+        async with asyncio.TaskGroup() as tg:
+            for _, rows in visits_by_patient:
+                task = tg.create_task(validate_rows(rows, async_client))
+                tasks.append(task)
+
+        return [task.result() for task in tasks]
+
     # We only one to create one patient per NHS number
     # Remember the original row number to help users find where the problem was in the CSV
     dataframe["row_index"] = np.arange(dataframe.shape[0])
@@ -289,29 +311,34 @@ def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
     errors_to_return = {}
 
-    for _, rows in visits_by_patient:
-        (patient_form, transfer_fields, visits) = validate_rows(rows)
+    async with httpx.AsyncClient() as async_client:
+        validation_results_by_patient = await validate_rows_in_parallel(visits_by_patient, async_client)
 
-        errors_to_return = errors_to_return | gather_errors(patient_form)
-
-        for visit_form in visits:
-            errors_to_return = errors_to_return | gather_errors(visit_form)
-
-        if not has_error_that_would_fail_save(errors_to_return):
-            patient = create_instance(Patient, patient_form)
-            patient.save()
-
-            # add the patient to a new Transfer instance
-            transfer_fields["paediatric_diabetes_unit"] = pdu
-            transfer_fields["patient"] = patient
-            Transfer.objects.create(**transfer_fields)
-
-            new_submission.patients.add(patient)
+        for (patient_form, transfer_fields, visits) in validation_results_by_patient:
+            errors_to_return = errors_to_return | gather_errors(patient_form)
 
             for visit_form in visits:
-                visit = create_instance(Visit, visit_form)
-                visit.patient = patient
-                visit.save()
+                errors_to_return = errors_to_return | gather_errors(visit_form)
 
-    if errors_to_return:
-        raise ValidationError(errors_to_return)
+            if not has_error_that_would_fail_save(errors_to_return):
+                patient = create_instance(Patient, patient_form)
+
+                # We don't call PatientForm.save as there's no async version so we have to set this manually
+                patient.index_of_multiple_deprivation_quintile = patient_form.async_validation_results.index_of_multiple_deprivation_quintile
+
+                await patient.asave()
+
+                # add the patient to a new Transfer instance
+                transfer_fields["paediatric_diabetes_unit"] = pdu
+                transfer_fields["patient"] = patient
+                await Transfer.objects.acreate(**transfer_fields)
+
+                await new_submission.patients.aadd(patient)
+
+                for visit_form in visits:
+                    visit = create_instance(Visit, visit_form)
+                    visit.patient = patient
+                    await visit.asave()
+
+        if errors_to_return:
+            raise ValidationError(errors_to_return)

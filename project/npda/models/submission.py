@@ -53,7 +53,7 @@ class Submission(models.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.audit_year}, {self.patients.count()} patients"
+        return f"Submission from {self.paediatric_diabetes_unit} for {self.audit_year}"
 
     class Meta:
         verbose_name = "Submission"

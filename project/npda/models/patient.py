@@ -3,7 +3,7 @@ from datetime import date
 import logging
 from enum import Enum
 
-from requests import RequestException
+from httpx import HTTPError
 
 # django imports
 from django.contrib.gis.db import models
@@ -22,10 +22,7 @@ from ...constants import (
     CAN_UNLOCK_CHILD_PATIENT_DATA_FROM_EDITING,
     CAN_OPT_OUT_CHILD_FROM_INCLUSION_IN_AUDIT,
 )
-from ..general_functions import (
-    stringify_time_elapsed,
-    imd_for_postcode,
-)
+from ..general_functions import stringify_time_elapsed
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -140,16 +137,3 @@ class Patient(models.Model):
         if today_date is None:
             today_date = self.get_todays_date()
         return stringify_time_elapsed(self.date_of_birth, today_date)
-
-    def save(self, *args, **kwargs) -> None:
-        if self.postcode:
-            try:
-                self.index_of_multiple_deprivation_quintile = imd_for_postcode(
-                    self.postcode
-                )
-            except RequestException as err:
-                logger.warning(
-                    f"Cannot calculate deprivation score for {self.postcode} {err}"
-                )
-
-        return super().save(*args, **kwargs)

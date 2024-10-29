@@ -36,7 +36,7 @@ def error_list(wrapper_error: ValidationError):
                 {
                     "field": field,
                     "message": error.message,
-                    "original_row_index": error.original_row_index,
+                    "original_row_index": getattr(error, "original_row_index", None),
                 }
             )
 
@@ -44,7 +44,7 @@ def error_list(wrapper_error: ValidationError):
 
 
 @login_and_otp_required()
-def home(request):
+async def home(request):
     """
     Home page view - contains the upload form.
     Only verified users can access this page.
@@ -61,7 +61,7 @@ def home(request):
         errors = []
 
         try:
-            csv_upload(
+            await csv_upload(
                 user=request.user,
                 dataframe=read_csv(file),
                 csv_file=file,
@@ -74,7 +74,7 @@ def home(request):
 
             VisitActivity = apps.get_model("npda", "VisitActivity")
             try:
-                VisitActivity.objects.create(
+                await VisitActivity.objects.acreate(
                     activity=8,
                     ip_address=request.META.get("REMOTE_ADDR"),
                     npdauser=request.user,
@@ -88,7 +88,6 @@ def home(request):
                     request=request,
                     message=f"CSV has been uploaded, but errors have been found. These include error in row {error['original_row_index']}: {error['message']}",
                 )
-            pass
 
         return redirect("submissions")
     else:
