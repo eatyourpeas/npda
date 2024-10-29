@@ -57,6 +57,8 @@ async def validate_patient_async(postcode: str, gp_practice_ods_code: str | None
                     "Could not find GP practice with ODS code %(ods_code)s",
                     params={"ods_code":gp_practice_ods_code}
                 )
+            else:
+                ret.gp_practice_ods_code = gp_practice_ods_code
         except HTTPError as err:
             logger.warning(f"Error looking up GP practice by ODS code {err}")
     elif gp_practice_postcode:

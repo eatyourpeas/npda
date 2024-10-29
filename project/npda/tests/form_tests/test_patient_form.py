@@ -20,9 +20,7 @@ from project.npda.tests.factories.patient_factory import (
     DATE_OF_BIRTH,
     VALID_FIELDS,
     VALID_FIELDS_WITH_GP_POSTCODE,
-    INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
-    GP_POSTCODE_NO_SPACES,
-    GP_POSTCODE_WITH_SPACES
+    INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE
 )
 
 # Logging
@@ -287,22 +285,6 @@ def test_error_validating_gp_postcode():
     form.is_valid()
 
     assert(len(form.errors.as_data()) == 0)
-
-
-# TODO MRB: move this to a unit test on external_patient_validators
-# @pytest.mark.django_db
-# def test_normalised_postcode_used_for_call_to_nhs_spine():
-#     # The NHS API only returns results if you have a space between the parts of the postcode
-#     with patch("project.npda.forms.patient_form.validate_postcode", AsyncMock(return_value={"normalised_postcode":GP_POSTCODE_WITH_SPACES})):
-#         with patch("project.npda.forms.patient_form.gp_ods_code_for_postcode") as mock_gp_ods_code_for_postcode:
-#             form = PatientForm(VALID_FIELDS_WITH_GP_POSTCODE | {
-#                 "gp_practice_postcode": GP_POSTCODE_NO_SPACES
-#             })
-
-#             form.is_valid()
-
-#             assert(len(mock_gp_ods_code_for_postcode.call_args_list) == 1)
-#             assert(mock_gp_ods_code_for_postcode.call_args_list[0][0][0] == GP_POSTCODE_WITH_SPACES)
 
 
 @pytest.mark.django_db
