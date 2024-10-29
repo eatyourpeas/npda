@@ -21,7 +21,7 @@ async def gp_ods_code_for_postcode(postcode: str, async_client: httpx.AsyncClien
 
     url = settings.NHS_SPINE_SERVICES_URL
     request_url = (
-        f"{url}/organisations/?PostCode={postcode}&Status=Active&PrimaryRoleId=RO177"
+        f"{url}/organisations?PostCode={postcode}&Status=Active&PrimaryRoleId=RO177"
     )
 
     response = await async_client.get(
