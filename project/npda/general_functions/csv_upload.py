@@ -294,7 +294,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         return instance
 
     async def validate_rows_in_parallel(rows_by_patient, async_client):
-        # TODO MRB: ensure a single unhandled error doesn't stop the whole process
         tasks = []
 
         async with asyncio.TaskGroup() as tg:
