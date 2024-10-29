@@ -53,7 +53,9 @@ Implementation notes:
     need to additionally add the `Transfer` column values manually.
 """
 
+from collections import defaultdict
 from datetime import datetime
+import random
 
 from django.utils import timezone
 from django.core.management.base import BaseCommand
@@ -70,6 +72,7 @@ from project.npda.general_functions.data_generator_extended import (
     HbA1cTargetRange,
     VisitType,
 )
+from project.npda.general_functions.model_utils import print_instance_field_attrs, get_model_field_attrs_and_vals
 from project.npda.models import (
     NPDAUser,
     Patient,
@@ -77,6 +80,16 @@ from project.npda.models import (
     OrganisationEmployer,
 )
 from project.npda.management.commands.seed_submission import letter_name_map, hb_target_map, CYAN, RESET
+
+PZ_CODE = "PZ999"
+GP_ODS_CODES = [
+    "A81001", "A81002", "A81004", "A81005", "A81006",
+    "A81007", "A81009", "A81011", "A81012", "A81013",
+    "A81014", "A81016", "A81017", "A81018", "A81019",
+    "A81020", "A81021", "A81022", "A81023", "A81025"
+]
+TEMPLATE_HEADERS = pd.read_csv("project/npda/dummy_sheets/npda_csv_submission_template_for_use_from_april_2021.csv").columns
+
 
 class Command(BaseCommand):
     help = "Creates a csv file that can be uploaded to the NPDA platform."
@@ -172,13 +185,56 @@ class Command(BaseCommand):
         )
         
         # `CSV_HEADINGS` is a tuple for csv headings and model fields
-        # first create a map { model : {csv_heading, model_field} }
-        for csv_heading in CSV_HEADINGS:
+        # Create a map = { 
+        #   model : {
+        #     model_field : csv_heading  
+        #   }
+        # }
+        csv_map = self._get_map_model_csv_heading_field()
         
+        # Initialise data list, where each item is a dict relating to a row in the csv
+        # Each dict will have keys as csv headings and values as the data
+        data = []
         
-        from pprint import pprint
-        for v in new_visits:
-            pprint(v.__dict__)
+        # We're using the build method so Patients and Visits are separate objects
+        # Need to manually iterate and join the data
+        N_VISIT_TYPES = len(visit_types)
+        for ix, pt in enumerate(new_pts):
+            gp_ods_code = random.choice(GP_ODS_CODES)
+            visit_start_idx = ix * N_VISIT_TYPES
+            visit_end_idx = visit_start_idx + N_VISIT_TYPES
+            for visit in new_visits[visit_start_idx : visit_end_idx]:
+                visit_dict = {}
+
+                for model, field_heading_mappings in csv_map.items():
+                    for model_field, csv_heading in field_heading_mappings.items():
+                        if model == 'Visit':
+                            visit_dict[csv_heading] = getattr(visit, model_field)
+                        elif model == 'Patient':
+                            # Foreign key so need to manually set the value
+                            if model_field == 'pdu':
+                                visit_dict[csv_heading] = PZ_CODE
+                                continue
+                            if model_field == 'gp_ods_code':
+                                visit_dict[csv_heading] = gp_ods_code
+                                continue
+                            
+                            visit_dict[csv_heading] = getattr(pt, model_field) 
+                        
+                        # date of leaving service
+                        # & reason for leaving service. Ignore for now
+                        elif model == 'Transfer':
+                             visit_dict[csv_heading] = None
+                             
+                data.append(visit_dict)
+        
+        df = pd.DataFrame(data)
+        breakpoint()
+        # Need to ensure the order of columns is correct
+        df = df[TEMPLATE_HEADERS]
+        breakpoint()
+        df.to_csv(f"project/npda/dummy_sheets/npda_seed_data-{n_pts_to_seed}-{visits.replace(' ','')}.csv", index=False)
+            
         
     
     def _parse_values_from_options(self, **options):
@@ -263,15 +319,12 @@ class Command(BaseCommand):
         }
         """
         
-        map_model_csv_heading_field = {}
+        map_model_csv_heading_field = defaultdict(dict)
         
-        for csv_heading in CSV_HEADINGS:
-            model = csv_heading.model
-            csv_heading = csv_heading.csv_heading
-            model_field = csv_heading.model_field
-            map_model_csv_heading_field[model] = {
-                "csv_heading": csv_heading,
-                "model_field": model_field
-            }
+        for item in CSV_HEADINGS:
+            model = item['model']
+            csv_heading = item['heading']
+            model_field = item['model_field']
+            map_model_csv_heading_field[model][model_field] = csv_heading
         
         return map_model_csv_heading_field
