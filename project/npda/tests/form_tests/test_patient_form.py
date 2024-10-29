@@ -162,7 +162,6 @@ def test_invalid_ethnicity():
     assert("ethnicity" in form.errors.as_data())
 
 
-# TODO MRB: should we make this error more obvious that you can only set GP postcode in the form?
 def test_missing_gp_details():
     form = PatientForm({})
     
@@ -264,7 +263,7 @@ def test_invalid_postcode():
 @pytest.mark.django_db
 @patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(postcode=None))
 def test_error_validating_postcode():
-    # TODO MRB: report this back somehow rather than just eat it in the log?
+    # TODO MRB: report this back somehow rather than just eat it in the log? (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/334)
     form = PatientForm(VALID_FIELDS)
     form.is_valid()
 
@@ -283,7 +282,7 @@ def test_invalid_gp_postcode():
 @pytest.mark.django_db
 @patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(gp_practice_postcode=None))
 def test_error_validating_gp_postcode():
-    # TODO MRB: report this back somehow rather than just eat it in the log?
+    # TODO MRB: report this back somehow rather than just eat it in the log? (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/334)
     form = PatientForm(VALID_FIELDS_WITH_GP_POSTCODE)
     form.is_valid()
 
@@ -318,7 +317,7 @@ def test_invalid_gp_ods_code():
 @pytest.mark.django_db
 @patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(gp_practice_ods_code=None))
 def test_error_validating_gp_ods_code():
-    # TODO MRB: report this back somehow rather than just eat it in the log?
+    # TODO MRB: report this back somehow rather than just eat it in the log? (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/334)
     form = PatientForm(VALID_FIELDS)
     form.is_valid()
 
@@ -339,7 +338,7 @@ def test_lookup_index_of_multiple_deprivation():
 @pytest.mark.django_db
 @patch("project.npda.forms.patient_form.validate_patient_sync", mock_external_validation_result(index_of_multiple_deprivation_quintile=None))
 def test_error_looking_up_index_of_multiple_deprivation():
-    # TODO MRB: report this back somehow rather than just eat it in the log?
+    # TODO MRB: report this back somehow rather than just eat it in the log? (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/334)
     form = PatientForm(VALID_FIELDS)
     patient = form.save()
     

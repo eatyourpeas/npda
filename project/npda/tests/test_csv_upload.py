@@ -220,7 +220,7 @@ def test_multiple_patients_where_one_has_visit_errors_and_the_other_does_not(tes
 
 @pytest.mark.django_db
 def test_multiple_patients_with_visit_errors():
-    # TODO MRB: implement this test
+    # TODO MRB: implement this test (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/331)
     pass
 
 
@@ -237,7 +237,7 @@ def test_invalid_nhs_number(test_user, single_row_valid_df):
 
     assert(patient.nhs_number == invalid_nhs_number)
 
-    # TODO MRB: create a ValidationError model field
+    # TODO MRB: create a ValidationError model field (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/332)
     assert("nhs_number" in patient.errors)
 
 
@@ -321,7 +321,7 @@ def test_diagnosis_date_before_date_of_birth(test_user, single_row_valid_df):
     assert("diagnosis_date" in patient.errors)
 
     error_message = patient.errors["diagnosis_date"][0]['message']
-    # TODO MRB: why does this have entity encoding issues?
+    # TODO MRB: why does this have entity encoding issues? (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/333)
     assert(error_message == "&#x27;Date of Diabetes Diagnosis&#x27; cannot be before &#x27;Date of Birth&#x27;")
 
 
@@ -363,7 +363,7 @@ def test_missing_gp_ods_code(test_user, single_row_valid_df):
     assert("gp_practice_ods_code" in patient.errors)
 
     error_message = patient.errors["gp_practice_ods_code"][0]['message']
-    # TODO MRB: why does this have entity encoding issues?
+    # TODO MRB: why does this have entity encoding issues? (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/333)
     assert(error_message == "&#x27;GP Practice ODS code&#x27; and &#x27;GP Practice postcode&#x27; cannot both be empty")
 
 
@@ -402,7 +402,7 @@ def test_death_date_before_date_of_birth(test_user, single_row_valid_df):
     assert("death_date" in patient.errors)
 
     error_message = patient.errors["death_date"][0]['message']
-    # TODO MRB: why does this have entity encoding issues?
+    # TODO MRB: why does this have entity encoding issues? (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/333)
     assert(error_message == "&#x27;Death Date&#x27; cannot be before &#x27;Date of Birth&#x27;")
 
 

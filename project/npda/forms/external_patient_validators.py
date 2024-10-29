@@ -51,7 +51,7 @@ async def validate_patient_async(postcode: str, gp_practice_ods_code: str | None
     
     if gp_practice_ods_code:
         try:
-            # TODO MRB: set gp_practice_postcode based on response
+            # TODO MRB: set gp_practice_postcode based on response (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/330)
             if not await gp_details_for_ods_code(gp_practice_ods_code, async_client):
                 ret.gp_practice_ods_code = ValidationError(
                     "Could not find GP practice with ODS code %(ods_code)s",

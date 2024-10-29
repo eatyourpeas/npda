@@ -148,7 +148,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         }
 
     def validate_transfer(row):
-        # TODO MRB: do something with transfer_errors
         return row_to_dict(
             row,
             Transfer,
