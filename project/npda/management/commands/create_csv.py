@@ -12,6 +12,10 @@ Example use:
         --pts=5 \
         --visits="CDCD DHPC ACDC CDCD" \
         --hb_target=T
+        
+    Will generate a csv file with 5 patients, each with 12 visits, with the visit encoding provided.
+    The HbA1c target range for each visit will be set to 'TARGET'. 
+    The resulting csv will have 5 * 12 = 60 rows (one for each visit).
 
     Options:
     
@@ -44,6 +48,9 @@ Example use:
         The submission date in YYYY-MM-DD format. Defaults to today. This
         date is used to set the audit period's start and end dates, and visit
         values e.g. diabetes diagnosis date.
+    
+    --output_path (str, optional):
+        Path to save the csv. Defaults to `project/npda/dummy_sheets/local_generated_data`.
 
 Implementation notes: 
 
@@ -129,6 +136,12 @@ class Command(BaseCommand):
             type=str,
             help="Submission date in YYYY-MM-DD format (optional, defaults to today).",
         )
+        parser.add_argument(
+            "--output_path",
+            type=str,
+            help="Path to save the csv",
+            default="project/npda/dummy_sheets/local_generated_data",
+        )
     
     def handle(self, *args, **options):
 
@@ -143,6 +156,7 @@ class Command(BaseCommand):
         visit_types = parsed_values["visit_types"]
         submission_date = parsed_values["submission_date"]
         age_range = AgeRange.AGE_11_15
+        output_path = parsed_values["output_path"]
         
         # Print out the parsed values
         self.print_info(
@@ -228,12 +242,20 @@ class Command(BaseCommand):
                              
                 data.append(visit_dict)
         
-        df = pd.DataFrame(data)
-        breakpoint()
-        # Need to ensure the order of columns is correct
-        df = df[TEMPLATE_HEADERS]
-        breakpoint()
-        df.to_csv(f"project/npda/dummy_sheets/npda_seed_data-{n_pts_to_seed}-{visits.replace(' ','')}.csv", index=False)
+        df = (
+            pd.DataFrame(data)
+            # The template file headers are weird
+            .rename(columns={
+                'Observation Date: Thyroid Function' : 'Observation Date: Thyroid Function ',
+                'At time of or following measurement of thyroid function, was the patient prescribed any thyroid treatment?' : 'At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?',
+            })
+            # Reorder columns
+            [TEMPLATE_HEADERS]
+        )
+        df.to_csv(
+            f"{output_path}/npda_seed_data-{n_pts_to_seed}-{visits.replace(' ','')}.csv", 
+            index=False,
+        )
             
         
     
@@ -274,6 +296,9 @@ class Command(BaseCommand):
 
         # hba1c target
         hba1c_target = hb_target_map[options["hb_target"]]
+        
+        # output path
+        output_path = options["output_path"]
 
         return {
             "n_pts_to_seed": n_pts_to_seed,
@@ -283,6 +308,7 @@ class Command(BaseCommand):
             "visits": visits,
             "visit_types": visit_types,
             "submission_date": submission_date,
+            "output_path": output_path,
         }
     
     def _map_visit_type_letters_to_names(self, vt_letters: str) -> str:
