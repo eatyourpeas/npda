@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
 
+import asyncio
 from asgiref.sync import async_to_sync
 
 from django.core.exceptions import ValidationError
@@ -23,61 +24,107 @@ class PatientExternalValidationResult:
     index_of_multiple_deprivation_quintile: str | None 
 
 
-# Run lookups to external APIs asynchronously to speed up CSV upload by processing patients in parallel
-async def validate_patient_async(postcode: str, gp_practice_ods_code: str | None, gp_practice_postcode: str | None, async_client: AsyncClient) -> PatientExternalValidationResult:
-    ret = PatientExternalValidationResult(None, None, None, None)
-
+async def _validate_postcode(postcode: str | None, async_client: AsyncClient) -> str | None:
     if postcode:
         try:
             result = await validate_postcode(postcode, async_client)
 
             if not result:
-                ret.postcode = ValidationError(
+                raise ValidationError(
                     "Invalid postcode %(postcode)s", params={"postcode":postcode}
                 )
             else:
-                ret.postcode = result["normalised_postcode"]
+                return result["normalised_postcode"]
         except HTTPError as err:
             logger.warning(f"Error validating postcode {err}")
-        
+
+
+async def _imd_for_postcode(postcode: str | None, async_client: AsyncClient) -> str | None:
+    if postcode:
         try:
-            ret.index_of_multiple_deprivation_quintile = await imd_for_postcode(
+            imd = await imd_for_postcode(
                 postcode, async_client
             )
+
+            return imd
         except HTTPError as err:
             logger.warning(
                 f"Cannot calculate deprivation score for {postcode} {err}"
             )
-    
+
+
+async def _gp_details_from_ods_code(ods_code: str | None, async_client: AsyncClient) -> tuple[str, str] | None:
+    try:
+        result = await gp_details_for_ods_code(ods_code, async_client)
+
+        if not result:
+            raise ValidationError(
+                "Could not find GP practice with ODS code %(ods_code)s",
+                params={"ods_code":ods_code}
+            )
+        else:
+            postcode = result["GeoLoc"]["Location"]["PostCode"]
+            return [ods_code, postcode]
+    except HTTPError as err:
+        logger.warning(f"Error looking up GP practice by ODS code {err}")
+
+
+async def _gp_details_from_postcode(gp_practice_postcode: str, async_client: AsyncClient) -> tuple[str, str] | None:
+    try:
+        validation_result = await validate_postcode(gp_practice_postcode, async_client)
+        normalised_postcode = validation_result["normalised_postcode"]
+
+        ods_code = await gp_ods_code_for_postcode(normalised_postcode, async_client)
+
+        if not ods_code:
+            raise ValidationError(
+                "Could not find GP practice with postcode %(postcode)s",
+                params={"postcode":gp_practice_postcode}
+            )
+        else:
+            return [ods_code, normalised_postcode]
+    except HTTPError as err:
+        logger.warning(f"Error looking up GP practice by postcode {err}")
+
+
+# Run lookups to external APIs asynchronously to speed up CSV upload by processing patients in parallel
+async def validate_patient_async(postcode: str, gp_practice_ods_code: str | None, gp_practice_postcode: str | None, async_client: AsyncClient) -> PatientExternalValidationResult:
+    ret = PatientExternalValidationResult(None, None, None, None)
+
+    validate_postcode_task = _validate_postcode(postcode, async_client)
+    imd_for_postcode_task = _imd_for_postcode(postcode, async_client)
+
     if gp_practice_ods_code:
-        try:
-            # TODO MRB: set gp_practice_postcode based on response (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/330)
-            if not await gp_details_for_ods_code(gp_practice_ods_code, async_client):
-                ret.gp_practice_ods_code = ValidationError(
-                    "Could not find GP practice with ODS code %(ods_code)s",
-                    params={"ods_code":gp_practice_ods_code}
-                )
-            else:
-                ret.gp_practice_ods_code = gp_practice_ods_code
-        except HTTPError as err:
-            logger.warning(f"Error looking up GP practice by ODS code {err}")
+        gp_details_task = _gp_details_from_ods_code(gp_practice_ods_code, async_client)
     elif gp_practice_postcode:
-        try:
-            validation_result = await validate_postcode(gp_practice_postcode, async_client)
-            normalised_postcode = validation_result["normalised_postcode"]
+        gp_details_task = _gp_details_from_postcode(gp_practice_postcode, async_client)
+    else:
+        gp_details_task = asyncio.Future()
+        gp_details_task.set_result(None)
+    
+    # This is the Python equivalent of Promise.allSettled
+    # Run all the lookups in parallel but retain exceptions per job rather than returning the first one
+    [postcode, index_of_multiple_deprivation_quintile, gp_details] = await asyncio.gather(
+        validate_postcode_task,
+        imd_for_postcode_task,
+        gp_details_task,
+        return_exceptions=True
+    )
 
-            ods_code = await gp_ods_code_for_postcode(normalised_postcode, async_client)
+    ret.postcode = postcode
+    ret.index_of_multiple_deprivation_quintile = index_of_multiple_deprivation_quintile
 
-            if not ods_code:
-                ret.gp_practice_postcode = ValidationError(
-                    "Could not find GP practice with postcode %(postcode)s",
-                    params={"postcode":gp_practice_postcode}
-                )
-            else:
-                ret.gp_practice_ods_code = ods_code
-                ret.gp_practice_postcode = normalised_postcode
-        except HTTPError as err:
-            logger.warning(f"Error looking up GP practice by postcode {err}")
+    if type(gp_details) is ValidationError:
+        if gp_practice_ods_code:
+            # Assign error to original field
+            ret.gp_practice_ods_code = gp_details
+        else:
+            ret.gp_practice_postcode = gp_details
+    elif gp_details:
+        [gp_practice_ods_code, gp_practice_postcode] = gp_details
+
+        ret.gp_practice_ods_code = gp_practice_ods_code
+        ret.gp_practice_postcode = gp_practice_postcode
 
     return ret
 

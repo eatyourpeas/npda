@@ -15,11 +15,19 @@ from project.npda.forms.external_patient_validators import validate_patient_asyn
 
 async_client = AsyncMock()
 
+MOCK_GP_DETAILS_FOR_ODS_CODE = {
+    "GeoLoc": {
+        "Location": {
+            "PostCode": VALID_FIELDS_WITH_GP_POSTCODE["gp_practice_postcode"]
+        }
+    }
+}
+
 # We don't want to call remote services in unit tests
 @pytest.fixture(autouse=True)
 def mock_remote_calls():
     with patch("project.npda.forms.external_patient_validators.validate_postcode", AsyncMock(return_value={"normalised_postcode": VALID_FIELDS["postcode"]})):
-        with patch("project.npda.forms.external_patient_validators.gp_details_for_ods_code", AsyncMock(return_value=True)):
+        with patch("project.npda.forms.external_patient_validators.gp_details_for_ods_code", AsyncMock(return_value=MOCK_GP_DETAILS_FOR_ODS_CODE)):
             with patch("project.npda.forms.external_patient_validators.gp_ods_code_for_postcode", AsyncMock(return_value=VALID_FIELDS["gp_practice_ods_code"])):
                 with patch("project.npda.forms.external_patient_validators.imd_for_postcode", AsyncMock(return_value=INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE)):
                     yield None
@@ -35,7 +43,7 @@ async def test_validate_patient():
 
     assert(result.postcode == VALID_FIELDS["postcode"])
     assert(result.gp_practice_ods_code == VALID_FIELDS["gp_practice_ods_code"])
-    assert(result.gp_practice_postcode == None)
+    assert(result.gp_practice_postcode == VALID_FIELDS_WITH_GP_POSTCODE["gp_practice_postcode"])
     assert(result.index_of_multiple_deprivation_quintile == INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE)
 
 
@@ -95,7 +103,7 @@ async def test_validate_patient_with_gp_practice_ods_code():
     )
 
     assert(result.gp_practice_ods_code == VALID_FIELDS["gp_practice_ods_code"])
-    assert(result.gp_practice_postcode == None)
+    assert(result.gp_practice_postcode == VALID_FIELDS_WITH_GP_POSTCODE["gp_practice_postcode"])
 
 
 async def test_invalid_gp_practice_ods_code():
