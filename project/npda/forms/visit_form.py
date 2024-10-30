@@ -363,7 +363,7 @@ class VisitForm(forms.ModelForm):
         return data
 
     def clean_weight(self):
-        data = self.cleaned_data["height"]
+        data = self.cleaned_data["weight"]
         if data is not None:
             if data < 1:
                 raise ValidationError(
