@@ -68,6 +68,8 @@ POSTCODE_API_BASE_URL = os.getenv("POSTCODE_API_BASE_URL")
 POSTCODES_IO_API_URL = os.getenv("POSTCODES_IO_API_URL")
 POSTCODES_IO_API_KEY = os.getenv("POSTCODES_IO_API_KEY")
 
+DOCS_URL = os.getenv("DOCS_URL", "/docs/index.html")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 if DEBUG is True:
