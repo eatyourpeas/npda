@@ -21,14 +21,18 @@ docker compose up -d
 s/test
 docker compose down
 
+# TODO MRB: uncomment these once we test the GitHub pages deploy
+
 # Push to Azure
-azure_tag="${AZURE_REGISTRY_NAME}.azurecr.io/npda-django:${GITHUB_SHA}"
-docker tag npda-django:built ${azure_tag}
-docker push ${azure_tag}
+# azure_tag="${AZURE_REGISTRY_NAME}.azurecr.io/npda-django:${GITHUB_SHA}"
+# docker tag npda-django:built ${azure_tag}
+# docker push ${azure_tag}
 
 # Deploy to Azure Container Apps
-az containerapp revision copy \
-    --name ${AZURE_STAGING_APP_NAME} \
-    --resource-group ${AZURE_RESOURCE_GROUP} \
-    --image ${azure_tag} \
-    --query 'properties.provisioningState'
+# az containerapp revision copy \
+#     --name ${AZURE_STAGING_APP_NAME} \
+#     --resource-group ${AZURE_RESOURCE_GROUP} \
+#     --image ${azure_tag} \
+#     --query 'properties.provisioningState'
+
+# Deploy to the docs is handled in the GitHub workflow itself
