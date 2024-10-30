@@ -225,3 +225,7 @@ def extract_digits(value, underscore_index=0):
     if len(matches) > 0:
         return int(matches[underscore_index])
     return 0
+
+@register.simple_tag
+def docs_url():
+    return settings.DOCS_URL

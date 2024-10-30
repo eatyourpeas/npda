@@ -32,3 +32,5 @@ az containerapp revision copy \
     --resource-group ${AZURE_RESOURCE_GROUP} \
     --image ${azure_tag} \
     --query 'properties.provisioningState'
+
+# Deploy to the docs is handled in the GitHub workflow itself
