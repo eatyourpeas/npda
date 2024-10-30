@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - live
-      # TODO MRB: remove this once we test the GitHub pages deploy
-      - mbarton/docs-in-deploy
 
 permissions:
   id-token: write
