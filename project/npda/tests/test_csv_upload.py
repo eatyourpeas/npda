@@ -75,6 +75,15 @@ def two_patients_first_with_two_visits_second_with_one(dummy_sheets_folder):
     return df
 
 @pytest.fixture
+def two_patients_with_one_visit_each(dummy_sheets_folder):
+    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').drop([0]).head(2).reset_index(drop=True)
+
+    assert(len(df) == 2)
+    assert(df["NHS Number"][1] != df["NHS Number"][0])
+
+    return df
+
+@pytest.fixture
 def test_user(seed_groups_fixture, seed_users_fixture):
     return NPDAUser.objects.filter(
         organisation_employers__pz_code=ALDER_HEY_PZ_CODE
@@ -222,9 +231,29 @@ def test_multiple_patients_where_one_has_visit_errors_and_the_other_does_not(tes
 
 
 @pytest.mark.django_db
-def test_multiple_patients_with_visit_errors():
-    # TODO MRB: implement this test (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/331)
-    pass
+def test_multiple_patients_with_visit_errors(test_user, two_patients_with_one_visit_each):
+    df = two_patients_with_one_visit_each
+
+    df.loc[0, 'Diabetes Treatment at time of Hba1c measurement'] = 45
+    df.loc[1, 'Diabetes Treatment at time of Hba1c measurement'] = 45
+
+    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    
+    assert("treatment" in errors[0])
+    assert("treatment" in errors[1])
+
+    [patient_one, patient_two] = Patient.objects.all()
+
+    assert(Visit.objects.count() == 2)
+
+    visit_for_first_patient = Visit.objects.filter(patient=patient_one).first()
+    visit_for_second_patient = Visit.objects.filter(patient=patient_two).first()
+
+    assert(visit_for_first_patient.treatment == 45)
+    assert("treatment" in visit_for_first_patient.errors)
+
+    assert(visit_for_second_patient.treatment == 45)
+    assert("treatment" in visit_for_second_patient.errors)
 
 
 @pytest.mark.django_db
