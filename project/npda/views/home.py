@@ -27,22 +27,6 @@ from .decorators import login_and_otp_required
 logger = logging.getLogger(__name__)
 
 
-def error_list(wrapper_error: ValidationError):
-    ret = []
-
-    for field, errors in wrapper_error.error_dict.items():
-        for error in errors:
-            ret.append(
-                {
-                    "field": field,
-                    "message": error.message,
-                    "original_row_index": getattr(error, "original_row_index", None),
-                }
-            )
-
-    return ret
-
-
 @login_and_otp_required()
 async def home(request):
     """
@@ -60,34 +44,36 @@ async def home(request):
         file.seek(0)
         errors = []
 
+        errors_by_row_index = await csv_upload(
+            user=request.user,
+            dataframe=read_csv(file),
+            csv_file=file,
+            pdu_pz_code=pz_code,
+        )
+
+        VisitActivity = apps.get_model("npda", "VisitActivity")
         try:
-            await csv_upload(
-                user=request.user,
-                dataframe=read_csv(file),
-                csv_file=file,
-                pdu_pz_code=pz_code,
-            )
+            await VisitActivity.objects.acreate(
+                activity=8,
+                ip_address=request.META.get("REMOTE_ADDR"),
+                npdauser=request.user,
+            )  # uploaded csv - activity 8
+        except Exception as e:
+            logger.error(f"Failed to log user activity: {e}")
+
+        if errors_by_row_index:
+            for row_index, errors_by_field in errors_by_row_index.items():
+                for field, errors in errors_by_field.items():
+                    for error in errors:
+                        messages.error(
+                            request=request,
+                            message=f"CSV has been uploaded, but errors have been found. These include error in row {row_index}[{field}]: {error}",
+                        )
+        else:
             messages.success(
                 request=request,
                 message="File uploaded successfully. There are no errors,",
-            )
-
-            VisitActivity = apps.get_model("npda", "VisitActivity")
-            try:
-                await VisitActivity.objects.acreate(
-                    activity=8,
-                    ip_address=request.META.get("REMOTE_ADDR"),
-                    npdauser=request.user,
-                )  # uploaded csv - activity 8
-            except Exception as e:
-                logger.error(f"Failed to log user activity: {e}")
-        except ValidationError as error:
-            errors = error_list(error)
-            for error in errors:
-                messages.error(
-                    request=request,
-                    message=f"CSV has been uploaded, but errors have been found. These include error in row {error['original_row_index']}: {error['message']}",
-                )
+            )   
 
         return redirect("submissions")
     else:

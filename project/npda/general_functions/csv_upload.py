@@ -2,6 +2,7 @@
 from datetime import date
 import logging
 import asyncio
+import collections
 
 # django imports
 from django.apps import apps
@@ -33,10 +34,7 @@ def read_csv(csv_file):
 async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     """
     Processes standardised NPDA csv file and persists results in NPDA tables
-
-    accepts CSV file with standardised column names
-
-    return True if successful, False with error message if not
+    Returns the empty dict if successful, otherwise ValidationErrors indexed by the row they occurred at 
     """
     Patient = apps.get_model("npda", "Patient")
     Transfer = apps.get_model("npda", "Transfer")
@@ -183,7 +181,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 async_client=async_client
         )
 
-        assign_original_row_indices_to_errors(form, row)
         return form
 
     def validate_visit_using_form(patient, row):
@@ -235,48 +232,21 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         )
 
         form = VisitForm(data=fields, initial={"patient": patient})
-        assign_original_row_indices_to_errors(form, row)
         return form
-
-    def assign_original_row_indices_to_errors(form, row):
-        for _, errors in form.errors.as_data().items():
-            for error in errors:
-                error.original_row_index = row["row_index"]
 
     async def validate_rows(rows, async_client):
         first_row = rows.iloc[0]
+        patient_row_index = first_row["row_index"]
 
         transfer_fields = validate_transfer(first_row)
         patient_form = await validate_patient_using_form(first_row, async_client)
 
         visits = rows.apply(
-            lambda row: validate_visit_using_form(patient_form.instance, row),
+            lambda row: (validate_visit_using_form(patient_form.instance, row), row["row_index"]),
             axis=1,
         )
 
-        return (patient_form, transfer_fields, visits)
-
-    def gather_errors(form):
-        ret = {}
-
-        for field, errors in form.errors.as_data().items():
-            for error in errors:
-                errors_for_field = []
-
-                if field in ret:
-                    errors_for_field = ret[field]
-
-                errors_for_field.append(error)
-
-                ret[field] = errors_for_field
-
-        return ret
-
-    def has_error_that_would_fail_save(errors):
-        for _, errors in errors.items():
-            for error in errors:
-                if error.code in ["required", "null"]:
-                    return True
+        return (patient_form, transfer_fields, patient_row_index, visits)
 
     def create_instance(model, form):
         # We want to retain fields even if they're invalid so that we can edit them in the UI
@@ -303,24 +273,24 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return [task.result() for task in tasks]
 
-    # We only one to create one patient per NHS number
     # Remember the original row number to help users find where the problem was in the CSV
     dataframe["row_index"] = np.arange(dataframe.shape[0])
 
+    # We only one to create one patient per NHS number and we can't create their visits if we fail to save the patient model
     visits_by_patient = dataframe.groupby("NHS Number", sort=False, dropna=False)
 
-    errors_to_return = {}
+    # Gather all errors indexed by row number and the field that caused them (__all__ if we don't know which one)
+    # dict[number, dict[str, list[ValidationError]]]
+    errors_to_return = collections.defaultdict(lambda: collections.defaultdict(list))
 
     async with httpx.AsyncClient() as async_client:
         validation_results_by_patient = await validate_rows_in_parallel(visits_by_patient, async_client)
 
-        for (patient_form, transfer_fields, visits) in validation_results_by_patient:
-            errors_to_return = errors_to_return | gather_errors(patient_form)
+        for (patient_form, transfer_fields, patient_row_index, visits) in validation_results_by_patient:
+            for field, error in patient_form.errors.as_data().items():
+                errors_to_return[patient_row_index][field].append(error)
 
-            for visit_form in visits:
-                errors_to_return = errors_to_return | gather_errors(visit_form)
-
-            if not has_error_that_would_fail_save(errors_to_return):
+            try:
                 patient = create_instance(Patient, patient_form)
 
                 # We don't call PatientForm.save as there's no async version so we have to set this manually
@@ -334,11 +304,19 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 await Transfer.objects.acreate(**transfer_fields)
 
                 await new_submission.patients.aadd(patient)
+            except Exception as error:
+                # We don't know what field caused the error so add to __all__
+                errors_to_return[patient_row_index]["__all__"].append(error)
 
-                for visit_form in visits:
+            for (visit_form, visit_row_index) in visits:
+                for field, error in visit_form.errors.as_data().items():
+                    errors_to_return[visit_row_index][field].append(error)
+
+                try:
                     visit = create_instance(Visit, visit_form)
                     visit.patient = patient
                     await visit.asave()
-
-        if errors_to_return:
-            raise ValidationError(errors_to_return)
+                except Exception as error:
+                    errors_to_return[visit_row_index]["__all__"].append(error)
+        
+        return errors_to_return
