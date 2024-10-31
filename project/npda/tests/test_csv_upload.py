@@ -10,6 +10,7 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from httpx import HTTPError
 
 from project.npda.general_functions.csv_upload import csv_upload, read_csv
@@ -87,7 +88,7 @@ def async_get_all(query_set_fn):
 # https://github.com/pytest-dev/pytest-asyncio/issues/226
 @async_to_sync
 async def csv_upload_sync(user, dataframe, csv_file, pdu_pz_code):
-    await csv_upload(user, dataframe, csv_file, pdu_pz_code)
+    return await csv_upload(user, dataframe, csv_file, pdu_pz_code)
 
 
 @pytest.mark.django_db
@@ -139,18 +140,20 @@ def test_multiple_patients(test_user, two_patients_first_with_two_visits_second_
     assert(second_patient.diagnosis_date == df["Date of Diabetes Diagnosis"][2].date())
 
 
-@pytest.mark.parametrize("column", [
-    pytest.param("NHS Number"),
-    pytest.param("Date of Birth"),
-    pytest.param("Diabetes Type"),
-    pytest.param("Date of Diabetes Diagnosis")
+@pytest.mark.parametrize("column,model_field", [
+    pytest.param("NHS Number", "nhs_number"),
+    pytest.param("Date of Birth", "date_of_birth"),
+    pytest.param("Diabetes Type", "diabetes_type"),
+    pytest.param("Date of Diabetes Diagnosis", "diagnosis_date")
 ])
 @pytest.mark.django_db
-def test_missing_mandatory_field(test_user, valid_df, column):
+def test_missing_mandatory_field(test_user, valid_df, column, model_field):
     valid_df.loc[0, column] = None
 
-    with pytest.raises(ValidationError) as e_info:
-        csv_upload_sync(test_user, valid_df, None, ALDER_HEY_PZ_CODE)
+    with transaction.atomic():
+        errors = csv_upload_sync(test_user, valid_df, None, ALDER_HEY_PZ_CODE)
+    
+    assert(model_field in errors[0])
 
     # Catastrophic - we can't save this patient at all so we won't save any of the patients in the submission
     assert(Patient.objects.count() == 0)
