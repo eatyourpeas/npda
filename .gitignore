@@ -19,4 +19,4 @@ build_info.json
 media/submissions/csv/*
 *.crt
 
-local_generated_data/
+local_generated_data/*
