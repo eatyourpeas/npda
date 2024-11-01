@@ -76,11 +76,6 @@ def test_csv_upload_view(
     with open(file_path, "rb") as f:
         csv_file = SimpleUploadedFile(f.name, f.read(), content_type="text/csv")
 
-    # Mock session data required by the view
-    session = client.session
-    session["pz_code"] = "PZ999"
-    session.save()
-
     # Send POST request with CSV file
     url = reverse("home")
     response = client.post(url, {"csv_upload": csv_file})
