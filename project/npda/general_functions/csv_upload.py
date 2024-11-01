@@ -27,9 +27,17 @@ from ..forms.external_patient_validators import validate_patient_async
 
 
 def read_csv(csv_file):
-    return pd.read_csv(
-        csv_file, parse_dates=ALL_DATES, dayfirst=True, date_format="%d/%m/%Y"
-    )
+    df = pd.read_csv(csv_file)
+
+    # Remove leading and trailing whitespace on column names
+    # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
+    df.columns = df.columns.str.strip()
+
+    for column in ALL_DATES:
+        df[column] = pd.to_datetime(df[column], format="%d/%m/%Y")
+
+    return df
+
 
 async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     """

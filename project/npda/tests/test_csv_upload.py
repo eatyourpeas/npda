@@ -1,5 +1,6 @@
-from functools import partial
 import dataclasses
+import tempfile
+from functools import partial
 from unittest.mock import AsyncMock, patch
 
 from asgiref.sync import sync_to_async, async_to_sync
@@ -43,6 +44,12 @@ ALDER_HEY_PZ_CODE = "PZ074"
 @pytest.fixture
 def dummy_sheets_folder(request):
     return request.config.rootdir / 'project' / 'npda' / 'dummy_sheets'
+
+@pytest.fixture
+def dummy_sheet_csv(dummy_sheets_folder):
+    file = dummy_sheets_folder / 'dummy_sheet.csv'
+    with open(file, 'r') as f:
+        return f.read()
 
 @pytest.fixture
 def valid_df(dummy_sheets_folder):
@@ -98,6 +105,13 @@ def async_get_all(query_set_fn):
 @async_to_sync
 async def csv_upload_sync(user, dataframe, csv_file, pdu_pz_code):
     return await csv_upload(user, dataframe, csv_file, pdu_pz_code)
+
+def read_csv_from_str(contents):
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(contents.encode())
+        f.seek(0)
+
+        return read_csv(f)
 
 
 @pytest.mark.django_db
@@ -505,3 +519,42 @@ def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_va
 
     patient = Patient.objects.first()
     assert(patient.index_of_multiple_deprivation_quintile is None)
+
+
+@pytest.mark.django_db
+def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
+    csv = dummy_sheet_csv.replace("NHS Number", "  NHS Number")
+    df = read_csv_from_str(csv)
+
+    assert(df.columns[0] == "NHS Number")
+
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    patient = Patient.objects.first()
+
+    assert(patient.nhs_number == nhs_number.standardise_format(df["NHS Number"][0]))
+
+
+@pytest.mark.django_db
+def test_strip_last_spaces_in_column_name(test_user, dummy_sheet_csv):
+    csv = dummy_sheet_csv.replace("NHS Number", "NHS Number  ")
+    df = read_csv_from_str(csv)
+
+    assert(df.columns[0] == "NHS Number")
+
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    patient = Patient.objects.first()
+
+    assert(patient.nhs_number == nhs_number.standardise_format(df["NHS Number"][0]))
+
+
+# Originally found in https://github.com/rcpch/national-paediatric-diabetes-audit/actions/runs/11627684066/job/32381466250
+# so we have a separate unit test for it
+@pytest.mark.django_db
+def test_spaces_in_date_column_name(test_user, dummy_sheet_csv):
+    csv = dummy_sheet_csv.replace("Date of Birth", "  Date of Birth")
+    df = read_csv_from_str(csv)
+
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    patient = Patient.objects.first()
+
+    assert(patient.date_of_birth == df["Date of Birth"][0].date())
