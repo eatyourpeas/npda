@@ -22,6 +22,9 @@ def test_csv_upload_view(
     client,
     tmpdir,
 ):
+    """Use the generate csv function to assert basic behaviors for uploading
+    csv.
+    """
 
     # Get a user
     ah_user = NPDAUser.objects.filter(
