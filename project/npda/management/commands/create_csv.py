@@ -189,15 +189,27 @@ class Command(BaseCommand):
 
 
 
-        # Print out the parsed values
+       # Print out the parsed values
         self.print_info(
             f"Using submission_date: {CYAN}{submission_date}{RESET}\n"
             f"Audit period: Start Date - {CYAN}{audit_start_date}{RESET}, "
             f"End Date - {CYAN}{audit_end_date}{RESET}\n"
         )
+        
         self.print_info(
-            f"Number of rows to seed: {CYAN}{n_pts_to_seed}{RESET}\n"
+            f"Number of pts to seed: {CYAN}{n_pts_to_seed}{RESET}"
         )
+        self.print_info(
+            f"Number of visits per pt: {CYAN}{len(visit_types)}{RESET}"
+        )
+        self.print_info(
+            f"Number of rows in resulting csv: {CYAN}{n_pts_to_seed * len(visit_types)}{RESET}\n"
+        )
+
+        self.print_info(f"HbA1c target range: {CYAN}{hba1c_target.value}{RESET}\n")
+
+        self.print_info(f"Age range: {CYAN}{age_range.value}{RESET}\n")
+        
         formatted_visits = "\n    ".join(
             f"{CYAN}{visit_type}{RESET}"
             for visit_type in self._map_visit_type_letters_to_names(
@@ -205,8 +217,6 @@ class Command(BaseCommand):
             ).split("\n")
         )
         self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
-        self.print_info(f"HbA1c target range: {CYAN}{hba1c_target}{RESET}\n")
-        self.print_info(f"Age range: {CYAN}{age_range}{RESET}\n")
 
         self.generate_csv(
             audit_start_date,
