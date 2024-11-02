@@ -128,7 +128,7 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
     {
-        "heading": "At time of or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
+        "heading": "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
         "model_field": "thyroid_treatment_status",
         "model": "Visit",
     },
