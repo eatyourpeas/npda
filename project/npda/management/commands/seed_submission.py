@@ -38,6 +38,16 @@ Options:
             - T (TARGET)
             - A (ABOVE)
             - W (WELL_ABOVE)
+    
+    --age_range (str, optional):
+        The possible age range for the patients to be seeded. 
+        Defaults to 11_15.
+            - 0_4
+            - 5_10
+            - 11_15
+            - 16_19
+            - 20_25
+    
     --user_pk (int, optional):
         The primary key of the user for whom the submission is created.
         Defaults to the seeded SuperuserAda. Note that Submission.pdu is set
@@ -86,6 +96,13 @@ hb_target_map = {
     "T": HbA1cTargetRange.TARGET,
     "A": HbA1cTargetRange.ABOVE,
     "W": HbA1cTargetRange.WELL_ABOVE,
+}
+age_range_map = {
+    "0_4": AgeRange.AGE_0_4,
+    "5_10": AgeRange.AGE_5_10,
+    "11_15": AgeRange.AGE_11_15,
+    "16_19": AgeRange.AGE_16_19,
+    "20_25": AgeRange.AGE_20_25,
 }
 
 # ANSI Colour Codes
@@ -136,6 +153,13 @@ class Command(BaseCommand):
             choices=["T", "A", "W"],
             help="HBA1C Target range for visit seeding.",
         )
+        parser.add_argument(
+            "--age_range",
+            type=str,
+            default="11_15",
+            choices=["0_4", "5_10", "11_15", "16_19", "20_25"],
+            help="Age range for patients to be seeded.",
+        )
 
     def handle(self, *args, **options):
 
@@ -151,6 +175,7 @@ class Command(BaseCommand):
         user_pk = parsed_values["user_pk"]
         submission_by = parsed_values["submission_by"]
         submission_date = parsed_values["submission_date"]
+        age_range = age_range_map[options["age_range"]]
 
         # Associate submission's PDU with user
         primary_pdu_for_user = (
@@ -185,6 +210,7 @@ class Command(BaseCommand):
         self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
         # Now create the submission
         self.print_info(f"HbA1c target: {CYAN}{hba1c_target.name}{RESET}\n")
+        self.print_info(f"Age range: {CYAN}{age_range.name}{RESET}\n")
 
         # Start seeding logic
 
@@ -195,7 +221,7 @@ class Command(BaseCommand):
         )
         new_pts = fake_patient_creator.create_and_save_fake_patients(
             n=n_pts_to_seed,
-            age_range=AgeRange.AGE_11_15,
+            age_range=age_range,
             hb1ac_target_range=hba1c_target,
             visit_types=visit_types,
             visit_kwargs={"is_valid": True},
@@ -278,6 +304,9 @@ class Command(BaseCommand):
 
         # hba1c target
         hba1c_target = hb_target_map[options["hb_target"]]
+        
+        # Age range
+        age_range = age_range_map[options["age_range"]]
 
         return {
             "n_pts_to_seed": n_pts_to_seed,
@@ -289,6 +318,7 @@ class Command(BaseCommand):
             "submission_by": submission_by,
             "user_pk": user_pk,
             "submission_date": submission_date,
+            "age_range": age_range,
         }
 
     def _map_visit_type_letters_to_names(self, vt_letters: str) -> str:

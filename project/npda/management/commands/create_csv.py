@@ -12,6 +12,7 @@ Example use:
         --pts=5 \
         --visits="CDCD DHPC ACDC CDCD" \
         --hb_target=T
+        --age_range=11_15
 
     Will generate a csv file with 5 patients, each with 12 visits, with the visit encoding provided.
     The HbA1c target range for each visit will be set to 'TARGET'.
@@ -20,8 +21,7 @@ Example use:
     Options:
 
     --pts (int, required):
-        The number of pts to seed for this csv file. (NOTE: resulting rows will be pts * visits
-        )
+        The number of pts to seed for this csv file. (NOTE: resulting rows will be pts * visits)
 
     --visits (str, required):
         A string encoding the VisitTypes each patient should have. Use
@@ -43,6 +43,15 @@ Example use:
             - T (TARGET)
             - A (ABOVE)
             - W (WELL_ABOVE)
+    
+    --age_range (str, optional):
+        The possible age range for the patients to be seeded. 
+        Defaults to 11_15.
+            - 0_4
+            - 5_10
+            - 11_15
+            - 16_19
+            - 20_25
 
     --submission_date (str, optional):
         The submission date in YYYY-MM-DD format. Defaults to today. This
@@ -67,31 +76,18 @@ import random
 from django.utils import timezone
 from django.core.management.base import BaseCommand
 import pandas as pd
-import numpy as np
 
 from project.constants.csv_headings import CSV_HEADINGS
 from project.npda.general_functions.audit_period import (
     get_audit_period_for_date,
 )
 from project.npda.general_functions.data_generator_extended import (
-    AgeRange,
     FakePatientCreator,
-    HbA1cTargetRange,
-    VisitType,
-)
-from project.npda.general_functions.model_utils import (
-    print_instance_field_attrs,
-    get_model_field_attrs_and_vals,
-)
-from project.npda.models import (
-    NPDAUser,
-    Patient,
-    Submission,
-    OrganisationEmployer,
 )
 from project.npda.management.commands.seed_submission import (
     letter_name_map,
     hb_target_map,
+    age_range_map,
     CYAN,
     RESET,
 )
@@ -168,6 +164,13 @@ class Command(BaseCommand):
             help="Path to save the csv",
             default="project/npda/dummy_sheets/local_generated_data",
         )
+        parser.add_argument(
+            "--age_range",
+            type=str,
+            default="11_15",
+            choices=["0_4", "5_10", "11_15", "16_19", "20_25"],
+            help="Age range for patients to be seeded.",
+        )
 
     def handle(self, *args, **options):
 
@@ -181,7 +184,7 @@ class Command(BaseCommand):
         visits = parsed_values["visits"]
         visit_types = parsed_values["visit_types"]
         submission_date = parsed_values["submission_date"]
-        age_range = AgeRange.AGE_11_15
+        age_range = parsed_values["age_range"]
         output_path = parsed_values["output_path"]
 
 
@@ -203,6 +206,7 @@ class Command(BaseCommand):
         )
         self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
         self.print_info(f"HbA1c target range: {CYAN}{hba1c_target}{RESET}\n")
+        self.print_info(f"Age range: {CYAN}{age_range}{RESET}\n")
 
         self.generate_csv(
             audit_start_date,
@@ -301,12 +305,12 @@ class Command(BaseCommand):
         df = (
             pd.DataFrame(data)
             # The template file headers are weird
-            .rename(
-                columns={
-                    "Observation Date: Thyroid Function": "Observation Date: Thyroid Function ",
-                    "At time of or following measurement of thyroid function, was the patient prescribed any thyroid treatment?": "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
-                }
-            )
+            # .rename(
+            #     columns={
+            #         "Observation Date: Thyroid Function": "Observation Date: Thyroid Function ",
+            #         "At time of or following measurement of thyroid function, was the patient prescribed any thyroid treatment?": "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
+            #     }
+            # )
             # Reorder columns
             # [TEMPLATE_HEADERS]
         )
@@ -352,6 +356,9 @@ class Command(BaseCommand):
 
         # hba1c target
         hba1c_target = hb_target_map[options["hb_target"]]
+        
+        # age range
+        age_range = age_range_map[options["age_range"]]
 
         # output path
         output_path = options["output_path"]
@@ -365,6 +372,7 @@ class Command(BaseCommand):
             "visit_types": visit_types,
             "submission_date": submission_date,
             "output_path": output_path,
+            "age_range": age_range,
         }
 
     def _map_visit_type_letters_to_names(self, vt_letters: str) -> str:
