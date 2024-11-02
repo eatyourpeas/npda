@@ -11,7 +11,7 @@ Example use:
     python manage.py create_csv \
         --pts=5 \
         --visits="CDCD DHPC ACDC CDCD" \
-        --hb_target=T
+        --hb_target=T \
         --age_range=11_15
 
     Will generate a csv file with 5 patients, each with 12 visits, with the visit encoding provided.
@@ -77,7 +77,7 @@ from django.utils import timezone
 from django.core.management.base import BaseCommand
 import pandas as pd
 
-from project.constants.csv_headings import CSV_HEADINGS
+from project.constants.csv_headings import ALL_DATES, CSV_HEADINGS
 from project.npda.general_functions.audit_period import (
     get_audit_period_for_date,
 )
@@ -301,19 +301,28 @@ class Command(BaseCommand):
                             visit_dict[csv_heading] = None
 
                 data.append(visit_dict)
-
+        
         df = (
             pd.DataFrame(data)
-            # The template file headers are weird
-            # .rename(
-            #     columns={
-            #         "Observation Date: Thyroid Function": "Observation Date: Thyroid Function ",
-            #         "At time of or following measurement of thyroid function, was the patient prescribed any thyroid treatment?": "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
-            #     }
-            # )
+            .assign(
+                # Convert each date column in ALL_DATES to the desired format, preserving null values as NaT
+                **{
+                    date_header: lambda x, date_header=date_header: pd.to_datetime(
+                        x[date_header],
+                        format="%d/%m/%Y",
+                        errors='coerce'
+                    )
+                    for date_header in ALL_DATES
+                },
+            )
             # Reorder columns
-            # [TEMPLATE_HEADERS]
+            [TEMPLATE_HEADERS]
         )
+
+        # Ensure the formatting is right for validation
+        for date_header in ALL_DATES:
+            df[date_header] = df[date_header].dt.strftime("%d/%m/%Y")
+            
         df.to_csv(
             f"{output_path}/npda_seed_data-{n_pts_to_seed}-{visits.replace(' ','')}.csv",
             index=False,
