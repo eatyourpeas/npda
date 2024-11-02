@@ -11,8 +11,8 @@ Example use:
     python manage.py create_csv \
         --pts=5 \
         --visits="CDCD DHPC ACDC CDCD" \
-        --hb_target="TA" \
-        --age_range="0_4,0_4,5_10,16_19"
+        --hb_target=T \
+        --age_range=11_15
 
     Will generate a csv file with 5 patients, each with 12 visits, with the visit encoding provided.
     The HbA1c target range for each visit will be set to 'TARGET'.
@@ -39,13 +39,13 @@ Example use:
             - H (HOSPITAL_ADMISSION)
 
     --hb_target (str, required):
-        Encoding for HbA1c target range(s) per visit:
+        Character setting for HbA1c target range per visit:
             - T (TARGET)
             - A (ABOVE)
             - W (WELL_ABOVE)
     
     --age_range (str, optional):
-        The possible age range(s) for the patients to be seeded. 
+        The possible age range for the patients to be seeded. 
         Defaults to 11_15.
             - 0_4
             - 5_10
@@ -150,14 +150,8 @@ class Command(BaseCommand):
             "--hb_target",
             type=str,
             required=True,
-            default="T",
+            choices=["T", "A", "W"],
             help="HBA1C Target range for visit seeding.",
-        )
-        parser.add_argument(
-            "--age_range",
-            type=str,
-            default="11_15",
-            help="Age range for patients to be seeded. Separate multiple with commas.",
         )
         parser.add_argument(
             "--submission_date",
@@ -169,6 +163,13 @@ class Command(BaseCommand):
             type=str,
             help="Path to save the csv",
             default="project/npda/dummy_sheets/local_generated_data",
+        )
+        parser.add_argument(
+            "--age_range",
+            type=str,
+            default="11_15",
+            choices=["0_4", "5_10", "11_15", "16_19", "20_25"],
+            help="Age range for patients to be seeded.",
         )
 
     def handle(self, *args, **options):
@@ -186,7 +187,7 @@ class Command(BaseCommand):
         age_range = parsed_values["age_range"]
         output_path = parsed_values["output_path"]
 
-        breakpoint()
+
 
         # Print out the parsed values
         self.print_info(
@@ -361,21 +362,12 @@ class Command(BaseCommand):
                 visits.replace(" ", ""),
             )
         )
+
         # hba1c target
-        hba1c_targets = list(
-            map(
-                lambda target: hb_target_map[target],
-                options["hb_target"].replace(" ", ""),
-            )
-        )
+        hba1c_target = hb_target_map[options["hb_target"]]
         
         # age range
-        age_ranges = list(
-            map(
-                lambda age_range: age_range_map[age_range],
-                options["age_range"].replace(" ", "").split(","),
-            )
-        )
+        age_range = age_range_map[options["age_range"]]
 
         # output path
         output_path = options["output_path"]
@@ -384,12 +376,12 @@ class Command(BaseCommand):
             "n_pts_to_seed": n_pts_to_seed,
             "audit_start_date": audit_start_date,
             "audit_end_date": audit_end_date,
-            "hba1c_target": hba1c_targets,
+            "hba1c_target": hba1c_target,
             "visits": visits,
             "visit_types": visit_types,
             "submission_date": submission_date,
             "output_path": output_path,
-            "age_range": age_ranges,
+            "age_range": age_range,
         }
 
     def _map_visit_type_letters_to_names(self, vt_letters: str) -> str:
