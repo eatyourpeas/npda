@@ -227,7 +227,7 @@ class Command(BaseCommand):
             self.print_info(f"{CYAN}{item[0]:<20}{RESET} {item[1]}")
 
         # Seeding information table
-        self.print_info(f"\n{CYAN}--- Seeding Information ---{RESET}\n")
+        self.print_info(f"\n{CYAN}--- Seeding Information ---{RESET} \n")
         seeding_info = [
             ["Number of Patients to Seed", n_pts_to_seed],
             ["Number of Visits per Patient", len(visit_types)],
@@ -238,15 +238,17 @@ class Command(BaseCommand):
         self.print_info(f"{'Metric':<30} {'Value'}")
         self.print_info("-" * 45)
         for item in seeding_info:
-            self.print_info(f"{CYAN}{item[0]:<30}{RESET} {item[1]}")        
+            self.print_info(f"{CYAN}{item[0]:<30}{RESET} {item[1]}")
         # Visit types table
-        self.print_info(f"\n{CYAN}--- Visit Types Provided ---{RESET}\n")
+
+        self.print_info(f"\n{CYAN}--- Visit Types Provided ---{RESET} \n")
+
         # Divide the list into chunks of 4 for a compact table
         visit_types_chunks = [visit_types[i : i + 4] for i in range(0, len(visit_types), 4)]
         for chunk in visit_types_chunks:
             self.print_info("    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk))
         print()
-        
+
         self.generate_csv(
             audit_start_date,
             audit_end_date,
