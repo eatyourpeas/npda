@@ -73,6 +73,7 @@ from collections import defaultdict
 from datetime import datetime
 import os
 import random
+import sys
 
 from django.utils import timezone
 from django.core.management.base import BaseCommand
@@ -136,25 +137,25 @@ class Command(BaseCommand):
         self.stdout.write(self.style.ERROR(f"ERROR: {message}"))
 
     def add_arguments(self, parser):
+        # Primary parser for standard arguments
         parser.add_argument(
             "--pts",
             type=int,
-            required=True,
             help="Number of patients to seed.",
+            required="--coalesce" not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--visits",
             type=str,
-            required=True,
-            help="Visit types (e.g., 'CDCD DHPC ACDC CDCD'). Can have whitespaces, these will be "
-            "ignored",
+            help="Visit types (e.g., 'CDCD DHPC ACDC CDCD'). Can have whitespaces, these will be ignored.",
+            required="--coalesce" not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--hb_target",
             type=str,
-            required=True,
             choices=["T", "A", "W"],
             help="HBA1C Target range for visit seeding.",
+            required="--coalesce" not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--submission_date",
@@ -174,18 +175,27 @@ class Command(BaseCommand):
             choices=["0_4", "5_10", "11_15", "16_19", "20_25"],
             help="Age range for patients to be seeded.",
         )
-        parser.add_argument(
+
+        # Mutually exclusive group for --build and --coalesce
+        mutex_group = parser.add_mutually_exclusive_group()
+        mutex_group.add_argument(
             "--build",
             action="store_true",
-            help="Outputs a build csv file. Combine with --coalesce to generate a coalesced csv file.",
+            help="Outputs a build csv file.",
         )
-        parser.add_argument(
+        mutex_group.add_argument(
             "--coalesce",
             action="store_true",
             help="Coalesces build csv files.",
         )
 
     def handle(self, *args, **options):
+
+        # If --coalesce is provided, ignore other options
+        if options["coalesce"]:
+            # Only coalesce, ignoring all other arguments
+            self._run_coalesce(**options)
+            return
 
         if not (parsed_values := self._parse_values_from_options(**options)):
             return
@@ -200,15 +210,6 @@ class Command(BaseCommand):
         age_range = parsed_values["age_range"]
         output_path = parsed_values["output_path"]
         build_flag = parsed_values["build_flag"]
-        coalesce_flag = parsed_values["coalesce_flag"]
-
-        if coalesce_flag:
-            self.print_info("Coalescing build csv files...")
-            # Coalesce build csv files
-            # these csv filenames all start with `build_``
-            # and are in the output path
-
-            return
 
         # PRINT INFORMATION
         # Header
@@ -373,6 +374,69 @@ class Command(BaseCommand):
             index=False,
         )
 
+    def _run_coalesce(self, **options):
+        self.print_info("Coalescing build csv files...")
+
+        # Get the existing build files
+        existing_build_files = [
+            f for f in os.listdir(options["output_path"]) if f.startswith("build")
+        ]
+        if not existing_build_files:
+            self.print_error(f"No build files to coalesce in {options['output_path']}/")
+            return
+        self.print_info(f"{CYAN}Existing build files: {RESET}\n")
+        for file in existing_build_files:
+            self.print_info(f"\t{file}")
+        print()
+        # Coalesce the build files
+
+        # First read all the files into a list of dataframes
+        dfs = []
+        for file in existing_build_files:
+            dfs.append(pd.read_csv(os.path.join(options["output_path"], file)))
+
+        # Make sure the columns are the same
+        seen_cols = set(dfs[0].columns)
+        for i, df in enumerate(dfs[1:], 1):
+            if set(df.columns) != seen_cols:
+                self.print_error(
+                    f"Column mismatch in {existing_build_files[i]} compared to {existing_build_files[0]}"
+                )
+
+        # Concatenate the dataframes
+        df = (
+            pd.concat(dfs, axis=0, join="outer")
+            .reset_index(drop=True)
+            .assign(
+                # Convert each date column in ALL_DATES to the desired format, preserving null values as NaT
+                **{
+                    date_header: lambda x, date_header=date_header: pd.to_datetime(
+                        x[date_header], format="%d/%m/%Y", errors="coerce"
+                    )
+                    for date_header in ALL_DATES
+                },
+            )
+            # Reorder columns
+            [TEMPLATE_HEADERS]
+        )
+
+        # Ensure the formatting is right for validation
+        for date_header in ALL_DATES:
+            df[date_header] = df[date_header].dt.strftime("%d/%m/%Y")
+
+        df.info()
+
+        csv_file_name = f"coalesced_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        full_csv_path = os.path.join(options["output_path"], csv_file_name)
+        df.to_csv(
+            full_csv_path,
+            index=False,
+        )
+
+        self.print_success(f"\n✨ CSV coalesced successfully at {full_csv_path}.\n")
+
+        return
+
     def _parse_values_from_options(self, **options):
 
         # Handle submission_date with default to today's date if not provided
@@ -415,7 +479,6 @@ class Command(BaseCommand):
 
         # flags
         build_flag = options["build"]
-        coalesce_flag = options["coalesce"]
 
         return {
             "n_pts_to_seed": n_pts_to_seed,
@@ -428,7 +491,6 @@ class Command(BaseCommand):
             "output_path": output_path,
             "age_range": age_range,
             "build_flag": build_flag,
-            "coalesce_flag": coalesce_flag,
         }
 
     def _get_file_name(
