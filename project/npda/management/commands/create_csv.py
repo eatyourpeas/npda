@@ -210,30 +210,43 @@ class Command(BaseCommand):
 
             return
 
-        # Print out the parsed values
-        self.print_info(f"Build Mode: {CYAN}{'ON' if build_flag else 'OFF'}{RESET}")
-        self.print_info(
-            f"Using submission_date: {CYAN}{submission_date}{RESET}\n"
-            f"Audit period: Start Date - {CYAN}{audit_start_date}{RESET}, "
-            f"End Date - {CYAN}{audit_end_date}{RESET}\n"
-        )
+        # PRINT INFORMATION
+        # Header
+        self.print_info(f"{CYAN}--- Build Information ---{RESET}\n")
 
-        self.print_info(f"Number of pts to seed: {CYAN}{n_pts_to_seed}{RESET}")
-        self.print_info(f"Number of visits per pt: {CYAN}{len(visit_types)}{RESET}")
-        self.print_info(
-            f"Number of rows in resulting csv: {CYAN}{n_pts_to_seed * len(visit_types)}{RESET}\n"
-        )
+        # Build information table
+        build_info = [
+            ["Build Mode", "ON" if build_flag else "OFF"],
+            ["Submission Date", submission_date],
+            ["Audit Start Date", audit_start_date],
+            ["Audit End Date", audit_end_date],
+        ]
+        self.print_info(f"{'Parameter':<20} {'Value'}")
+        self.print_info("-" * 35)
+        for item in build_info:
+            self.print_info(f"{CYAN}{item[0]:<20}{RESET} {item[1]}")
 
-        self.print_info(f"HbA1c target range: {CYAN}{hba1c_target.value}{RESET}\n")
-
-        self.print_info(f"Age range: {CYAN}{age_range.value}{RESET}\n")
-
-        formatted_visits = "\n    ".join(
-            f"{CYAN}{visit_type}{RESET}"
-            for visit_type in self._map_visit_type_letters_to_names(visits).split("\n")
-        )
-        self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
-
+        # Seeding information table
+        self.print_info(f"\n{CYAN}--- Seeding Information ---{RESET}\n")
+        seeding_info = [
+            ["Number of Patients to Seed", n_pts_to_seed],
+            ["Number of Visits per Patient", len(visit_types)],
+            ["Total Rows in Resulting CSV", n_pts_to_seed * len(visit_types)],
+            ["HbA1c Target Range", hba1c_target.name],
+            ["Age Range", f"{age_range.name}"],
+        ]
+        self.print_info(f"{'Metric':<30} {'Value'}")
+        self.print_info("-" * 45)
+        for item in seeding_info:
+            self.print_info(f"{CYAN}{item[0]:<30}{RESET} {item[1]}")        
+        # Visit types table
+        self.print_info(f"\n{CYAN}--- Visit Types Provided ---{RESET}\n")
+        # Divide the list into chunks of 4 for a compact table
+        visit_types_chunks = [visit_types[i : i + 4] for i in range(0, len(visit_types), 4)]
+        for chunk in visit_types_chunks:
+            self.print_info("    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk))
+        print()
+        
         self.generate_csv(
             audit_start_date,
             audit_end_date,
