@@ -456,7 +456,7 @@ class Command(BaseCommand):
 
     def _set_valid_dtypes(self, df: pd.DataFrame) -> pd.DataFrame:
         """Sets the correct data types for the dataframe, making them same as original
-        dummy_sheet.csv file.
+        dummy_sheet_invalid.csv file (to ensure we handle errors).
         """
 
         df = (
