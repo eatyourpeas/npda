@@ -71,6 +71,7 @@ Implementation notes:
 
 from collections import defaultdict
 from datetime import datetime
+import os
 import random
 
 from django.utils import timezone
@@ -82,7 +83,9 @@ from project.npda.general_functions.audit_period import (
     get_audit_period_for_date,
 )
 from project.npda.general_functions.data_generator_extended import (
+    AgeRange,
     FakePatientCreator,
+    HbA1cTargetRange,
 )
 from project.npda.management.commands.seed_submission import (
     letter_name_map,
@@ -171,6 +174,16 @@ class Command(BaseCommand):
             choices=["0_4", "5_10", "11_15", "16_19", "20_25"],
             help="Age range for patients to be seeded.",
         )
+        parser.add_argument(
+            "--build",
+            action="store_true",
+            help="Outputs a build csv file. Combine with --coalesce to generate a coalesced csv file.",
+        )
+        parser.add_argument(
+            "--coalesce",
+            action="store_true",
+            help="Coalesces build csv files.",
+        )
 
     def handle(self, *args, **options):
 
@@ -186,22 +199,27 @@ class Command(BaseCommand):
         submission_date = parsed_values["submission_date"]
         age_range = parsed_values["age_range"]
         output_path = parsed_values["output_path"]
+        build_flag = parsed_values["build_flag"]
+        coalesce_flag = parsed_values["coalesce_flag"]
 
+        if coalesce_flag:
+            self.print_info("Coalescing build csv files...")
+            # Coalesce build csv files
+            # these csv filenames all start with `build_``
+            # and are in the output path
 
+            return
 
-       # Print out the parsed values
+        # Print out the parsed values
+        self.print_info(f"Build Mode: {CYAN}{'ON' if build_flag else 'OFF'}{RESET}")
         self.print_info(
             f"Using submission_date: {CYAN}{submission_date}{RESET}\n"
             f"Audit period: Start Date - {CYAN}{audit_start_date}{RESET}, "
             f"End Date - {CYAN}{audit_end_date}{RESET}\n"
         )
-        
-        self.print_info(
-            f"Number of pts to seed: {CYAN}{n_pts_to_seed}{RESET}"
-        )
-        self.print_info(
-            f"Number of visits per pt: {CYAN}{len(visit_types)}{RESET}"
-        )
+
+        self.print_info(f"Number of pts to seed: {CYAN}{n_pts_to_seed}{RESET}")
+        self.print_info(f"Number of visits per pt: {CYAN}{len(visit_types)}{RESET}")
         self.print_info(
             f"Number of rows in resulting csv: {CYAN}{n_pts_to_seed * len(visit_types)}{RESET}\n"
         )
@@ -209,12 +227,10 @@ class Command(BaseCommand):
         self.print_info(f"HbA1c target range: {CYAN}{hba1c_target.value}{RESET}\n")
 
         self.print_info(f"Age range: {CYAN}{age_range.value}{RESET}\n")
-        
+
         formatted_visits = "\n    ".join(
             f"{CYAN}{visit_type}{RESET}"
-            for visit_type in self._map_visit_type_letters_to_names(
-                visits
-            ).split("\n")
+            for visit_type in self._map_visit_type_letters_to_names(visits).split("\n")
         )
         self.print_info(f"Visit types provided:\n    {formatted_visits}\n")
 
@@ -227,7 +243,11 @@ class Command(BaseCommand):
             visits,
             visit_types,
             output_path,
+            build_flag,
         )
+        self.print_success(f"✨ CSV generated successfully at {self.csv_name}.\n")
+        if build_flag:
+            self.print_info(f"Coalesce the build csv files using the --coalesce flag.")
 
     def generate_csv(
         self,
@@ -239,6 +259,7 @@ class Command(BaseCommand):
         visits,
         visit_types,
         output_path,
+        build_flag,
     ):
 
         # Start csv logic
@@ -291,9 +312,7 @@ class Command(BaseCommand):
                         csv_heading,
                     ) in field_heading_mappings.items():
                         if model == "Visit":
-                            visit_dict[csv_heading] = getattr(
-                                visit, model_field
-                            )
+                            visit_dict[csv_heading] = getattr(visit, model_field)
                         elif model == "Patient":
                             # Foreign key so need to manually set the value
                             if model_field == "pdu":
@@ -311,16 +330,13 @@ class Command(BaseCommand):
                             visit_dict[csv_heading] = None
 
                 data.append(visit_dict)
-        
+
         df = (
-            pd.DataFrame(data)
-            .assign(
+            pd.DataFrame(data).assign(
                 # Convert each date column in ALL_DATES to the desired format, preserving null values as NaT
                 **{
                     date_header: lambda x, date_header=date_header: pd.to_datetime(
-                        x[date_header],
-                        format="%d/%m/%Y",
-                        errors='coerce'
+                        x[date_header], format="%d/%m/%Y", errors="coerce"
                     )
                     for date_header in ALL_DATES
                 },
@@ -332,9 +348,17 @@ class Command(BaseCommand):
         # Ensure the formatting is right for validation
         for date_header in ALL_DATES:
             df[date_header] = df[date_header].dt.strftime("%d/%m/%Y")
-            
+
+        self.csv_name = self._get_file_name(
+            n_pts_to_seed=n_pts_to_seed,
+            visits=visits,
+            build=build_flag,
+            output_path=output_path,
+            age_range=age_range,
+            hb_target=hba1c_target,
+        )
         df.to_csv(
-            f"{output_path}/npda_seed_data-{n_pts_to_seed}-{visits.replace(' ','')}.csv",
+            self.csv_name,
             index=False,
         )
 
@@ -348,16 +372,12 @@ class Command(BaseCommand):
                     datetime.strptime(submission_date_str, "%Y-%m-%d")
                 ).date()
             except ValueError:
-                self.print_error(
-                    "Invalid submission_date format. Use YYYY-MM-DD."
-                )
+                self.print_error("Invalid submission_date format. Use YYYY-MM-DD.")
                 return
         else:
             submission_date = timezone.now().date()
 
-        audit_start_date, audit_end_date = get_audit_period_for_date(
-            submission_date
-        )
+        audit_start_date, audit_end_date = get_audit_period_for_date(submission_date)
 
         # Number of patients to seed (pts)
         n_pts_to_seed = options["pts"]
@@ -375,12 +395,16 @@ class Command(BaseCommand):
 
         # hba1c target
         hba1c_target = hb_target_map[options["hb_target"]]
-        
+
         # age range
         age_range = age_range_map[options["age_range"]]
 
         # output path
         output_path = options["output_path"]
+
+        # flags
+        build_flag = options["build"]
+        coalesce_flag = options["coalesce"]
 
         return {
             "n_pts_to_seed": n_pts_to_seed,
@@ -392,7 +416,33 @@ class Command(BaseCommand):
             "submission_date": submission_date,
             "output_path": output_path,
             "age_range": age_range,
+            "build_flag": build_flag,
+            "coalesce_flag": coalesce_flag,
         }
+
+    def _get_file_name(
+        self,
+        n_pts_to_seed: str,
+        visits: str,
+        output_path: str,
+        age_range: AgeRange,
+        hb_target: HbA1cTargetRange,
+        build: bool = False,
+    ) -> str:
+
+        building_str = ""
+        if build:
+            # First count the number of existing files to use this as filename prefix
+            existing_files = [f for f in os.listdir(output_path) if f.startswith("build")]
+
+            # Set the building string filename prefix
+            building_str = f"build_{len(existing_files) + 1}"
+
+        output_path = os.path.join(
+            output_path,
+            f"{building_str}__{datetime.now().strftime("%Y%m%d%H%M%S")}-npda-seed-data-{n_pts_to_seed}pts-{age_range.name}-{hb_target.name}-{visits.replace(' ', '')}.csv",
+        )
+        return output_path
 
     def _map_visit_type_letters_to_names(self, vt_letters: str) -> str:
         rendered_vt_names: list[str] = []
