@@ -343,23 +343,7 @@ class Command(BaseCommand):
 
                 data.append(visit_dict)
 
-        df = (
-            pd.DataFrame(data).assign(
-                # Convert each date column in ALL_DATES to the desired format, preserving null values as NaT
-                **{
-                    date_header: lambda x, date_header=date_header: pd.to_datetime(
-                        x[date_header], format="%d/%m/%Y", errors="coerce"
-                    )
-                    for date_header in ALL_DATES
-                },
-            )
-            # Reorder columns
-            [TEMPLATE_HEADERS]
-        )
-
-        # Ensure the formatting is right for validation
-        for date_header in ALL_DATES:
-            df[date_header] = df[date_header].dt.strftime("%d/%m/%Y")
+        df = self._set_valid_dtypes(pd.DataFrame(data))
 
         self.csv_name = self._get_file_name(
             n_pts_to_seed=n_pts_to_seed,
@@ -404,25 +388,8 @@ class Command(BaseCommand):
                 )
 
         # Concatenate the dataframes
-        df = (
-            pd.concat(dfs, axis=0, join="outer")
-            .reset_index(drop=True)
-            .assign(
-                # Convert each date column in ALL_DATES to the desired format, preserving null values as NaT
-                **{
-                    date_header: lambda x, date_header=date_header: pd.to_datetime(
-                        x[date_header], format="%d/%m/%Y", errors="coerce"
-                    )
-                    for date_header in ALL_DATES
-                },
-            )
-            # Reorder columns
-            [TEMPLATE_HEADERS]
-        )
-
-        # Ensure the formatting is right for validation
-        for date_header in ALL_DATES:
-            df[date_header] = df[date_header].dt.strftime("%d/%m/%Y")
+        df = pd.concat(dfs, axis=0, join="outer").reset_index(drop=True)
+        df = self._set_valid_dtypes(df)
 
         df.info()
 
@@ -435,7 +402,122 @@ class Command(BaseCommand):
 
         self.print_success(f"\n✨ CSV coalesced successfully at {full_csv_path}.\n")
 
+        orig = pd.read_csv("project/npda/dummy_sheets/dummy_sheet.csv")
+        # Get data types for both DataFrames
+        orig_dtypes = orig.dtypes
+        new_dtypes = df.dtypes
+
+        # Identify columns with differing data types
+        mismatched_dtypes = {}
+        for col in orig_dtypes.index:
+            if col in new_dtypes.index and orig_dtypes[col] != new_dtypes[col]:
+                mismatched_dtypes[col] = (orig_dtypes[col], new_dtypes[col])
+
+        # Print out mismatched columns and their respective data types
+        print("Columns with differing data types:")
+        for col, (orig_type, new_type) in mismatched_dtypes.items():
+            print(f"{col}: original type = {orig_type}, coalesced type = {new_type}")
+
         return
+
+    def _set_valid_dtypes(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Sets the correct data types for the dataframe, making them same as original
+        dummy_sheet.csv file.
+        """
+
+        df = (
+            df.assign(
+                # Convert each date column in ALL_DATES to the desired format, preserving null values as NaT
+                **{
+                    date_header: lambda x, date_header=date_header: pd.to_datetime(
+                        x[date_header], format="%d/%m/%Y", errors="coerce"
+                    )
+                    for date_header in ALL_DATES
+                },
+                **{
+                    # Convert mismatched columns to the correct data type
+                    # We're using errors='coerce' to handle any conversion errors with NaN (float)
+                    "NHS Number": lambda x: x["NHS Number"].astype(str),
+                    "Patient Height (cm)": lambda x: pd.to_numeric(
+                        x["Patient Height (cm)"], errors="coerce"
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "Patient Weight (kg)": lambda x: pd.to_numeric(
+                        x["Patient Weight (kg)"], errors="coerce"
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "Hba1c Value": lambda x: pd.to_numeric(x["Hba1c Value"], errors="coerce")
+                    .round()
+                    .astype("Int64"),
+                    "HbA1c result format": lambda x: pd.to_numeric(
+                        x["HbA1c result format"], errors="coerce"
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "Diabetes Treatment at time of Hba1c measurement": lambda x: pd.to_numeric(
+                        x["Diabetes Treatment at time of Hba1c measurement"], errors="coerce"
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?": lambda x: x[
+                        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?"
+                    ].astype(
+                        str
+                    ),
+                    "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?": lambda x: pd.to_numeric(
+                        x[
+                            "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?"
+                        ],
+                        errors="coerce",
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "Systolic Blood Pressure": lambda x: pd.to_numeric(
+                        x["Systolic Blood Pressure"], errors="coerce"
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "Diastolic Blood pressure": lambda x: pd.to_numeric(
+                        x["Diastolic Blood pressure"], errors="coerce"
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "Retinal Screening Result": lambda x: pd.to_numeric(
+                        x["Retinal Screening Result"], errors="coerce"
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "Urinary Albumin Level (ACR)": lambda x: pd.to_numeric(
+                        x["Urinary Albumin Level (ACR)"], errors="coerce"
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "Albuminuria Stage": lambda x: pd.to_numeric(
+                        x["Albuminuria Stage"], errors="coerce"
+                    )
+                    .round()
+                    .astype("Int64"),
+                    "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?": lambda x: pd.to_numeric(
+                        x[
+                            "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?"
+                        ],
+                        errors="coerce",
+                    )
+                    .round()
+                    .astype("Int64"),
+                },
+            )
+            # Reorder columns
+            [TEMPLATE_HEADERS]
+        )
+
+        # Ensure the formatting is right for validation
+        for date_header in ALL_DATES:
+            df[date_header] = df[date_header].dt.strftime("%d/%m/%Y")
+
+        return df
 
     def _parse_values_from_options(self, **options):
 
