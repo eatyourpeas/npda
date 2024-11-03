@@ -221,13 +221,10 @@ class Command(BaseCommand):
             ["Audit Start Date", audit_start_date],
             ["Audit End Date", audit_end_date],
         ]
-        self.print_info(f"{'Parameter':<20} {'Value'}")
-        self.print_info("-" * 35)
         for item in build_info:
-            self.print_info(f"{CYAN}{item[0]:<20}{RESET} {item[1]}")
+            self.print_info(f"{CYAN}{item[0]:<30}{RESET} {item[1]}")
 
         # Seeding information table
-        self.print_info(f"\n{CYAN}--- Seeding Information ---{RESET} \n")
         seeding_info = [
             ["Number of Patients to Seed", n_pts_to_seed],
             ["Number of Visits per Patient", len(visit_types)],
@@ -235,13 +232,12 @@ class Command(BaseCommand):
             ["HbA1c Target Range", hba1c_target.name],
             ["Age Range", f"{age_range.name}"],
         ]
-        self.print_info(f"{'Metric':<30} {'Value'}")
         self.print_info("-" * 45)
         for item in seeding_info:
             self.print_info(f"{CYAN}{item[0]:<30}{RESET} {item[1]}")
         # Visit types table
 
-        self.print_info(f"\n{CYAN}--- Visit Types Provided ---{RESET} \n")
+        self.print_info(f"\n--- Visit Types Provided ---\n")
 
         # Divide the list into chunks of 4 for a compact table
         visit_types_chunks = [visit_types[i : i + 4] for i in range(0, len(visit_types), 4)]
@@ -451,11 +447,11 @@ class Command(BaseCommand):
             existing_files = [f for f in os.listdir(output_path) if f.startswith("build")]
 
             # Set the building string filename prefix
-            building_str = f"build_{len(existing_files) + 1}"
+            building_str = f"build__{len(existing_files) + 1}_"
 
         output_path = os.path.join(
             output_path,
-            f"{building_str}__{datetime.now().strftime("%Y%m%d%H%M%S")}-npda-seed-data-{n_pts_to_seed}pts-{age_range.name}-{hb_target.name}-{visits.replace(' ', '')}.csv",
+            f"{building_str}{datetime.now().strftime("%Y%m%d%H%M%S")}-npda-seed-data-{n_pts_to_seed}pts-{age_range.name}-{hb_target.name}-{visits.replace(' ', '')}.csv",
         )
         return output_path
 
