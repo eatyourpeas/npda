@@ -14,9 +14,39 @@ Example use:
         --hb_target=T \
         --age_range=11_15
 
-    Will generate a csv file with 5 patients, each with 12 visits, with the visit encoding provided.
+    Will generate 1 csv file with 5 patients, each with 12 visits, with the visit encoding provided.
     The HbA1c target range for each visit will be set to 'TARGET'.
     The resulting csv will have 5 * 12 = 60 rows (one for each visit).
+    
+    ## Building multiple larger csv files
+    
+    This can be used to create a spread of data with different ages, visits, hb_targets etc.
+    
+    Using the `--build` flag will generate a `build` csv file, the same as above, but with
+    a `build_` filename prefix. The `--coalesce` flag can be used to combine all the build files
+    into a single csv file.
+    
+    python manage.py create_csv \
+        --pts=5 \
+        --visits="CDCD DHPC ACDC CDCD" \
+        --hb_target=T \
+        --age_range=11_15 \
+        --build \
+    && python manage.py create_csv \
+        --pts=5 \
+        --visits="CDCCD DDCC CACC" \
+        --hb_target=A \
+        --age_range=16_19 \
+        --build \
+    && python manage.py create_csv \
+        --pts=5 \
+        --visits="CDC ACDC CDCD" \
+        --hb_target=T \
+        --age_range=0_4 \
+        --build \
+    && python manage.py create_csv \
+       --coalesce
+    
 
     Options:
 
@@ -436,77 +466,7 @@ class Command(BaseCommand):
                 },
                 **{
                     # Convert mismatched columns to the correct data type
-                    # We're using errors='coerce' to handle any conversion errors with NaN (float)
                     "NHS Number": lambda x: x["NHS Number"].astype(str),
-                    "Patient Height (cm)": lambda x: pd.to_numeric(
-                        x["Patient Height (cm)"], errors="coerce"
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "Patient Weight (kg)": lambda x: pd.to_numeric(
-                        x["Patient Weight (kg)"], errors="coerce"
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "Hba1c Value": lambda x: pd.to_numeric(x["Hba1c Value"], errors="coerce")
-                    .round()
-                    .astype("Int64"),
-                    "HbA1c result format": lambda x: pd.to_numeric(
-                        x["HbA1c result format"], errors="coerce"
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "Diabetes Treatment at time of Hba1c measurement": lambda x: pd.to_numeric(
-                        x["Diabetes Treatment at time of Hba1c measurement"], errors="coerce"
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?": lambda x: x[
-                        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?"
-                    ].astype(
-                        str
-                    ),
-                    "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?": lambda x: pd.to_numeric(
-                        x[
-                            "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?"
-                        ],
-                        errors="coerce",
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "Systolic Blood Pressure": lambda x: pd.to_numeric(
-                        x["Systolic Blood Pressure"], errors="coerce"
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "Diastolic Blood pressure": lambda x: pd.to_numeric(
-                        x["Diastolic Blood pressure"], errors="coerce"
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "Retinal Screening Result": lambda x: pd.to_numeric(
-                        x["Retinal Screening Result"], errors="coerce"
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "Urinary Albumin Level (ACR)": lambda x: pd.to_numeric(
-                        x["Urinary Albumin Level (ACR)"], errors="coerce"
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "Albuminuria Stage": lambda x: pd.to_numeric(
-                        x["Albuminuria Stage"], errors="coerce"
-                    )
-                    .round()
-                    .astype("Int64"),
-                    "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?": lambda x: pd.to_numeric(
-                        x[
-                            "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?"
-                        ],
-                        errors="coerce",
-                    )
-                    .round()
-                    .astype("Int64"),
                 },
             )
             # Reorder columns
