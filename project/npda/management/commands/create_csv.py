@@ -124,6 +124,7 @@ from project.npda.management.commands.seed_submission import (
     age_range_map,
     CYAN,
     RESET,
+    GREEN,
 )
 
 PZ_CODE = "PZ999"
@@ -432,11 +433,11 @@ class Command(BaseCommand):
 
         self.print_success(f"\n✨ CSV coalesced successfully at {full_csv_path}.\n")
 
-        orig = pd.read_csv("project/npda/dummy_sheets/dummy_sheet.csv")
+        # PRINT OUT DIFFERENCE IN DATA TYPES
+        orig = pd.read_csv("project/npda/dummy_sheets/dummy_sheet_invalid.csv")
         # Get data types for both DataFrames
         orig_dtypes = orig.dtypes
         new_dtypes = df.dtypes
-
         # Identify columns with differing data types
         mismatched_dtypes = {}
         for col in orig_dtypes.index:
@@ -444,9 +445,12 @@ class Command(BaseCommand):
                 mismatched_dtypes[col] = (orig_dtypes[col], new_dtypes[col])
 
         # Print out mismatched columns and their respective data types
-        print("Columns with differing data types:")
+        self.print_error("Columns with differing data types:")
+        self.print_info("NOTE: columns with Nan are cast to float")
         for col, (orig_type, new_type) in mismatched_dtypes.items():
-            print(f"{col}: original type = {orig_type}, coalesced type = {new_type}")
+            print(
+                f"{col}: original type = {GREEN}{orig_type}{RESET}, coalesced type = {CYAN}{new_type}{RESET}"
+            )
 
         return
 

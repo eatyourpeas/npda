@@ -108,7 +108,7 @@ age_range_map = {
 # ANSI Colour Codes
 CYAN = "\033[96m"
 RESET = "\033[0m"
-
+GREEN = "\033[92m"
 
 class Command(BaseCommand):
     help = "Seeds submission with specific user, submission date, number of patients, and visit types."
