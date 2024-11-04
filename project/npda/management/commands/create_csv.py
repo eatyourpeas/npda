@@ -17,15 +17,15 @@ Example use:
     Will generate 1 csv file with 5 patients, each with 12 visits, with the visit encoding provided.
     The HbA1c target range for each visit will be set to 'TARGET'.
     The resulting csv will have 5 * 12 = 60 rows (one for each visit).
-    
+
     ## Building multiple larger csv files
-    
+
     This can be used to create a spread of data with different ages, visits, hb_targets etc.
-    
+
     Using the `--build` flag will generate a `build` csv file, the same as above, but with
     a `build_` filename prefix. The `--coalesce` flag can be used to combine all the build files
     into a single csv file.
-    
+
     python manage.py create_csv \
         --pts=5 \
         --visits="CDCD DHPC ACDC CDCD" \
@@ -46,7 +46,7 @@ Example use:
         --build \
     && python manage.py create_csv \
        --coalesce
-    
+
 
     Options:
 
@@ -73,9 +73,9 @@ Example use:
             - T (TARGET)
             - A (ABOVE)
             - W (WELL_ABOVE)
-    
+
     --age_range (str, optional):
-        The possible age range for the patients to be seeded. 
+        The possible age range for the patients to be seeded.
         Defaults to 11_15.
             - 0_4
             - 5_10
@@ -173,20 +173,23 @@ class Command(BaseCommand):
             "--pts",
             type=int,
             help="Number of patients to seed.",
-            required="--coalesce" not in sys.argv,  # Set required only if --coalesce is not used
+            required="--coalesce"
+            not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--visits",
             type=str,
             help="Visit types (e.g., 'CDCD DHPC ACDC CDCD'). Can have whitespaces, these will be ignored.",
-            required="--coalesce" not in sys.argv,  # Set required only if --coalesce is not used
+            required="--coalesce"
+            not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--hb_target",
             type=str,
             choices=["T", "A", "W"],
             help="HBA1C Target range for visit seeding.",
-            required="--coalesce" not in sys.argv,  # Set required only if --coalesce is not used
+            required="--coalesce"
+            not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--submission_date",
@@ -272,9 +275,13 @@ class Command(BaseCommand):
         self.print_info(f"\n--- Visit Types Provided ---\n")
 
         # Divide the list into chunks of 4 for a compact table
-        visit_types_chunks = [visit_types[i : i + 4] for i in range(0, len(visit_types), 4)]
+        visit_types_chunks = [
+            visit_types[i : i + 4] for i in range(0, len(visit_types), 4)
+        ]
         for chunk in visit_types_chunks:
-            self.print_info("    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk))
+            self.print_info(
+                "    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk)
+            )
         print()
 
         self.generate_csv(
@@ -288,9 +295,13 @@ class Command(BaseCommand):
             output_path,
             build_flag,
         )
-        self.print_success(f"✨ CSV generated successfully at {self.csv_name}.\n")
+        self.print_success(
+            f"✨ CSV generated successfully at {self.csv_name}.\n"
+        )
         if build_flag:
-            self.print_info(f"Coalesce the build csv files using the --coalesce flag.")
+            self.print_info(
+                f"Coalesce the build csv files using the --coalesce flag."
+            )
 
     def generate_csv(
         self,
@@ -355,7 +366,9 @@ class Command(BaseCommand):
                         csv_heading,
                     ) in field_heading_mappings.items():
                         if model == "Visit":
-                            visit_dict[csv_heading] = getattr(visit, model_field)
+                            visit_dict[csv_heading] = getattr(
+                                visit, model_field
+                            )
                         elif model == "Patient":
                             # Foreign key so need to manually set the value
                             if model_field == "pdu":
@@ -394,10 +407,14 @@ class Command(BaseCommand):
 
         # Get the existing build files
         existing_build_files = [
-            f for f in os.listdir(options["output_path"]) if f.startswith("build")
+            f
+            for f in os.listdir(options["output_path"])
+            if f.startswith("build")
         ]
         if not existing_build_files:
-            self.print_error(f"No build files to coalesce in {options['output_path']}/")
+            self.print_error(
+                f"No build files to coalesce in {options['output_path']}/"
+            )
             return
         self.print_info(f"{CYAN}Existing build files: {RESET}\n")
         for file in existing_build_files:
@@ -424,17 +441,22 @@ class Command(BaseCommand):
 
         df.info()
 
-        csv_file_name = f"coalesced_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        csv_file_name = (
+            f"coalesced_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        )
         full_csv_path = os.path.join(options["output_path"], csv_file_name)
         df.to_csv(
             full_csv_path,
             index=False,
         )
 
-        self.print_success(f"\n✨ CSV coalesced successfully at {full_csv_path}.\n")
+        self.print_success(
+            f"\n✨ CSV coalesced successfully at {full_csv_path}.\n"
+        )
 
         # PRINT OUT DIFFERENCE IN DATA TYPES
-        orig = pd.read_csv("project/npda/dummy_sheets/dummy_sheet_invalid.csv")
+        comparison_csv = "dummy_sheet_invalid.csv"
+        orig = pd.read_csv(f"project/npda/dummy_sheets/{comparison_csv}")
         # Get data types for both DataFrames
         orig_dtypes = orig.dtypes
         new_dtypes = df.dtypes
@@ -445,11 +467,16 @@ class Command(BaseCommand):
                 mismatched_dtypes[col] = (orig_dtypes[col], new_dtypes[col])
 
         # Print out mismatched columns and their respective data types
-        self.print_error("Columns with differing data types:")
+        self.print_error(
+            f"Columns with differing data types from {comparison_csv}:"
+        )
         self.print_info("NOTE: columns with Nan are cast to float")
         for col, (orig_type, new_type) in mismatched_dtypes.items():
             print(
                 f"{col}: original type = {GREEN}{orig_type}{RESET}, coalesced type = {CYAN}{new_type}{RESET}"
+            )
+            print(
+                f"Value in original: {GREEN}{orig[col].iloc[0]}{RESET}, value in coalesced: {CYAN}{df[col].iloc[0]}{RESET}\n"
             )
 
         return
@@ -471,6 +498,7 @@ class Command(BaseCommand):
                 **{
                     # Convert mismatched columns to the correct data type
                     "NHS Number": lambda x: x["NHS Number"].astype(str),
+
                 },
             )
             # Reorder columns
@@ -493,12 +521,16 @@ class Command(BaseCommand):
                     datetime.strptime(submission_date_str, "%Y-%m-%d")
                 ).date()
             except ValueError:
-                self.print_error("Invalid submission_date format. Use YYYY-MM-DD.")
+                self.print_error(
+                    "Invalid submission_date format. Use YYYY-MM-DD."
+                )
                 return
         else:
             submission_date = timezone.now().date()
 
-        audit_start_date, audit_end_date = get_audit_period_for_date(submission_date)
+        audit_start_date, audit_end_date = get_audit_period_for_date(
+            submission_date
+        )
 
         # Number of patients to seed (pts)
         n_pts_to_seed = options["pts"]
@@ -552,7 +584,9 @@ class Command(BaseCommand):
         building_str = ""
         if build:
             # First count the number of existing files to use this as filename prefix
-            existing_files = [f for f in os.listdir(output_path) if f.startswith("build")]
+            existing_files = [
+                f for f in os.listdir(output_path) if f.startswith("build")
+            ]
 
             # Set the building string filename prefix
             building_str = f"build__{len(existing_files) + 1}_"
