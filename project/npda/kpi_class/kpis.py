@@ -611,7 +611,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_6_total_t1dm_complete_year_gte_12yo(self) -> dict:
+    def calculate_kpi_6_total_t1dm_complete_year_gte_12yo(self) -> KPIResult:
         """
         Calculates KPI 6: Total number of patients with T1DM who have completed a year of care and are aged 12 or older
         Total number of patients with:
@@ -729,7 +729,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_7_total_new_diagnoses_t1dm(self) -> dict:
+    def calculate_kpi_7_total_new_diagnoses_t1dm(self) -> KPIResult:
         """
         Calculates KPI 7: Total number of new diagnoses of T1DM
         Total number of patients with:
@@ -822,7 +822,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_8_total_deaths(self) -> dict:
+    def calculate_kpi_8_total_deaths(self) -> KPIResult:
         """
         Calculates KPI 8: Number of patients who died within audit period
         Number of eligible patients (measure 1) with:
@@ -868,7 +868,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_9_total_service_transitions(self) -> dict:
+    def calculate_kpi_9_total_service_transitions(self) -> KPIResult:
         """
         Calculates KPI 9: Number of patients who transitioned/left service within audit period
 
@@ -919,7 +919,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_10_total_coeliacs(self) -> dict:
+    def calculate_kpi_10_total_coeliacs(self) -> KPIResult:
         """
         Calculates KPI 10: Total number of coeliacs
         Number of eligible patients (measure 1) who:
@@ -977,7 +977,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_11_total_thyroids(self) -> dict:
+    def calculate_kpi_11_total_thyroids(self) -> KPIResult:
         """
         Calculates KPI 11: Number of patients with thyroid  disease
         Number of eligible patients (measure 1)
@@ -1037,7 +1037,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_12_total_ketone_test_equipment(self) -> dict:
+    def calculate_kpi_12_total_ketone_test_equipment(self) -> KPIResult:
         """
         Calculates KPI 12: Number of patients using (or trained to use) blood ketone testing equipment
 
@@ -1095,7 +1095,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_13_one_to_three_injections_per_day(self) -> dict:
+    def calculate_kpi_13_one_to_three_injections_per_day(self) -> KPIResult:
         """
         Calculates KPI 13: One - three injections/day
 
@@ -1141,7 +1141,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_14_four_or_more_injections_per_day(self) -> dict:
+    def calculate_kpi_14_four_or_more_injections_per_day(self) -> KPIResult:
         """
         Calculates KPI 14: Four or more injections/day
 
@@ -1187,7 +1187,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_15_insulin_pump(self) -> dict:
+    def calculate_kpi_15_insulin_pump(self) -> KPIResult:
         """
         Calculates KPI 15: Insulin pump (including those using a pump as part of a hybrid closed loop)
 
@@ -1235,7 +1235,7 @@ class CalculateKPIS:
 
     def calculate_kpi_16_one_to_three_injections_plus_other_medication(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 16: One - three injections/day plus other blood glucose lowering medication
 
@@ -1282,7 +1282,7 @@ class CalculateKPIS:
 
     def calculate_kpi_17_four_or_more_injections_plus_other_medication(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 17: Four or more injections/day plus other blood glucose lowering medication
 
@@ -1328,7 +1328,7 @@ class CalculateKPIS:
 
     def calculate_kpi_18_insulin_pump_plus_other_medication(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 18: Insulin pump therapy plus other blood glucose lowering medication
 
@@ -1374,7 +1374,7 @@ class CalculateKPIS:
 
     def calculate_kpi_19_dietary_management_alone(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 19: Dietary management alone (no insulin or other diabetes related medication)
 
@@ -1420,7 +1420,7 @@ class CalculateKPIS:
 
     def calculate_kpi_20_dietary_management_plus_other_medication(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 20: Dietary management plus other blood glucose lowering medication (non Type-1 diabetes)
 
@@ -1466,7 +1466,7 @@ class CalculateKPIS:
 
     def calculate_kpi_21_flash_glucose_monitor(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 21: Number of patients using a flash glucose monitor
 
@@ -1512,7 +1512,7 @@ class CalculateKPIS:
 
     def calculate_kpi_22_real_time_cgm_with_alarms(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 22: Number of patients using a real time continuous glucose monitor (CGM) with alarms
 
@@ -1558,7 +1558,7 @@ class CalculateKPIS:
 
     def calculate_kpi_23_type1_real_time_cgm_with_alarms(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 23: Number of patients with Type 1 diabetes using a real time continuous glucose monitor (CGM) with alarms
 
@@ -1605,7 +1605,7 @@ class CalculateKPIS:
 
     def calculate_kpi_24_hybrid_closed_loop_system(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 24: Hybrid closed loop system (HCL)
 
@@ -1691,7 +1691,7 @@ class CalculateKPIS:
 
     def calculate_kpi_25_hba1c(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 25: HbA1c (%)
 
@@ -1733,7 +1733,7 @@ class CalculateKPIS:
 
     def calculate_kpi_26_bmi(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 26: BMI (%)
 
@@ -1776,7 +1776,7 @@ class CalculateKPIS:
 
     def calculate_kpi_27_thyroid_screen(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 27: Thyroid Screen (%)
 
@@ -1817,7 +1817,7 @@ class CalculateKPIS:
 
     def calculate_kpi_28_blood_pressure(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 28: Blood Pressure (%)
 
@@ -1861,7 +1861,7 @@ class CalculateKPIS:
 
     def calculate_kpi_29_urinary_albumin(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 29: Urinary Albumin (%)
 
@@ -1904,7 +1904,7 @@ class CalculateKPIS:
 
     def calculate_kpi_30_retinal_screening(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 30: Retinal Screening (%)
 
@@ -1951,7 +1951,7 @@ class CalculateKPIS:
 
     def calculate_kpi_31_foot_examination(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 31: Foot Examination (%)
 
@@ -1993,7 +1993,7 @@ class CalculateKPIS:
     # TODO: get actual querysets for patients who passed and failed
     def calculate_kpi_32_1_health_check_completion_rate(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 32.1: Health check completion rate (%)
         Number of actual health checks over number of expected health checks.
@@ -2199,7 +2199,7 @@ class CalculateKPIS:
         )
 
     # TODO: get actual querysets for patients who passed and failed
-    def calculate_kpi_32_2_health_check_lt_12yo(self) -> dict:
+    def calculate_kpi_32_2_health_check_lt_12yo(self) -> KPIResult:
         """
         Calculates KPI 32.2: Health Checks (Less than 12 years)
 
@@ -2281,7 +2281,7 @@ class CalculateKPIS:
         )
 
     # TODO: get actual querysets for patients who passed and failed
-    def calculate_kpi_32_3_health_check_gte_12yo(self) -> dict:
+    def calculate_kpi_32_3_health_check_gte_12yo(self) -> KPIResult:
         """
         Calculates KPI 32.3: Health Checks (12 years and over)
 
@@ -2433,7 +2433,7 @@ class CalculateKPIS:
 
     def calculate_kpi_33_hba1c_4plus(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 33: HbA1c 4+ (%)
 
@@ -2485,7 +2485,7 @@ class CalculateKPIS:
 
     def calculate_kpi_34_psychological_assessment(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 34: Psychological assessment (%)
 
@@ -2536,7 +2536,7 @@ class CalculateKPIS:
 
     def calculate_kpi_35_smoking_status_screened(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 35: Smoking status screened (%)
 
@@ -2593,7 +2593,7 @@ class CalculateKPIS:
 
     def calculate_kpi_36_referral_to_smoking_cessation_service(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 36: Referral to smoking cessation service (%)
 
@@ -2643,7 +2643,7 @@ class CalculateKPIS:
 
     def calculate_kpi_37_additional_dietetic_appointment_offered(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 37: Additional dietetic appointment offered (%)
 
@@ -2692,7 +2692,7 @@ class CalculateKPIS:
 
     def calculate_kpi_38_patients_attending_additional_dietetic_appointment(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 38: Patients attending additional dietetic appointment (%)
 
@@ -2744,7 +2744,7 @@ class CalculateKPIS:
 
     def calculate_kpi_39_influenza_immunisation_recommended(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 39: Influenza immunisation recommended (%)
 
@@ -2796,7 +2796,7 @@ class CalculateKPIS:
 
     def calculate_kpi_40_sick_day_rules_advice(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 40: Sick day rules advice (%)
 
@@ -2847,7 +2847,7 @@ class CalculateKPIS:
 
     def calculate_kpi_41_coeliac_disease_screening(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 41: Coeliac diasease screening (%)
 
@@ -2901,7 +2901,7 @@ class CalculateKPIS:
 
     def calculate_kpi_42_thyroid_disease_screening(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 42: Thyroid disaese screening (%)
 
@@ -2953,7 +2953,7 @@ class CalculateKPIS:
 
     def calculate_kpi_43_carbohydrate_counting_education(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 43: Carbohydrate counting education (%)
 
@@ -3022,7 +3022,7 @@ class CalculateKPIS:
 
     def calculate_kpi_44_mean_hba1c(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 44: Mean HbA1c
 
@@ -3097,7 +3097,7 @@ class CalculateKPIS:
 
     def calculate_kpi_45_median_hba1c(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 43: Median HbA1c
 
@@ -3170,7 +3170,7 @@ class CalculateKPIS:
 
     def calculate_kpi_46_number_of_admissions(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 46: Number of admissions
 
@@ -3233,7 +3233,7 @@ class CalculateKPIS:
 
     def calculate_kpi_47_number_of_dka_admissions(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 47: Number of DKA admissions
 
@@ -3294,7 +3294,7 @@ class CalculateKPIS:
 
     def calculate_kpi_48_required_additional_psychological_support(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 48: Required additional psychological support
 
@@ -3347,7 +3347,7 @@ class CalculateKPIS:
 
     def calculate_kpi_49_albuminuria_present(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 49: Albuminuria present
 
