@@ -3571,17 +3571,3 @@ class Median(Func):
     function = "percentile_cont"
     template = "%(function)s(0.5) WITHIN GROUP (ORDER BY %(expressions)s)"
 
-
-def queryset_median_value(queryset: QuerySet, column_name: str):
-    """Calculates the median value of a given column_name:str in a queryset
-
-    Median is not a SQL aggregate function so we have to calculate it manually
-
-    Thanks https://stackoverflow.com/questions/942620/missing-median-aggregate-function-in-django.
-    """
-    count = queryset.count()
-    values = queryset.values_list(column_name, flat=True).order_by(column_name)
-    if count % 2 == 1:
-        return values[int(round(count / 2))]
-    else:
-        return sum(values[count / 2 - 1 : count / 2 + 1]) / Decimal(2.0)
