@@ -44,6 +44,14 @@ def read_csv(csv_file) -> ParsedCSVFile:
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
 
+    # Pandas has strange behaviour for the first line in a CSV - additional cells become row labels
+    # https://github.com/pandas-dev/pandas/issues/47490
+    # 
+    # As a heuristic for this, check the row label for the first row is the number 0
+    # If it isn't - you've got too many values in the first row
+    if not df.iloc[0].name == 0:
+        raise ValueError("Suspected too many values in the first row, please check there are no extra values")
+
     for column in ALL_DATES:
         df[column] = pd.to_datetime(df[column], format="%d/%m/%Y")
 

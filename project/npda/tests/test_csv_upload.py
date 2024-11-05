@@ -606,3 +606,55 @@ def test_missing_columns_causes_error(test_user, single_row_valid_df):
 
     missing_columns = read_csv_from_str(csv).missing_columns
     assert(missing_columns == ["Urinary Albumin Level (ACR)", "Total Cholesterol Level (mmol/l)"])
+
+
+@pytest.mark.django_db
+def test_first_row_with_extra_cell_at_the_start(test_user, single_row_valid_df):
+    csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
+    
+    lines = csv.split("\n")
+    lines[1] = "extra_value," + lines[1]
+
+    csv = "\n".join(lines)
+
+    with pytest.raises(ValueError):
+        read_csv_from_str(csv)
+
+
+@pytest.mark.django_db
+def test_first_row_with_extra_cell_on_the_end(test_user, single_row_valid_df):
+    csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
+    
+    lines = csv.split("\n")
+    lines[1] += ",extra_value"
+
+    csv = "\n".join(lines)
+
+    with pytest.raises(ValueError):
+        read_csv_from_str(csv)
+
+
+@pytest.mark.django_db
+def test_second_row_with_extra_cell_at_the_start(test_user, one_patient_two_visits):
+    csv = one_patient_two_visits.to_csv(index=False, date_format="%d/%m/%Y")
+    
+    lines = csv.split("\n")
+    lines[2] = "extra_value," + lines[1]
+
+    csv = "\n".join(lines)
+
+    with pytest.raises(pd.errors.ParserError):
+        read_csv_from_str(csv)
+
+
+@pytest.mark.django_db
+def test_second_row_with_extra_cell_on_the_end(test_user, one_patient_two_visits):
+    csv = one_patient_two_visits.to_csv(index=False, date_format="%d/%m/%Y")
+    
+    lines = csv.split("\n")
+    lines[2] += ",extra_value"
+
+    csv = "\n".join(lines)
+
+    with pytest.raises(pd.errors.ParserError):
+        read_csv_from_str(csv)
