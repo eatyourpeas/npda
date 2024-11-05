@@ -256,7 +256,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         return [task.result() for task in tasks]
 
     # Remember the original row number to help users find where the problem was in the CSV
-    dataframe["row_index"] = np.arange(dataframe.shape[0])
+    dataframe = dataframe.assign(row_index=np.arange(dataframe.shape[0]))
 
     # We only one to create one patient per NHS number and we can't create their visits if we fail to save the patient model
     visits_by_patient = dataframe.groupby("NHS Number", sort=False, dropna=False)
