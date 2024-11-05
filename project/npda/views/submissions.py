@@ -15,6 +15,7 @@ from django.views.generic import ListView
 from .mixins import LoginAndOTPRequiredMixin
 from ..models import Submission
 from ..general_functions import download_csv, csv_summarize
+from ..general_functions.csv_upload import read_csv
 
 
 class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
@@ -76,7 +77,8 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         ).first()  # there can be only one of these
         if latest_active_submission:
             # If a submission exists, summarize the csv data
-            context["data"] = csv_summarize(latest_active_submission.csv_file)
+            parsed_csv = read_csv(latest_active_submission.csv_file)
+            context["data"] = csv_summarize(parsed_csv.df)
             # Get some summary data about the patients in the submission...
             context["patients"] = Patient.objects.filter(
                 submissions=latest_active_submission

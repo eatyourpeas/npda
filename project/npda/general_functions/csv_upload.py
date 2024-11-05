@@ -1,5 +1,6 @@
 # python imports
 from datetime import date
+from dataclasses import dataclass
 import logging
 import asyncio
 import collections
@@ -17,6 +18,7 @@ import httpx
 # RCPCH imports
 from ...constants import (
     ALL_DATES,
+    CSV_HEADINGS
 )
 
 # Logging setup
@@ -26,17 +28,33 @@ from ..forms.visit_form import VisitForm
 from ..forms.external_patient_validators import validate_patient_async
 
 
-def read_csv(csv_file):
+@dataclass
+class ParsedCSVFile:
+    df: pd.DataFrame
+    missing_columns: list[str]
+    additional_columns: list[str]
+    duplicate_columns: list[str]
+
+def read_csv(csv_file) -> ParsedCSVFile:
     df = pd.read_csv(csv_file)
 
     # Remove leading and trailing whitespace on column names
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
 
+    missing_columns = [heading["heading"] for heading in CSV_HEADINGS]
+    additional_columns = []
+
+    for column in df.columns:
+        try:
+            missing_columns.remove(column)
+        except ValueError:
+            additional_columns.append(column)
+
     for column in ALL_DATES:
         df[column] = pd.to_datetime(df[column], format="%d/%m/%Y")
 
-    return df
+    return ParsedCSVFile(df, missing_columns, additional_columns, [])
 
 
 async def csv_upload(user, dataframe, csv_file, pdu_pz_code):

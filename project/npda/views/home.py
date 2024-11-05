@@ -16,7 +16,6 @@ from django.conf import settings
 from django_htmx.http import trigger_client_event
 
 from ..forms.upload import UploadFileForm
-from ..general_functions.csv_summarize import csv_summarize
 from ..general_functions.csv_upload import csv_upload, read_csv
 from ..general_functions.session import get_new_session_fields
 from ..general_functions.view_preference import get_or_update_view_preference
@@ -27,11 +26,6 @@ from .decorators import login_and_otp_required
 
 # Logging
 logger = logging.getLogger(__name__)
-
-# csv processing imports
-import csv
-from ...constants.csv_headings import HEADINGS_LIST
-
 
 @login_and_otp_required()
 async def home(request):
@@ -44,44 +38,18 @@ async def home(request):
         user_csv = request.FILES["csv_upload"]
         pz_code = request.session.get("pz_code")
 
-        # You can't read the same file twice without resetting it
-        user_csv.seek(0)
-        reader = csv.reader(user_csv.read().decode("utf-8").splitlines())
-        user_headers = next(reader, None)
-
-        template_headers = HEADINGS_LIST
-
-        # Next localise headers so have list and say 'these are the headers affected'
-
-        if user_headers != template_headers:
-            list_diff = [header for header in user_headers if header not in template_headers]
-            error_string = f'CSV headers do not match the expected format/order. Please ensure you are using the template csv provided. Headers affected, or those present in your file but not the template, are: {list_diff}. The headers uploaded must be exactly the same as the template headers, including whitespace, capital letters and ordering.'
-            messages.error(request, error_string)
-            return render(request, "home.html", {
-                    "file_uploaded": False,
-                    "form": form,
-                    "errors": [error_string]
-            })
-
-        # You can't read the same file twice without resetting it
-        user_csv.seek(0)
-        errors = []
+        # TODO MRB: inform user of column errors
+        parsed_csv = read_csv(user_csv)
 
         errors_by_row_index = await csv_upload(
             user=request.user,
-            dataframe=read_csv(file),
-            csv_file=file,
+            dataframe=parsed_csv.df,
+            csv_file=user_csv,
             pdu_pz_code=pz_code,
         )
 
         VisitActivity = apps.get_model("npda", "VisitActivity")
         try:
-            csv_upload(
-                user=request.user,
-                dataframe=read_csv(user_csv),
-                csv_file=user_csv,
-                pdu_pz_code=pz_code,
-            )
             await VisitActivity.objects.acreate(
                 activity=8,
                 ip_address=request.META.get("REMOTE_ADDR"),

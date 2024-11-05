@@ -53,18 +53,18 @@ def dummy_sheet_csv(dummy_sheets_folder):
 
 @pytest.fixture
 def valid_df(dummy_sheets_folder):
-    return read_csv(dummy_sheets_folder / 'dummy_sheet.csv')
+    return read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df
 
 @pytest.fixture
 def single_row_valid_df(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').head(1)
+    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df.head(1)
     assert(len(df) == 1)
 
     return df
 
 @pytest.fixture
 def one_patient_two_visits(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').head(2)
+    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df.head(2)
 
     assert(len(df) == 2)
     assert(df["NHS Number"][0] == df["NHS Number"][1])
@@ -73,7 +73,7 @@ def one_patient_two_visits(dummy_sheets_folder):
 
 @pytest.fixture
 def two_patients_first_with_two_visits_second_with_one(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').head(3)
+    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df.head(3)
 
     assert(len(df) == 3)
     assert(df["NHS Number"][0] == df["NHS Number"][1])
@@ -83,7 +83,7 @@ def two_patients_first_with_two_visits_second_with_one(dummy_sheets_folder):
 
 @pytest.fixture
 def two_patients_with_one_visit_each(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').drop([0]).head(2).reset_index(drop=True)
+    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df.drop([0]).head(2).reset_index(drop=True)
 
     assert(len(df) == 2)
     assert(df["NHS Number"][1] != df["NHS Number"][0])
@@ -524,7 +524,7 @@ def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_va
 @pytest.mark.django_db
 def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("NHS Number", "  NHS Number")
-    df = read_csv_from_str(csv)
+    df = read_csv_from_str(csv).df
 
     assert(df.columns[0] == "NHS Number")
 
@@ -537,7 +537,7 @@ def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
 @pytest.mark.django_db
 def test_strip_last_spaces_in_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("NHS Number", "NHS Number  ")
-    df = read_csv_from_str(csv)
+    df = read_csv_from_str(csv).df
 
     assert(df.columns[0] == "NHS Number")
 
@@ -552,7 +552,7 @@ def test_strip_last_spaces_in_column_name(test_user, dummy_sheet_csv):
 @pytest.mark.django_db
 def test_spaces_in_date_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("Date of Birth", "  Date of Birth")
-    df = read_csv_from_str(csv)
+    df = read_csv_from_str(csv).df
 
     csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
     patient = Patient.objects.first()
@@ -572,15 +572,16 @@ def test_different_column_order(test_user, single_row_valid_df):
     assert(Patient.objects.count() == 1)
 
 
+# TODO MRB: these should probably be calling the route directly?
 @pytest.mark.django_db
 def test_additional_columns_causes_error(test_user, single_row_valid_df):
     single_row_valid_df["extra_one"] = "woo"
     single_row_valid_df["extra_two"] = "bloo"
 
-    csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
+    df = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
 
-    with pytest.raises(ValueError) as err:
-        read_csv_from_str(csv)
+    additional_columns = read_csv_from_str(df).additional_columns
+    assert(additional_columns == ["extra_one", "extra_two"])  
 
 
 @pytest.mark.django_db
@@ -592,7 +593,16 @@ def test_duplicate_columns_causes_error(test_user, single_row_valid_df):
     csv = csv.replace("NHS Number_2", "NHS Number")
     csv = csv.replace("Date of Birth_2", "Date of Birth")
 
-    csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
+    df = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
 
-    with pytest.raises(ValueError) as err:
-        read_csv_from_str(csv)
+    duplicate_columns = read_csv_from_str(df).duplicate_columns
+    assert(duplicate_columns == ["NHS Number", "Date of Birth"])
+
+
+@pytest.mark.django_db
+def test_missing_columns_causes_error(test_user, single_row_valid_df):
+    df = single_row_valid_df.drop(['Urinary Albumin Level (ACR)', 'Total Cholesterol Level (mmol/l)'])
+    csv = df.to_csv(index=False)
+
+    missing_columns = read_csv_from_str(csv).missing_columns
+    assert(duplicate_columns == ["Urinary Albumin Level (ACR)", "Total Cholesterol Level (mmol/l)"])
