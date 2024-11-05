@@ -4,6 +4,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from project.npda.general_functions import get_audit_period_for_date
+from project.npda.general_functions.audit_period import get_quarters_for_audit_period
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -58,3 +59,45 @@ def test_ensure_error_raised_for_date_outside_audit_period():
 
     with pytest.raises(ValueError):
         get_audit_period_for_date(date(2028, 4, 1))
+
+
+@pytest.mark.parametrize(
+    "audit_start_date,audit_end_date,expected_quarters",
+    [
+        (
+            date(2024, 4, 1),
+            date(2025, 3, 31),
+            [
+                (date(2024, 4, 1), date(2024, 6, 30)),
+                (date(2024, 7, 1), date(2024, 9, 30)),
+                (date(2024, 10, 1), date(2024, 12, 31)),
+                (date(2025, 1, 1), date(2025, 3, 31)),
+            ],
+        ),
+        (
+            date(2025, 4, 1),
+            date(2026, 3, 31),
+            [
+                (date(2025, 4, 1), date(2025, 6, 30)),
+                (date(2025, 7, 1), date(2025, 9, 30)),
+                (date(2025, 10, 1), date(2025, 12, 31)),
+                (date(2026, 1, 1), date(2026, 3, 31)),
+            ],
+        ),
+        (
+            date(2026, 4, 1),
+            date(2027, 3, 31),
+            [
+                (date(2026, 4, 1), date(2026, 6, 30)),
+                (date(2026, 7, 1), date(2026, 9, 30)),
+                (date(2026, 10, 1), date(2026, 12, 31)),
+                (date(2027, 1, 1), date(2027, 3, 31)),
+            ],
+        ),
+    ],
+)
+def test_get_quarters_for_audit_period(
+    audit_start_date, audit_end_date, expected_quarters
+):
+    quarters = get_quarters_for_audit_period(audit_start_date, audit_end_date)
+    assert quarters == expected_quarters

@@ -32,13 +32,6 @@ register(OrganisationEmployerFactory)  # => npdauser_factory
 register(PaediatricsDiabetesUnitFactory)  # => npdauser_factory
 register(TransferFactory)  # => npdauser_factory
 
-@pytest.fixture(autouse=True)
-def patch_imd_for_postcode():
-    """Automatically patch `imd_for_postcode` for all tests."""
-    with patch('project.npda.models.patient.imd_for_postcode', return_value=4) as mocked_imd_for_postcode:
-        logger.debug("Patching imd_for_postcode")
-        yield
-
 @pytest.fixture
 def AUDIT_START_DATE():
     """AUDIT_START_DATE is Day 2 of the first audit period"""

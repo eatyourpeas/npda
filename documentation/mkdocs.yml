@@ -147,6 +147,7 @@ nav:
     - 'developer/organisations.md'
     - 'developer/users.md'
     - 'developer/testing.md'
+    - 'developer/fake_patient_generator.md'
     - 'developer/submission.md'
     - KPI Definitions:
       - 'developer/kpis/kpi_definitions.md'
