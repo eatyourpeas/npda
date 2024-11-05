@@ -14,7 +14,8 @@ from django.views.generic import ListView
 # RCPCH imports
 from .mixins import LoginAndOTPRequiredMixin
 from ..models import Submission
-from ..general_functions import download_csv, csv_summarize
+from ..general_functions.csv_download import download_csv
+from ..general_functions.csv_summarize import csv_summarize
 from ..general_functions.csv_upload import read_csv
 
 

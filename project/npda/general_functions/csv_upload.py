@@ -16,7 +16,7 @@ import numpy as np
 import httpx
 
 # RCPCH imports
-from ...constants import (
+from ...constants.csv_headings import (
     ALL_DATES,
     CSV_HEADINGS
 )
@@ -163,40 +163,31 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return value
 
-    def row_to_dict(row, model, mapping):
-        return {
-            model_field: csv_value_to_model_value(
-                model._meta.get_field(model_field), row[csv_field]
-            )
-            for model_field, csv_field in mapping.items()
-        }
+    def row_to_dict(row, model):
+        ret = {}
+
+        for entry in CSV_HEADINGS:
+            if "model" in entry and entry["model"] == model:
+                model_field_name = entry["model_field"]
+                model_field_definition = model._meta.get_field(model_field_name)
+
+                csv_value = row[entry["heading"]]
+                model_field_value = csv_value_to_model_value(model_field_definition, csv_value)
+
+                ret[model_field_name] = model_field_value
+
+        return ret
 
     def validate_transfer(row):
         return row_to_dict(
             row,
-            Transfer,
-            {
-                "date_leaving_service": "Date of leaving service",
-                "reason_leaving_service": "Reason for leaving service",
-            },
+            Transfer
         ) | {"paediatric_diabetes_unit": pdu}
 
     async def validate_patient_using_form(row, async_client):
-
         fields = row_to_dict(
             row,
-            Patient,
-            {
-                "nhs_number": "NHS Number",
-                "date_of_birth": "Date of Birth",
-                "postcode": "Postcode of usual address",
-                "sex": "Stated gender",
-                "ethnicity": "Ethnic Category",
-                "diabetes_type": "Diabetes Type",
-                "gp_practice_ods_code": "GP Practice Code",
-                "diagnosis_date": "Date of Diabetes Diagnosis",
-                "death_date": "Death Date",
-            },
+            Patient
         )
         
         form = PatientForm(fields)
@@ -210,51 +201,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         return form
 
     def validate_visit_using_form(patient, row):
-
         fields = row_to_dict(
             row,
             Visit,
-            {
-                "visit_date": "Visit/Appointment Date",
-                "height": "Patient Height (cm)",
-                "weight": "Patient Weight (kg)",
-                "height_weight_observation_date": "Observation Date (Height and weight)",
-                "hba1c_format": "HbA1c result format",
-                "hba1c_date": "Observation Date: Hba1c Value",
-                "treatment": "Diabetes Treatment at time of Hba1c measurement",
-                "closed_loop_system": "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
-                "glucose_monitoring": "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?",
-                "systolic_blood_pressure": "Systolic Blood Pressure",
-                "diastolic_blood_pressure": "Diastolic Blood pressure",
-                "blood_pressure_observation_date": "Observation Date (Blood Pressure)",
-                "foot_examination_observation_date": "Foot Assessment / Examination Date",
-                "retinal_screening_observation_date": "Retinal Screening date",
-                "retinal_screening_result": "Retinal Screening Result",
-                "albumin_creatinine_ratio": "Urinary Albumin Level (ACR)",
-                "albumin_creatinine_ratio_date": "Observation Date: Urinary Albumin Level",
-                "albuminuria_stage": "Albuminuria Stage",
-                "total_cholesterol": "Total Cholesterol Level (mmol/l)",
-                "total_cholesterol_date": "Observation Date: Total Cholesterol Level",
-                "thyroid_function_date": "Observation Date: Thyroid Function",
-                "thyroid_treatment_status": "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
-                "coeliac_screen_date": "Observation Date: Coeliac Disease Screening",
-                "gluten_free_diet": "Has the patient been recommended a Gluten-free diet?",
-                "psychological_screening_assessment_date": "Observation Date - Psychological Screening Assessment",
-                "psychological_additional_support_status": "Was the patient assessed as requiring additional psychological/CAMHS support outside of MDT clinics?",
-                "smoking_status": "Does the patient smoke?",
-                "smoking_cessation_referral_date": "Date of offer of referral to smoking cessation service (if patient is a current smoker)",
-                "carbohydrate_counting_level_three_education_date": "Date of Level 3 carbohydrate counting education received",
-                "dietician_additional_appointment_offered": "Was the patient offered an additional appointment with a paediatric dietitian?",
-                "dietician_additional_appointment_date": "Date of additional appointment with dietitian",
-                "ketone_meter_training": "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?",
-                "flu_immunisation_recommended_date": "Date that influenza immunisation was recommended",
-                "sick_day_rules_training_date": "Date of provision of advice ('sick-day rules') about managing diabetes during intercurrent illness or episodes of hyperglycaemia",
-                "hospital_admission_date": "Start date (Hospital Provider Spell)",
-                "hospital_discharge_date": "Discharge date (Hospital provider spell)",
-                "hospital_admission_reason": "Reason for admission",
-                "dka_additional_therapies": "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
-                "hospital_admission_other": "Only complete if OTHER selected: Reason for admission (free text)",
-            },
         )
 
         form = VisitForm(data=fields, initial={"patient": patient})
