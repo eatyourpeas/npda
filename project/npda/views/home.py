@@ -41,36 +41,53 @@ async def home(request):
         # TODO MRB: inform user of column errors
         parsed_csv = read_csv(user_csv)
 
-        errors_by_row_index = await csv_upload(
-            user=request.user,
-            dataframe=parsed_csv.df,
-            csv_file=user_csv,
-            pdu_pz_code=pz_code,
-        )
+        if parsed_csv.missing_columns or parsed_csv.additional_columns or parsed_csv.duplicate_columns:
+            message = "Invalid CSV format."
 
-        VisitActivity = apps.get_model("npda", "VisitActivity")
-        try:
-            await VisitActivity.objects.acreate(
-                activity=8,
-                ip_address=request.META.get("REMOTE_ADDR"),
-                npdauser=request.user,
-            )  # uploaded csv - activity 8
-        except Exception as e:
-            logger.error(f"Failed to log user activity: {e}")
-
-        if errors_by_row_index:
-            for row_index, errors_by_field in errors_by_row_index.items():
-                for field, errors in errors_by_field.items():
-                    for error in errors:
-                        messages.error(
-                            request=request,
-                            message=f"CSV has been uploaded, but errors have been found. These include error in row {row_index}[{field}]: {error}",
-                        )
-        else:
-            messages.success(
+            if parsed_csv.missing_columns:
+                message += f" Missing columns: [{", ".join(parsed_csv.missing_columns)}]"
+            
+            if parsed_csv.additional_columns:
+                message += f" Unexpected columns: [{", ".join(parsed_csv.additional_columns)}]"
+            
+            if parsed_csv.duplicate_columns:
+                message += f" Duplicate columns: [{", ".join(parsed_csv.additional_columns)}]"
+            
+            messages.error(
                 request=request,
-                message="File uploaded successfully. There are no errors,",
-            )   
+                message=message,
+            )
+        else:
+            errors_by_row_index = await csv_upload(
+                user=request.user,
+                dataframe=parsed_csv.df,
+                csv_file=user_csv,
+                pdu_pz_code=pz_code,
+            )
+
+            VisitActivity = apps.get_model("npda", "VisitActivity")
+            try:
+                await VisitActivity.objects.acreate(
+                    activity=8,
+                    ip_address=request.META.get("REMOTE_ADDR"),
+                    npdauser=request.user,
+                )  # uploaded csv - activity 8
+            except Exception as e:
+                logger.error(f"Failed to log user activity: {e}")
+
+            if errors_by_row_index:
+                for row_index, errors_by_field in errors_by_row_index.items():
+                    for field, errors in errors_by_field.items():
+                        for error in errors:
+                            messages.error(
+                                request=request,
+                                message=f"CSV has been uploaded, but errors have been found. These include error in row {row_index}[{field}]: {error}",
+                            )
+            else:
+                messages.success(
+                    request=request,
+                    message="File uploaded successfully. There are no errors,",
+                )
 
         return redirect("submissions")
     else:

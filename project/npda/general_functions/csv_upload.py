@@ -35,6 +35,7 @@ class ParsedCSVFile:
     additional_columns: list[str]
     duplicate_columns: list[str]
 
+
 def read_csv(csv_file) -> ParsedCSVFile:
     df = pd.read_csv(csv_file)
 
@@ -42,17 +43,13 @@ def read_csv(csv_file) -> ParsedCSVFile:
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
 
-    missing_columns = [heading["heading"] for heading in CSV_HEADINGS]
-    additional_columns = []
-
-    for column in df.columns:
-        try:
-            missing_columns.remove(column)
-        except ValueError:
-            additional_columns.append(column)
-
     for column in ALL_DATES:
         df[column] = pd.to_datetime(df[column], format="%d/%m/%Y")
+
+    csv_headings = [heading["heading"] for heading in CSV_HEADINGS]
+
+    missing_columns = [column for column in csv_headings if not column in df.columns]
+    additional_columns = [column for column in df.columns if not column in csv_headings]
 
     return ParsedCSVFile(df, missing_columns, additional_columns, [])
 

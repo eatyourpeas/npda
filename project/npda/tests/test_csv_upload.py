@@ -578,9 +578,9 @@ def test_additional_columns_causes_error(test_user, single_row_valid_df):
     single_row_valid_df["extra_one"] = "woo"
     single_row_valid_df["extra_two"] = "bloo"
 
-    df = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
+    csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
 
-    additional_columns = read_csv_from_str(df).additional_columns
+    additional_columns = read_csv_from_str(csv).additional_columns
     assert(additional_columns == ["extra_one", "extra_two"])  
 
 
@@ -589,20 +589,18 @@ def test_duplicate_columns_causes_error(test_user, single_row_valid_df):
     single_row_valid_df["NHS Number_2"] = single_row_valid_df["NHS Number"]
     single_row_valid_df["Date of Birth_2"] = single_row_valid_df["Date of Birth"]
 
-    csv = single_row_valid_df.to_csv(index=False)
+    csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
     csv = csv.replace("NHS Number_2", "NHS Number")
     csv = csv.replace("Date of Birth_2", "Date of Birth")
 
-    df = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
-
-    duplicate_columns = read_csv_from_str(df).duplicate_columns
+    duplicate_columns = read_csv_from_str(csv).duplicate_columns
     assert(duplicate_columns == ["NHS Number", "Date of Birth"])
 
 
 @pytest.mark.django_db
 def test_missing_columns_causes_error(test_user, single_row_valid_df):
-    df = single_row_valid_df.drop(['Urinary Albumin Level (ACR)', 'Total Cholesterol Level (mmol/l)'])
-    csv = df.to_csv(index=False)
+    df = single_row_valid_df.drop(columns=['Urinary Albumin Level (ACR)', 'Total Cholesterol Level (mmol/l)'])
+    csv = df.to_csv(index=False, date_format="%d/%m/%Y")
 
     missing_columns = read_csv_from_str(csv).missing_columns
-    assert(duplicate_columns == ["Urinary Albumin Level (ACR)", "Total Cholesterol Level (mmol/l)"])
+    assert(missing_columns == ["Urinary Albumin Level (ACR)", "Total Cholesterol Level (mmol/l)"])
