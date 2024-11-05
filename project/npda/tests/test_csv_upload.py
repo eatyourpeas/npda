@@ -558,3 +558,41 @@ def test_spaces_in_date_column_name(test_user, dummy_sheet_csv):
     patient = Patient.objects.first()
 
     assert(patient.date_of_birth == df["Date of Birth"][0].date())
+
+
+@pytest.mark.django_db
+def test_different_column_order(test_user, single_row_valid_df):
+    columns = single_row_valid_df.columns.to_list()
+
+    # Move the first column to the end
+    columns = columns[1:] + columns[:1]
+    df = single_row_valid_df[columns]
+
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    assert(Patient.objects.count() == 1)
+
+
+@pytest.mark.django_db
+def test_additional_columns_causes_error(test_user, single_row_valid_df):
+    single_row_valid_df["extra_one"] = "woo"
+    single_row_valid_df["extra_two"] = "bloo"
+
+    csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
+
+    with pytest.raises(ValueError) as err:
+        read_csv_from_str(csv)
+
+
+@pytest.mark.django_db
+def test_duplicate_columns_causes_error(test_user, single_row_valid_df):
+    single_row_valid_df["NHS Number_2"] = single_row_valid_df["NHS Number"]
+    single_row_valid_df["Date of Birth_2"] = single_row_valid_df["Date of Birth"]
+
+    csv = single_row_valid_df.to_csv(index=False)
+    csv = csv.replace("NHS Number_2", "NHS Number")
+    csv = csv.replace("Date of Birth_2", "Date of Birth")
+
+    csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
+
+    with pytest.raises(ValueError) as err:
+        read_csv_from_str(csv)
