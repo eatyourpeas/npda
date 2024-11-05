@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import logging
 import asyncio
 import collections
+import re
 
 # django imports
 from django.apps import apps
@@ -51,7 +52,16 @@ def read_csv(csv_file) -> ParsedCSVFile:
     missing_columns = [column for column in csv_headings if not column in df.columns]
     additional_columns = [column for column in df.columns if not column in csv_headings]
 
-    return ParsedCSVFile(df, missing_columns, additional_columns, [])
+    # Duplicate columns appear in the dataframe as XYZ.1, XYZ.2 etc
+    duplicate_columns = []
+
+    for column in df.columns:
+        result = re.match(r"([\w ]+)\.\d+$", column)
+
+        if result and result.group(1) not in duplicate_columns:
+            duplicate_columns.append(result.group(1))
+
+    return ParsedCSVFile(df, missing_columns, additional_columns, duplicate_columns)
 
 
 async def csv_upload(user, dataframe, csv_file, pdu_pz_code):

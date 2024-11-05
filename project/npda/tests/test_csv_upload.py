@@ -587,10 +587,12 @@ def test_additional_columns_causes_error(test_user, single_row_valid_df):
 @pytest.mark.django_db
 def test_duplicate_columns_causes_error(test_user, single_row_valid_df):
     single_row_valid_df["NHS Number_2"] = single_row_valid_df["NHS Number"]
+    single_row_valid_df["NHS Number_3"] = single_row_valid_df["NHS Number"]
     single_row_valid_df["Date of Birth_2"] = single_row_valid_df["Date of Birth"]
 
     csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
     csv = csv.replace("NHS Number_2", "NHS Number")
+    csv = csv.replace("NHS Number_3", "NHS Number")
     csv = csv.replace("Date of Birth_2", "Date of Birth")
 
     duplicate_columns = read_csv_from_str(csv).duplicate_columns
