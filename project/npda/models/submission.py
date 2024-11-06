@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.conf import settings
-from project.constants import CAN_UPLOAD_CSV, CAN_COMPLETE_QUESTIONNAIRE
 
 
 class Submission(models.Model):
@@ -60,10 +59,6 @@ class Submission(models.Model):
         verbose_name = "Submission"
         verbose_name_plural = "Submissions"
         ordering = ("audit_year",)
-        permissions = [
-            CAN_UPLOAD_CSV,
-            CAN_COMPLETE_QUESTIONNAIRE,
-        ]
 
     def delete(self, *args, **kwargs):
         if self.submission_active:
