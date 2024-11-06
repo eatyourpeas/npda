@@ -117,6 +117,16 @@ CAN_CONSENT_TO_AUDIT_PARTICIPATION = (
     "Can consent to participating in NPDA.",
 )
 
+CAN_UPLOAD_CSV = (
+    "can_upload_csv",
+    "Can upload CSV files.",
+)
+
+CAN_COMPLETE_QUESTIONNAIRE = (
+    "can_complete_questionnaire",
+    "Can complete questionnaires.",
+)
+
 PERMISSIONS = (
     CAN_LOCK_CHILD_PATIENT_DATA_FROM_EDITING,
     CAN_UNLOCK_CHILD_PATIENT_DATA_FROM_EDITING,
@@ -127,4 +137,6 @@ PERMISSIONS = (
     CAN_DELETE_NPDA_LEAD_CENTRE,
     CAN_CONSENT_TO_AUDIT_PARTICIPATION,
     CAN_PUBLISH_NPDA_DATA,
+    CAN_UPLOAD_CSV,
+    CAN_COMPLETE_QUESTIONNAIRE,
 )
