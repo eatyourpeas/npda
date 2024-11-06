@@ -239,7 +239,10 @@ class NPDAUser(AbstractUser, PermissionsMixin):
                 name="user_email_ci_uniqueness",
             ),
         ]
-        permissions = [CAN_PUBLISH_NPDA_DATA, CAN_CONSENT_TO_AUDIT_PARTICIPATION]
+        permissions = [
+            CAN_PUBLISH_NPDA_DATA,
+            CAN_CONSENT_TO_AUDIT_PARTICIPATION,
+        ]
         ordering = ("surname",)
 
     def __str__(self) -> str:

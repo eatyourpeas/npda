@@ -61,6 +61,8 @@ async def home(request):
         except Exception as e:
             logger.error(f"Failed to log user activity: {e}")
 
+        # file has been uploaded. If this is the first time for this PDU, then the PDU can nolonger edit data in the questionnaire
+
         if errors_by_row_index:
             for row_index, errors_by_field in errors_by_row_index.items():
                 for field, errors in errors_by_field.items():
@@ -73,7 +75,7 @@ async def home(request):
             messages.success(
                 request=request,
                 message="File uploaded successfully. There are no errors,",
-            )   
+            )
 
         return redirect("submissions")
     else:
