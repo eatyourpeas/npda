@@ -578,7 +578,7 @@ def test_different_column_order(test_user, single_row_valid_df):
     assert(Patient.objects.count() == 1)
 
 
-# TODO MRB: these should probably be calling the route directly?
+# TODO MRB: these should probably be calling the route directly? https://github.com/rcpch/national-paediatric-diabetes-audit/issues/353
 @pytest.mark.django_db
 def test_additional_columns_causes_error(test_user, single_row_valid_df):
     single_row_valid_df["extra_one"] = "woo"
