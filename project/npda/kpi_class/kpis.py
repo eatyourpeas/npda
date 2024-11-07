@@ -3121,28 +3121,32 @@ class CalculateKPIS:
 
         # Get the visits that match the valid HbA1c criteria
 
-        # Subquery to filter valid HBA1c values while ensuring visit_date is in
-        # the required range
-        valid_hba1c_subquery = (
-            Visit.objects.filter(
-                visit_date__range=self.AUDIT_DATE_RANGE,
-                hba1c_date__gte=F("patient__diagnosis_date")
-                + timedelta(days=90),  # Ensure HbA1c is taken >90 days after diagnosis
-                patient=OuterRef("pk"),
-            )
-            # Clear any implicit ordering, select only 'hba1c' for calculating
-            # the median as getting error with the visit_date field
-            .order_by().values("hba1c")
-        )
-
-        # Annotate eligible patients with the median HbA1c value
-        eligible_pts_annotated = eligible_patients.annotate(
-            median_hba1c=Subquery(
-                valid_hba1c_subquery.annotate(median_hba1c=Median("hba1c")).values(
-                    "median_hba1c"
-                )[:1]
-            )
-        )
+        # debugging
+        from pprint import pprint, pformat
+        tmp_pts_data = defaultdict(list)
+        for v in Visit.objects.all().values('visit_date', 'hba1c_date','patient__diagnosis_date', 'hba1c', 'patient__postcode'):
+            tmp_pts_data[(v['patient__postcode'], v['patient__diagnosis_date'])].append({
+                v['visit_date']: {
+                    'hba1c_date': v['hba1c_date'],
+                    'hba1c': v['hba1c'],
+                }
+            })
+        for (pt_name, diagnosis_date), visit_data in tmp_pts_data.items():
+            print(f'{pt_name=}, diagnosed on {diagnosis_date}')
+            pprint(visit_data)
+            print()
+        breakpoint()
+            # diagnosis_date = v['patient__diagnosis_date']
+            # hba1c_date = v['hba1c_date']
+            # print(f'{v["patient__postcode"]}')
+            # print(f"{v['patient__diagnosis_date']=}  {v['hba1c_date']=}")
+            # if diagnosis_date and hba1c_date:
+            #     print(f"Measurement taken {v['hba1c_date'] - v['patient__diagnosis_date']} days after diagnosis: {'excluded' if (hba1c_date - diagnosis_date).days < 90 else 'included'}")
+            # else:
+            #     print(f"Taken after 90 days of diabetes diagnosis: False")
+            # print(f"{v['visit_date']=}")
+            # print(f"{v['hba1c']=}")
+            # print()
 
         # Calculate the mean of the medians and convert to float (as Decimal)
         mean_of_median_hba1cs = (
