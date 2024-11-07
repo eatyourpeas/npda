@@ -532,8 +532,6 @@ def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("NHS Number", "  NHS Number")
     df = read_csv(csv).df
 
-    print("HELLO!?")
-
     assert(df.columns[0] == "NHS Number")
 
     csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)

@@ -41,15 +41,22 @@ class ParsedCSVFile:
     duplicate_columns: list[str]
 
 
-def read_csv(csv_file) -> ParsedCSVFile:
-    if not csv_file.startswith(HEADINGS_LIST[0]):
-        csv_file = csv_header() + "\n" + csv_file
-
+def read_csv_and_strip_columns(csv_file) -> pd.DataFrame:
     df = pd.read_csv(StringIO(csv_file))
 
     # Remove leading and trailing whitespace on column names
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
+
+    return df
+
+
+def read_csv(csv_file) -> ParsedCSVFile:
+    df = read_csv_and_strip_columns(csv_file)
+
+    if not df.columns[0] == HEADINGS_LIST[0]:
+        csv_file = csv_header() + "\n" + csv_file
+        df = read_csv_and_strip_columns(csv_file)
 
     # Pandas has strange behaviour for the first line in a CSV - additional cells become row labels
     # https://github.com/pandas-dev/pandas/issues/47490
