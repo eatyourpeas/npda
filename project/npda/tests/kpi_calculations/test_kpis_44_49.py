@@ -1,5 +1,6 @@
 """Tests for the Outcomes KPIs."""
 
+from decimal import Decimal
 import logging
 from typing import List
 

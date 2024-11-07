@@ -1,6 +1,7 @@
 """Views for KPIs calculations
 """
 
+from collections import defaultdict
 import logging
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime, timedelta
@@ -3153,7 +3154,7 @@ class CalculateKPIS:
             total_eligible=total_eligible,
             total_ineligible=total_ineligible,
             # Use passed for storing the value
-            total_passed=mean_of_median_hba1cs,
+            total_passed=median_of_median_hba1cs,
             # Failed is not used
             total_failed=-1,
             patient_querysets=patient_querysets,
@@ -3555,6 +3556,35 @@ class CalculateKPIS:
             self.t1dm_pts_diagnosed_90D_before_end_base_query_set,
             self.t1dm_pts_diagnosed_90D_before_end_total_eligible,
         )
+
+    def calculate_median(self, values: list[Decimal]) -> float:
+        """Calculates the median of a list of values
+
+        Args:
+            values (list[Decimal]): List of values to calculate the median for.
+            assuming used with hba1c values which come in as Decimals. Convert
+            these to floats for convenience.
+
+        Returns:
+            float: Median of the list of values. Returns -1 if no values
+        """
+        if not values:
+            return float(-1)
+
+        # Ensure they're sorted
+        values.sort()
+
+        length = len(values)
+        if length % 2 == 0:
+
+            # even number, take mean
+            middle_1 = values[(length // 2) - 1]
+            middle_2 = values[length // 2]
+            return float((middle_1 + middle_2) / 2)
+
+        # odd number
+        middle = values[length // 2]
+        return float(middle)
 
 
 # Custom Median function for PostgreSQL
