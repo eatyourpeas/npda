@@ -39,7 +39,6 @@ async def home(request):
         user_csv = request.FILES["csv_upload"]
         pz_code = request.session.get("pz_code")
 
-        # TODO MRB: inform user of column errors
         parsed_csv = read_csv(user_csv)
 
         if parsed_csv.missing_columns or parsed_csv.additional_columns or parsed_csv.duplicate_columns:
