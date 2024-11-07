@@ -43,7 +43,7 @@ def create_session_object(user):
             submission_active=True,
             audit_year=datetime.now().year,
         ).get()
-        if submission.csv_file is not None:
+        if submission.csv_file and submission.csv_file.name:
             can_upload_csv = True
             can_complete_questionnaire = False
         else:
