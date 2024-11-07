@@ -1,8 +1,5 @@
 {% load static %}
 <div class="max-w-xl w-full">
-    <a href="{% url 'download_template' %}">
-        <p class="text-center text-xl font-semibold font-montserrat mb-4 text-rcpch_dark_blue">Download the NPDA CSV template here</p>
-    </a>
     
         <form method="POST" enctype="multipart/form-data" action="home"
             class="w-full max-w-xl p-8 border-4 border-dashed border-gray-400"
@@ -45,6 +42,12 @@
                 </div>
             </div>
         </form>
+
+        <div class="mt-2">
+            <a href="{% url 'download_template' %}">
+                <p class="text-center text-xl font-semibold font-montserrat mb-4 text-rcpch_dark_blue">Download the NPDA CSV template</p>
+            </a>
+        </div>
     
 </div>
 
