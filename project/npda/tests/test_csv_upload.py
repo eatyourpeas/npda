@@ -40,10 +40,6 @@ def mock_remote_calls():
 
 ALDER_HEY_PZ_CODE = "PZ074"
 
-def read_csv_from_file(csv_file):
-    with open(csv_file, 'r') as f:
-        csv = f.read()
-        return read_csv(csv)
 
 @pytest.fixture
 def dummy_sheets_folder(request):
@@ -58,12 +54,12 @@ def dummy_sheet_csv(dummy_sheets_folder):
 @pytest.fixture
 def valid_df(dummy_sheets_folder):
     file = dummy_sheets_folder / 'dummy_sheet.csv'
-    return read_csv_from_file(file).df
+    return read_csv(file).df
 
 @pytest.fixture
 def single_row_valid_df(dummy_sheets_folder):
     file = dummy_sheets_folder / 'dummy_sheet.csv'
-    df = read_csv_from_file(file).df
+    df = read_csv(file).df
 
     df = df.head(1)
 
@@ -72,7 +68,7 @@ def single_row_valid_df(dummy_sheets_folder):
 @pytest.fixture
 def one_patient_two_visits(dummy_sheets_folder):
     file = dummy_sheets_folder / 'dummy_sheet.csv'
-    df = read_csv_from_file(file).df
+    df = read_csv(file).df
 
     df = df.head(2)
     assert(df["NHS Number"][0] == df["NHS Number"][1])
@@ -82,7 +78,7 @@ def one_patient_two_visits(dummy_sheets_folder):
 @pytest.fixture
 def two_patients_first_with_two_visits_second_with_one(dummy_sheets_folder):
     file = dummy_sheets_folder / 'dummy_sheet.csv'
-    df = read_csv_from_file(file).df
+    df = read_csv(file).df
 
     df = df.head(3)
 
@@ -94,7 +90,7 @@ def two_patients_first_with_two_visits_second_with_one(dummy_sheets_folder):
 @pytest.fixture
 def two_patients_with_one_visit_each(dummy_sheets_folder):
     file = dummy_sheets_folder / 'dummy_sheet.csv'
-    df = read_csv_from_file(file).df
+    df = read_csv(file).df
 
     df = df.drop([0]).head(2).reset_index(drop=True)
 
@@ -118,6 +114,13 @@ def async_get_all(query_set_fn):
 @async_to_sync
 async def csv_upload_sync(user, dataframe, csv_file, pdu_pz_code):
     return await csv_upload(user, dataframe, csv_file, pdu_pz_code)
+
+def read_csv_from_str(contents):
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(contents.encode())
+        f.seek(0)
+
+        return read_csv(f)
 
 
 @pytest.mark.django_db
@@ -530,7 +533,7 @@ def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_va
 @pytest.mark.django_db
 def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("NHS Number", "  NHS Number")
-    df = read_csv(csv).df
+    df = read_csv_from_str(csv).df
 
     assert(df.columns[0] == "NHS Number")
 
@@ -543,7 +546,7 @@ def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
 @pytest.mark.django_db
 def test_strip_last_spaces_in_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("NHS Number", "NHS Number  ")
-    df = read_csv(csv).df
+    df = read_csv_from_str(csv).df
 
     assert(df.columns[0] == "NHS Number")
 
@@ -558,7 +561,7 @@ def test_strip_last_spaces_in_column_name(test_user, dummy_sheet_csv):
 @pytest.mark.django_db
 def test_spaces_in_date_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("Date of Birth", "  Date of Birth")
-    df = read_csv(csv).df
+    df = read_csv_from_str(csv).df
 
     csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
     patient = Patient.objects.first()
@@ -586,7 +589,7 @@ def test_additional_columns_causes_error(test_user, single_row_valid_df):
 
     csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
 
-    additional_columns = read_csv(csv).additional_columns
+    additional_columns = read_csv_from_str(csv).additional_columns
     assert(additional_columns == ["extra_one", "extra_two"])  
 
 
@@ -601,7 +604,7 @@ def test_duplicate_columns_causes_error(test_user, single_row_valid_df):
     csv = csv.replace("NHS Number_3", "NHS Number")
     csv = csv.replace("Date of Birth_2", "Date of Birth")
 
-    duplicate_columns = read_csv(csv).duplicate_columns
+    duplicate_columns = read_csv_from_str(csv).duplicate_columns
     assert(duplicate_columns == ["NHS Number", "Date of Birth"])
 
 
@@ -610,7 +613,7 @@ def test_missing_columns_causes_error(test_user, single_row_valid_df):
     df = single_row_valid_df.drop(columns=['Urinary Albumin Level (ACR)', 'Total Cholesterol Level (mmol/l)'])
     csv = df.to_csv(index=False, date_format="%d/%m/%Y")
 
-    missing_columns = read_csv(csv).missing_columns
+    missing_columns = read_csv_from_str(csv).missing_columns
     assert(missing_columns == ["Urinary Albumin Level (ACR)", "Total Cholesterol Level (mmol/l)"])
 
 
@@ -624,7 +627,7 @@ def test_first_row_with_extra_cell_at_the_start(test_user, single_row_valid_df):
     csv = "\n".join(lines)
 
     with pytest.raises(ValueError):
-        read_csv(csv)
+        read_csv_from_str(csv)
 
 
 @pytest.mark.django_db
@@ -637,7 +640,7 @@ def test_first_row_with_extra_cell_on_the_end(test_user, single_row_valid_df):
     csv = "\n".join(lines)
 
     with pytest.raises(ValueError):
-        read_csv(csv)
+        read_csv_from_str(csv)
 
 
 @pytest.mark.django_db
@@ -650,7 +653,7 @@ def test_second_row_with_extra_cell_at_the_start(test_user, one_patient_two_visi
     csv = "\n".join(lines)
 
     with pytest.raises(pd.errors.ParserError):
-        read_csv(csv)
+        read_csv_from_str(csv)
 
 
 @pytest.mark.django_db
@@ -663,7 +666,7 @@ def test_second_row_with_extra_cell_on_the_end(test_user, one_patient_two_visits
     csv = "\n".join(lines)
 
     with pytest.raises(pd.errors.ParserError):
-        read_csv(csv)
+        read_csv_from_str(csv)
 
 
 @pytest.mark.django_db
@@ -675,7 +678,7 @@ def test_upload_without_headers(test_user, one_patient_two_visits):
 
     csv = "\n".join(lines)
     
-    df = read_csv(csv).df
+    df = read_csv_from_str(csv).df
 
     csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
 
