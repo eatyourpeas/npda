@@ -1,6 +1,7 @@
 # python imports
 from datetime import date
 from dataclasses import dataclass
+from io import StringIO
 import logging
 import asyncio
 import collections
@@ -19,8 +20,11 @@ import httpx
 # RCPCH imports
 from ...constants.csv_headings import (
     ALL_DATES,
-    CSV_HEADINGS
+    CSV_HEADINGS,
+    HEADINGS_LIST,
 )
+
+from ..general_functions.csv_header import csv_header
 
 # Logging setup
 logger = logging.getLogger(__name__)
@@ -38,7 +42,10 @@ class ParsedCSVFile:
 
 
 def read_csv(csv_file) -> ParsedCSVFile:
-    df = pd.read_csv(csv_file)
+    if not csv_file.startswith(HEADINGS_LIST[0]):
+        csv_file = csv_header() + "\n" + csv_file
+
+    df = pd.read_csv(StringIO(csv_file))
 
     # Remove leading and trailing whitespace on column names
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
@@ -55,10 +62,8 @@ def read_csv(csv_file) -> ParsedCSVFile:
     for column in ALL_DATES:
         df[column] = pd.to_datetime(df[column], format="%d/%m/%Y")
 
-    csv_headings = [heading["heading"] for heading in CSV_HEADINGS]
-
-    missing_columns = [column for column in csv_headings if not column in df.columns]
-    additional_columns = [column for column in df.columns if not column in csv_headings]
+    missing_columns = [column for column in HEADINGS_LIST if not column in df.columns]
+    additional_columns = [column for column in df.columns if not column in HEADINGS_LIST]
 
     # Duplicate columns appear in the dataframe as XYZ.1, XYZ.2 etc
     duplicate_columns = []

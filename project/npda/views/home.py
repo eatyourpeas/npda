@@ -17,6 +17,7 @@ from django_htmx.http import trigger_client_event
 
 from ..forms.upload import UploadFileForm
 from ..general_functions.csv_upload import csv_upload, read_csv
+from ..general_functions.csv_header import csv_header
 from ..general_functions.session import get_new_session_fields
 from ..general_functions.view_preference import get_or_update_view_preference
 from ..kpi_class.kpis import CalculateKPIS
@@ -101,13 +102,11 @@ def download_template(request):
     """
     Creates the template csv for users to fill out and upload into NPDA
     """
-    response = HttpResponse(
+    return HttpResponse(
+        csv_header(),
         content_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="npda_template.csv"'},
     )
-    writer = csv.writer(response)
-    writer.writerow(HEADINGS_LIST)
-    return response
 
 
 def view_preference(request):

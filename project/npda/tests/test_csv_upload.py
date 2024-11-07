@@ -40,6 +40,10 @@ def mock_remote_calls():
 
 ALDER_HEY_PZ_CODE = "PZ074"
 
+def read_csv_from_file(csv_file):
+    with open(csv_file, 'r') as f:
+        csv = f.read()
+        return read_csv(csv)
 
 @pytest.fixture
 def dummy_sheets_folder(request):
@@ -53,29 +57,35 @@ def dummy_sheet_csv(dummy_sheets_folder):
 
 @pytest.fixture
 def valid_df(dummy_sheets_folder):
-    return read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df
+    file = dummy_sheets_folder / 'dummy_sheet.csv'
+    return read_csv_from_file(file).df
 
 @pytest.fixture
 def single_row_valid_df(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df.head(1)
-    assert(len(df) == 1)
+    file = dummy_sheets_folder / 'dummy_sheet.csv'
+    df = read_csv_from_file(file).df
+
+    df = df.head(1)
 
     return df
 
 @pytest.fixture
 def one_patient_two_visits(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df.head(2)
+    file = dummy_sheets_folder / 'dummy_sheet.csv'
+    df = read_csv_from_file(file).df
 
-    assert(len(df) == 2)
+    df = df.head(2)
     assert(df["NHS Number"][0] == df["NHS Number"][1])
 
     return df
 
 @pytest.fixture
 def two_patients_first_with_two_visits_second_with_one(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df.head(3)
+    file = dummy_sheets_folder / 'dummy_sheet.csv'
+    df = read_csv_from_file(file).df
 
-    assert(len(df) == 3)
+    df = df.head(3)
+
     assert(df["NHS Number"][0] == df["NHS Number"][1])
     assert(df["NHS Number"][2] != df["NHS Number"][0])
 
@@ -83,7 +93,10 @@ def two_patients_first_with_two_visits_second_with_one(dummy_sheets_folder):
 
 @pytest.fixture
 def two_patients_with_one_visit_each(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / 'dummy_sheet.csv').df.drop([0]).head(2).reset_index(drop=True)
+    file = dummy_sheets_folder / 'dummy_sheet.csv'
+    df = read_csv_from_file(file).df
+
+    df = df.drop([0]).head(2).reset_index(drop=True)
 
     assert(len(df) == 2)
     assert(df["NHS Number"][1] != df["NHS Number"][0])
@@ -105,13 +118,6 @@ def async_get_all(query_set_fn):
 @async_to_sync
 async def csv_upload_sync(user, dataframe, csv_file, pdu_pz_code):
     return await csv_upload(user, dataframe, csv_file, pdu_pz_code)
-
-def read_csv_from_str(contents):
-    with tempfile.NamedTemporaryFile() as f:
-        f.write(contents.encode())
-        f.seek(0)
-
-        return read_csv(f)
 
 
 @pytest.mark.django_db
@@ -524,7 +530,9 @@ def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_va
 @pytest.mark.django_db
 def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("NHS Number", "  NHS Number")
-    df = read_csv_from_str(csv).df
+    df = read_csv(csv).df
+
+    print("HELLO!?")
 
     assert(df.columns[0] == "NHS Number")
 
@@ -537,7 +545,7 @@ def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
 @pytest.mark.django_db
 def test_strip_last_spaces_in_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("NHS Number", "NHS Number  ")
-    df = read_csv_from_str(csv).df
+    df = read_csv(csv).df
 
     assert(df.columns[0] == "NHS Number")
 
@@ -552,7 +560,7 @@ def test_strip_last_spaces_in_column_name(test_user, dummy_sheet_csv):
 @pytest.mark.django_db
 def test_spaces_in_date_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("Date of Birth", "  Date of Birth")
-    df = read_csv_from_str(csv).df
+    df = read_csv(csv).df
 
     csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
     patient = Patient.objects.first()
@@ -580,7 +588,7 @@ def test_additional_columns_causes_error(test_user, single_row_valid_df):
 
     csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
 
-    additional_columns = read_csv_from_str(csv).additional_columns
+    additional_columns = read_csv(csv).additional_columns
     assert(additional_columns == ["extra_one", "extra_two"])  
 
 
@@ -595,7 +603,7 @@ def test_duplicate_columns_causes_error(test_user, single_row_valid_df):
     csv = csv.replace("NHS Number_3", "NHS Number")
     csv = csv.replace("Date of Birth_2", "Date of Birth")
 
-    duplicate_columns = read_csv_from_str(csv).duplicate_columns
+    duplicate_columns = read_csv(csv).duplicate_columns
     assert(duplicate_columns == ["NHS Number", "Date of Birth"])
 
 
@@ -604,7 +612,7 @@ def test_missing_columns_causes_error(test_user, single_row_valid_df):
     df = single_row_valid_df.drop(columns=['Urinary Albumin Level (ACR)', 'Total Cholesterol Level (mmol/l)'])
     csv = df.to_csv(index=False, date_format="%d/%m/%Y")
 
-    missing_columns = read_csv_from_str(csv).missing_columns
+    missing_columns = read_csv(csv).missing_columns
     assert(missing_columns == ["Urinary Albumin Level (ACR)", "Total Cholesterol Level (mmol/l)"])
 
 
@@ -618,7 +626,7 @@ def test_first_row_with_extra_cell_at_the_start(test_user, single_row_valid_df):
     csv = "\n".join(lines)
 
     with pytest.raises(ValueError):
-        read_csv_from_str(csv)
+        read_csv(csv)
 
 
 @pytest.mark.django_db
@@ -631,7 +639,7 @@ def test_first_row_with_extra_cell_on_the_end(test_user, single_row_valid_df):
     csv = "\n".join(lines)
 
     with pytest.raises(ValueError):
-        read_csv_from_str(csv)
+        read_csv(csv)
 
 
 @pytest.mark.django_db
@@ -644,7 +652,7 @@ def test_second_row_with_extra_cell_at_the_start(test_user, one_patient_two_visi
     csv = "\n".join(lines)
 
     with pytest.raises(pd.errors.ParserError):
-        read_csv_from_str(csv)
+        read_csv(csv)
 
 
 @pytest.mark.django_db
@@ -657,4 +665,22 @@ def test_second_row_with_extra_cell_on_the_end(test_user, one_patient_two_visits
     csv = "\n".join(lines)
 
     with pytest.raises(pd.errors.ParserError):
-        read_csv_from_str(csv)
+        read_csv(csv)
+
+
+@pytest.mark.django_db
+def test_upload_without_headers(test_user, one_patient_two_visits):
+    csv = one_patient_two_visits.to_csv(index=False, date_format="%d/%m/%Y")
+
+    lines = csv.split("\n")
+    lines = lines[1:]
+
+    csv = "\n".join(lines)
+    
+    df = read_csv(csv).df
+
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+
+    assert(Patient.objects.count() == 1)
+    assert(Visit.objects.count() == 2)
+        
