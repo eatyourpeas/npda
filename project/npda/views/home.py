@@ -77,11 +77,11 @@ async def home(request):
 
             return redirect("submissions")
         else:
-            PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
             messages.error(
                 request=request,
-                message=f"You have do not have permission to upload csvs for {PaediatricDiabetesUnit.objects.get(pz_code=pz_code)}.",
+                message=f"You have do not have permission to upload csvs for {pz_code}.",
             )
+            form = UploadFileForm()
     else:
         form = UploadFileForm()
 

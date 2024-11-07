@@ -99,7 +99,8 @@ def get_new_session_fields(user, pz_code):
                 submission_active=True,
                 audit_year=datetime.now().year,
             ).get()
-            if submission.csv_file is not None:
+
+            if submission.csv_file and submission.csv_file.name:
                 can_upload_csv = True
                 can_complete_questionnaire = (
                     False
@@ -124,3 +125,17 @@ def get_new_session_fields(user, pz_code):
         ret["can_complete_questionnaire"] = can_complete_questionnaire
 
     return ret
+
+
+def refresh_session_object(self, user, pz_code):
+    """
+    Refresh the session object and save the new fields.
+    """
+    session = get_new_session_fields(user, pz_code)
+    self.request.session.update(session)
+    self.request.session.modified = True
+    print(
+        "can_complete_questionnaire",
+        self.request.session.get("can_complete_questionnaire"),
+    )
+    print("can_upload_csv", self.request.session.get("can_upload_csv"))
