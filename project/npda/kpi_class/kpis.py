@@ -3104,6 +3104,8 @@ class CalculateKPIS:
         SINGLE NUMBER: median of HbA1c measurements (item 17) within the audit
         period, excluding measurements taken within 90 days of diagnosis
 
+        i.e. valid = hba1c date > diagnosis date + 90 days
+
         NOTE: The median for each patient is calculated. We then calculate the
         median of the medians.
 
@@ -3119,42 +3121,27 @@ class CalculateKPIS:
 
         # Calculate median HBa1c for each patient
 
-        # Get the visits that match the valid HbA1c criteria
+        # Retrieve all visits with valid HbA1c values
+        valid_visits = Visit.objects.filter(
+            visit_date__range=self.AUDIT_DATE_RANGE,
+            hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90)
+        ).values("patient__pk", "hba1c")
 
-        # debugging
-        from pprint import pprint, pformat
-        tmp_pts_data = defaultdict(list)
-        for v in Visit.objects.all().values('visit_date', 'hba1c_date','patient__diagnosis_date', 'hba1c', 'patient__postcode'):
-            tmp_pts_data[(v['patient__postcode'], v['patient__diagnosis_date'])].append({
-                v['visit_date']: {
-                    'hba1c_date': v['hba1c_date'],
-                    'hba1c': v['hba1c'],
-                }
-            })
-        for (pt_name, diagnosis_date), visit_data in tmp_pts_data.items():
-            print(f'{pt_name=}, diagnosed on {diagnosis_date}')
-            pprint(visit_data)
-            print()
-        breakpoint()
-            # diagnosis_date = v['patient__diagnosis_date']
-            # hba1c_date = v['hba1c_date']
-            # print(f'{v["patient__postcode"]}')
-            # print(f"{v['patient__diagnosis_date']=}  {v['hba1c_date']=}")
-            # if diagnosis_date and hba1c_date:
-            #     print(f"Measurement taken {v['hba1c_date'] - v['patient__diagnosis_date']} days after diagnosis: {'excluded' if (hba1c_date - diagnosis_date).days < 90 else 'included'}")
-            # else:
-            #     print(f"Taken after 90 days of diabetes diagnosis: False")
-            # print(f"{v['visit_date']=}")
-            # print(f"{v['hba1c']=}")
-            # print()
+        # Group HbA1c values by patient ID into a list so can use
+        # calculate_median method
+        # We're doing this in Python instead of Django ORM because median
+        # aggregation gets complicated
+        hba1c_values_by_patient = defaultdict(list)
+        for visit in valid_visits:
+            hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
 
-        # Calculate the mean of the medians and convert to float (as Decimal)
-        mean_of_median_hba1cs = (
-            eligible_pts_annotated.aggregate(
-                mean_of_median_hba1cs=Avg("median_hba1c")
-            ).get("mean_of_median_hba1cs")
-            or 0
-        )
+        # For each patient, calculate the median of their HbA1c values
+        median_hba1cs = []
+        for _, hba1c_values in hba1c_values_by_patient.items():
+            median_hba1cs.append(self.calculate_median(hba1c_values))
+
+        # Finally calculate the median of the medians
+        median_of_median_hba1cs = self.calculate_median(median_hba1cs)
 
         # Also set pt querysets to be returned if required
         patient_querysets = self._get_pt_querysets_object(

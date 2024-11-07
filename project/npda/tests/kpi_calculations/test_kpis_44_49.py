@@ -152,6 +152,8 @@ def test_kpi_calculation_45(AUDIT_START_DATE):
     SINGLE NUMBER: median of HbA1c measurements (item 17) within the audit
     period, excluding measurements taken within 90 days of diagnosis
 
+    i.e. valid = hba1c date > diagnosis date + 90 days
+
     NOTE: The median for each patient is calculated. We then calculate the
     median of the medians.
 
@@ -162,17 +164,17 @@ def test_kpi_calculation_45(AUDIT_START_DATE):
     Patient.objects.all().delete()
 
     # Create  Patients and Visits that should be eligible (KPI1)
-    DIAGNOSIS_DATE = AUDIT_START_DATE - relativedelta(days=91)
+    DIAGNOSIS_DATE = AUDIT_START_DATE - relativedelta(days=89)
     eligible_criteria = {
         "date_of_birth": AUDIT_START_DATE - relativedelta(days=365 * 10),
+        "diagnosis_date": DIAGNOSIS_DATE,
     }
 
     # Create passing pts
     pt_1_hba1cs = [Decimal(n) for n in [45, 46, 47]]
-    # Diagnosis date is 91 days before AUDIT_START_DATE so valid hba1c dates are
+    # Diagnosis date is 89 days before AUDIT_START_DATE so valid hba1c dates are
     # all from AUDIT_START_DATE+1day onwards
-    # 91 so we can test for 90 days after diagnosis whilst still being in audit period
-    pt_1_hba1c_date_1 = AUDIT_START_DATE+relativedelta(days=1)
+    pt_1_hba1c_date_1 = AUDIT_START_DATE+relativedelta(days=2)
     passing_pt_1_median_46 = PatientFactory(
         # KPI1 eligible
         **eligible_criteria,
@@ -201,7 +203,7 @@ def test_kpi_calculation_45(AUDIT_START_DATE):
     )
 
     pt_2_hba1cs = [Decimal(n) for n in [47, 48, 49]]
-    pt_2_hba1c_date_1 = AUDIT_START_DATE+relativedelta(days=1)
+    pt_2_hba1c_date_1 = AUDIT_START_DATE+relativedelta(days=2)
     passing_pt_2_median_48 = PatientFactory(
         # KPI1 eligible
         **eligible_criteria,
@@ -228,8 +230,9 @@ def test_kpi_calculation_45(AUDIT_START_DATE):
         hba1c_date=pt_2_hba1c_date_3,
         hba1c=pt_2_hba1cs[2],
     )
-    # This measurement should NOT be counted as it's within 90 days of diagnosis
-    pt_2_invalid_hba1c_date_wihtin_90_days_diagnosis = AUDIT_START_DATE
+    # This measurement should NOT be counted as it's exactly 90 days after diagnosis
+    # even though it's within the audit period
+    pt_2_invalid_hba1c_date_wihtin_90_days_diagnosis = AUDIT_START_DATE + relativedelta(days=1)
     VisitFactory(
         patient=passing_pt_2_median_48,
         visit_date=pt_2_invalid_hba1c_date_wihtin_90_days_diagnosis,
