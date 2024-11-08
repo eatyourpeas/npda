@@ -27,7 +27,7 @@ def csv_summarize(csv_file):
     total_records = len(dataframe)
     number_unique_nhs_numbers = dataframe["NHS Number"].nunique()
     unique_nhs_numbers_no_spaces = (
-        dataframe["NHS Number"].fillna("").apply(lambda x: x.replace(" ", "")).unique()
+        dataframe["NHS Number"].fillna("").apply(lambda x: str(x).replace(" ", "")).unique()
     )
     count_of_records_per_nhs_number = dataframe["NHS Number"].value_counts()
     matching_patients_in_current_audit_year = Patient.objects.filter(

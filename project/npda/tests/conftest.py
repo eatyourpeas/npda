@@ -19,7 +19,9 @@ from project.npda.tests.factories import (NPDAUserFactory,
                                           PatientFactory, TransferFactory,
                                           VisitFactory, seed_groups_fixture,
                                           seed_patients_fixture,
-                                          seed_users_fixture)
+                                          seed_users_fixture,
+                                          dummy_sheets_folder,
+                                          dummy_sheet_csv)
 
 logger = logging.getLogger(__name__)
 # register factories to be used across test directory
