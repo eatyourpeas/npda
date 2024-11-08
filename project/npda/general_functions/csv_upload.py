@@ -145,27 +145,34 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return value
 
-    def row_to_dict(row, model, mapping):
-        return {
-            model_field: csv_value_to_model_value(
-                model._meta.get_field(model_field), row[csv_field]
-            )
-            for model_field, csv_field in mapping.items()
-        }
+    def parse_row_using_model(row, model, mapping):
+        model_values = {}
+        field_errors = {}
+
+        for model_field_name, csv_field in mapping.items():
+            try:
+                model_field = model._meta.get_field(model_field_name)
+                csv_value = row[csv_field]
+
+                model_value = csv_value_to_model_value(model_field, csv_value)
+                model_values[model_field_name] = model_value
+            except ValidationError as e:
+                field_errors[model_field_name] = e
+
+        return (model_values, field_errors)
 
     def validate_transfer(row):
-        return row_to_dict(
+        return parse_row_using_model(
             row,
             Transfer,
             {
                 "date_leaving_service": "Date of leaving service",
                 "reason_leaving_service": "Reason for leaving service",
             },
-        ) | {"paediatric_diabetes_unit": pdu}
+        )
 
     async def validate_patient_using_form(row, async_client):
-
-        fields = row_to_dict(
+        (fields, field_errors) = parse_row_using_model(
             row,
             Patient,
             {
@@ -189,11 +196,10 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 async_client=async_client
         )
 
-        return form
+        return (form, field_errors)
 
     def validate_visit_using_form(patient, row):
-
-        fields = row_to_dict(
+        (fields, field_errors) = parse_row_using_model(
             row,
             Visit,
             {
@@ -240,21 +246,24 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         )
 
         form = VisitForm(data=fields, initial={"patient": patient})
-        return form
+        return (form, field_errors)
 
     async def validate_rows(rows, async_client):
         first_row = rows.iloc[0]
         patient_row_index = first_row["row_index"]
 
-        transfer_fields = validate_transfer(first_row)
-        patient_form = await validate_patient_using_form(first_row, async_client)
+        (transfer_fields, transfer_field_errors) = validate_transfer(first_row)
+        (patient_form, patient_field_errors) = await validate_patient_using_form(first_row, async_client)
 
-        visits = rows.apply(
-            lambda row: (validate_visit_using_form(patient_form.instance, row), row["row_index"]),
-            axis=1,
-        )
+        visits = []
 
-        return (patient_form, transfer_fields, patient_row_index, visits)
+        for _, row in rows.iterrows():
+            (visit_form, visit_field_errors) = validate_visit_using_form(patient_form.instance, row)
+            visits.append((visit_form, visit_field_errors, row["row_index"]))
+
+        first_row_field_errors = transfer_field_errors | patient_field_errors
+
+        return (patient_form, transfer_fields, patient_row_index, first_row_field_errors, visits)
 
     def create_instance(model, form):
         # We want to retain fields even if they're invalid so that we can edit them in the UI
@@ -294,7 +303,12 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     async with httpx.AsyncClient() as async_client:
         validation_results_by_patient = await validate_rows_in_parallel(visits_by_patient, async_client)
 
-        for (patient_form, transfer_fields, patient_row_index, visits) in validation_results_by_patient:
+        for (patient_form, transfer_fields, patient_row_index, first_row_field_errors, visits) in validation_results_by_patient:
+            # Errors parsing the Transfer or Patient fields
+            for field, error in first_row_field_errors.items():
+                errors_to_return[patient_row_index][field].append(error)
+            
+            # Errors validating the Patient fields
             for field, error in patient_form.errors.as_data().items():
                 errors_to_return[patient_row_index][field].append(error)
 
@@ -316,7 +330,12 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
-            for (visit_form, visit_row_index) in visits:
+            for (visit_form, visit_field_errors, visit_row_index) in visits:
+                # Errors parsing the Visit fields
+                for field, error in visit_field_errors.items():
+                    errors_to_return[visit_row_index][field].append(error)
+
+                # Errors validating the Visit fields
                 for field, error in visit_form.errors.as_data().items():
                     errors_to_return[visit_row_index][field].append(error)
 
