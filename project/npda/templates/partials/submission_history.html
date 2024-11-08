@@ -101,6 +101,10 @@
 
     {% else %}
         <!-- No submissions so far -->
-        <p class="text-gray-400">No submissions uploaded yet for {{request.session.pz_code}}.</p>
+         {% if can_upload_csv %}
+            <p class="text-gray-400">No submissions uploaded yet for {{request.session.pz_code}}.</p>
+        {% elif can_complete_questionnaire %}
+            <p class="text-gray-400">No submissions created yet for {{request.session.pz_code}}.</p>
+        {% endif %}
     {% endif %}
 </div>

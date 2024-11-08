@@ -34,62 +34,73 @@ async def home(request):
     Home page view - contains the upload form.
     Only verified users can access this page.
     """
+    if request.session.get("can_upload_csv") is False:
+        # If the user does not have permission to upload csvs, redirect them to the submissions page
+        return redirect("dashboard")
+
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
         user_csv = request.FILES["csv_upload"]
         pz_code = request.session.get("pz_code")
 
-        parsed_csv = read_csv(user_csv)
+        if request.session.get("can_upload_csv") is True:
+          parsed_csv = read_csv(user_csv)
 
-        if parsed_csv.missing_columns or parsed_csv.additional_columns or parsed_csv.duplicate_columns:
-            message = "Invalid CSV format."
+          if parsed_csv.missing_columns or parsed_csv.additional_columns or parsed_csv.duplicate_columns:
+              message = "Invalid CSV format."
 
-            if parsed_csv.missing_columns:
-                message += f" Missing columns: [{", ".join(parsed_csv.missing_columns)}]"
-            
-            if parsed_csv.additional_columns:
-                message += f" Unexpected columns: [{", ".join(parsed_csv.additional_columns)}]"
-            
-            if parsed_csv.duplicate_columns:
-                message += f" Duplicate columns: [{", ".join(parsed_csv.additional_columns)}]"
-            
+              if parsed_csv.missing_columns:
+                  message += f" Missing columns: [{", ".join(parsed_csv.missing_columns)}]"
+
+              if parsed_csv.additional_columns:
+                  message += f" Unexpected columns: [{", ".join(parsed_csv.additional_columns)}]"
+
+              if parsed_csv.duplicate_columns:
+                  message += f" Duplicate columns: [{", ".join(parsed_csv.additional_columns)}]"
+
+              messages.error(
+                  request=request,
+                  message=message,
+              )
+          else:
+              errors_by_row_index = await csv_upload(
+                  user=request.user,
+                  dataframe=parsed_csv.df,
+                  csv_file=user_csv,
+                  pdu_pz_code=pz_code,
+              )
+
+              VisitActivity = apps.get_model("npda", "VisitActivity")
+              try:
+                  await VisitActivity.objects.acreate(
+                      activity=8,
+                      ip_address=request.META.get("REMOTE_ADDR"),
+                      npdauser=request.user,
+                  )  # uploaded csv - activity 8
+              except Exception as e:
+                  logger.error(f"Failed to log user activity: {e}")
+
+              if errors_by_row_index:
+                  for row_index, errors_by_field in errors_by_row_index.items():
+                      for field, errors in errors_by_field.items():
+                          for error in errors:
+                              messages.error(
+                                  request=request,
+                                  message=f"CSV has been uploaded, but errors have been found. These include error in row {row_index}[{field}]: {error}",
+                              )
+              else:
+                  messages.success(
+                      request=request,
+                      message="File uploaded successfully. There are no errors,",
+                  )
+
+          return redirect("submissions")
+        else:
             messages.error(
                 request=request,
-                message=message,
+                message=f"You have do not have permission to upload csvs for {pz_code}.",
             )
-        else:
-            errors_by_row_index = await csv_upload(
-                user=request.user,
-                dataframe=parsed_csv.df,
-                csv_file=user_csv,
-                pdu_pz_code=pz_code,
-            )
-
-            VisitActivity = apps.get_model("npda", "VisitActivity")
-            try:
-                await VisitActivity.objects.acreate(
-                    activity=8,
-                    ip_address=request.META.get("REMOTE_ADDR"),
-                    npdauser=request.user,
-                )  # uploaded csv - activity 8
-            except Exception as e:
-                logger.error(f"Failed to log user activity: {e}")
-
-            if errors_by_row_index:
-                for row_index, errors_by_field in errors_by_row_index.items():
-                    for field, errors in errors_by_field.items():
-                        for error in errors:
-                            messages.error(
-                                request=request,
-                                message=f"CSV has been uploaded, but errors have been found. These include error in row {row_index}[{field}]: {error}",
-                            )
-            else:
-                messages.success(
-                    request=request,
-                    message="File uploaded successfully. There are no errors,",
-                )
-
-        return redirect("submissions")
+            form = UploadFileForm()
     else:
         form = UploadFileForm()
 

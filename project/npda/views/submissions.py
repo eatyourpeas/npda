@@ -78,15 +78,16 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         ).first()  # there can be only one of these
         if latest_active_submission:
             # If a submission exists, summarize the csv data
+          if latest_active_submission.csv_file:
             parsed_csv = read_csv(latest_active_submission.csv_file)
             context["data"] = csv_summarize(parsed_csv.df)
-            # Get some summary data about the patients in the submission...
-            context["patients"] = Patient.objects.filter(
-                submissions=latest_active_submission
-            ).annotate(
-                visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
-                visit_count=Count("visit"),
-            )
+          # Get some summary data about the patients in the submission...
+          context["patients"] = Patient.objects.filter(
+              submissions=latest_active_submission
+          ).annotate(
+              visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
+              visit_count=Count("visit"),
+          )
         return context
 
     def get(self, request, *args, **kwargs):
