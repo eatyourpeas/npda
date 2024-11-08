@@ -618,6 +618,28 @@ def test_missing_columns_causes_error(test_user, single_row_valid_df):
 
 
 @pytest.mark.django_db
+def test_case_insensitive_column_headers(test_user, dummy_sheet_csv):
+    csv = dummy_sheet_csv
+
+    lines = csv.split("\n")
+    lines[0] = lines[0].lower()
+    csv = "\n".join(lines)
+
+    df = read_csv_from_str(csv).df
+
+    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    assert(len(errors) == 0)
+
+
+@pytest.mark.django_db
+def test_mixed_case_column_headers(test_user, dummy_sheet_csv):
+    csv = dummy_sheet_csv.replace("NHS Number", "NHS number")
+    df = read_csv_from_str(csv).df
+
+    assert(df.columns[0] == "NHS Number")
+
+
+@pytest.mark.django_db
 def test_first_row_with_extra_cell_at_the_start(test_user, single_row_valid_df):
     csv = single_row_valid_df.to_csv(index=False, date_format="%d/%m/%Y")
     

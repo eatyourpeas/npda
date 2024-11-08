@@ -43,11 +43,13 @@ class ParsedCSVFile:
 def read_csv(csv_file) -> ParsedCSVFile:
     df = pd.read_csv(csv_file)
 
-    # Remove leading and trailing whitespace on column names
+    # Remove leading and trailing whitespace on column names.
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
 
-    if not df.columns[0] == HEADINGS_LIST[0]:
+    lowercase_headings_list = [heading.lower() for heading in HEADINGS_LIST]
+
+    if df.columns[0].lower() not in lowercase_headings_list:
         # No header in the source - pass them from our definitions
         logger.warning(f"CSV file uploaded without column names, using predefined column names")
 
@@ -65,8 +67,11 @@ def read_csv(csv_file) -> ParsedCSVFile:
     if not df.iloc[0].name == 0:
         raise ValueError("Suspected too many values in the first row, please check there are no extra values")
 
-    for column in ALL_DATES:
-        df[column] = pd.to_datetime(df[column], format="%d/%m/%Y")
+    # Accept columns case insensitively but replace them with their official version to make life easier later
+    for column in df.columns:
+        if not column in HEADINGS_LIST and column.lower() in lowercase_headings_list:
+            normalised_column = next(c for c in HEADINGS_LIST if c.lower() == column.lower())
+            df = df.rename(columns={ column: normalised_column })
 
     missing_columns = [column for column in HEADINGS_LIST if not column in df.columns]
     additional_columns = [column for column in df.columns if not column in HEADINGS_LIST]
@@ -79,6 +84,11 @@ def read_csv(csv_file) -> ParsedCSVFile:
 
         if result and result.group(1) not in duplicate_columns:
             duplicate_columns.append(result.group(1))
+
+    for column in ALL_DATES:
+        # Could still be missing
+        if column in df.columns:
+            df[column] = pd.to_datetime(df[column], format="%d/%m/%Y")
 
     return ParsedCSVFile(df, missing_columns, additional_columns, duplicate_columns)
 
