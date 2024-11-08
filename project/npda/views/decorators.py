@@ -56,9 +56,9 @@ def login_and_otp_required():
 
         def sync_login_and_otp_required(request, *args, **kwargs):
             if check_otp(view, request):
-                return redirect("two_factor:setup")
-            else:
                 return view(request, *args, **kwargs)
+            else:
+                return redirect("two_factor:setup")
 
         login_required(view)
 
