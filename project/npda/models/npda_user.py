@@ -44,7 +44,8 @@ class NPDAUserManager(BaseUserManager):
         )
 
         user.set_password(password)
-        user.view_preference = 0  # organisation level view preference
+        if not extra_fields.get("view_preference"):
+            user.view_preference = 1  # PDU level view preference
         if not extra_fields.get("is_superuser"):
             user.is_superuser = False
         if not extra_fields.get("is_active"):
