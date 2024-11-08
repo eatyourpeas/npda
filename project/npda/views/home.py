@@ -33,6 +33,10 @@ async def home(request):
     Home page view - contains the upload form.
     Only verified users can access this page.
     """
+    if request.session.get("can_upload_csv") is False:
+        # If the user does not have permission to upload csvs, redirect them to the submissions page
+        return redirect("dashboard")
+
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
         file = request.FILES["csv_upload"]
