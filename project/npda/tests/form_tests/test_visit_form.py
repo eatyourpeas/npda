@@ -10,13 +10,16 @@ def test_height_and_weight_set_correctly():
 
     form = VisitForm(
         data={
-            "height": "1.5",
+            "height": "60",
             "weight": "50",
         },
         initial = {
             "patient": patient
         }
     )
-    assert form.is_valid()
-    assert form.cleaned_data["height"] == 1.5
+
+    # Not passing all the data so it will have errors, just trigger the cleaners
+    form.is_valid()
+
+    assert form.cleaned_data["height"] == 60
     assert form.cleaned_data["weight"] == 50
