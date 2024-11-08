@@ -23,7 +23,7 @@ class NPDAUserManager(BaseUserManager):
     All clinicians must be associated with a organisation trust
     """
 
-    def create_user(self, email, password, first_name, role, **extra_fields):
+    def create_user(self, email, password, role, **extra_fields):
         """
         Create and save a User with the given email and password.
         """
@@ -37,21 +37,21 @@ class NPDAUserManager(BaseUserManager):
         email = self.normalize_email(str(email))
         user = self.model(
             email=email,
-            first_name=first_name,
             password=password,
             role=role,
             **extra_fields,
         )
 
         user.set_password(password)
-        if not extra_fields.get("view_preference"):
+        if not user.view_preference:
             user.view_preference = 1  # PDU level view preference
         if not extra_fields.get("is_superuser"):
             user.is_superuser = False
         if not extra_fields.get("is_active"):
             user.is_active = False
         # user not active until has confirmed by email
-        user.email_confirmed = False
+        if not extra_fields.get("email_confirmed"):
+            user.email_confirmed = False
         # set time password has been updated
         user.password_last_set = timezone.now()
         user.date_joined = timezone.now()
@@ -66,72 +66,36 @@ class NPDAUserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, email, password, **extra_fields):
+    def create_superuser(self, first_name, last_name, email, password):
         """
         Create and save a SuperUser with the given email and password.
         """
         PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
         OrganisationEmployer = apps.get_model("npda", "OrganisationEmployer")
 
-        extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("is_active", True)
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_rcpch_audit_team_member", True)
-        extra_fields.setdefault("is_rcpch_staff", False)
-        extra_fields.setdefault("email_confirmed", True)
-        extra_fields.setdefault("password_last_set", timezone.now())
-        # PDU level preference
-        extra_fields.setdefault("view_preference", 1)
+        logged_in_user = self.create_user(
+            email=email.lower(),
+            password=password,
+            role=RCPCH_AUDIT_TEAM,
+            is_superuser=True,
+            is_active=True,
+            is_staff=True,
+            is_rcpch_audit_team_member=True,
+            is_rcpch_staff=True,
+            email_confirmed=True,
+            view_preference=2 # national
+        )
 
-        if extra_fields.get("is_active") is not True:
-            raise ValueError(_("Superuser must have is_active=True."))
-        if extra_fields.get("is_staff") is not True:
-            raise ValueError(_("Superuser must have is_staff=True."))
-        if extra_fields.get("is_superuser") is not True:
-            raise ValueError(_("Superuser must have is_superuser=True."))
+        paediatric_diabetes_unit = PaediatricDiabetesUnit.objects.get(
+                pz_code="PZ999",  # RCPCH
+        )
+        
+        OrganisationEmployer.objects.create(
+            paediatric_diabetes_unit=paediatric_diabetes_unit,
+            npda_user=logged_in_user,
+            is_primary_employer=True
+        )
 
-        if extra_fields.get("role") not in [1, 2, 3, 4]:
-            raise ValueError("--role must be an integer between 1 and 4")
-        else:
-            if extra_fields.get("role") == 4:
-                extra_fields.setdefault("is_rcpch_staff", True)
-                extra_fields.setdefault("view_preference", 2)  # national scope
-                logged_in_user = self.create_user(
-                    email.lower(), password, **extra_fields
-                )
-                paediatric_diabetes_unit = PaediatricDiabetesUnit.objects.get(
-                    pz_code="PZ999",  # RCPCH
-                )
-                # if user already has an employer, do not create a new one - update the status to primary
-                OrganisationEmployer.objects.update_or_create(
-                    paediatric_diabetes_unit=paediatric_diabetes_unit,
-                    npda_user=logged_in_user,
-                    defaults={"is_primary_employer": True},
-                )
-            else:
-                extra_fields.setdefault("is_rcpch_staff", False)
-                extra_fields.setdefault("view_preference", 2)  # national scope
-                logged_in_user = self.create_user(
-                    email.lower(), password, **extra_fields
-                )
-                paediatric_diabetes_unit = PaediatricDiabetesUnit.objects.get(
-                    pz_code="PZ215",  # Superusers that are not RCPCH staff are affiliated with King's College Hospital
-                )
-                # if user already has an employer, do not create a new one - update the status to primary
-                OrganisationEmployer.objects.update_or_create(
-                    paediatric_diabetes_unit=paediatric_diabetes_unit,
-                    npda_user=logged_in_user,
-                    defaults={"is_primary_employer": True},
-                )
-
-        logged_in_user.date_joined = timezone.now()
-
-        """
-        Allocate Roles
-        """
-
-        group = group_for_role(logged_in_user.role)
-        logged_in_user.groups.add(group)
         return logged_in_user
 
 
