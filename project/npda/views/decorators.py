@@ -1,15 +1,11 @@
-# python imports
-import logging
-import asyncio
-
-from django.conf import settings
-from django.core.exceptions import PermissionDenied
-from django.contrib.auth.decorators import login_required
+from functools import wraps
 from django.shortcuts import redirect
-
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from asgiref.sync import sync_to_async
+import asyncio
+import logging
 
-# Logging setup
 logger = logging.getLogger(__name__)
 
 
@@ -17,6 +13,7 @@ def login_and_otp_required():
     """
     Must have verified via 2FA
     """
+
     def check_otp(view, request):
         # Then, ensure 2fa verified
         user = request.user
@@ -28,16 +25,13 @@ def login_and_otp_required():
                 view,
                 settings.DEBUG,
             )
-
             return True
 
         # Prevent unverified users
         if not user.is_verified():
-            user_list = user.__dict__
-            npda_user = user_list["_wrapped"]
             logger.info(
                 "User %s is unverified. Tried accessing %s",
-                npda_user,
+                user,
                 view.__qualname__,
             )
             return False
@@ -45,20 +39,22 @@ def login_and_otp_required():
         return True
 
     def decorator(view):
+        @wraps(view)
         async def async_login_and_otp_required(request, *args, **kwargs):
             async_check_otp = sync_to_async(check_otp)
-            
+
             if await async_check_otp(view, request):
                 response = await view(request, *args, **kwargs)
                 return response
             else:
                 return redirect("two_factor:setup")
 
+        @wraps(view)
         def sync_login_and_otp_required(request, *args, **kwargs):
             if check_otp(view, request):
-                return redirect("two_factor:setup")
-            else:
                 return view(request, *args, **kwargs)
+            else:
+                return redirect("two_factor:setup")
 
         login_required(view)
 
@@ -66,5 +62,5 @@ def login_and_otp_required():
             return async_login_and_otp_required
         else:
             return sync_login_and_otp_required
-    
+
     return decorator
