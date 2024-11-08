@@ -27,14 +27,14 @@ class PatientExternalValidationResult:
 async def _validate_postcode(postcode: str | None, async_client: AsyncClient) -> str | None:
     if postcode:
         try:
-            result = await validate_postcode(postcode, async_client)
+            normalised_postcode = await validate_postcode(postcode, async_client)
 
-            if not result:
+            if not normalised_postcode:
                 raise ValidationError(
                     "Invalid postcode %(postcode)s", params={"postcode":postcode}
                 )
-            else:
-                return result["normalised_postcode"]
+            
+            return normalised_postcode
         except HTTPError as err:
             logger.warning(f"Error validating postcode {err}")
 
@@ -71,9 +71,7 @@ async def _gp_details_from_ods_code(ods_code: str | None, async_client: AsyncCli
 
 async def _gp_details_from_postcode(gp_practice_postcode: str, async_client: AsyncClient) -> tuple[str, str] | None:
     try:
-        validation_result = await validate_postcode(gp_practice_postcode, async_client)
-        normalised_postcode = validation_result["normalised_postcode"]
-
+        normalised_postcode = await validate_postcode(gp_practice_postcode, async_client)
         ods_code = await gp_ods_code_for_postcode(normalised_postcode, async_client)
 
         if not ods_code:
@@ -111,8 +109,15 @@ async def validate_patient_async(postcode: str, gp_practice_ods_code: str | None
         return_exceptions=True
     )
 
-    ret.postcode = postcode
-    ret.index_of_multiple_deprivation_quintile = index_of_multiple_deprivation_quintile
+    if isinstance(postcode, Exception) and not type(postcode) is ValidationError:
+        raise postcode
+    else:
+        ret.postcode = postcode
+    
+    if isinstance(index_of_multiple_deprivation_quintile, Exception) and not type(index_of_multiple_deprivation_quintile) is ValidationError:
+        raise index_of_multiple_deprivation_quintile
+    else:
+        ret.index_of_multiple_deprivation_quintile = index_of_multiple_deprivation_quintile
 
     if type(gp_details) is ValidationError:
         if gp_practice_ods_code:
@@ -120,6 +125,8 @@ async def validate_patient_async(postcode: str, gp_practice_ods_code: str | None
             ret.gp_practice_ods_code = gp_details
         else:
             ret.gp_practice_postcode = gp_details
+    elif isinstance(gp_details, Exception):
+        raise gp_details
     elif gp_details:
         [gp_practice_ods_code, gp_practice_postcode] = gp_details
 
