@@ -38,7 +38,6 @@ class Submission(models.Model):
     csv_file = models.FileField(
         upload_to=f"submissions/csv/",
         help_text="CSV file containing the audit data for this submission",
-        default="submissions/csv/default.csv",
         null=True,  # submissions that are not active will have their csv file deleted
     )
 
