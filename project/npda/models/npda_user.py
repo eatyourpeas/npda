@@ -76,6 +76,8 @@ class NPDAUserManager(BaseUserManager):
         logged_in_user = self.create_user(
             email=email.lower(),
             password=password,
+            first_name=first_name,
+            last_name=last_name,
             role=RCPCH_AUDIT_TEAM,
             is_superuser=True,
             is_active=True,
