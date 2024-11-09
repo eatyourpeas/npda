@@ -1,6 +1,9 @@
 # Python imports
+from asgiref.sync import sync_to_async
 import datetime
 import logging
+from pprint import pprint
+
 
 # Django imports
 from django.apps import apps
@@ -15,6 +18,7 @@ from django_htmx.http import trigger_client_event
 
 from ..forms.upload import UploadFileForm
 from ..general_functions.csv_upload import csv_upload, read_csv
+from ..general_functions.serialize_validation_errors import serialize_errors
 from ..general_functions.session import (
     get_new_session_fields,
     refresh_session_object_asynchronously,
@@ -49,7 +53,6 @@ async def home(request):
 
         # You can't read the same file twice without resetting it
         file.seek(0)
-        errors = []
 
         if request.session.get("can_upload_csv") is True:
             try:
@@ -79,6 +82,17 @@ async def home(request):
             )
 
             if errors_by_row_index:
+                # get submission and store the errors
+                Submission = apps.get_model("npda", "Submission")
+                submission = await Submission.objects.aget(
+                    paediatric_diabetes_unit__pz_code=pz_code,
+                    submission_active=True,
+                    audit_year=datetime.date.today().year,
+                )
+                pprint(errors_by_row_index)
+                submission.errors = serialize_errors(errors_by_row_index)
+                # submission.errors = json.dumps(errors_by_row_index)
+                await sync_to_async(submission.save)()
                 # row_indices = []
                 # for row_index, errors_by_field in errors_by_row_index.items():
                 #     for field, errors in errors_by_field.items():

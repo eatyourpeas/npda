@@ -92,7 +92,7 @@
         {% if data is not None %}
             <!-- data quality report only visible for PDU view -->
             {% if request.user.view_preference == 1 %}
-                {% include 'partials/data_quality_report.html' with data=data %}
+                {% include 'partials/data_quality_report.html' with data=data submission_errors=submission_errors %}
             {% elif request.user.view_preference == 2 %}
                 <p class="text-gray-400">It is not possible to view individual data quality reports for an individual Paediatric Diabetes Unit in the National View.</p>
             {% endif %}

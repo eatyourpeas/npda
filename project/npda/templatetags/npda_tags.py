@@ -3,7 +3,12 @@ import itertools
 from django import template, forms
 from django.conf import settings
 from ..general_functions import get_visit_category_for_field
-from ...constants import VisitCategories, VISIT_FIELD_FLAT_LIST, VISIT_FIELDS
+from ...constants import (
+    VisitCategories,
+    VISIT_FIELD_FLAT_LIST,
+    VISIT_FIELDS,
+    CSV_HEADINGS,
+)
 from datetime import date
 
 register = template.Library()
@@ -99,6 +104,24 @@ def category_for_first_item(form, field, index):
         return ""
     else:
         return current_visit_category.value
+
+
+@register.filter
+def heading_for_field(field):
+    """
+    Returns the heading for a given field
+    """
+    for item in CSV_HEADINGS:
+        if field == item["model_field"]:
+            return item["heading"]
+    return None
+
+
+@register.filter
+def join_with_comma(value):
+    if isinstance(value, list):
+        return ", ".join(map(str, value))
+    return value
 
 
 @register.simple_tag
