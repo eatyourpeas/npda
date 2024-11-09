@@ -59,7 +59,6 @@ def login_and_otp_required():
         login_required(view)
 
         if asyncio.iscoroutinefunction(view):
-            print("hello hello")
             return async_login_and_otp_required
         else:
             return sync_login_and_otp_required

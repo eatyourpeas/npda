@@ -31,22 +31,20 @@ def read_csv(csv_file):
     Parses the dates in the columns to the correct format
     """
 
-    # import the csv file into a pandas dataframe, parsing the dates and other data types correctly
-    def date_parser(x):
-        if pd.isnull(x):
-            return pd.NaT
-        pd.to_datetime(x, format="%d/%m/%Y")
-
-    df = pd.read_csv(
-        csv_file,
-        dtype=CSV_DATA_TYPES_MINUS_DATES,
-        parse_dates=ALL_DATES,
-        date_format=date_parser,
-    )
-
+    # Parse the dates in the columns to the correct format first
+    df = pd.read_csv(csv_file)
     # Remove leading and trailing whitespace on column names
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
+
+    for column in ALL_DATES:
+        if column in df.columns:
+            df[column] = pd.to_datetime(df[column], format="%d/%m/%Y", errors="coerce")
+
+    # Apply the dtype to non-date columns
+    for column, dtype in CSV_DATA_TYPES_MINUS_DATES.items():
+        df[column] = df[column].astype(dtype)
+        df[column] = df[column].where(pd.notnull(df[column]), 0)
 
     return df
 
