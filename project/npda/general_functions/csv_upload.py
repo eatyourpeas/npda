@@ -56,7 +56,7 @@ def read_csv(csv_file):
             "Patient Weight (kg)",
             "Total Cholesterol Level (mmol/l)",
         ]:
-            print(f"Rounded {column} to 1 decimal place: {df[column]}")
+            df[column] = df[column].round(1)
 
     return df
 
