@@ -7,3 +7,4 @@ from .visit_factory import *
 from .transfer_factory import *
 from .paediatrics_diabetes_unit_factory import *
 from .organisation_employer_factory import *
+from .csv_file_fixtures import *

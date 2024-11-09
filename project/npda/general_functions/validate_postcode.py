@@ -12,28 +12,22 @@ import httpx
 
 async def validate_postcode(postcode: str, async_client: httpx.AsyncClient):
     """
-    Tests if postcode is valid
-    Returns boolean
+    Tests if postcode is valid, normalising it to AB1 2CD format if it is
+    Throws None if the postcode does not exist, otherwise returns the normalised version
     """
-    use_postcodes_io = settings.POSTCODES_IO_API_URL and settings.POSTCODES_IO_API_KEY
-
-    if use_postcodes_io:
-        request_url = f"{settings.POSTCODES_IO_API_URL}/postcodes/{postcode}"
-    else:
-        request_url = f"{settings.POSTCODE_API_BASE_URL}/postcodes/{postcode}.json"
 
     response = await async_client.get(
-        url=request_url,
+        url=f"{settings.POSTCODES_IO_API_URL}/postcodes/{postcode}",
+        headers={"Ocp-Apim-Subscription-Key": settings.POSTCODES_IO_API_KEY},
         timeout=10,  # times out after 10 seconds
     )
+
+    if response.status_code == 404:
+        return None
+    
     response.raise_for_status()
 
-    if use_postcodes_io:
-        print(f"Postcodes.io response: {response.json()}")
-        normalised_postcode = response.json()["result"]["postcode"]
-    else:
-        normalised_postcode = response.json()["data"]["id"]
+    normalised_postcode = response.json()["result"]["postcode"]
+    print(f"!! normalised_postcode={normalised_postcode}")
 
-    return {
-        "normalised_postcode": normalised_postcode
-    }
+    return normalised_postcode

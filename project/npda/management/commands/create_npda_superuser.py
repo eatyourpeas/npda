@@ -3,7 +3,6 @@ import os
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 
-
 class Command(BaseCommand):
     help = "Create a default NPDA superuser, pulling in values set in environment variables: LOCAL_DEV_ADMIN_EMAIL and LOCAL_DEV_ADMIN_PASSWORD."
 
@@ -33,11 +32,7 @@ class Command(BaseCommand):
                 first_name="SuperuserAda",
                 last_name="Lovelace",
                 email=LOCAL_DEV_ADMIN_EMAIL,
-                password=LOCAL_DEV_ADMIN_PASSWORD,
-                is_active=True,
-                is_staff=True,
-                is_superuser=True,
-                role=4,  # also sets is_rcpch_staff=True
+                password=LOCAL_DEV_ADMIN_PASSWORD
             )
             self.stdout.write(self.style.SUCCESS("Successfully created the superuser."))
         else:

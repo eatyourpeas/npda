@@ -63,8 +63,6 @@ RCPCH_NHS_ORGANISATIONS_API_URL = "https://rcpch-nhs-organisations.azurewebsites
 # jargon for a GP practice
 NHS_SPINE_SERVICES_URL = os.getenv("NHS_SPINE_SERVICES_URL")
 
-POSTCODE_API_BASE_URL = os.getenv("POSTCODE_API_BASE_URL")
-
 POSTCODES_IO_API_URL = os.getenv("POSTCODES_IO_API_URL")
 POSTCODES_IO_API_KEY = os.getenv("POSTCODES_IO_API_KEY")
 
@@ -146,6 +144,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "project.npda.build_info.get_build_info",
+                "project.npda.context_processors.session_data",
             ],
         },
     },

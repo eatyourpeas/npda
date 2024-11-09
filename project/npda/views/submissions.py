@@ -78,8 +78,10 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
             # If a submission exists and it was created by uploading a csv, summarize the csv data
             if self.request.session.get(
                 "can_upload_csv"
-            ):  # check if the user has permission to upload csv (not this function is not available in this brance but is in live)
+            ):  
+                # check if the user has permission to upload csv (not this function is not available in this brance but is in live)
                 context["data"] = csv_summarize(latest_active_submission.csv_file)
+
             # Get some summary data about the patients in the submission...
             context["patients"] = Patient.objects.filter(
                 submissions=latest_active_submission
