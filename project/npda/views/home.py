@@ -73,7 +73,7 @@ async def home(request):
             messages.success(
                 request=request,
                 message="File uploaded successfully. There are no errors,",
-            )   
+            )
 
         return redirect("submissions")
     else:

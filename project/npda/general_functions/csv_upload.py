@@ -55,6 +55,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     """
     Processes standardised NPDA csv file and persists results in NPDA tables
     Returns the empty dict if successful, otherwise ValidationErrors indexed by the row they occurred at
+    Also return the dataframe for later summary purposes
     """
     Patient = apps.get_model("npda", "Patient")
     Transfer = apps.get_model("npda", "Transfer")
