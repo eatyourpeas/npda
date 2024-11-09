@@ -350,6 +350,7 @@ class VisitForm(forms.ModelForm):
     """
 
     def clean_height(self):
+        # Get the height value, if present round it to 1 decimal place
         data = self.cleaned_data["height"]
         if data is not None:
             if data < 40:
@@ -360,9 +361,11 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Please enter a valid height. Cannot be greater than 240cm"
                 )
+            data = round(data, 1)
         return data
 
     def clean_weight(self):
+        # Get the weight value, if present round it to 1 decimal place
         data = self.cleaned_data["weight"]
         if data is not None:
             if data < 1:
@@ -373,6 +376,7 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Patient Weight (kg)' invalid. Cannot be above 200kg"
                 )
+            data = round(data, 1)
         return data
 
     def clean_systolic_blood_pressure(self):
