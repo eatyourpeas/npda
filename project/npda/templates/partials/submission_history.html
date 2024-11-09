@@ -1,4 +1,5 @@
 {% load static %}
+{% load npda_tags %}
 <div>
     {% if request.user.view_preference == 1 %}
         <!-- national view -->
@@ -96,15 +97,15 @@
                 <p class="text-gray-400">It is not possible to view individual data quality reports for an individual Paediatric Diabetes Unit in the National View.</p>
             {% endif %}
         {% else %}
-                <p class="text-gray-400">No data quality report available for {{request.session.pz_code}}.</p>
+                <p class="text-gray-400">No data quality report available for {{request.session.pz_code}}. {% text_for_data_submission can_upload_csv can_complete_questionnaire %}</p>
         {% endif %}
 
     {% else %}
         <!-- No submissions so far -->
          {% if can_upload_csv %}
-            <p class="text-gray-400">No submissions uploaded yet for {{request.session.pz_code}}.</p>
+            <p class="text-gray-400">No submissions uploaded yet for {{request.session.pz_code}}. {% text_for_data_submission can_upload_csv can_complete_questionnaire %}</p>
         {% elif can_complete_questionnaire %}
-            <p class="text-gray-400">No submissions created yet for {{request.session.pz_code}}.</p>
+            <p class="text-gray-400">No submissions created yet for {{request.session.pz_code}}. {% text_for_data_submission can_upload_csv can_complete_questionnaire %}</p>
         {% endif %}
     {% endif %}
 </div>

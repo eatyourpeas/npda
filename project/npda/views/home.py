@@ -18,6 +18,7 @@ from ..general_functions.csv_upload import csv_upload, read_csv
 from ..general_functions.session import (
     get_new_session_fields,
     refresh_session_object_asynchronously,
+    refresh_session_object_synchronously,
 )
 from ..general_functions.view_preference import get_or_update_view_preference
 from ..kpi_class.kpis import CalculateKPIS
@@ -178,6 +179,9 @@ def dashboard(request):
     """
     template = "dashboard.html"
     pz_code = request.session.get("pz_code")
+    refresh_session_object_synchronously(
+        request=request, user=request.user, pz_code=pz_code
+    )
     if request.htmx:
         # If the request is an htmx request, we want to return the partial template
         template = "partials/kpi_table.html"
