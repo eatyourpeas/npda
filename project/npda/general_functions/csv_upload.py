@@ -15,9 +15,7 @@ import numpy as np
 import httpx
 
 # RCPCH imports
-from ...constants import (
-    ALL_DATES,
-)
+from ...constants import ALL_DATES, CSV_DATA_TYPES_MINUS_DATES, NONNULL_FIELDS
 
 # Logging setup
 logger = logging.getLogger(__name__)
@@ -27,16 +25,28 @@ from ..forms.external_patient_validators import validate_patient_async
 
 
 def read_csv(csv_file):
-    df = pd.read_csv(csv_file)
+    """
+    Read the csv file and return a pandas dataframe
+    Assigns the correct data types to the columns
+    Parses the dates in the columns to the correct format
+    """
+
+    # import the csv file into a pandas dataframe, parsing the dates and other data types correctly
+    def date_parser(x):
+        if pd.isnull(x):
+            return pd.NaT
+        pd.to_datetime(x, format="%d/%m/%Y")
+
+    df = pd.read_csv(
+        csv_file,
+        dtype=CSV_DATA_TYPES_MINUS_DATES,
+        parse_dates=ALL_DATES,
+        date_format=date_parser,
+    )
 
     # Remove leading and trailing whitespace on column names
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
-
-    # define the dtype for the columns
-
-    for column in ALL_DATES:
-        df[column] = pd.to_datetime(df[column], format="%d/%m/%Y")
 
     return df
 
@@ -145,9 +155,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         if isinstance(value, pd.Timestamp):
             return value.to_pydatetime().date()
 
-        if model_field.choices:
-            # If the model field has choices, we need to convert the value to the correct type otherwise 1, 2 will be saved as booleans
-            return model_field.to_python(value)
+        # if model_field.choices:
+        #     # If the model field has choices, we need to convert the value to the correct type otherwise 1, 2 will be saved as booleans
+        #     return model_field.to_python(value)
 
         return value
 
