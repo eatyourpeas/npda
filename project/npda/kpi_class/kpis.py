@@ -3125,7 +3125,7 @@ class CalculateKPIS:
         # Retrieve all visits with valid HbA1c values
         valid_visits = Visit.objects.filter(
             visit_date__range=self.AUDIT_DATE_RANGE,
-            hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90)
+            hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90),
         ).values("patient__pk", "hba1c")
 
         # Group HbA1c values by patient ID into a list so can use
@@ -3134,7 +3134,8 @@ class CalculateKPIS:
         # aggregation gets complicated
         hba1c_values_by_patient = defaultdict(list)
         for visit in valid_visits:
-            hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
+            if visit["hba1c"] is not None:
+                hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
 
         # For each patient, calculate the median of their HbA1c values
         median_hba1cs = []
@@ -3591,4 +3592,3 @@ class CalculateKPIS:
 class Median(Func):
     function = "percentile_cont"
     template = "%(function)s(0.5) WITHIN GROUP (ORDER BY %(expressions)s)"
-
