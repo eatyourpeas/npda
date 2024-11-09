@@ -79,13 +79,14 @@ async def home(request):
             )
 
             if errors_by_row_index:
-                for row_index, errors_by_field in errors_by_row_index.items():
-                    for field, errors in errors_by_field.items():
-                        for error in errors:
-                            messages.error(
-                                request=request,
-                                message=f"CSV has been uploaded, but errors have been found. These include error in row {row_index}[{field}]: {error}",
-                            )
+                # row_indices = []
+                # for row_index, errors_by_field in errors_by_row_index.items():
+                #     for field, errors in errors_by_field.items():
+                #         print(errors)
+                messages.error(
+                    request=request,
+                    message=f"CSV has been uploaded, but errors have been found in {len(errors_by_row_index.items())} rows. Please check the data quality report for details.",
+                )
             else:
                 messages.success(
                     request=request,
