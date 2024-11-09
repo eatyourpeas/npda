@@ -3,7 +3,7 @@
 <header>
     <div class="navbar bg-base-100 py-0">
         <div class="flex-1">
-            <a href="{% url 'home' %}" class="flex flex-row ml-8">
+            <a href="{% url 'dashboard' %}" class="flex flex-row ml-8">
                 <img src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg" class="mr-3 h-6 sm:h-9 " alt="RCPCH Logo" />
             <div class="text-xl font-semibold whitespace-nowrap light:text-black ml-3 mr-5">
                 National Paediatric Diabetes Audit
@@ -15,7 +15,7 @@
                 {% if user.is_authenticated %}
                     <li class="ml-auto mr-2 flex items-center">
                         <a href="{% url 'dashboard' %}"
-                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}"
+                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'dashboard' %}"
                             aria-current="page">Dashboard</a>
                     </li>
                     <li class="ml-auto mr-2 flex items-center">
@@ -23,11 +23,20 @@
                             class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}"
                             aria-current="page">Submissions</a>
                     </li>
+                    {% if can_complete_questionnaire %}
                     <li class="mr-2">
                         <a href="{% url 'patients' %}"
                             class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'patients' %}"
-                            aria-current="page">Patients</a>
+                            aria-current="page">Questionnaire</a>
                     </li>
+                    {% endif %}
+                    {% if can_upload_csv %}
+                    <li class="mr-2">
+                        <a href="{% url 'home' %}"
+                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'home' %}"
+                            aria-current="page">Upload  CSV</a>
+                    </li>
+                    {% endif %}
                     <li class="mr-2">
                         <a href="{% url 'npda_users' %}"
                             class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">

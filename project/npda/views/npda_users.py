@@ -511,7 +511,7 @@ class RCPCHLoginView(TwoFactorLoginView):
                 # successful login, get PDU and organisation details from user and store in session
 
                 # Override normal auth flow behaviour, redirect straight to home page
-                return redirect("home")
+                return redirect("dashboard")
 
         # Otherwise, continue with usual workflow
         response = super().post(*args, **kwargs)
@@ -558,5 +558,5 @@ class RCPCHLoginView(TwoFactorLoginView):
                     f"You are now logged in as {user.email}. Welcome to the National Paediatric Diabetes Audit platform! This is your first time logging in ({timezone.localtime(last_logged_in[0].activity_datetime).strftime('%H:%M %p on %A, %d %B %Y')} from {last_logged_in[0].ip_address}).",
                 )
 
-            return redirect(reverse("home"))
+            return redirect(reverse("dashboard"))
         return response

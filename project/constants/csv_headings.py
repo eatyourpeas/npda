@@ -1,3 +1,5 @@
+import pandas as pd
+
 CSV_HEADINGS = (
     # Patient
     {"heading": "NHS Number", "model_field": "nhs_number", "model": "Patient"},
@@ -128,7 +130,7 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
     {
-        "heading": "At time of or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
+        "heading": "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
         "model_field": "thyroid_treatment_status",
         "model": "Visit",
     },
@@ -281,4 +283,45 @@ ALL_VISIT_DATES = [
     ),
     ("hospital_admission_date", "Start date (Hospital Provider Spell)"),
     ("hospital_discharge_date", "Discharge date (Hospital provider spell)"),
+]
+
+CSV_DATA_TYPES_MINUS_DATES = {
+    "NHS Number": "str",
+    "Postcode of usual address": "str",
+    "Stated gender": "Int8",
+    "Ethnic Category": "str",  # choices are all capital letters
+    "Diabetes Type": "Int8",
+    "Reason for leaving service": "Int8",
+    "GP Practice Code": "str",
+    "PDU Number": "str",
+    "Patient Height (cm)": "float32",
+    "Patient Weight (kg)": "float32",
+    "Hba1c Value": "float32",
+    "HbA1c result format": "Int8",
+    "Diabetes Treatment at time of Hba1c measurement": "Int8",
+    "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?": "Int8",
+    "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?": "str",
+    "Systolic Blood Pressure": "Int8",
+    "Diastolic Blood pressure": "Int8",
+    "Retinal Screening Result": "Int8",
+    "Urinary Albumin Level (ACR)": "float64",
+    "Albuminuria Stage": "Int8",
+    "Total Cholesterol Level (mmol/l)": "float64",
+    "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?": "Int8",
+    "Has the patient been recommended a Gluten-free diet?": "Int8",
+    "Was the patient assessed as requiring additional psychological/CAMHS support outside of MDT clinics?": "Int8",
+    "Does the patient smoke?": "Int8",
+    "Was the patient offered an additional appointment with a paediatric dietitian?": "Int8",
+    "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?": "Int8",
+    "Reason for admission": "Int8",
+    "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?": "Int8",
+    "Only complete if OTHER selected: Reason for admission (free text)": "str",
+}
+
+NONNULL_FIELDS = [
+    "NHS Number",
+    "Date of Birth",
+    "Diabetes Type",
+    "PDU Number",
+    "Visit/Appointment Date",
 ]

@@ -18,3 +18,6 @@ build_info.json
 
 media/submissions/csv/*
 *.crt
+
+project/npda/dummy_sheets/local_generated_data/*
+!project/npda/dummy_sheets/local_generated_data/.gitkeep
