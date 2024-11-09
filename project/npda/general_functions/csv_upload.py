@@ -44,7 +44,7 @@ def read_csv(csv_file):
     # Apply the dtype to non-date columns
     for column, dtype in CSV_DATA_TYPES_MINUS_DATES.items():
         df[column] = df[column].astype(dtype)
-        df[column] = df[column].where(pd.notnull(df[column]), 0)
+        df[column] = df[column].where(pd.notnull(df[column]), None)
 
     return df
 
@@ -169,6 +169,8 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 model_field = model._meta.get_field(model_field_name)
                 csv_value = row[csv_field]
 
+                print(f"csv_value: {csv_value}, model_field_name: {model_field_name}")
+
                 model_value = csv_value_to_model_value(model_field, csv_value)
                 model_values[model_field_name] = model_value
             except ValidationError as e:
@@ -268,20 +270,30 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         patient_row_index = first_row["row_index"]
 
         (transfer_fields, transfer_field_errors) = validate_transfer(first_row)
-        (patient_form, patient_field_errors) = await validate_patient_using_form(first_row, async_client)
+        (patient_form, patient_field_errors) = await validate_patient_using_form(
+            first_row, async_client
+        )
 
         visits = []
 
         for _, row in rows.iterrows():
-            (visit_form, visit_field_errors) = validate_visit_using_form(patient_form.instance, row)
+            (visit_form, visit_field_errors) = validate_visit_using_form(
+                patient_form.instance, row
+            )
             visits.append((visit_form, visit_field_errors, row["row_index"]))
 
         first_row_field_errors = transfer_field_errors | patient_field_errors
 
-        return (patient_form, transfer_fields, patient_row_index, first_row_field_errors, visits)
+        return (
+            patient_form,
+            transfer_fields,
+            patient_row_index,
+            first_row_field_errors,
+            visits,
+        )
 
     def create_instance(model, form):
-        # We want to retain fields even if they're invalid so that we can edit them in the UI
+        # We want to retain fields even if they're invalid so that we can return them to the user
         # Use the field value from cleaned_data, falling back to data if it's not there
         if form.is_valid():
             data = form.cleaned_data
@@ -320,11 +332,17 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             visits_by_patient, async_client
         )
 
-        for (patient_form, transfer_fields, patient_row_index, first_row_field_errors, visits) in validation_results_by_patient:
+        for (
+            patient_form,
+            transfer_fields,
+            patient_row_index,
+            first_row_field_errors,
+            visits,
+        ) in validation_results_by_patient:
             # Errors parsing the Transfer or Patient fields
             for field, error in first_row_field_errors.items():
                 errors_to_return[patient_row_index][field].append(error)
-            
+
             # Errors validating the Patient fields
             for field, error in patient_form.errors.as_data().items():
                 errors_to_return[patient_row_index][field].append(error)
@@ -349,7 +367,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
-            for (visit_form, visit_field_errors, visit_row_index) in visits:
+            for visit_form, visit_field_errors, visit_row_index in visits:
                 # Errors parsing the Visit fields
                 for field, error in visit_field_errors.items():
                     errors_to_return[visit_row_index][field].append(error)

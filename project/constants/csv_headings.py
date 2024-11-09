@@ -300,7 +300,7 @@ CSV_DATA_TYPES_MINUS_DATES = {
     "HbA1c result format": "Int8",
     "Diabetes Treatment at time of Hba1c measurement": "Int8",
     "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?": "Int8",
-    "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?": "str",
+    "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?": "Int8",
     "Systolic Blood Pressure": "Int8",
     "Diastolic Blood pressure": "Int8",
     "Retinal Screening Result": "Int8",
