@@ -134,8 +134,4 @@ def refresh_session_object(self, user, pz_code):
     session = get_new_session_fields(user, pz_code)
     self.request.session.update(session)
     self.request.session.modified = True
-    print(
-        "can_complete_questionnaire",
-        self.request.session.get("can_complete_questionnaire"),
-    )
-    print("can_upload_csv", self.request.session.get("can_upload_csv"))
+    return session

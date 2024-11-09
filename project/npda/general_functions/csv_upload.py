@@ -45,6 +45,14 @@ def read_csv(csv_file):
     for column, dtype in CSV_DATA_TYPES_MINUS_DATES.items():
         df[column] = df[column].astype(dtype)
         df[column] = df[column].where(pd.notnull(df[column]), None)
+        # round height and weight if provided to 1 decimal place
+        if column in [
+            "Patient Height (cm)",
+            "Patient Weight (kg)",
+            "Total Cholesterol Level (mmol/l)",
+        ]:
+            df[column] = df[column].round(1)
+            print(f"Rounded {column} to 1 decimal place: {df[column]}")
 
     return df
 
@@ -142,14 +150,14 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         if pd.isnull(value):
             return None
 
-        # Pandas is returning 0 for empty cells in integer columns
-        if value == 0:
-            return None
+        # # Pandas is returning 0 for empty cells in integer columns
+        # if value == 0:
+        #     return None
 
         # Pandas will convert an integer column to float if it contains missing values
         # http://pandas.pydata.org/pandas-docs/stable/user_guide/gotchas.html#missing-value-representation-for-numpy-types
-        if pd.api.types.is_float(value) and model_field.choices:
-            return int(value)
+        # if pd.api.types.is_float(value) and model_field.choices:
+        #     return int(value)
 
         if isinstance(value, pd.Timestamp):
             return value.to_pydatetime().date()
@@ -169,7 +177,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 model_field = model._meta.get_field(model_field_name)
                 csv_value = row[csv_field]
 
-                print(f"csv_value: {csv_value}, model_field_name: {model_field_name}")
+                # print(f"csv_value: {csv_value}, model_field_name: {model_field_name}")
 
                 model_value = csv_value_to_model_value(model_field, csv_value)
                 model_values[model_field_name] = model_value

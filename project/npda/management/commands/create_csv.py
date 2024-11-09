@@ -279,10 +279,7 @@ class Command(BaseCommand):
             visit_types[i : i + 4] for i in range(0, len(visit_types), 4)
         ]
         for chunk in visit_types_chunks:
-            self.print_info(
-                "    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk)
-            )
-        print()
+            self.print_info("    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk))
 
         self.generate_csv(
             audit_start_date,
@@ -295,13 +292,9 @@ class Command(BaseCommand):
             output_path,
             build_flag,
         )
-        self.print_success(
-            f"✨ CSV generated successfully at {self.csv_name}.\n"
-        )
+        self.print_success(f"✨ CSV generated successfully at {self.csv_name}.\n")
         if build_flag:
-            self.print_info(
-                f"Coalesce the build csv files using the --coalesce flag."
-            )
+            self.print_info(f"Coalesce the build csv files using the --coalesce flag.")
 
     def generate_csv(
         self,
@@ -366,9 +359,7 @@ class Command(BaseCommand):
                         csv_heading,
                     ) in field_heading_mappings.items():
                         if model == "Visit":
-                            visit_dict[csv_heading] = getattr(
-                                visit, model_field
-                            )
+                            visit_dict[csv_heading] = getattr(visit, model_field)
                         elif model == "Patient":
                             # Foreign key so need to manually set the value
                             if model_field == "pdu":
@@ -407,19 +398,14 @@ class Command(BaseCommand):
 
         # Get the existing build files
         existing_build_files = [
-            f
-            for f in os.listdir(options["output_path"])
-            if f.startswith("build")
+            f for f in os.listdir(options["output_path"]) if f.startswith("build")
         ]
         if not existing_build_files:
-            self.print_error(
-                f"No build files to coalesce in {options['output_path']}/"
-            )
+            self.print_error(f"No build files to coalesce in {options['output_path']}/")
             return
         self.print_info(f"{CYAN}Existing build files: {RESET}\n")
         for file in existing_build_files:
             self.print_info(f"\t{file}")
-        print()
         # Coalesce the build files
 
         # First read all the files into a list of dataframes
@@ -441,18 +427,14 @@ class Command(BaseCommand):
 
         df.info()
 
-        csv_file_name = (
-            f"coalesced_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
-        )
+        csv_file_name = f"coalesced_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
         full_csv_path = os.path.join(options["output_path"], csv_file_name)
         df.to_csv(
             full_csv_path,
             index=False,
         )
 
-        self.print_success(
-            f"\n✨ CSV coalesced successfully at {full_csv_path}.\n"
-        )
+        self.print_success(f"\n✨ CSV coalesced successfully at {full_csv_path}.\n")
 
         # PRINT OUT DIFFERENCE IN DATA TYPES
         comparison_csv = "dummy_sheet_invalid.csv"
@@ -467,9 +449,7 @@ class Command(BaseCommand):
                 mismatched_dtypes[col] = (orig_dtypes[col], new_dtypes[col])
 
         # Print out mismatched columns and their respective data types
-        self.print_error(
-            f"Columns with differing data types from {comparison_csv}:"
-        )
+        self.print_error(f"Columns with differing data types from {comparison_csv}:")
         self.print_info("NOTE: columns with Nan are cast to float")
         for col, (orig_type, new_type) in mismatched_dtypes.items():
             print(
@@ -498,7 +478,6 @@ class Command(BaseCommand):
                 **{
                     # Convert mismatched columns to the correct data type
                     "NHS Number": lambda x: x["NHS Number"].astype(str),
-
                 },
             )
             # Reorder columns
@@ -521,16 +500,12 @@ class Command(BaseCommand):
                     datetime.strptime(submission_date_str, "%Y-%m-%d")
                 ).date()
             except ValueError:
-                self.print_error(
-                    "Invalid submission_date format. Use YYYY-MM-DD."
-                )
+                self.print_error("Invalid submission_date format. Use YYYY-MM-DD.")
                 return
         else:
             submission_date = timezone.now().date()
 
-        audit_start_date, audit_end_date = get_audit_period_for_date(
-            submission_date
-        )
+        audit_start_date, audit_end_date = get_audit_period_for_date(submission_date)
 
         # Number of patients to seed (pts)
         n_pts_to_seed = options["pts"]
