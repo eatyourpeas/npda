@@ -28,6 +28,7 @@ from project.constants import (
     SMOKING_STATUS,
     HOSPITAL_ADMISSION_REASONS,
     DKA_ADDITIONAL_THERAPIES,
+    CLOSED_LOOP_TYPES,
 )
 
 
@@ -147,13 +148,9 @@ class FakePatientCreator:
                     # q1
                     visit_types[0:n_visits_per_quarter],
                     # q2
-                    visit_types[
-                        n_visits_per_quarter : n_visits_per_quarter * 2
-                    ],
+                    visit_types[n_visits_per_quarter : n_visits_per_quarter * 2],
                     # q3
-                    visit_types[
-                        n_visits_per_quarter * 2 : n_visits_per_quarter * 3
-                    ],
+                    visit_types[n_visits_per_quarter * 2 : n_visits_per_quarter * 3],
                     # q4 - all remaining
                     visit_types[n_visits_per_quarter * 3 :],
                 ]
@@ -170,9 +167,7 @@ class FakePatientCreator:
 
                 # For each visit, randomly assign a date within quarter
                 for visit_type in visits_in_q:
-                    visit_date = get_random_date(
-                        quarter_start_date, quarter_end_date
-                    )
+                    visit_date = get_random_date(quarter_start_date, quarter_end_date)
 
                     # Get the correct kwarg measurements for the visit type
                     # These will be fed into this VisitFactory's.build() call
@@ -306,9 +301,7 @@ class FakePatientCreator:
         - BP
         """
         height, weight, height_weight_observation_date = (
-            self._height_weight_observations(
-                age_range=age_range, visit_date=visit_date
-            )
+            self._height_weight_observations(age_range=age_range, visit_date=visit_date)
         )
 
         hba1c, hba1c_format, hba1c_date = self._hba1c_observations(
@@ -378,23 +371,23 @@ class FakePatientCreator:
             albumin_creatinine_ratio_date,
             albuminuria_stage,
         ) = self._acr_observations(visit_date=visit_date)
-        total_cholesterol, total_cholesterol_date = (
-            self._cholesterol_observations(visit_date=visit_date)
+        total_cholesterol, total_cholesterol_date = self._cholesterol_observations(
+            visit_date=visit_date
         )
-        thyroid_function_date, thyroid_treatment_status = (
-            self._thyroid_observations(visit_date=visit_date)
+        thyroid_function_date, thyroid_treatment_status = self._thyroid_observations(
+            visit_date=visit_date
         )
         coeliac_screen_date, gluten_free_diet = self._coeliac_observations(
             visit_date=visit_date
         )
-        smoking_status, smoking_cessation_referral_date = (
-            self._smoking_observations(visit_date=visit_date)
+        smoking_status, smoking_cessation_referral_date = self._smoking_observations(
+            visit_date=visit_date
         )
         carbohydrate_counting_level_three_education_date = (
             self._carbohydrate_counting_observations(visit_date=visit_date)
         )
-        flu_immunisation_recommended_date = (
-            self._flu_immunisation_observations(visit_date=visit_date)
+        flu_immunisation_recommended_date = self._flu_immunisation_observations(
+            visit_date=visit_date
         )
         ketone_meter_training = self._ketone_meter_observations()
         sick_day_rules_training_date = self._sick_day_rules_observations(
@@ -431,9 +424,7 @@ class FakePatientCreator:
             dietician_additional_appointment_offered: int
             dietician_additional_appointment_date: date
         """
-        dietician_additional_appointment_offered = random.choice(
-            YES_NO_UNKNOWN
-        )[0]
+        dietician_additional_appointment_offered = random.choice(YES_NO_UNKNOWN)[0]
         dietician_additional_appointment_date = visit_date
         return {
             "dietician_additional_appointment_offered": dietician_additional_appointment_offered,
@@ -450,9 +441,7 @@ class FakePatientCreator:
             psychological_additional_support_status: int
         """
         psychological_screening_assessment_date = visit_date
-        psychological_additional_support_status = random.choice(
-            YES_NO_UNKNOWN
-        )[0]
+        psychological_additional_support_status = random.choice(YES_NO_UNKNOWN)[0]
         return {
             "psychological_screening_assessment_date": psychological_screening_assessment_date,
             "psychological_additional_support_status": psychological_additional_support_status,
@@ -470,9 +459,7 @@ class FakePatientCreator:
         """
         hospital_admission_date = visit_date
         hospital_discharge_date = visit_date
-        hospital_admission_reason = random.choice(HOSPITAL_ADMISSION_REASONS)[
-            0
-        ]
+        hospital_admission_reason = random.choice(HOSPITAL_ADMISSION_REASONS)[0]
         dka_additional_therapies = random.choice(DKA_ADDITIONAL_THERAPIES)[0]
         hospital_admission_other = None
         return {
@@ -506,8 +493,8 @@ class FakePatientCreator:
             AgeRange.AGE_20_25: (170, 190, 60, 90),
         }
 
-        height_min, height_max, weight_min, weight_max = (
-            height_weight_observations.get(AgeRange(age_range.value))
+        height_min, height_max, weight_min, weight_max = height_weight_observations.get(
+            AgeRange(age_range.value)
         )
 
         height = round(random.uniform(height_min, height_max), 2)
@@ -570,16 +557,14 @@ class FakePatientCreator:
             closed_loop_system:
         """
         if diabetes_type == 1:
-            treatment = random.choice(TREATMENT_TYPES[0:6])[
-                0
-            ]  # MDI or pump options
+            treatment = random.choice(TREATMENT_TYPES[0:6])[0]  # MDI or pump options
         else:
             treatment = random.choice(
                 [1, 2, 4, 5, 7, 8, 9]
             )  # insulin or non-insulin options compatible with type 2 diabetes
 
         if diabetes_type == 1:
-            closed_loop_system = random.choice([True, False])
+            closed_loop_system = random.choice(CLOSED_LOOP_TYPES)[0]
         else:
             closed_loop_system = YES_NO_UNKNOWN[0][0]  # No
 
