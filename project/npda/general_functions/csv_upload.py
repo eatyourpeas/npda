@@ -43,7 +43,12 @@ def read_csv(csv_file):
 
     # Apply the dtype to non-date columns
     for column, dtype in CSV_DATA_TYPES_MINUS_DATES.items():
-        df[column] = df[column].astype(dtype)
+        try:
+            df[column] = df[column].astype(dtype)
+        except ValueError as e:
+            raise ValidationError(
+                f"The data type for {column} cannot be processed. Please make sure the data type is correct."
+            )
         df[column] = df[column].where(pd.notnull(df[column]), None)
         # round height and weight if provided to 1 decimal place
         if column in [
@@ -51,7 +56,6 @@ def read_csv(csv_file):
             "Patient Weight (kg)",
             "Total Cholesterol Level (mmol/l)",
         ]:
-            df[column] = df[column].round(1)
             print(f"Rounded {column} to 1 decimal place: {df[column]}")
 
     return df

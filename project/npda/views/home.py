@@ -49,12 +49,17 @@ async def home(request):
         errors = []
 
         if request.session.get("can_upload_csv") is True:
-            errors_by_row_index = await csv_upload(
-                user=request.user,
-                dataframe=read_csv(file),
-                csv_file=file,
-                pdu_pz_code=pz_code,
-            )
+            try:
+                errors_by_row_index = await csv_upload(
+                    user=request.user,
+                    dataframe=read_csv(file),
+                    csv_file=file,
+                    pdu_pz_code=pz_code,
+                )
+            except ValidationError as e:
+                messages.error(request=request, message=e.message)
+                return redirect("home")
+
             VisitActivity = apps.get_model("npda", "VisitActivity")
             try:
                 await VisitActivity.objects.acreate(
