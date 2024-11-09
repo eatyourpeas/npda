@@ -2,14 +2,14 @@
 {% load static %}
 {% load npda_tags %}
 {% block content %}
-<div class="flex flex-row min-h-screen justify-center px-10">
-  <div class="overflow-x-auto sm:-mx-2 lg:-mx-2">
-    <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
-        <div class="relative overflow-x-auto">
+<div class="flex flex-col min-h-screen justify-center">
+  <div class="overflow-x-auto">
+    <div class="inline-block min-w-full py-2 px-10">
+        <div class="relative overflow-x-auto w-full">
         <strong>All {{submission.audit_year}} Audit Visits for {{patient.nhs_number}} (NPDA ID-{{patient.pk}})</strong>
           
         {% if visits %}
-          <table class="table-auto w-full text-sm text-left rtl:text-right text-gray-500 text-gray-400 mb-5 font-montserrat">
+          <table class="table table-md w-full text-sm text-left rtl:text-right text-gray-500 text-gray-400 mb-5 font-montserrat">
                   <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
                     <tr>
                       <th class="px-2 py-3">Visit ID</th>
@@ -79,7 +79,9 @@
                   </tfoot>
               </table>
           {% else %}
-              <h5>This child has had no visits yet!</h5>
+              <div class="py-2">
+                <h5>This child has had no visits yet!</h5>
+              </div>
           {% endif %}
           
           {% if perms.npda.add_visit %}

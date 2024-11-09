@@ -14,9 +14,11 @@ from django.urls import reverse
 from django_htmx.http import trigger_client_event
 
 from ..forms.upload import UploadFileForm
-from ..general_functions.csv_summarize import csv_summarize
 from ..general_functions.csv_upload import csv_upload, read_csv
-from ..general_functions.session import get_new_session_fields
+from ..general_functions.session import (
+    get_new_session_fields,
+    refresh_session_object_asynchronously,
+)
 from ..general_functions.view_preference import get_or_update_view_preference
 from ..kpi_class.kpis import CalculateKPIS
 
@@ -49,12 +51,17 @@ async def home(request):
         errors = []
 
         if request.session.get("can_upload_csv") is True:
-            errors_by_row_index = await csv_upload(
-                user=request.user,
-                dataframe=read_csv(file),
-                csv_file=file,
-                pdu_pz_code=pz_code,
-            )
+            try:
+                errors_by_row_index = await csv_upload(
+                    user=request.user,
+                    dataframe=read_csv(file),
+                    csv_file=file,
+                    pdu_pz_code=pz_code,
+                )
+            except ValidationError as e:
+                messages.error(request=request, message=e.message)
+                return redirect("home")
+
             VisitActivity = apps.get_model("npda", "VisitActivity")
             try:
                 await VisitActivity.objects.acreate(
@@ -64,6 +71,11 @@ async def home(request):
                 )  # uploaded csv - activity 8
             except Exception as e:
                 logger.error(f"Failed to log user activity: {e}")
+
+            # update the session fields
+            await refresh_session_object_asynchronously(
+                request=request, user=request.user, pz_code=pz_code
+            )
 
             if errors_by_row_index:
                 for row_index, errors_by_field in errors_by_row_index.items():
