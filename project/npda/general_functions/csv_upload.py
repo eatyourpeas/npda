@@ -33,6 +33,8 @@ def read_csv(csv_file):
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
 
+    # define the dtype for the columns
+
     for column in ALL_DATES:
         df[column] = pd.to_datetime(df[column], format="%d/%m/%Y")
 
@@ -42,7 +44,7 @@ def read_csv(csv_file):
 async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     """
     Processes standardised NPDA csv file and persists results in NPDA tables
-    Returns the empty dict if successful, otherwise ValidationErrors indexed by the row they occurred at 
+    Returns the empty dict if successful, otherwise ValidationErrors indexed by the row they occurred at
     """
     Patient = apps.get_model("npda", "Patient")
     Transfer = apps.get_model("npda", "Transfer")
@@ -81,12 +83,14 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         if csv_file:
             # save the csv file with a custom name
-            new_filename = f"{pdu.pz_code}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            new_filename = (
+                f"{pdu.pz_code}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            )
 
             # save=False so it doesn't try to save the parent, which would cause an error in an async context
             # we save immediately after this anyway
             new_submission.csv_file.save(new_filename, csv_file, save=False)
-        
+
         await new_submission.asave()
 
     except Exception as e:
@@ -101,7 +105,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     # now can delete all patients and visits from the previous active submission
     if original_submission:
         try:
-            original_submission_patient_count = await Patient.objects.filter(submissions=original_submission).acount()
+            original_submission_patient_count = await Patient.objects.filter(
+                submissions=original_submission
+            ).acount()
             print(
                 f"Deleting patients from previous submission: {original_submission_patient_count}"
             )
@@ -180,13 +186,13 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 "death_date": "Death Date",
             },
         )
-        
+
         form = PatientForm(fields)
         form.async_validation_results = await validate_patient_async(
-                postcode=fields["postcode"],
-                gp_practice_ods_code=fields["gp_practice_ods_code"],
-                gp_practice_postcode=None,
-                async_client=async_client
+            postcode=fields["postcode"],
+            gp_practice_ods_code=fields["gp_practice_ods_code"],
+            gp_practice_postcode=None,
+            async_client=async_client,
         )
 
         return form
@@ -250,7 +256,10 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         patient_form = await validate_patient_using_form(first_row, async_client)
 
         visits = rows.apply(
-            lambda row: (validate_visit_using_form(patient_form.instance, row), row["row_index"]),
+            lambda row: (
+                validate_visit_using_form(patient_form.instance, row),
+                row["row_index"],
+            ),
             axis=1,
         )
 
@@ -292,9 +301,16 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     errors_to_return = collections.defaultdict(lambda: collections.defaultdict(list))
 
     async with httpx.AsyncClient() as async_client:
-        validation_results_by_patient = await validate_rows_in_parallel(visits_by_patient, async_client)
+        validation_results_by_patient = await validate_rows_in_parallel(
+            visits_by_patient, async_client
+        )
 
-        for (patient_form, transfer_fields, patient_row_index, visits) in validation_results_by_patient:
+        for (
+            patient_form,
+            transfer_fields,
+            patient_row_index,
+            visits,
+        ) in validation_results_by_patient:
             for field, error in patient_form.errors.as_data().items():
                 errors_to_return[patient_row_index][field].append(error)
 
@@ -302,7 +318,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 patient = create_instance(Patient, patient_form)
 
                 # We don't call PatientForm.save as there's no async version so we have to set this manually
-                patient.index_of_multiple_deprivation_quintile = patient_form.async_validation_results.index_of_multiple_deprivation_quintile
+                patient.index_of_multiple_deprivation_quintile = (
+                    patient_form.async_validation_results.index_of_multiple_deprivation_quintile
+                )
 
                 await patient.asave()
 
@@ -316,7 +334,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
-            for (visit_form, visit_row_index) in visits:
+            for visit_form, visit_row_index in visits:
                 for field, error in visit_form.errors.as_data().items():
                     errors_to_return[visit_row_index][field].append(error)
 
@@ -326,5 +344,5 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                     await visit.asave()
                 except Exception as error:
                     errors_to_return[visit_row_index]["__all__"].append(error)
-        
+
         return errors_to_return

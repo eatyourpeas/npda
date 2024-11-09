@@ -17,6 +17,7 @@ def login_and_otp_required():
     """
     Must have verified via 2FA
     """
+
     def check_otp(view, request):
         # Then, ensure 2fa verified
         user = request.user
@@ -47,7 +48,7 @@ def login_and_otp_required():
     def decorator(view):
         async def async_login_and_otp_required(request, *args, **kwargs):
             async_check_otp = sync_to_async(check_otp)
-            
+
             if await async_check_otp(view, request):
                 response = await view(request, *args, **kwargs)
                 return response
@@ -63,8 +64,9 @@ def login_and_otp_required():
         login_required(view)
 
         if asyncio.iscoroutinefunction(view):
+            print("hello hello")
             return async_login_and_otp_required
         else:
             return sync_login_and_otp_required
-    
+
     return decorator
