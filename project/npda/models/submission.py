@@ -40,6 +40,12 @@ class Submission(models.Model):
         help_text="CSV file containing the audit data for this submission",
         null=True,  # submissions that are not active will have their csv file deleted
     )
+    errors = models.JSONField(
+        "Errors",
+        help_text="Errors that have been found in the uploaded CSV file",
+        null=True,
+        blank=True,
+    )
 
     patients = models.ManyToManyField(
         to="npda.Patient", through="npda.PatientSubmission", related_name="submissions"
