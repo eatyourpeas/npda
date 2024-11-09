@@ -3134,8 +3134,7 @@ class CalculateKPIS:
         # aggregation gets complicated
         hba1c_values_by_patient = defaultdict(list)
         for visit in valid_visits:
-            if visit["hba1c"] is not None:
-                hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
+            hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
 
         # For each patient, calculate the median of their HbA1c values
         median_hba1cs = []
@@ -3572,19 +3571,23 @@ class CalculateKPIS:
         if not values:
             return float(-1)
 
-        # Ensure they're sorted
-        values.sort()
+        # Remove the None values and ensure they're sorted
+        cleaned_values = [val for val in values if val is not None]
+        if len(cleaned_values) == 0:
+            return float(-1)
+
+        cleaned_values.sort()
 
         length = len(values)
         if length % 2 == 0:
 
             # even number, take mean
-            middle_1 = values[(length // 2) - 1]
-            middle_2 = values[length // 2]
+            middle_1 = cleaned_values[(length // 2) - 1]
+            middle_2 = cleaned_values[length // 2]
             return float((middle_1 + middle_2) / 2)
 
         # odd number
-        middle = values[length // 2]
+        middle = cleaned_values[length // 2]
         return float(middle)
 
 
