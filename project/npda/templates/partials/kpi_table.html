@@ -1,7 +1,9 @@
 {% load npda_tags %}
 
 <div class="w-100">
-<strong>
+
+
+<strong class="text-rcpch_light_blue">
     {{aggregation_level}}-Level Key Performance Indicators for {{pdu.lead_organisation_name}} ({{pdu.pz_code}}{% if pdu.parent_name is not None %} - {{pdu.parent_name}}) - {{pdu.paediatric_diabetes_network_name}} ({{pdu.paediatric_diabetes_network_code}}){% else %}){% endif %}
 </strong>
 <table class="table-auto w-full text-sm text-left text-gray-500 mb-5 font-montserrat">
@@ -18,7 +20,7 @@
         {% for kpi_key, kpi_value in kpi_results.calculated_kpi_values.items %}
        
             {% if kpi_key|extract_digits:0 < 13  %}
-                <tr class="border-b bg-white text-rcpch_light_blue border-gray-100 hover:bg-r hover:bg-rcpch_light_blue hover:text-white">
+                <tr class="border-b bg-rcpch_light_grey text-rcpch_light_blue border-gray-100 hover:bg-r hover:bg-rcpch_light_blue hover:text-white">
                     <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"><span class="text-rcpch_light_blue hover:text-rcpch_pink">
                         {{ kpi_key|extract_digits:0 }}.
                     </span>{{ kpi_value.kpi_label }}</td>
@@ -35,16 +37,16 @@
                     <td class="px-6 py-4">
                         <span class="tooltip" data-tip="Does not apply to this measure">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12px" height="12px" viewBox="0 0 24 24">
-                            <path d="M6 12C6 12.5523 6.44772 13 7 13L17 13C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H7C6.44772 11 6 11.4477 6 12Z" stroke="#11a7f2"/>
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 1 1 5.92487 1 12C1 18.0751 5.92487 23 12 23ZM12 20.9932C7.03321 20.9932 3.00683 16.9668 3.00683 12C3.00683 7.03321 7.03321 3.00683 12 3.00683C16.9668 3.00683 20.9932 7.03321 20.9932 12C20.9932 16.9668 16.9668 20.9932 12 20.9932Z" stroke="#11a7f2"/>
+                            <path d="M6 12C6 12.5523 6.44772 13 7 13L17 13C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H7C6.44772 11 6 11.4477 6 12Z" fill="#e00087"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 1 1 5.92487 1 12C1 18.0751 5.92487 23 12 23ZM12 20.9932C7.03321 20.9932 3.00683 16.9668 3.00683 12C3.00683 7.03321 7.03321 3.00683 12 3.00683C16.9668 3.00683 20.9932 7.03321 20.9932 12C20.9932 16.9668 16.9668 20.9932 12 20.9932Z" fill="#e00087"/>
                             </svg>
                         </span>
                     </td>
                     <td class="px-6 py-4">
                         <span class="tooltip" data-tip="Does not apply to this measure">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12px" height="12px" viewBox="0 0 24 24" fill="none">
-                            <path d="M6 12C6 12.5523 6.44772 13 7 13L17 13C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H7C6.44772 11 6 11.4477 6 12Z" fill="#11a7f2"/>
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 1 1 5.92487 1 12C1 18.0751 5.92487 23 12 23ZM12 20.9932C7.03321 20.9932 3.00683 16.9668 3.00683 12C3.00683 7.03321 7.03321 3.00683 12 3.00683C16.9668 3.00683 20.9932 7.03321 20.9932 12C20.9932 16.9668 16.9668 20.9932 12 20.9932Z" fill="#11a7f2"/>
+                            <path d="M6 12C6 12.5523 6.44772 13 7 13L17 13C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H7C6.44772 11 6 11.4477 6 12Z" fill="#e00087"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 1 1 5.92487 1 12C1 18.0751 5.92487 23 12 23ZM12 20.9932C7.03321 20.9932 3.00683 16.9668 3.00683 12C3.00683 7.03321 7.03321 3.00683 12 3.00683C16.9668 3.00683 20.9932 7.03321 20.9932 12C20.9932 16.9668 16.9668 20.9932 12 20.9932Z" fill="#e00087"/>
                             </svg>
                         </span>
                     </td>
@@ -54,7 +56,7 @@
 
                 {% with extracted_value=kpi_key|extract_digits:0 %}
                     {% if extracted_value == 32 %}
-                        <tr class="bg-gray-50 border-b">
+                        <tr class="bg-rcpch_mid_grey border-b">
                             <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                                 <span class="text-rcpch_light_blue">
                                     {{ kpi_key|extract_digits:0 }} - {{ kpi_key|extract_digits:1 }}.
@@ -81,7 +83,7 @@
                             </td>
                         </tr>
                     {% else %}
-                    <tr class="bg-white border-b">
+                    <tr class="bg-rcpch_light_grey border-b">
                         <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                             <span class="text-rcpch_light_blue">
                                 {{ kpi_key|extract_digits:0 }}.
