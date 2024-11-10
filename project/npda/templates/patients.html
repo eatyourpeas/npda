@@ -13,7 +13,7 @@
           <div class="hidden lg:block tooltip tooltip-top" data-tip="You can search for a patient by first name, surname or fullname.">
             <i class="fas fa-circle-question"></i>
           </div>
-          <input type="text" class="text-center grow placeholder-gray-300 focus:bg-rcpch_strong_blue_light_tint2 hover:bg-rcpch_strong_blue_light_tint2 focus:placeholder-gray-500 p-2 m-2" placeholder="Search by patient name..." id="search-input" name="search-input" hx-get="{% url 'patients' %}" hx-trigger="keyup changed delay:500ms" hx-target="#patient_table" hx-swap="innerHTML" hx-include="[name='search-input']" hx-params="*" hx-indicator="#search_spinner" />
+          <input type="text" class="text-center grow placeholder-gray-300 focus:bg-rcpch_strong_blue_light_tint2 hover:bg-rcpch_strong_blue_light_tint2 focus:placeholder-gray-500 p-2 m-2" placeholder="Search by NHS number..." id="search-input" name="search-input" hx-get="{% url 'patients' %}" hx-trigger="keyup changed delay:500ms" hx-target="#patient_table" hx-swap="innerHTML" hx-include="[name='search-input']" hx-params="*" hx-indicator="#search_spinner" />
           <div id="search_spinner" class="htmx-indicator flex items-center px-4 text-white absolute right-14 loading loading-bars loading-sm"></div>
         </label>
       </label>
