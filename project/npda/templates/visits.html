@@ -22,9 +22,9 @@
                         {% for visit in visits %}
                         <tr 
                         {% if visit.visit.is_valid %} 
-                          class="border-b bg-white text-rcpch_light_blue border-gray-100"
+                          class="hover:bg-gray-200 border-b bg-white text-rcpch_light_blue border-gray-100"
                         {% else %} 
-                          class="border-b bg-white text-black border-gray-100"
+                          class="border-b hover:bg-gray-200  bg-white text-black border-gray-100"
                         {% endif %}>
                               <td  class="px-5">
                                     <strong>{{ visit.visit.pk }}</strong>
