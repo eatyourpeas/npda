@@ -1,5 +1,7 @@
+from asgiref.sync import sync_to_async
 from datetime import datetime
 import logging
+
 from django.core.exceptions import PermissionDenied
 from django.apps import apps
 
@@ -127,15 +129,19 @@ def get_new_session_fields(user, pz_code):
     return ret
 
 
-def refresh_session_object(self, user, pz_code):
+async def refresh_session_object_asynchronously(request, user, pz_code):
+    """
+    Refresh the session object and save the new fields.
+    """
+    session = await sync_to_async(get_new_session_fields)(user, pz_code)
+    request.session.update(session)
+    request.session.modified = True
+
+
+def refresh_session_object_synchronously(request, user, pz_code):
     """
     Refresh the session object and save the new fields.
     """
     session = get_new_session_fields(user, pz_code)
-    self.request.session.update(session)
-    self.request.session.modified = True
-    print(
-        "can_complete_questionnaire",
-        self.request.session.get("can_complete_questionnaire"),
-    )
-    print("can_upload_csv", self.request.session.get("can_upload_csv"))
+    request.session.update(session)
+    request.session.modified = True

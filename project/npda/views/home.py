@@ -1,6 +1,9 @@
 # Python imports
+from asgiref.sync import sync_to_async
 import datetime
 import logging
+from pprint import pprint
+
 
 # Django imports
 from django.apps import apps
@@ -16,9 +19,13 @@ from django.conf import settings
 from django_htmx.http import trigger_client_event
 
 from ..forms.upload import UploadFileForm
-from ..general_functions.csv_upload import csv_upload, read_csv
-from ..general_functions.csv_header import csv_header
-from ..general_functions.session import get_new_session_fields
+from ..general_functions.csv_upload import csv_upload, read_csv, csv_header
+from ..general_functions.serialize_validation_errors import serialize_errors
+from ..general_functions.session import (
+    get_new_session_fields,
+    refresh_session_object_asynchronously,
+    refresh_session_object_synchronously,
+)
 from ..general_functions.view_preference import get_or_update_view_preference
 from ..kpi_class.kpis import CalculateKPIS
 
@@ -80,27 +87,41 @@ async def home(request):
               except Exception as e:
                   logger.error(f"Failed to log user activity: {e}")
 
-              if errors_by_row_index:
-                  for row_index, errors_by_field in errors_by_row_index.items():
-                      for field, errors in errors_by_field.items():
-                          for error in errors:
-                              messages.error(
-                                  request=request,
-                                  message=f"CSV has been uploaded, but errors have been found. These include error in row {row_index}[{field}]: {error}",
-                              )
-              else:
-                  messages.success(
-                      request=request,
-                      message="File uploaded successfully. There are no errors,",
-                  )
+              # update the session fields
+            await refresh_session_object_asynchronously(
+                request=request, user=request.user, pz_code=pz_code
+            )
 
-          return redirect("submissions")
+            if errors_by_row_index:
+                # get submission and store the errors
+                Submission = apps.get_model("npda", "Submission")
+                submission = await Submission.objects.aget(
+                    paediatric_diabetes_unit__pz_code=pz_code,
+                    submission_active=True,
+                    audit_year=datetime.date.today().year,
+                )
+                pprint(errors_by_row_index)
+                submission.errors = serialize_errors(errors_by_row_index)
+                await sync_to_async(submission.save)()
+                messages.error(
+                    request=request,
+                    message=f"CSV has been uploaded, but errors have been found in {len(errors_by_row_index.items())} rows. Please check the data quality report for details.",
+                )
+            else:
+                messages.success(
+                    request=request,
+                    message="File uploaded successfully. There are no errors,",
+                )
+
+            return redirect("submissions")
+
         else:
             messages.error(
                 request=request,
                 message=f"You have do not have permission to upload csvs for {pz_code}.",
             )
             form = UploadFileForm()
+
     else:
         form = UploadFileForm()
 
@@ -190,6 +211,9 @@ def dashboard(request):
     """
     template = "dashboard.html"
     pz_code = request.session.get("pz_code")
+    refresh_session_object_synchronously(
+        request=request, user=request.user, pz_code=pz_code
+    )
     if request.htmx:
         # If the request is an htmx request, we want to return the partial template
         template = "partials/kpi_table.html"

@@ -1,3 +1,5 @@
+{% load static %}
+{% load npda_tags %}
 <div class="overflow-x-auto">
     <h5 class="text-lg font-bold text-gray-900">Data Quality Report</h5>
     <table class="table">
@@ -23,4 +25,38 @@
             </tr>
         </tfoot>
     </table>
+    
+{% if submission_errors %}
+    <table class="table-auto w-full text-sm text-left text-gray-500 mb-5 font-montserrat">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
+            <tr>
+                <th class="px-6 py-3">CSV Row Number</th>
+                <th class="px-6 py-3">Field</th>
+                <th class="px-6 py-3">Error</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row_number, errors in submission_errors.items %}
+                {% for field, error_list in errors.items %}
+                    {% for individual_errors in error_list %}
+                        {% for individual_error in individual_errors %}
+                            <tr>
+                                <td class="px-6 py-4">{{ row_number }}</td>
+                                <td class="px-6 py-4">{{ field|heading_for_field }}</td>
+                                <td class="px-6 py-4">
+                                    {{ individual_error|join_with_comma }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-gray-900">This table shows the errors found in the CSV file for the current active submission.</td>
+            </tr>
+        </tfoot>
+    </table>
+{% endif %}
 </div>

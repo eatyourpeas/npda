@@ -3125,7 +3125,7 @@ class CalculateKPIS:
         # Retrieve all visits with valid HbA1c values
         valid_visits = Visit.objects.filter(
             visit_date__range=self.AUDIT_DATE_RANGE,
-            hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90)
+            hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90),
         ).values("patient__pk", "hba1c")
 
         # Group HbA1c values by patient ID into a list so can use
@@ -3571,19 +3571,23 @@ class CalculateKPIS:
         if not values:
             return float(-1)
 
-        # Ensure they're sorted
-        values.sort()
+        # Remove the None values and ensure they're sorted
+        cleaned_values = [val for val in values if val is not None]
+        if len(cleaned_values) == 0:
+            return float(-1)
+
+        cleaned_values.sort()
 
         length = len(values)
         if length % 2 == 0:
 
             # even number, take mean
-            middle_1 = values[(length // 2) - 1]
-            middle_2 = values[length // 2]
+            middle_1 = cleaned_values[(length // 2) - 1]
+            middle_2 = cleaned_values[length // 2]
             return float((middle_1 + middle_2) / 2)
 
         # odd number
-        middle = values[length // 2]
+        middle = cleaned_values[length // 2]
         return float(middle)
 
 
@@ -3591,4 +3595,3 @@ class CalculateKPIS:
 class Median(Func):
     function = "percentile_cont"
     template = "%(function)s(0.5) WITHIN GROUP (ORDER BY %(expressions)s)"
-

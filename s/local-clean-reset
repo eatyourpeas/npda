@@ -1,0 +1,17 @@
+#!/bin/bash -e
+
+# This script stops and cleans up our Docker Compose setup defined in `docker-compose.yml`.
+# 
+# Specifically, it performs the following actions:
+# 1. Stops all running containers associated with the Docker Compose setup.
+# 2. Removes the containers, any named or anonymous volumes, and images used by this Compose file.
+# 3. Then, it runs `s/up` to start the Docker Compose setup again.
+# 
+# Flags:
+# - `--volumes` removes both named and anonymous volumes created by the Docker Compose setup.
+# - `--rmi all` removes all images used by the Compose setup, including pulled and locally built images.
+# 
+# Note: Be cautious, as this will remove images and data volumes, which could result in data loss.
+
+docker compose -f docker-compose.yml down --volumes --rmi all
+s/up
