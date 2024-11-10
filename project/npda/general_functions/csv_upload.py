@@ -5,6 +5,7 @@ import logging
 import asyncio
 import collections
 import re
+from pprint import pprint
 
 # django imports
 from django.apps import apps
@@ -125,11 +126,130 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     Returns the empty dict if successful, otherwise ValidationErrors indexed by the row they occurred at
     Also return the dataframe for later summary purposes
     """
+
+    # Get the models
     Patient = apps.get_model("npda", "Patient")
     Transfer = apps.get_model("npda", "Transfer")
     Visit = apps.get_model("npda", "Visit")
     Submission = apps.get_model("npda", "Submission")
     PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+
+    # Helper functions
+    def csv_value_to_model_value(model_field, value):
+        if pd.isnull(value):
+            return None
+
+        # # Pandas is returning 0 for empty cells in integer columns
+        # if value == 0:
+        #     return None
+
+        # Pandas will convert an integer column to float if it contains missing values
+        # http://pandas.pydata.org/pandas-docs/stable/user_guide/gotchas.html#missing-value-representation-for-numpy-types
+        # if pd.api.types.is_float(value) and model_field.choices:
+        #     return int(value)
+
+        if isinstance(value, pd.Timestamp):
+            return value.to_pydatetime().date()
+
+        # if model_field.choices:
+        #     # If the model field has choices, we need to convert the value to the correct type otherwise 1, 2 will be saved as booleans
+        #     return model_field.to_python(value)
+
+        return value
+
+    def row_to_dict(row, model):
+        ret = {}
+
+        for entry in CSV_HEADINGS:
+            if "model" in entry and apps.get_model("npda", entry["model"]) == model:
+                model_field_name = entry["model_field"]
+                model_field_definition = model._meta.get_field(model_field_name)
+
+                csv_value = row[entry["heading"]]
+                model_field_value = csv_value_to_model_value(
+                    model_field_definition, csv_value
+                )
+
+                ret[model_field_name] = model_field_value
+
+        return ret
+
+    def validate_transfer(row):
+        return row_to_dict(row, Transfer) | {"paediatric_diabetes_unit": pdu}
+
+    async def validate_patient_using_form(row, async_client):
+        fields = row_to_dict(row, Patient)
+
+        form = PatientForm(fields)
+        form.async_validation_results = await validate_patient_async(
+            postcode=fields["postcode"],
+            gp_practice_ods_code=fields["gp_practice_ods_code"],
+            gp_practice_postcode=None,
+            async_client=async_client,
+        )
+
+        return form
+
+    def validate_visit_using_form(patient, row):
+        fields = row_to_dict(
+            row,
+            Visit,
+        )
+
+        form = VisitForm(data=fields, initial={"patient": patient})
+        return form
+
+    async def validate_rows(rows, async_client):
+        first_row = rows.iloc[0]
+        patient_row_index = first_row["row_index"]
+
+        transfer_fields = validate_transfer(first_row)
+        patient_form = await validate_patient_using_form(first_row, async_client)
+        visits = rows.apply(
+            lambda row: (
+                validate_visit_using_form(patient_form.instance, row),
+                row["row_index"],
+            ),
+            axis=1,
+        )
+
+        return (
+            patient_form,
+            transfer_fields,
+            patient_row_index,
+            visits,
+        )
+
+    def create_instance(model, form):
+        # We want to retain fields even if they're invalid so that we can return them to the user
+        # Use the field value from cleaned_data, falling back to data if it's not there
+        if form.is_valid():
+            data = form.cleaned_data
+        else:
+            data = form.data
+        instance = model(**data)
+        instance.is_valid = form.is_valid()
+        instance.errors = (
+            None if form.is_valid() else form.errors.get_json_data(escape_html=True)
+        )
+
+        return instance
+
+    async def validate_rows_in_parallel(rows_by_patient, async_client):
+        tasks = []
+
+        async with asyncio.TaskGroup() as tg:
+            for _, rows in rows_by_patient:
+                task = tg.create_task(validate_rows(rows, async_client))
+                tasks.append(task)
+
+        return [task.result() for task in tasks]
+
+    # Code starts here....
+
+    """"
+    Create the submission and save the csv file
+    """
 
     # get the PDU object
     # TODO #249 MRB: handle case where PDU does not exist
@@ -208,137 +328,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 {"csv_upload": "Error deactivating previous submission"}
             )
 
-    def csv_value_to_model_value(model_field, value):
-        if pd.isnull(value):
-            return None
-
-        # # Pandas is returning 0 for empty cells in integer columns
-        # if value == 0:
-        #     return None
-
-        # Pandas will convert an integer column to float if it contains missing values
-        # http://pandas.pydata.org/pandas-docs/stable/user_guide/gotchas.html#missing-value-representation-for-numpy-types
-        # if pd.api.types.is_float(value) and model_field.choices:
-        #     return int(value)
-
-        if isinstance(value, pd.Timestamp):
-            return value.to_pydatetime().date()
-
-        # if model_field.choices:
-        #     # If the model field has choices, we need to convert the value to the correct type otherwise 1, 2 will be saved as booleans
-        #     return model_field.to_python(value)
-
-        return value
-
-    def row_to_dict(row, model):
-        ret = {}
-
-        for entry in CSV_HEADINGS:
-            if "model" in entry and entry["model"] == model:
-                model_field_name = entry["model_field"]
-                model_field_definition = model._meta.get_field(model_field_name)
-
-                csv_value = row[entry["heading"]]
-                model_field_value = csv_value_to_model_value(
-                    model_field_definition, csv_value
-                )
-
-                ret[model_field_name] = model_field_value
-
-        return ret
-
-    def validate_transfer(row):
-        return row_to_dict(row, Transfer) | {"paediatric_diabetes_unit": pdu}
-
-    async def validate_patient_using_form(row, async_client):
-        fields = row_to_dict(row, Patient)
-
-        form = PatientForm(fields)
-        form.async_validation_results = await validate_patient_async(
-            postcode=fields["postcode"],
-            gp_practice_ods_code=fields["gp_practice_ods_code"],
-            gp_practice_postcode=None,
-            async_client=async_client,
-        )
-
-        return form
-
-    def validate_visit_using_form(patient, row):
-        fields = row_to_dict(
-            row,
-            Visit,
-        )
-
-        form = VisitForm(data=fields, initial={"patient": patient})
-        return form
-
-    async def validate_rows(rows, async_client):
-        first_row = rows.iloc[0]
-        patient_row_index = first_row["row_index"]
-
-        transfer_fields = validate_transfer(first_row)
-        patient_form = await validate_patient_using_form(first_row, async_client)
-        visits = rows.apply(
-            lambda row: (
-                validate_visit_using_form(patient_form.instance, row),
-                row["row_index"],
-            ),
-            axis=1,
-        )
-
-        return (patient_form, transfer_fields, patient_row_index, visits)
-
-    # async def validate_rows(rows, async_client):
-    #     first_row = rows.iloc[0]
-    #     patient_row_index = first_row["row_index"]
-
-    #     (transfer_fields, transfer_field_errors) = validate_transfer(first_row)
-    #     (patient_form, patient_field_errors) = await validate_patient_using_form(
-    #         first_row, async_client
-    #     )
-
-    #     visits = []
-
-    #     for _, row in rows.iterrows():
-    #         (visit_form, visit_field_errors) = validate_visit_using_form(
-    #             patient_form.instance, row
-    #         )
-    #         visits.append((visit_form, visit_field_errors, row["row_index"]))
-
-    #     first_row_field_errors = transfer_field_errors | patient_field_errors
-
-    #     return (
-    #         patient_form,
-    #         transfer_fields,
-    #         patient_row_index,
-    #         first_row_field_errors,
-    #         visits,
-    #     )
-
-    def create_instance(model, form):
-        # We want to retain fields even if they're invalid so that we can return them to the user
-        # Use the field value from cleaned_data, falling back to data if it's not there
-        if form.is_valid():
-            data = form.cleaned_data
-        else:
-            data = form.data
-        instance = model(**data)
-        instance.is_valid = form.is_valid()
-        instance.errors = (
-            None if form.is_valid() else form.errors.get_json_data(escape_html=True)
-        )
-
-        return instance
-
-    async def validate_rows_in_parallel(rows_by_patient, async_client):
-        tasks = []
-
-        async with asyncio.TaskGroup() as tg:
-            for _, rows in visits_by_patient:
-                task = tg.create_task(validate_rows(rows, async_client))
-                tasks.append(task)
-
-        return [task.result() for task in tasks]
+    """
+    Process the csv file and validate adn save the data in the tables, parsing any errors
+    """
 
     # Remember the original row number to help users find where the problem was in the CSV
     dataframe = dataframe.assign(row_index=np.arange(dataframe.shape[0]))
@@ -352,7 +344,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
     async with httpx.AsyncClient() as async_client:
         validation_results_by_patient = await validate_rows_in_parallel(
-            visits_by_patient, async_client
+            rows_by_patient=visits_by_patient, async_client=async_client
         )
 
         for (
@@ -360,7 +352,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             transfer_fields,
             patient_row_index,
             first_row_field_errors,
-            visits,
+            parsed_visits,
         ) in validation_results_by_patient:
             # Errors parsing the Transfer or Patient fields
             for field, error in first_row_field_errors.items():
@@ -390,7 +382,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
-            for visit_form, visit_field_errors, visit_row_index in visits:
+            for visit_form, visit_field_errors, visit_row_index in parsed_visits:
                 # Errors parsing the Visit fields
                 for field, error in visit_field_errors.items():
                     errors_to_return[visit_row_index][field].append(error)

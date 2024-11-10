@@ -1,5 +1,5 @@
 CSV_HEADINGS = (
-    # 'Patient')
+    # patient
     {
         "heading": "NHS Number",
         "model_field": "nhs_number",
@@ -59,17 +59,17 @@ CSV_HEADINGS = (
     },
     # Visit
     {
-        "heading": "'Visit')/Appointment Date",
+        "heading": "Visit/Appointment Date",
         "model_field": "visit_date",
         "model": "Visit",
     },
     {
-        "heading": "'Patient') Height (cm)",
+        "heading": "Patient Height (cm)",
         "model_field": "height",
         "model": "Visit",
     },
     {
-        "heading": "'Patient') Weight (kg)",
+        "heading": "Patient Weight (kg)",
         "model_field": "weight",
         "model": "Visit",
     },
@@ -100,7 +100,7 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
     {
-        "heading": "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the 'Patient') using any other method of glucose monitoring?",
+        "heading": "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?",
         "model_field": "glucose_monitoring",
         "model": "Visit",
     },
@@ -165,7 +165,7 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
     {
-        "heading": "At time of, or following measurement of thyroid function, was the 'Patient') prescribed any thyroid treatment?",
+        "heading": "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
         "model_field": "thyroid_treatment_status",
         "model": "Visit",
     },
@@ -175,7 +175,7 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
     {
-        "heading": "Has the 'Patient') been recommended a Gluten-free diet?",
+        "heading": "Has the patient been recommended a Gluten-free diet?",
         "model_field": "gluten_free_diet",
         "model": "Visit",
     },
@@ -185,17 +185,17 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
     {
-        "heading": "Was the 'Patient') assessed as requiring additional psychological/CAMHS support outside of MDT clinics?",
+        "heading": "Was the patient assessed as requiring additional psychological/CAMHS support outside of MDT clinics?",
         "model_field": "psychological_additional_support_status",
         "model": "Visit",
     },
     {
-        "heading": "Does the 'Patient') smoke?",
+        "heading": "Does the patient smoke?",
         "model_field": "smoking_status",
         "model": "Visit",
     },
     {
-        "heading": "Date of offer of referral to smoking cessation service (if 'Patient') is a current smoker)",
+        "heading": "Date of offer of referral to smoking cessation service (if patient is a current smoker)",
         "model_field": "smoking_cessation_referral_date",
         "model": "Visit",
     },
@@ -205,7 +205,7 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
     {
-        "heading": "Was the 'Patient') offered an additional appointment with a paediatric dietitian?",
+        "heading": "Was the patient offered an additional appointment with a paediatric dietitian?",
         "model_field": "dietician_additional_appointment_offered",
         "model": "Visit",
     },
@@ -215,7 +215,7 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
     {
-        "heading": "Was the 'Patient') using (or trained to use) blood ketone testing equipment at time of 'Visit')?",
+        "heading": "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?",
         "model_field": "ketone_meter_training",
         "model": "Visit",
     },
@@ -245,7 +245,7 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
     {
-        "heading": "Only complete if DKA selected in previous question: During this DKA admission did the 'Patient') receive any of the following therapies?",
+        "heading": "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
         "model_field": "dka_additional_therapies",
         "model": "Visit",
     },
