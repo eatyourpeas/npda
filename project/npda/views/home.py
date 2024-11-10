@@ -19,7 +19,8 @@ from django.conf import settings
 from django_htmx.http import trigger_client_event
 
 from ..forms.upload import UploadFileForm
-from ..general_functions.csv_upload import csv_upload, read_csv, csv_header
+from ..general_functions.csv_upload import csv_upload, read_csv
+from ..general_functions.csv_header import csv_header
 from ..general_functions.serialize_validation_errors import serialize_errors
 from ..general_functions.session import (
     get_new_session_fields,
@@ -35,6 +36,7 @@ from .decorators import login_and_otp_required
 # Logging
 logger = logging.getLogger(__name__)
 
+
 @login_and_otp_required()
 async def home(request):
     """
@@ -49,58 +51,59 @@ async def home(request):
         form = UploadFileForm(request.POST, request.FILES)
         user_csv = request.FILES["csv_upload"]
         pz_code = request.session.get("pz_code")
-
         if request.session.get("can_upload_csv") is True:
-          parsed_csv = read_csv(user_csv)
+            # check to see if the CSV is valid
+            parsed_csv = read_csv(user_csv)
+            if (
+                parsed_csv.missing_columns
+                or parsed_csv.additional_columns
+                or parsed_csv.duplicate_columns
+            ):
+                message = "Invalid CSV format."
+                if parsed_csv.missing_columns:
+                    message += (
+                        f" Missing columns: [{", ".join(parsed_csv.missing_columns)}]"
+                    )
+                if parsed_csv.additional_columns:
+                    message += f" Unexpected columns: [{", ".join(parsed_csv.additional_columns)}]"
+                if parsed_csv.duplicate_columns:
+                    message += f" Duplicate columns: [{", ".join(parsed_csv.additional_columns)}]"
+                messages.error(
+                    request=request,
+                    message=message,
+                )
+                return redirect("home")
 
-          if parsed_csv.missing_columns or parsed_csv.additional_columns or parsed_csv.duplicate_columns:
-              message = "Invalid CSV format."
+            # CSV is valid, parse any errors and store the data in the tables.
+            errors_by_row_index = await csv_upload(
+                user=request.user,
+                dataframe=parsed_csv.df,
+                csv_file=user_csv,
+                pdu_pz_code=pz_code,
+            )
+            # log user activity
+            VisitActivity = apps.get_model("npda", "VisitActivity")
+            try:
+                await VisitActivity.objects.acreate(
+                    activity=8,
+                    ip_address=request.META.get("REMOTE_ADDR"),
+                    npdauser=request.user,
+                )  # uploaded csv - activity 8
+            except Exception as e:
+                logger.error(f"Failed to log user activity: {e}")
 
-              if parsed_csv.missing_columns:
-                  message += f" Missing columns: [{", ".join(parsed_csv.missing_columns)}]"
-
-              if parsed_csv.additional_columns:
-                  message += f" Unexpected columns: [{", ".join(parsed_csv.additional_columns)}]"
-
-              if parsed_csv.duplicate_columns:
-                  message += f" Duplicate columns: [{", ".join(parsed_csv.additional_columns)}]"
-
-              messages.error(
-                  request=request,
-                  message=message,
-              )
-          else:
-              errors_by_row_index = await csv_upload(
-                  user=request.user,
-                  dataframe=parsed_csv.df,
-                  csv_file=user_csv,
-                  pdu_pz_code=pz_code,
-              )
-
-              VisitActivity = apps.get_model("npda", "VisitActivity")
-              try:
-                  await VisitActivity.objects.acreate(
-                      activity=8,
-                      ip_address=request.META.get("REMOTE_ADDR"),
-                      npdauser=request.user,
-                  )  # uploaded csv - activity 8
-              except Exception as e:
-                  logger.error(f"Failed to log user activity: {e}")
-
-              # update the session fields
+            # update the session fields - this stores that the user has uploaded a csv and disables the ability to use the questionnaire
             await refresh_session_object_asynchronously(
                 request=request, user=request.user, pz_code=pz_code
             )
-
             if errors_by_row_index:
-                # get submission and store the errors
+                # get submission and store the errors to report back to the user in the Data Quality Report
                 Submission = apps.get_model("npda", "Submission")
                 submission = await Submission.objects.aget(
                     paediatric_diabetes_unit__pz_code=pz_code,
                     submission_active=True,
                     audit_year=datetime.date.today().year,
                 )
-                pprint(errors_by_row_index)
                 submission.errors = serialize_errors(errors_by_row_index)
                 await sync_to_async(submission.save)()
                 messages.error(
@@ -112,15 +115,14 @@ async def home(request):
                     request=request,
                     message="File uploaded successfully. There are no errors,",
                 )
-
             return redirect("submissions")
-
         else:
+            # If the user does not have permission to upload csvs, redirect them to the dashboard page
             messages.error(
                 request=request,
                 message=f"You have do not have permission to upload csvs for {pz_code}.",
             )
-            form = UploadFileForm()
+            return redirect("dashboard")
 
     else:
         form = UploadFileForm()
@@ -128,6 +130,7 @@ async def home(request):
     context = {"file_uploaded": False, "form": form}
     template = "home.html"
     return render(request=request, template_name=template, context=context)
+
 
 def download_template(request):
     """

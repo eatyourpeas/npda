@@ -17,9 +17,12 @@ import numpy as np
 import httpx
 
 # RCPCH imports
-from ...constants import ALL_DATES, CSV_DATA_TYPES_MINUS_DATES, NONNULL_FIELDS
-
-from ..general_functions.csv_header import csv_header
+from ...constants import (
+    ALL_DATES,
+    CSV_DATA_TYPES_MINUS_DATES,
+    CSV_HEADINGS,
+    HEADINGS_LIST,
+)
 
 # Logging setup
 logger = logging.getLogger(__name__)
@@ -35,6 +38,7 @@ class ParsedCSVFile:
     additional_columns: list[str]
     duplicate_columns: list[str]
 
+
 def read_csv(csv_file):
     """
     Read the csv file and return a pandas dataframe
@@ -45,7 +49,6 @@ def read_csv(csv_file):
     # Parse the dates in the columns to the correct format first
     df = pd.read_csv(csv_file)
     # Remove leading and trailing whitespace on column names
-
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
 
@@ -53,30 +56,35 @@ def read_csv(csv_file):
 
     if df.columns[0].lower() not in lowercase_headings_list:
         # No header in the source - pass them from our definitions
-        logger.warning(f"CSV file uploaded without column names, using predefined column names")
+        logger.warning(
+            f"CSV file uploaded without column names, using predefined column names"
+        )
 
         # Have to reset back otherwise we get an empty dataframe
         csv_file.seek(0)
 
-        df = pd.read_csv(csv_file, names=HEADINGS_LIST)
-        df.columns = df.columns.str.strip()
-
     # Pandas has strange behaviour for the first line in a CSV - additional cells become row labels
     # https://github.com/pandas-dev/pandas/issues/47490
-    # 
+    #
     # As a heuristic for this, check the row label for the first row is the number 0
     # If it isn't - you've got too many values in the first row
     if not df.iloc[0].name == 0:
-        raise ValueError("Suspected too many values in the first row, please check there are no extra values")
+        raise ValueError(
+            "Suspected too many values in the first row, please check there are no extra values"
+        )
 
     # Accept columns case insensitively but replace them with their official version to make life easier later
     for column in df.columns:
         if not column in HEADINGS_LIST and column.lower() in lowercase_headings_list:
-            normalised_column = next(c for c in HEADINGS_LIST if c.lower() == column.lower())
-            df = df.rename(columns={ column: normalised_column })
+            normalised_column = next(
+                c for c in HEADINGS_LIST if c.lower() == column.lower()
+            )
+            df = df.rename(columns={column: normalised_column})
 
     missing_columns = [column for column in HEADINGS_LIST if not column in df.columns]
-    additional_columns = [column for column in df.columns if not column in HEADINGS_LIST]
+    additional_columns = [
+        column for column in df.columns if not column in HEADINGS_LIST
+    ]
 
     # Duplicate columns appear in the dataframe as XYZ.1, XYZ.2 etc
     duplicate_columns = []
@@ -222,7 +230,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return value
 
-
     def row_to_dict(row, model):
         ret = {}
 
@@ -232,42 +239,19 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 model_field_definition = model._meta.get_field(model_field_name)
 
                 csv_value = row[entry["heading"]]
-                model_field_value = csv_value_to_model_value(model_field_definition, csv_value)
+                model_field_value = csv_value_to_model_value(
+                    model_field_definition, csv_value
+                )
 
                 ret[model_field_name] = model_field_value
 
         return ret
 
-    def parse_row_using_model(row, model, mapping):
-        model_values = {}
-        field_errors = {}
-
-        for model_field_name, csv_field in mapping.items():
-            try:
-                model_field = model._meta.get_field(model_field_name)
-                csv_value = row[csv_field]
-
-                # print(f"csv_value: {csv_value}, model_field_name: {model_field_name}")
-
-                model_value = csv_value_to_model_value(model_field, csv_value)
-                model_values[model_field_name] = model_value
-            except ValidationError as e:
-                field_errors[model_field_name] = e
-
-        return (model_values, field_errors)
-
-
     def validate_transfer(row):
-        return parse_row_using_model(
-            row,
-            Transfer
-        ) | {"paediatric_diabetes_unit": pdu}
+        return row_to_dict(row, Transfer) | {"paediatric_diabetes_unit": pdu}
 
     async def validate_patient_using_form(row, async_client):
-        fields = row_to_dict(
-            row,
-            Patient
-        )
+        fields = row_to_dict(row, Patient)
 
         form = PatientForm(fields)
         form.async_validation_results = await validate_patient_async(
@@ -277,7 +261,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             async_client=async_client,
         )
 
-        return (form, field_errors)
+        return form
 
     def validate_visit_using_form(patient, row):
         fields = row_to_dict(
@@ -286,34 +270,50 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         )
 
         form = VisitForm(data=fields, initial={"patient": patient})
-        return (form, field_errors)
+        return form
 
     async def validate_rows(rows, async_client):
         first_row = rows.iloc[0]
         patient_row_index = first_row["row_index"]
 
-        (transfer_fields, transfer_field_errors) = validate_transfer(first_row)
-        (patient_form, patient_field_errors) = await validate_patient_using_form(
-            first_row, async_client
+        transfer_fields = validate_transfer(first_row)
+        patient_form = await validate_patient_using_form(first_row, async_client)
+        visits = rows.apply(
+            lambda row: (
+                validate_visit_using_form(patient_form.instance, row),
+                row["row_index"],
+            ),
+            axis=1,
         )
 
-        visits = []
+        return (patient_form, transfer_fields, patient_row_index, visits)
 
-        for _, row in rows.iterrows():
-            (visit_form, visit_field_errors) = validate_visit_using_form(
-                patient_form.instance, row
-            )
-            visits.append((visit_form, visit_field_errors, row["row_index"]))
+    # async def validate_rows(rows, async_client):
+    #     first_row = rows.iloc[0]
+    #     patient_row_index = first_row["row_index"]
 
-        first_row_field_errors = transfer_field_errors | patient_field_errors
+    #     (transfer_fields, transfer_field_errors) = validate_transfer(first_row)
+    #     (patient_form, patient_field_errors) = await validate_patient_using_form(
+    #         first_row, async_client
+    #     )
 
-        return (
-            patient_form,
-            transfer_fields,
-            patient_row_index,
-            first_row_field_errors,
-            visits,
-        )
+    #     visits = []
+
+    #     for _, row in rows.iterrows():
+    #         (visit_form, visit_field_errors) = validate_visit_using_form(
+    #             patient_form.instance, row
+    #         )
+    #         visits.append((visit_form, visit_field_errors, row["row_index"]))
+
+    #     first_row_field_errors = transfer_field_errors | patient_field_errors
+
+    #     return (
+    #         patient_form,
+    #         transfer_fields,
+    #         patient_row_index,
+    #         first_row_field_errors,
+    #         visits,
+    #     )
 
     def create_instance(model, form):
         # We want to retain fields even if they're invalid so that we can return them to the user
