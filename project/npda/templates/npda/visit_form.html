@@ -3,7 +3,7 @@
 {% csrf_token %}
 {% block content %}
 <div class="flex justify-center bg-white py-8">
-  <div class="w-full mx-96 px-2 bg-white font-montserrat">
+  <div class="max-w-full md:max-w-3/4 px-2 bg-white font-montserrat">
     <strong>{{ title }} - NPDA Patient {{ patient_id }} {% if visit_id %}- NPDA Visit No. {{ visit_id }} {% endif %}</strong>
     <form id="update-form" method="post" {% if form_method == "create" %} action="{% url 'visit-create' patient_id %}" {% else %} action="{% url 'visit-update' patient_id=patient_id pk=visit.pk %}" {% endif %}>
       {% csrf_token %}
@@ -29,9 +29,9 @@
         {% endif %}
       {% endfor %}
 
-      <div role="tablist" class="tabs">
+      <div role="tablist" class="flex flex-wrap">
         <input type="radio" name="my_tabs_1" role="tab" 
-          class="tab font-bold mb-2 text-black
+          class="order-1 tab font-bold mb-2 text-black border-b-4 hover:border-b-rcpch_pink border-b-rcpch_light_blue_tint3 border-solid border-0
           
           {% if routine_measurements_categories_with_errors and form_method == 'update' %} 
             bg-rcpch_red
@@ -41,7 +41,21 @@
           aria-label="Routine&nbsp;Measurements" checked
         />
         <!-- This is the Routine measurements tab -->
-        <div role="tabpanel" class="tab-content rounded-none">
+        <div role="tabpanel" class="tab-content order-last rounded-none">
+          <div class="flex align-middle items-center bg-gray-100 p-2 m-2">
+            <span class="mr-2 text-nowrap"><i class="fa-solid fa-list"></i> Skip to section: </span>
+        <ul class="flex gap-2 flex-wrap my-2">
+          {% for field_category in form.categories %}
+          {% with field_category|colour_for_category as background_colour %}
+          {% if field_category == "Measurements" or field_category == "HBA1c" or field_category == "Treatment" or field_category == "CGM" or field_category == "BP"%} 
+          <li class="inline-block p-2 font-mono bg-{{background_colour}} hover:shadow-md hover:underline">
+            <a href="#{{ field_category|cut:" " }}_anchor"> {{ field_category }}</a>
+          </li>
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
+        </ul>
+      </div>
         {% for field_category in form.categories %}
           {% with field_category|colour_for_category as background_colour %}
           {% if field_category == "Measurements" or field_category == "HBA1c" or field_category == "Treatment" or field_category == "CGM" or field_category == "BP"%} 
@@ -55,6 +69,7 @@
               border-4 border-{{background_colour}}
               "
             >
+            <a name="{{ field_category|cut:" " }}_anchor"></a>
             <div class="badge badge-outline p-2 {% if background_colour %} bg-{{background_colour}} {% endif %} text-white">{{field_category}}</div>
 
               {% for field in form %}
@@ -99,7 +114,7 @@
         </div>
         
           <input type="radio" name="my_tabs_1" role="tab" 
-            class="tab rounded-none font-bold mb-2 text-black
+            class="order-2 tab rounded-none font-bold mb-2 text-black border-b-4 hover:border-b-rcpch_pink border-b-rcpch_light_blue_tint3 border-solid border-0
             {% if annual_review_categories_with_errors and form_method == 'update' %} 
             bg-rcpch_red
             {% else %} 
@@ -108,7 +123,21 @@
             aria-label="Annual&nbsp;Review"
           />
           <!-- This is the the annual review tab -->
-        <div role="tabpanel" class="tab-content rounded-none" >
+        <div role="tabpanel" class="tab-content order-last rounded-none" >
+                    <div class="flex align-middle items-center bg-gray-100 p-2 m-2">
+            <span class="mr-2 text-nowrap"><i class="fa-solid fa-list"></i> Skip to section: </span>
+        <ul class="flex gap-2 flex-wrap my-2">
+          {% for field_category in form.categories %}
+          {% with field_category|colour_for_category as background_colour %}
+          {% if field_category == "Foot Care" or field_category == "DECS" or field_category == "ACR" or field_category == "Cholesterol" or field_category == "Thyroid" or field_category == "Coeliac" or field_category == "Psychology" or field_category == "Smoking" or field_category == "Dietician" or field_category == "Sick Day Rules" or field_category == "Immunisation (flu)" %}
+          <li class="inline-block p-2 font-mono bg-{{background_colour}} hover:shadow-md hover:underline">
+            <a href="#{{ field_category|cut:" " }}_anchor"> {{ field_category }}</a>
+          </li>
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
+        </ul>
+      </div>
           {% for field_category in form.categories %}
             {% with field_category|colour_for_category as background_colour %}
             {% if field_category == "Foot Care" or field_category == "DECS" or field_category == "ACR" or field_category == "Cholesterol" or field_category == "Thyroid" or field_category == "Coeliac" or field_category == "Psychology" or field_category == "Smoking" or field_category == "Dietician" or field_category == "Sick Day Rules" or field_category == "Immunisation (flu)" %}
@@ -121,6 +150,7 @@
               ">
                 <input type="radio" name="my-accordion-3" checked="checked" /> 
                 <div class="collapse-title p-1 pt-0 pl-0 m-0" >
+                  <a name="{{ field_category|cut:" " }}_anchor"></a>
                   {% if field_category in categories_with_errors %}
                     <div class="badge badge-outline badge-rcpch_red text-white bg-rcpch_red">
                       {{field_category}}
@@ -175,7 +205,7 @@
         </div>
 
         <input type="radio" name="my_tabs_1" role="tab" aria-label="Inpatient&nbsp;Entry" 
-          class="tab font-bold mb-2 text-black
+          class="order-3 tab font-bold mb-2 text-black border-b-4 hover:border-b-rcpch_pink border-b-rcpch_light_blue_tint3 border-solid border-0
           {% if 'Hospital Admission' in categories_with_errors %}
             bg-rcpch_red
           {% else %}
@@ -184,7 +214,21 @@
         "/>
         <div 
           role="tabpanel"
-          class="tab-content rounded-none">
+          class="tab-content order-last rounded-none">
+                              <div class="flex align-middle items-center bg-gray-100 p-2 m-2">
+            <span class="mr-2 text-nowrap"><i class="fa-solid fa-list"></i> Skip to section: </span>
+        <ul class="flex gap-2 flex-wrap my-2">
+          {% for field_category in form.categories %}
+          {% with field_category|colour_for_category as background_colour %}
+          {% if field_category == "Hospital Admission" %}
+          <li class="inline-block p-2 font-mono bg-{{background_colour}} hover:shadow-md hover:underline">
+            <a href="#{{ field_category|cut:" " }}_anchor"> {{ field_category }}</a>
+          </li>
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
+        </ul>
+      </div>
           {% for field_category in form.categories %}
             {% with field_category|colour_for_category as background_colour %}
               {% if field_category == "Hospital Admission" %}
@@ -197,7 +241,7 @@
                     outline outline-4 outline-rcpch_red
                   {% endif %}"
                 >
-
+                <a name="{{ field_category|cut:" " }}_anchor"></a>
                 <div class="badge badge-outline p-2 {% if background_colour %} bg-{{background_colour}} {% endif %} text-white">{{field_category}}</div>
                 
                 {% for field in form %}
@@ -240,7 +284,7 @@
             {% endwith %}
           {% endfor %}
         </div>
-
+        <div class="order-4 flex-grow mb-2 border-b-4  border-b-rcpch_light_blue_tint3 border-solid border-0"></div>
         
               
       </div>
