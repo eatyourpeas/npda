@@ -11,6 +11,7 @@ __pycache__
 /.cache
 
 *.code-workspace
+.vscode
 
 node_modules
 
