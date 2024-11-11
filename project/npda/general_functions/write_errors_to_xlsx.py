@@ -23,8 +23,17 @@ def write_errors_to_xlsx(errors: defaultdict[Any, defaultdict[Any, list]], new_s
   # Serialize the errors to get text.
   errors = serialize_errors(errors)
 
-  # Write an xlsx of the original data.  
+  # Get original data
+  df = read_csv(new_submission.csv_file)
+
   
+  # Write an xlsx of the original data.  
+
+  # Add sheet that lists the errors.
+
+  # Style the original data to highlight in red erroneous/invalid cells.
+
+  # Return True/False based on successful .xlsx creation.
 
   print("Running write_errors_to_xlsx")
   print(new_submission.csv_file)
