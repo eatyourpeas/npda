@@ -17,7 +17,8 @@ from django.urls import reverse
 from django_htmx.http import trigger_client_event
 
 from ..forms.upload import UploadFileForm
-from ..general_functions.csv_upload import csv_upload, read_csv
+from ..general_functions.csv_upload import csv_upload
+from ..general_functions.csv_read import csv_read
 from ..general_functions.serialize_validation_errors import serialize_errors
 from ..general_functions.session import (
     get_new_session_fields,
@@ -58,7 +59,7 @@ async def home(request):
             try:
                 errors_by_row_index = await csv_upload(
                     user=request.user,
-                    dataframe=read_csv(file),
+                    dataframe=csv_read(file),
                     csv_file=file,
                     pdu_pz_code=pz_code,
                 )
