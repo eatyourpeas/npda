@@ -14,7 +14,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from httpx import HTTPError
 
-from project.npda.general_functions.csv_upload import csv_upload, read_csv
+from project.npda.general_functions.csv_upload import csv_upload
+from project.npda.general_functions.csv_read import csv_read
 from project.npda.models import NPDAUser, Patient, Visit
 from project.npda.tests.factories.patient_factory import (
     INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
@@ -55,12 +56,12 @@ ALDER_HEY_PZ_CODE = "PZ074"
 
 @pytest.fixture
 def valid_df(dummy_sheets_folder):
-    return read_csv(dummy_sheets_folder / "dummy_sheet.csv")
+    return csv_read(dummy_sheets_folder / "dummy_sheet.csv")
 
 
 @pytest.fixture
 def single_row_valid_df(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / "dummy_sheet.csv").head(1)
+    df = csv_read(dummy_sheets_folder / "dummy_sheet.csv").head(1)
     assert len(df) == 1
 
     return df
@@ -68,7 +69,7 @@ def single_row_valid_df(dummy_sheets_folder):
 
 @pytest.fixture
 def one_patient_two_visits(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / "dummy_sheet.csv").head(2)
+    df = csv_read(dummy_sheets_folder / "dummy_sheet.csv").head(2)
 
     assert len(df) == 2
     assert df["NHS Number"][0] == df["NHS Number"][1]
@@ -78,7 +79,7 @@ def one_patient_two_visits(dummy_sheets_folder):
 
 @pytest.fixture
 def two_patients_first_with_two_visits_second_with_one(dummy_sheets_folder):
-    df = read_csv(dummy_sheets_folder / "dummy_sheet.csv").head(3)
+    df = csv_read(dummy_sheets_folder / "dummy_sheet.csv").head(3)
 
     assert len(df) == 3
     assert df["NHS Number"][0] == df["NHS Number"][1]
@@ -90,7 +91,7 @@ def two_patients_first_with_two_visits_second_with_one(dummy_sheets_folder):
 @pytest.fixture
 def two_patients_with_one_visit_each(dummy_sheets_folder):
     df = (
-        read_csv(dummy_sheets_folder / "dummy_sheet.csv")
+        csv_read(dummy_sheets_folder / "dummy_sheet.csv")
         .drop([0])
         .head(2)
         .reset_index(drop=True)
@@ -126,7 +127,7 @@ def read_csv_from_str(contents):
         f.write(contents.encode())
         f.seek(0)
 
-        return read_csv(f)
+        return csv_read(f)
 
 
 @pytest.mark.django_db
