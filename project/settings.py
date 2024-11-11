@@ -63,7 +63,10 @@ RCPCH_NHS_ORGANISATIONS_API_URL = "https://rcpch-nhs-organisations.azurewebsites
 # jargon for a GP practice
 NHS_SPINE_SERVICES_URL = os.getenv("NHS_SPINE_SERVICES_URL")
 
-POSTCODE_API_BASE_URL = os.getenv("POSTCODE_API_BASE_URL")
+POSTCODES_IO_API_URL = os.getenv("POSTCODES_IO_API_URL")
+POSTCODES_IO_API_KEY = os.getenv("POSTCODES_IO_API_KEY")
+
+DOCS_URL = os.getenv("DOCS_URL", "/docs/index.html")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
@@ -76,6 +79,8 @@ if DEBUG is True:
 CAPTCHA_IMAGE_SIZE = (200, 50)
 CAPTCHA_FONT_SIZE = 40
 
+# CSRF failure view
+CSRF_FAILURE_VIEW = "project.npda.views.csrf_fail"
 
 # Application definition
 
@@ -140,6 +145,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "project.npda.build_info.get_build_info",
+                "project.npda.context_processors.session_data",
             ],
         },
     },
@@ -250,7 +256,10 @@ STATICFILES_DIRS = (str(BASE_DIR.joinpath("static")),)
 STATIC_ROOT = str(BASE_DIR.joinpath("staticfiles"))
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # enabled to allow daisy to be used in production
+# Ensure WHITENOISE_ROOT directory exists
 WHITENOISE_ROOT = os.path.join(BASE_DIR, "static/root")
+if not os.path.exists(WHITENOISE_ROOT):
+    os.makedirs(WHITENOISE_ROOT)
 
 SMTP_EMAIL_ENABLED = "False"
 

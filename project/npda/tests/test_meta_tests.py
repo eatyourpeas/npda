@@ -20,7 +20,6 @@ from project.npda.tests.factories.paediatrics_diabetes_unit_factory import (
 )
 from project.npda.tests.factories.patient_factory import PatientFactory
 from project.npda.general_functions import print_instance_field_attrs
-from project.settings import LOGGING
 
 # logging
 logger = logging.getLogger(__name__)
@@ -28,9 +27,6 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.django_db
 def test__seed_test_db(
-    seed_groups_fixture,
-    seed_users_fixture,
-    seed_patients_fixture,
 ):
     assert Group.objects.all().exists()
     assert OrganisationEmployer.objects.all().exists()
@@ -39,9 +35,6 @@ def test__seed_test_db(
 
 @pytest.mark.django_db
 def test_patient_creation(
-    seed_groups_fixture,
-    seed_users_fixture,
-    seed_patients_fixture,
 ):
     """Test Patient Factory creation."""
 
@@ -53,9 +46,6 @@ def test_patient_creation(
 
 @pytest.mark.django_db
 def test__multiple_PaediatricsDiabetesUnitFactory_instances_not_created(
-    seed_groups_fixture,
-    seed_users_fixture,
-    seed_patients_fixture,
 ):
     """
     Both Patient and NPDAUser factories eventually create and are associated with a PaediatricsDiabetesUnit instance.

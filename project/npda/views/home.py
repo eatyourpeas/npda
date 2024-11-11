@@ -1,6 +1,9 @@
 # Python imports
+from asgiref.sync import sync_to_async
 import datetime
 import logging
+from pprint import pprint
+
 
 # Django imports
 from django.apps import apps
@@ -14,9 +17,13 @@ from django.urls import reverse
 from django_htmx.http import trigger_client_event
 
 from ..forms.upload import UploadFileForm
-from ..general_functions.csv_summarize import csv_summarize
 from ..general_functions.csv_upload import csv_upload, read_csv
-from ..general_functions.session import get_new_session_fields
+from ..general_functions.serialize_validation_errors import serialize_errors
+from ..general_functions.session import (
+    get_new_session_fields,
+    refresh_session_object_asynchronously,
+    refresh_session_object_synchronously,
+)
 from ..general_functions.view_preference import get_or_update_view_preference
 from ..kpi_class.kpis import CalculateKPIS
 
@@ -27,28 +34,16 @@ from .decorators import login_and_otp_required
 logger = logging.getLogger(__name__)
 
 
-def error_list(wrapper_error: ValidationError):
-    ret = []
-
-    for field, errors in wrapper_error.error_dict.items():
-        for error in errors:
-            ret.append(
-                {
-                    "field": field,
-                    "message": error.message,
-                    "original_row_index": error.original_row_index,
-                }
-            )
-
-    return ret
-
-
 @login_and_otp_required()
-def home(request):
+async def home(request):
     """
     Home page view - contains the upload form.
     Only verified users can access this page.
     """
+    if request.session.get("can_upload_csv") is False:
+        # If the user does not have permission to upload csvs, redirect them to the submissions page
+        return redirect("dashboard")
+
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
         file = request.FILES["csv_upload"]
@@ -58,39 +53,68 @@ def home(request):
 
         # You can't read the same file twice without resetting it
         file.seek(0)
-        errors = []
 
-        try:
-            csv_upload(
-                user=request.user,
-                dataframe=read_csv(file),
-                csv_file=file,
-                pdu_pz_code=pz_code,
-            )
-            messages.success(
-                request=request,
-                message="File uploaded successfully. There are no errors,",
-            )
+        if request.session.get("can_upload_csv") is True:
+            try:
+                errors_by_row_index = await csv_upload(
+                    user=request.user,
+                    dataframe=read_csv(file),
+                    csv_file=file,
+                    pdu_pz_code=pz_code,
+                )
+            except ValidationError as e:
+                messages.error(request=request, message=e.message)
+                return redirect("home")
 
             VisitActivity = apps.get_model("npda", "VisitActivity")
             try:
-                VisitActivity.objects.create(
+                await VisitActivity.objects.acreate(
                     activity=8,
                     ip_address=request.META.get("REMOTE_ADDR"),
                     npdauser=request.user,
                 )  # uploaded csv - activity 8
             except Exception as e:
                 logger.error(f"Failed to log user activity: {e}")
-        except ValidationError as error:
-            errors = error_list(error)
-            for error in errors:
+
+            # update the session fields
+            await refresh_session_object_asynchronously(
+                request=request, user=request.user, pz_code=pz_code
+            )
+
+            if errors_by_row_index:
+                # get submission and store the errors
+                Submission = apps.get_model("npda", "Submission")
+                submission = await Submission.objects.aget(
+                    paediatric_diabetes_unit__pz_code=pz_code,
+                    submission_active=True,
+                    audit_year=datetime.date.today().year,
+                )
+                pprint(errors_by_row_index)
+                submission.errors = serialize_errors(errors_by_row_index)
+                # submission.errors = json.dumps(errors_by_row_index)
+                await sync_to_async(submission.save)()
+                # row_indices = []
+                # for row_index, errors_by_field in errors_by_row_index.items():
+                #     for field, errors in errors_by_field.items():
+                #         print(errors)
                 messages.error(
                     request=request,
-                    message=f"CSV has been uploaded, but errors have been found. These include error in row {error['original_row_index']}: {error['message']}",
+                    message=f"CSV has been uploaded, but errors have been found in {len(errors_by_row_index.items())} rows. Please check the data quality report for details.",
                 )
-            pass
+            else:
+                messages.success(
+                    request=request,
+                    message="File uploaded successfully. There are no errors,",
+                )
 
-        return redirect("submissions")
+            return redirect("submissions")
+        else:
+            messages.error(
+                request=request,
+                message=f"You have do not have permission to upload csvs for {pz_code}.",
+            )
+            form = UploadFileForm()
+
     else:
         form = UploadFileForm()
 
@@ -170,6 +194,9 @@ def dashboard(request):
     """
     template = "dashboard.html"
     pz_code = request.session.get("pz_code")
+    refresh_session_object_synchronously(
+        request=request, user=request.user, pz_code=pz_code
+    )
     if request.htmx:
         # If the request is an htmx request, we want to return the partial template
         template = "partials/kpi_table.html"

@@ -3,14 +3,13 @@
 # python imports
 import pytest
 import logging
-from http import HTTPStatus
 
 # 3rd party imports
 from django.urls import reverse
 from project.constants.user import TITLES
 
 # E12 imports
-from project.npda.models import NPDAUser, OrganisationEmployer
+from project.npda.models import NPDAUser
 
 logger = logging.getLogger(__name__)
 
@@ -18,9 +17,6 @@ logger = logging.getLogger(__name__)
 @pytest.mark.skip(reason="Test not yet implemented - just for setting things up")
 @pytest.mark.django_db
 def test_user_creation(
-    seed_groups_fixture,
-    seed_users_fixture,
-    seed_patients_fixture,
     client,
 ):
     """Test user can create in same organisation"""

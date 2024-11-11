@@ -3,7 +3,12 @@ import itertools
 from django import template, forms
 from django.conf import settings
 from ..general_functions import get_visit_category_for_field
-from ...constants import VisitCategories, VISIT_FIELD_FLAT_LIST, VISIT_FIELDS
+from ...constants import (
+    VisitCategories,
+    VISIT_FIELD_FLAT_LIST,
+    VISIT_FIELDS,
+    CSV_HEADINGS,
+)
 from datetime import date
 
 register = template.Library()
@@ -101,6 +106,24 @@ def category_for_first_item(form, field, index):
         return current_visit_category.value
 
 
+@register.filter
+def heading_for_field(field):
+    """
+    Returns the heading for a given field
+    """
+    for item in CSV_HEADINGS:
+        if field == item["model_field"]:
+            return item["heading"]
+    return None
+
+
+@register.filter
+def join_with_comma(value):
+    if isinstance(value, list):
+        return ", ".join(map(str, value))
+    return value
+
+
 @register.simple_tag
 def site_contact_email():
     return settings.SITE_CONTACT_EMAIL
@@ -195,14 +218,30 @@ def patient_valid(patient):
         return True
 
 
+@register.simple_tag
+def text_for_data_submission(can_upload_csv, can_complete_questionnaire):
+    if can_upload_csv and can_complete_questionnaire:
+        return "You can submit data by uploading a CSV or completing the questionnaire. Note that once you upload a CSV, you will not be able to complete the questionnaire. Once you complete the questionnaire, you will not be able to upload a CSV."
+    elif can_upload_csv:
+        return "You can only submit data by uploading a CSV. If you want to submit data via questionnaire, please contact the NPDA team."
+    elif can_complete_questionnaire:
+        return "You can only submit data by completing the questionnaire. If you want to submit data via CSV, please contact the NPDA team."
+    else:
+        return "You cannot upload a CSV or complete a questionnaire."
+
+
 # Used to keep text highlighted in navbar for the tab that has been selected
 @register.simple_tag
 def active_navbar_tab(request, url_name):
-    return (
-        "text-rcpch_light_blue"
-        if request.resolver_match.url_name == url_name
-        else "text-gray-700"
-    )
+    if request.resolver_match is not None:
+        return (
+            "text-rcpch_light_blue"
+            if request.resolver_match.url_name == url_name
+            else "text-gray-700"
+        )
+    else:
+        # Some routes, such as Error 404, do not have resolver_match property.
+        return "text-gray-700"
 
 
 @register.filter
@@ -221,3 +260,8 @@ def extract_digits(value, underscore_index=0):
     if len(matches) > 0:
         return int(matches[underscore_index])
     return 0
+
+
+@register.simple_tag
+def docs_url():
+    return settings.DOCS_URL

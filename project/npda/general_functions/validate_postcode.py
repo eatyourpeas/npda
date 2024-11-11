@@ -2,38 +2,32 @@
 import logging
 
 # django
-
-# third party libraries
-import requests
-from requests.exceptions import HTTPError
-
-# npda imports
 from django.conf import settings
 
-# Logging
-logger = logging.getLogger(__name__)
+# third party libraries
+import httpx
+
+# npda imports
 
 
-def validate_postcode(postcode):
+async def validate_postcode(postcode: str, async_client: httpx.AsyncClient):
     """
-    Tests if postcode is valid
-    Returns boolean
+    Tests if postcode is valid, normalising it to AB1 2CD format if it is
+    Throws None if the postcode does not exist, otherwise returns the normalised version
     """
 
-    request_url = f"{settings.POSTCODE_API_BASE_URL}/postcodes/{postcode}.json"
+    response = await async_client.get(
+        url=f"{settings.POSTCODES_IO_API_URL}/postcodes/{postcode}",
+        headers={"Ocp-Apim-Subscription-Key": settings.POSTCODES_IO_API_KEY},
+        timeout=10,  # times out after 10 seconds
+    )
 
-    try:
-        response = requests.get(
-            url=request_url,
-            timeout=10,  # times out after 10 seconds
-        )
-        response.raise_for_status()
-        
-        return {
-            "normalised_postcode": response.json()["data"]["id"]
-        }
-    except HTTPError as e:
-        logger.error(e.response.text)
+    if response.status_code == 404:
         return None
+    
+    response.raise_for_status()
 
-    return True
+    normalised_postcode = response.json()["result"]["postcode"]
+    print(f"!! normalised_postcode={normalised_postcode}")
+
+    return normalised_postcode

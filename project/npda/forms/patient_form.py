@@ -4,20 +4,19 @@ from datetime import date
 
 # project imports
 import nhs_number
+import httpx
 # third-party imports
 from dateutil.relativedelta import relativedelta
 from django import forms
 # django imports
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from requests import RequestException
+from httpx import HTTPError
 
 from ...constants.styles.form_styles import *
-from ..general_functions import (gp_details_for_ods_code,
-                                 gp_ods_code_for_postcode, imd_for_postcode,
-                                 validate_postcode)
 from ..models import Patient
 from ..validators import not_in_the_future_validator
+from .external_patient_validators import validate_patient_sync
 
 logger = logging.getLogger(__name__)
 
@@ -99,26 +98,6 @@ class PatientForm(forms.ModelForm):
 
         return date_of_birth
 
-    def clean_postcode(self):
-        postcode = self.cleaned_data["postcode"]
-
-        try:
-            result = validate_postcode(postcode)
-
-            if not result:
-                self.add_error(
-                    "postcode",
-                    ValidationError("Invalid postcode %(postcode)s",
-                        params={"postcode":postcode})
-                )
-
-                return postcode
-            else:
-                return result["normalised_postcode"]
-        except RequestException as err:
-            logger.warning(f"Error validating postcode {err}")
-            return postcode
-
     def clean_diagnosis_date(self):
         diagnosis_date = self.cleaned_data["diagnosis_date"]
         not_in_the_future_validator(diagnosis_date)
@@ -130,9 +109,18 @@ class PatientForm(forms.ModelForm):
         not_in_the_future_validator(death_date)
 
         return death_date
+    
+    def handle_async_validation_result(self, key):
+        value = getattr(self.async_validation_results, key)
+
+        if type(value) is ValidationError:
+            self.add_error(key, value)
+        elif value:
+            self.cleaned_data[key] = value
 
     def clean(self):
-        cleaned_data = super().clean()
+        cleaned_data = self.cleaned_data
+
         date_of_birth = cleaned_data.get("date_of_birth")
         diagnosis_date = cleaned_data.get("diagnosis_date")
         death_date = cleaned_data.get("death_date")
@@ -166,39 +154,23 @@ class PatientForm(forms.ModelForm):
 
         if gp_practice_ods_code is None and gp_practice_postcode is None:
             self.add_error("gp_practice_ods_code", ValidationError("'GP Practice ODS code' and 'GP Practice postcode' cannot both be empty"))
+        
+        if not getattr(self, "async_validation_results", None):
+            self.async_validation_results = validate_patient_sync(
+                postcode=self.cleaned_data["postcode"],
+                gp_practice_ods_code=self.cleaned_data.get("gp_practice_ods_code"),
+                gp_practice_postcode=self.cleaned_data.get("gp_practice_postcode")
+            )
+        
+        for key in ["postcode", "gp_practice_ods_code", "gp_practice_postcode"]:
+            self.handle_async_validation_result(key)
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
 
-        if gp_practice_postcode:
-            try:
-                validation_result = validate_postcode(gp_practice_postcode)
-                normalised_postcode = validation_result["normalised_postcode"]
+        instance.index_of_multiple_deprivation_quintile = self.async_validation_results.index_of_multiple_deprivation_quintile
 
-                ods_code = gp_ods_code_for_postcode(normalised_postcode)
+        if commit:
+            instance.save()
 
-                if not ods_code:
-                    self.add_error(
-                        "gp_practice_postcode",
-                        ValidationError(
-                            "Could not find GP practice with postcode %(postcode)s",
-                            params={"postcode":gp_practice_postcode}
-                        )
-                    )
-                else:
-                    cleaned_data["gp_practice_ods_code"] = ods_code
-                    cleaned_data["gp_practice_postcode"] = normalised_postcode
-            except RequestException as err:
-                logger.warning(f"Error looking up GP practice by postcode {err}")
-
-        elif gp_practice_ods_code:
-            try:
-                if not gp_details_for_ods_code(gp_practice_ods_code):
-                    self.add_error(
-                        "gp_practice_ods_code",
-                        ValidationError(
-                            "Could not find GP practice with ODS code %(ods_code)s",
-                            params={"ods_code":gp_practice_ods_code}
-                        )
-                    )
-            except RequestException as err:
-                logger.warning(f"Error looking up GP practice by ODS code {err}")
-
-        return cleaned_data
+        return instance

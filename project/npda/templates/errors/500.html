@@ -1,0 +1,13 @@
+{% extends "errors/error_base.html" %}
+
+{% block error_number %}
+500
+{% endblock %}
+
+{% block error_msg %}
+<p class="mb-8 text-lg font-normal lg:text-xl sm:px-16 xl:px-48 text-white">
+  Sorry, something went wrong on the server for this page.
+  <br />
+  Please try again and contact the NPDA team if the problem persists.
+</p>
+{% endblock %}

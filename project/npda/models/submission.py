@@ -38,8 +38,13 @@ class Submission(models.Model):
     csv_file = models.FileField(
         upload_to=f"submissions/csv/",
         help_text="CSV file containing the audit data for this submission",
-        default="submissions/csv/default.csv",
         null=True,  # submissions that are not active will have their csv file deleted
+    )
+    errors = models.JSONField(
+        "Errors",
+        help_text="Errors that have been found in the uploaded CSV file",
+        null=True,
+        blank=True,
     )
 
     patients = models.ManyToManyField(
@@ -53,7 +58,7 @@ class Submission(models.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.audit_year}, {self.patients.count()} patients"
+        return f"Submission from {self.paediatric_diabetes_unit} for {self.audit_year}"
 
     class Meta:
         verbose_name = "Submission"

@@ -1,6 +1,7 @@
 """Views for KPIs calculations
 """
 
+from collections import defaultdict
 import logging
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime, timedelta
@@ -611,7 +612,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_6_total_t1dm_complete_year_gte_12yo(self) -> dict:
+    def calculate_kpi_6_total_t1dm_complete_year_gte_12yo(self) -> KPIResult:
         """
         Calculates KPI 6: Total number of patients with T1DM who have completed a year of care and are aged 12 or older
         Total number of patients with:
@@ -729,7 +730,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_7_total_new_diagnoses_t1dm(self) -> dict:
+    def calculate_kpi_7_total_new_diagnoses_t1dm(self) -> KPIResult:
         """
         Calculates KPI 7: Total number of new diagnoses of T1DM
         Total number of patients with:
@@ -822,7 +823,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_8_total_deaths(self) -> dict:
+    def calculate_kpi_8_total_deaths(self) -> KPIResult:
         """
         Calculates KPI 8: Number of patients who died within audit period
         Number of eligible patients (measure 1) with:
@@ -868,7 +869,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_9_total_service_transitions(self) -> dict:
+    def calculate_kpi_9_total_service_transitions(self) -> KPIResult:
         """
         Calculates KPI 9: Number of patients who transitioned/left service within audit period
 
@@ -919,7 +920,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_10_total_coeliacs(self) -> dict:
+    def calculate_kpi_10_total_coeliacs(self) -> KPIResult:
         """
         Calculates KPI 10: Total number of coeliacs
         Number of eligible patients (measure 1) who:
@@ -977,7 +978,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_11_total_thyroids(self) -> dict:
+    def calculate_kpi_11_total_thyroids(self) -> KPIResult:
         """
         Calculates KPI 11: Number of patients with thyroid  disease
         Number of eligible patients (measure 1)
@@ -1037,7 +1038,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_12_total_ketone_test_equipment(self) -> dict:
+    def calculate_kpi_12_total_ketone_test_equipment(self) -> KPIResult:
         """
         Calculates KPI 12: Number of patients using (or trained to use) blood ketone testing equipment
 
@@ -1095,7 +1096,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_13_one_to_three_injections_per_day(self) -> dict:
+    def calculate_kpi_13_one_to_three_injections_per_day(self) -> KPIResult:
         """
         Calculates KPI 13: One - three injections/day
 
@@ -1141,7 +1142,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_14_four_or_more_injections_per_day(self) -> dict:
+    def calculate_kpi_14_four_or_more_injections_per_day(self) -> KPIResult:
         """
         Calculates KPI 14: Four or more injections/day
 
@@ -1187,7 +1188,7 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_15_insulin_pump(self) -> dict:
+    def calculate_kpi_15_insulin_pump(self) -> KPIResult:
         """
         Calculates KPI 15: Insulin pump (including those using a pump as part of a hybrid closed loop)
 
@@ -1235,7 +1236,7 @@ class CalculateKPIS:
 
     def calculate_kpi_16_one_to_three_injections_plus_other_medication(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 16: One - three injections/day plus other blood glucose lowering medication
 
@@ -1282,7 +1283,7 @@ class CalculateKPIS:
 
     def calculate_kpi_17_four_or_more_injections_plus_other_medication(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 17: Four or more injections/day plus other blood glucose lowering medication
 
@@ -1328,7 +1329,7 @@ class CalculateKPIS:
 
     def calculate_kpi_18_insulin_pump_plus_other_medication(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 18: Insulin pump therapy plus other blood glucose lowering medication
 
@@ -1374,7 +1375,7 @@ class CalculateKPIS:
 
     def calculate_kpi_19_dietary_management_alone(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 19: Dietary management alone (no insulin or other diabetes related medication)
 
@@ -1420,7 +1421,7 @@ class CalculateKPIS:
 
     def calculate_kpi_20_dietary_management_plus_other_medication(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 20: Dietary management plus other blood glucose lowering medication (non Type-1 diabetes)
 
@@ -1466,7 +1467,7 @@ class CalculateKPIS:
 
     def calculate_kpi_21_flash_glucose_monitor(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 21: Number of patients using a flash glucose monitor
 
@@ -1512,7 +1513,7 @@ class CalculateKPIS:
 
     def calculate_kpi_22_real_time_cgm_with_alarms(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 22: Number of patients using a real time continuous glucose monitor (CGM) with alarms
 
@@ -1558,7 +1559,7 @@ class CalculateKPIS:
 
     def calculate_kpi_23_type1_real_time_cgm_with_alarms(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 23: Number of patients with Type 1 diabetes using a real time continuous glucose monitor (CGM) with alarms
 
@@ -1605,7 +1606,7 @@ class CalculateKPIS:
 
     def calculate_kpi_24_hybrid_closed_loop_system(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 24: Hybrid closed loop system (HCL)
 
@@ -1691,7 +1692,7 @@ class CalculateKPIS:
 
     def calculate_kpi_25_hba1c(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 25: HbA1c (%)
 
@@ -1733,7 +1734,7 @@ class CalculateKPIS:
 
     def calculate_kpi_26_bmi(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 26: BMI (%)
 
@@ -1776,7 +1777,7 @@ class CalculateKPIS:
 
     def calculate_kpi_27_thyroid_screen(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 27: Thyroid Screen (%)
 
@@ -1817,7 +1818,7 @@ class CalculateKPIS:
 
     def calculate_kpi_28_blood_pressure(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 28: Blood Pressure (%)
 
@@ -1861,7 +1862,7 @@ class CalculateKPIS:
 
     def calculate_kpi_29_urinary_albumin(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 29: Urinary Albumin (%)
 
@@ -1904,7 +1905,7 @@ class CalculateKPIS:
 
     def calculate_kpi_30_retinal_screening(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 30: Retinal Screening (%)
 
@@ -1951,7 +1952,7 @@ class CalculateKPIS:
 
     def calculate_kpi_31_foot_examination(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 31: Foot Examination (%)
 
@@ -1993,7 +1994,7 @@ class CalculateKPIS:
     # TODO: get actual querysets for patients who passed and failed
     def calculate_kpi_32_1_health_check_completion_rate(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 32.1: Health check completion rate (%)
         Number of actual health checks over number of expected health checks.
@@ -2199,7 +2200,7 @@ class CalculateKPIS:
         )
 
     # TODO: get actual querysets for patients who passed and failed
-    def calculate_kpi_32_2_health_check_lt_12yo(self) -> dict:
+    def calculate_kpi_32_2_health_check_lt_12yo(self) -> KPIResult:
         """
         Calculates KPI 32.2: Health Checks (Less than 12 years)
 
@@ -2281,7 +2282,7 @@ class CalculateKPIS:
         )
 
     # TODO: get actual querysets for patients who passed and failed
-    def calculate_kpi_32_3_health_check_gte_12yo(self) -> dict:
+    def calculate_kpi_32_3_health_check_gte_12yo(self) -> KPIResult:
         """
         Calculates KPI 32.3: Health Checks (12 years and over)
 
@@ -2433,7 +2434,7 @@ class CalculateKPIS:
 
     def calculate_kpi_33_hba1c_4plus(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 33: HbA1c 4+ (%)
 
@@ -2485,7 +2486,7 @@ class CalculateKPIS:
 
     def calculate_kpi_34_psychological_assessment(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 34: Psychological assessment (%)
 
@@ -2536,7 +2537,7 @@ class CalculateKPIS:
 
     def calculate_kpi_35_smoking_status_screened(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 35: Smoking status screened (%)
 
@@ -2593,7 +2594,7 @@ class CalculateKPIS:
 
     def calculate_kpi_36_referral_to_smoking_cessation_service(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 36: Referral to smoking cessation service (%)
 
@@ -2643,7 +2644,7 @@ class CalculateKPIS:
 
     def calculate_kpi_37_additional_dietetic_appointment_offered(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 37: Additional dietetic appointment offered (%)
 
@@ -2692,7 +2693,7 @@ class CalculateKPIS:
 
     def calculate_kpi_38_patients_attending_additional_dietetic_appointment(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 38: Patients attending additional dietetic appointment (%)
 
@@ -2744,7 +2745,7 @@ class CalculateKPIS:
 
     def calculate_kpi_39_influenza_immunisation_recommended(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 39: Influenza immunisation recommended (%)
 
@@ -2796,7 +2797,7 @@ class CalculateKPIS:
 
     def calculate_kpi_40_sick_day_rules_advice(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 40: Sick day rules advice (%)
 
@@ -2847,7 +2848,7 @@ class CalculateKPIS:
 
     def calculate_kpi_41_coeliac_disease_screening(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 41: Coeliac diasease screening (%)
 
@@ -2901,7 +2902,7 @@ class CalculateKPIS:
 
     def calculate_kpi_42_thyroid_disease_screening(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 42: Thyroid disaese screening (%)
 
@@ -2953,7 +2954,7 @@ class CalculateKPIS:
 
     def calculate_kpi_43_carbohydrate_counting_education(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 43: Carbohydrate counting education (%)
 
@@ -3022,7 +3023,7 @@ class CalculateKPIS:
 
     def calculate_kpi_44_mean_hba1c(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 44: Mean HbA1c
 
@@ -3097,12 +3098,14 @@ class CalculateKPIS:
 
     def calculate_kpi_45_median_hba1c(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 43: Median HbA1c
 
         SINGLE NUMBER: median of HbA1c measurements (item 17) within the audit
         period, excluding measurements taken within 90 days of diagnosis
+
+        i.e. valid = hba1c date > diagnosis date + 90 days
 
         NOTE: The median for each patient is calculated. We then calculate the
         median of the medians.
@@ -3119,38 +3122,27 @@ class CalculateKPIS:
 
         # Calculate median HBa1c for each patient
 
-        # Get the visits that match the valid HbA1c criteria
+        # Retrieve all visits with valid HbA1c values
+        valid_visits = Visit.objects.filter(
+            visit_date__range=self.AUDIT_DATE_RANGE,
+            hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90),
+        ).values("patient__pk", "hba1c")
 
-        # Subquery to filter valid HBA1c values while ensuring visit_date is in
-        # the required range
-        valid_hba1c_subquery = (
-            Visit.objects.filter(
-                visit_date__range=self.AUDIT_DATE_RANGE,
-                hba1c_date__gte=F("patient__diagnosis_date")
-                + timedelta(days=90),  # Ensure HbA1c is taken >90 days after diagnosis
-                patient=OuterRef("pk"),
-            )
-            # Clear any implicit ordering, select only 'hba1c' for calculating
-            # the median as getting error with the visit_date field
-            .order_by().values("hba1c")
-        )
+        # Group HbA1c values by patient ID into a list so can use
+        # calculate_median method
+        # We're doing this in Python instead of Django ORM because median
+        # aggregation gets complicated
+        hba1c_values_by_patient = defaultdict(list)
+        for visit in valid_visits:
+            hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
 
-        # Annotate eligible patients with the median HbA1c value
-        eligible_pts_annotated = eligible_patients.annotate(
-            median_hba1c=Subquery(
-                valid_hba1c_subquery.annotate(median_hba1c=Median("hba1c")).values(
-                    "median_hba1c"
-                )[:1]
-            )
-        )
+        # For each patient, calculate the median of their HbA1c values
+        median_hba1cs = []
+        for _, hba1c_values in hba1c_values_by_patient.items():
+            median_hba1cs.append(self.calculate_median(hba1c_values))
 
-        # Calculate the mean of the medians and convert to float (as Decimal)
-        mean_of_median_hba1cs = (
-            eligible_pts_annotated.aggregate(
-                mean_of_median_hba1cs=Avg("median_hba1c")
-            ).get("mean_of_median_hba1cs")
-            or 0
-        )
+        # Finally calculate the median of the medians
+        median_of_median_hba1cs = self.calculate_median(median_hba1cs)
 
         # Also set pt querysets to be returned if required
         patient_querysets = self._get_pt_querysets_object(
@@ -3162,7 +3154,7 @@ class CalculateKPIS:
             total_eligible=total_eligible,
             total_ineligible=total_ineligible,
             # Use passed for storing the value
-            total_passed=mean_of_median_hba1cs,
+            total_passed=median_of_median_hba1cs,
             # Failed is not used
             total_failed=-1,
             patient_querysets=patient_querysets,
@@ -3170,7 +3162,7 @@ class CalculateKPIS:
 
     def calculate_kpi_46_number_of_admissions(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 46: Number of admissions
 
@@ -3233,7 +3225,7 @@ class CalculateKPIS:
 
     def calculate_kpi_47_number_of_dka_admissions(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 47: Number of DKA admissions
 
@@ -3294,7 +3286,7 @@ class CalculateKPIS:
 
     def calculate_kpi_48_required_additional_psychological_support(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 48: Required additional psychological support
 
@@ -3347,7 +3339,7 @@ class CalculateKPIS:
 
     def calculate_kpi_49_albuminuria_present(
         self,
-    ) -> dict:
+    ) -> KPIResult:
         """
         Calculates KPI 49: Albuminuria present
 
@@ -3565,23 +3557,41 @@ class CalculateKPIS:
             self.t1dm_pts_diagnosed_90D_before_end_total_eligible,
         )
 
+    def calculate_median(self, values: list[Decimal]) -> float:
+        """Calculates the median of a list of values
+
+        Args:
+            values (list[Decimal]): List of values to calculate the median for.
+            assuming used with hba1c values which come in as Decimals. Convert
+            these to floats for convenience.
+
+        Returns:
+            float: Median of the list of values. Returns -1 if no values
+        """
+        if not values:
+            return float(-1)
+
+        # Remove the None values and ensure they're sorted
+        cleaned_values = [val for val in values if val is not None]
+        if len(cleaned_values) == 0:
+            return float(-1)
+
+        cleaned_values.sort()
+
+        length = len(values)
+        if length % 2 == 0:
+
+            # even number, take mean
+            middle_1 = cleaned_values[(length // 2) - 1]
+            middle_2 = cleaned_values[length // 2]
+            return float((middle_1 + middle_2) / 2)
+
+        # odd number
+        middle = cleaned_values[length // 2]
+        return float(middle)
+
 
 # Custom Median function for PostgreSQL
 class Median(Func):
     function = "percentile_cont"
     template = "%(function)s(0.5) WITHIN GROUP (ORDER BY %(expressions)s)"
-
-
-def queryset_median_value(queryset: QuerySet, column_name: str):
-    """Calculates the median value of a given column_name:str in a queryset
-
-    Median is not a SQL aggregate function so we have to calculate it manually
-
-    Thanks https://stackoverflow.com/questions/942620/missing-median-aggregate-function-in-django.
-    """
-    count = queryset.count()
-    values = queryset.values_list(column_name, flat=True).order_by(column_name)
-    if count % 2 == 1:
-        return values[int(round(count / 2))]
-    else:
-        return sum(values[count / 2 - 1 : count / 2 + 1]) / Decimal(2.0)

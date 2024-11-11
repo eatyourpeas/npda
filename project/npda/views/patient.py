@@ -5,6 +5,7 @@ import logging
 # Django imports
 from django.apps import apps
 from django.utils import timezone
+from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count, Case, When, Max, Q, F
@@ -22,19 +23,29 @@ from django.urls import reverse_lazy
 from project.npda.general_functions import (
     organisations_adapter,
 )
-from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
+from project.npda.general_functions.quarter_for_date import (
+    retrieve_quarter_for_date,
+)
 from project.npda.models import NPDAUser
 
 # RCPCH imports
 from ..models import Patient
 from ..forms.patient_form import PatientForm
-from .mixins import CheckPDUInstanceMixin, CheckPDUListMixin, LoginAndOTPRequiredMixin
+from .mixins import (
+    CheckPDUInstanceMixin,
+    CheckPDUListMixin,
+    LoginAndOTPRequiredMixin,
+)
+from ..general_functions.session import refresh_session_object_synchronously
 
 logger = logging.getLogger(__name__)
 
 
 class PatientListView(
-    LoginAndOTPRequiredMixin, CheckPDUListMixin, PermissionRequiredMixin, ListView
+    LoginAndOTPRequiredMixin,
+    CheckPDUListMixin,
+    PermissionRequiredMixin,
+    ListView,
 ):
     permission_required = "npda.view_patient"
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."
@@ -112,7 +123,7 @@ class PatientListView(
                 visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
             )
             .order_by("is_valid", "visit_error_count", "pk")
-            .filter(is_valid=True, visit_error_count__lt=1)
+            .filter(visit__is_valid=True, visit_error_count__lt=1)
             .count()
         )
         context["pz_code"] = self.request.session.get("pz_code")
@@ -124,7 +135,8 @@ class PatientListView(
         context["index_of_first_invalid_patient"] = total_valid_patients + 1
         context["pdu_choices"] = (
             organisations_adapter.paediatric_diabetes_units_to_populate_select_field(
-                requesting_user=self.request.user, user_instance=self.request.user
+                requesting_user=self.request.user,
+                user_instance=self.request.user,
             )
         )
         context["chosen_pdu"] = self.request.session.get("pz_code")
@@ -161,7 +173,10 @@ class PatientListView(
 
 
 class PatientCreateView(
-    LoginAndOTPRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, CreateView
+    LoginAndOTPRequiredMixin,
+    PermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
 ):
     """
     Handle creation of new patient in audit - should link the patient to the current audit year and the logged in user's PDU
@@ -190,55 +205,71 @@ class PatientCreateView(
         return context
 
     def form_valid(self, form: BaseForm) -> HttpResponse:
-        # the Patient record is therefore valid
-        patient = form.save(commit=False)
-        patient.is_valid = True
-        patient.errors = None
-        patient.save()
+        if self.request.session.get("can_complete_questionnaire"):
+            # the Patient record is therefore valid
+            patient = form.save(commit=False)
+            patient.is_valid = True
+            patient.errors = None
+            patient.save()
 
-        # add the PDU to the patient record
-        # get or create the paediatric diabetes unit object
-        PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
-        paediatric_diabetes_unit = PaediatricDiabetesUnit.objects.get(
-            pz_code=self.request.session.get("pz_code"),
-        )
+            # add the PDU to the patient record
+            # get or create the paediatric diabetes unit object
+            PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+            paediatric_diabetes_unit = PaediatricDiabetesUnit.objects.get(
+                pz_code=self.request.session.get("pz_code"),
+            )
 
-        Transfer = apps.get_model("npda", "Transfer")
-        if Transfer.objects.filter(patient=patient).exists():
-            # the patient is being transferred from another PDU. Update the previous_pz_code field
-            transfer = Transfer.objects.get(patient=patient)
-            transfer.previous_pz_code = transfer.paediatric_diabetes_unit.pz_code
-            transfer.paediatric_diabetes_unit = paediatric_diabetes_unit
-            transfer.date_leaving_service = (
-                form.cleaned_data.get("date_leaving_service"),
-            )
-            transfer.reason_leaving_service = (
-                form.cleaned_data.get("reason_leaving_service"),
-            )
-            transfer.save()
-        else:
-            Transfer.objects.create(
+            Transfer = apps.get_model("npda", "Transfer")
+            if Transfer.objects.filter(patient=patient).exists():
+                # the patient is being transferred from another PDU. Update the previous_pz_code field
+                transfer = Transfer.objects.get(patient=patient)
+                transfer.previous_pz_code = transfer.paediatric_diabetes_unit.pz_code
+                transfer.paediatric_diabetes_unit = paediatric_diabetes_unit
+                transfer.date_leaving_service = (
+                    form.cleaned_data.get("date_leaving_service"),
+                )
+                transfer.reason_leaving_service = (
+                    form.cleaned_data.get("reason_leaving_service"),
+                )
+                transfer.save()
+            else:
+                Transfer.objects.create(
+                    paediatric_diabetes_unit=paediatric_diabetes_unit,
+                    patient=patient,
+                    date_leaving_service=None,
+                    reason_leaving_service=None,
+                )
+            # add patient to the latest audit year and the logged in user's PDU
+            # the form is initialised with the current audit year
+
+            Submission = apps.get_model("npda", "Submission")
+            submission, created = Submission.objects.update_or_create(
+                audit_year=date.today().year,
                 paediatric_diabetes_unit=paediatric_diabetes_unit,
-                patient=patient,
-                date_leaving_service=None,
-                reason_leaving_service=None,
+                submission_active=True,
+                defaults={
+                    "submission_by": NPDAUser.objects.get(pk=self.request.user.pk),
+                    "submission_by": NPDAUser.objects.get(pk=self.request.user.pk),
+                    "submission_date": timezone.now(),
+                },
+            )
+            submission.patients.add(patient)
+            submission.save()
+            # update the session
+            refresh_session_object_synchronously(
+                request=self.request,
+                user=self.request.user,
+                pz_code=self.request.session.get("pz_code"),
             )
 
-        # add patient to the latest audit year and the logged in user's PDU
-        # the form is initialised with the current audit year
-        Submission = apps.get_model("npda", "Submission")
-        submission, created = Submission.objects.update_or_create(
-            audit_year=date.today().year,
-            paediatric_diabetes_unit=paediatric_diabetes_unit,
-            submission_active=True,
-            defaults={
-                "submission_by": NPDAUser.objects.get(pk=self.request.user.pk),
-                "submission_by": NPDAUser.objects.get(pk=self.request.user.pk),
-                "submission_date": timezone.now(),
-            },
-        )
-        submission.patients.add(patient)
-        submission.save()
+        else:
+            logger.error(
+                f"User {self.request.user} attempted to add a new patient to the audit, but the submission for {self.request.session['pz_code']} is done through csv upload."
+            )
+            messages.error(
+                self.request,
+                "The submission for this PDU is done through csv upload and data cannot be added or edited through the questionnaire. If you need to edit the submission directly please contact the NPDA team for assistance.",
+            )
 
         return super().form_valid(form)
 
@@ -285,6 +316,7 @@ class PatientUpdateView(
         patient = form.save(commit=False)
         patient.is_valid = True
         patient.errors = None
+        # TODO MRB: this calls patient.save twice. super.form_valid calls it too (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/335)
         patient.save()
         return super().form_valid(form)
 

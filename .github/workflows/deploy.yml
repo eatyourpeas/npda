@@ -8,6 +8,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  pages: write
 
 jobs:
   build-and-deploy:
@@ -31,3 +32,15 @@ jobs:
           AZURE_STAGING_APP_NAME: ${{ secrets.AZURE_STAGING_APP_NAME }}
           AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
         run: s/ci
+      
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+      
+      - name: Upload docs artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'staticdocs'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

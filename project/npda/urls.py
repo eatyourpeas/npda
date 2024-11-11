@@ -3,9 +3,14 @@ from django.contrib.auth.views import PasswordResetConfirmView
 from django.urls import include, path
 
 from project.npda.forms.npda_user_form import NPDAUpdatePasswordForm
-from project.npda.views import (PatientListView, PatientVisitsListView,
-                                SubmissionsListView, VisitCreateView,
-                                VisitDeleteView, VisitUpdateView)
+from project.npda.views import (
+    PatientListView,
+    PatientVisitsListView,
+    SubmissionsListView,
+    VisitCreateView,
+    VisitDeleteView,
+    VisitUpdateView,
+)
 
 from .views import *
 
@@ -97,4 +102,5 @@ urlpatterns = [
         view=dashboard,
         name="dashboard",
     ),
+    path("csrf_fail/", csrf_fail, name="csrf_fail"),
 ]
