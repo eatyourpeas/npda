@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 import pandas as pd
 import numpy as np
 import httpx
+from ..general_functions.write_errors_to_xlsx import write_errors_to_xlsx
 
 # RCPCH imports
 from ...constants import ALL_DATES, CSV_DATA_TYPES_MINUS_DATES, NONNULL_FIELDS
@@ -395,4 +396,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 except Exception as error:
                     errors_to_return[visit_row_index]["__all__"].append(error)
 
-        return errors_to_return
+    # Copy csv to a styled xlsx.
+    _ = write_errors_to_xlsx(errors_to_return, new_submission)
+    return errors_to_return
