@@ -15,7 +15,7 @@ from django.views.generic import ListView
 # RCPCH imports
 from .mixins import LoginAndOTPRequiredMixin
 from ..models import Submission
-from ..general_functions import download_csv, csv_summarize
+from ..general_functions import download_csv, download_xlsx, csv_summarize
 
 
 class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
@@ -116,6 +116,7 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         The button name "submit-data" is used to determine the action to be taken.
         If the value of "submit-data" is "delete-data", the submission is deleted.
         If the value of "submit-data" is "download-data", the original csv is downloaded.
+        If the value of "submit-data" is "download-report", the commented xlsx (with validation remarks) is downloaded.
         """
         button_name = request.POST.get("submit-data")
         if button_name == "delete-data":
@@ -151,6 +152,12 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
                 pk=request.POST.get("audit_id")
             ).get()
             return download_csv(request, submission.id)
+        
+        if button_name == "download-report":
+            submission = Submission.objects.filter(
+                pk=request.POST.get("audit_id")
+            ).get()
+            return download_xlsx(request, submission.id)
 
         # POST is not supported for this view
         # Must therefore return the queryset as an obect_list and context

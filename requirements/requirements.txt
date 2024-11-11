@@ -15,6 +15,7 @@ django-citext==1.0.0
 docutils==0.20.1
 markdown
 pandas
+openpyxl==3.1.5
 psycopg2-binary==2.9.9
 whitenoise==6.6.0
 python-dotenv==1.0.1

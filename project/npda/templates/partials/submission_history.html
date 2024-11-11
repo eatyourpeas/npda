@@ -49,12 +49,18 @@
                                         {% csrf_token %}
                                         <input type="hidden" name="audit_id" value="{{submission.pk}}">
                                         {% if submission.submission_active %}
+                                        <button 
+                                                name="submit-data"
+                                                value="download-report"  
+                                                type="submit" 
+                                                class="join-item mr-2 bg-rcpch_pink text-white font-semibold hover:text-white py-1 px-2 hover:bg-rcpch_pink_light_tint1 btn-sm rounded-none">View Report</button>
                                             <button 
                                                 name="submit-data" 
                                                 value="download-data" 
                                                 type="submit" 
                                                 class="join-item bg-rcpch_light_blue text-white font-semibold hover:text-white py-1 px-2 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue btn-sm rounded-none">Download</button>
                                         {% else %}
+                                            
                                             <button 
                                                 name="submit-data"
                                                 disabled="true"
