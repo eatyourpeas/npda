@@ -47,14 +47,31 @@ def read_csv(csv_file):
     Assigns the correct data types to the columns
     Parses the dates in the columns to the correct format
     """
+    # It is possible the csv file has no header row. In this case, we will use the predefined column names
+    # The predefined column names are in the HEADINGS_LIST constant and if cast to lowercase, in lowercase_headings_list
+    # We will check if the first row of the csv file matches the predefined column names
+    # If it does not, we will use the predefined column names
+    # If it does, we will use the column names in the csv file
 
-    # Parse the dates in the columns to the correct format first
+    # Convert the predefined column names to lowercase
+    lowercase_headings_list = [heading.lower() for heading in HEADINGS_LIST]
+
+    # Read the first row of the csv file
     df = pd.read_csv(csv_file)
+
+    if any(col.lower() in lowercase_headings_list for col in df.columns):
+        # The first row of the csv file matches at least some of the predefined column names
+        # We will use the column names in the csv file
+        pass
+    else:
+        # The first row of the csv file does not match the predefined column names
+        # We will use the predefined column names
+        csv_file.seek(0)
+        df = pd.read_csv(csv_file, header=None, names=HEADINGS_LIST)
+
     # Remove leading and trailing whitespace on column names
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
-
-    lowercase_headings_list = [heading.lower() for heading in HEADINGS_LIST]
 
     if df.columns[0].lower() not in lowercase_headings_list:
         # No header in the source - pass them from our definitions
@@ -84,6 +101,7 @@ def read_csv(csv_file):
             df = df.rename(columns={column: normalised_column})
 
     missing_columns = [column for column in HEADINGS_LIST if not column in df.columns]
+
     additional_columns = [
         column for column in df.columns if not column in HEADINGS_LIST
     ]
@@ -323,7 +341,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             original_submission_patient_count = await Patient.objects.filter(
                 submissions=original_submission
             ).acount()
-            print(
+            logger.debug(
                 f"Deleting patients from previous submission: {original_submission_patient_count}"
             )
             await Patient.objects.filter(submissions=original_submission).adelete()
