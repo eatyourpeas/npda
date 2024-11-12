@@ -38,6 +38,7 @@ class ParsedCSVFile:
     missing_columns: list[str]
     additional_columns: list[str]
     duplicate_columns: list[str]
+    parse_type_error_columns: list[str]
 
 
 def read_csv(csv_file):
@@ -90,6 +91,8 @@ def read_csv(csv_file):
     # Duplicate columns appear in the dataframe as XYZ.1, XYZ.2 etc
     duplicate_columns = []
 
+    parse_type_error_columns = []
+
     for column in df.columns:
         result = re.match(r"([\w ]+)\.\d+$", column)
 
@@ -103,21 +106,36 @@ def read_csv(csv_file):
     # Apply the dtype to non-date columns
     for column, dtype in CSV_DATA_TYPES_MINUS_DATES.items():
         try:
-            df[column] = df[column].astype(dtype)
+            if column in df.columns:
+                df[column] = df[column].astype(dtype)
         except ValueError as e:
-            raise ValidationError(
-                f"The data type for {column} cannot be processed. Please make sure the data type is correct."
-            )
-        df[column] = df[column].where(pd.notnull(df[column]), None)
+            parse_type_error_columns.append(column)
+            continue
+        # Convert NaN to None for nullable fields
+        if column in df.columns:
+            df[column] = df[column].where(pd.notnull(df[column]), None)
         # round height and weight if provided to 1 decimal place
-        if column in [
-            "Patient Height (cm)",
-            "Patient Weight (kg)",
-            "Total Cholesterol Level (mmol/l)",
-        ]:
-            df[column] = df[column].round(1)
+        if (
+            column
+            in [
+                "Patient Height (cm)",
+                "Patient Weight (kg)",
+                "Total Cholesterol Level (mmol/l)",
+            ]
+            and column in df.columns
+        ):
+            if df[column].dtype == np.float64:
+                df[column] = df[column].round(1)
+            else:
+                parse_type_error_columns.append(column)
 
-    return ParsedCSVFile(df, missing_columns, additional_columns, duplicate_columns)
+    return ParsedCSVFile(
+        df,
+        missing_columns,
+        additional_columns,
+        duplicate_columns,
+        parse_type_error_columns,
+    )
 
 
 async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
@@ -245,8 +263,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return [task.result() for task in tasks]
 
-    # Code starts here....
-
     """"
     Create the submission and save the csv file
     """
@@ -329,7 +345,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             )
 
     """
-    Process the csv file and validate adn save the data in the tables, parsing any errors
+    Process the csv file and validate and save the data in the tables, parsing any errors
     """
 
     # Remember the original row number to help users find where the problem was in the CSV
@@ -351,12 +367,12 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             patient_form,
             transfer_fields,
             patient_row_index,
-            first_row_field_errors,
+            # first_row_field_errors,
             parsed_visits,
         ) in validation_results_by_patient:
             # Errors parsing the Transfer or Patient fields
-            for field, error in first_row_field_errors.items():
-                errors_to_return[patient_row_index][field].append(error)
+            # for field, error in first_row_field_errors.items():
+            #     errors_to_return[patient_row_index][field].append(error)
 
             # Errors validating the Patient fields
             for field, error in patient_form.errors.as_data().items():
@@ -382,10 +398,10 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
-            for visit_form, visit_field_errors, visit_row_index in parsed_visits:
+            for visit_form, visit_row_index in parsed_visits:
                 # Errors parsing the Visit fields
-                for field, error in visit_field_errors.items():
-                    errors_to_return[visit_row_index][field].append(error)
+                # for field, error in visit_field_errors.items():
+                #     errors_to_return[visit_row_index][field].append(error)
 
                 # Errors validating the Visit fields
                 for field, error in visit_form.errors.as_data().items():
