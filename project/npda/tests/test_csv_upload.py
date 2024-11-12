@@ -1,6 +1,6 @@
 import dataclasses
 import tempfile
-from functools import partial
+from decimal import Decimal
 from unittest.mock import AsyncMock, patch
 
 from asgiref.sync import sync_to_async, async_to_sync
@@ -779,3 +779,31 @@ def test_upload_without_headers(test_user, one_patient_two_visits):
 
     assert Patient.objects.count() == 1
     assert Visit.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_upload_csv_with_bool_values_instead_of_int(test_user, single_row_valid_df):
+    single_row_valid_df["Has the patient been recommended a Gluten-free diet?"] = True
+
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    assert "gluten_free_diet" in errors[0]
+
+    visit = Visit.objects.first()
+    assert visit.gluten_free_diet == 1
+
+
+@pytest.mark.django_db
+def test_height_is_rounded_to_one_decimal(test_user, single_row_valid_df):
+    single_row_valid_df["Patient Height (cm)"] = 123.456
+    single_row_valid_df["Patient Weight (kg)"] = 7.89
+
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+
+    visit = Visit.objects.first()
+
+    assert visit.height == round(
+        Decimal("123.456"), 1
+    )  # Values are stored as Decimals (4 digits with 1 decimal place)
+    assert visit.weight == round(
+        Decimal("7.89"), 1
+    )  # Values are stored as Decimals (4 digits with 1 decimal place)
