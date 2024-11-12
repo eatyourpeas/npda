@@ -388,10 +388,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             # first_row_field_errors,
             parsed_visits,
         ) in validation_results_by_patient:
-            # Errors parsing the Transfer or Patient fields
-            # for field, error in first_row_field_errors.items():
-            #     errors_to_return[patient_row_index][field].append(error)
-
             # Errors validating the Patient fields
             for field, error in patient_form.errors.as_data().items():
                 errors_to_return[patient_row_index][field].append(error)
@@ -417,10 +413,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
             for visit_form, visit_row_index in parsed_visits:
-                # Errors parsing the Visit fields
-                # for field, error in visit_field_errors.items():
-                #     errors_to_return[visit_row_index][field].append(error)
-
                 # Errors validating the Visit fields
                 for field, error in visit_form.errors.as_data().items():
                     errors_to_return[visit_row_index][field].append(error)
