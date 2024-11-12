@@ -1,17 +1,31 @@
-import pandas as pd
-
 CSV_HEADINGS = (
-    # Patient
-    {"heading": "NHS Number", "model_field": "nhs_number", "model": "Patient"},
-    {"heading": "Date of Birth", "model_field": "date_of_birth", "model": "Patient"},
+    # patient
+    {
+        "heading": "NHS Number",
+        "model_field": "nhs_number",
+        "model": "Patient",
+    },
+    {
+        "heading": "Date of Birth",
+        "model_field": "date_of_birth",
+        "model": "Patient",
+    },
     {
         "heading": "Postcode of usual address",
         "model_field": "postcode",
         "model": "Patient",
     },
     {"heading": "Stated gender", "model_field": "sex", "model": "Patient"},
-    {"heading": "Ethnic Category", "model_field": "ethnicity", "model": "Patient"},
-    {"heading": "Diabetes Type", "model_field": "diabetes_type", "model": "Patient"},
+    {
+        "heading": "Ethnic Category",
+        "model_field": "ethnicity",
+        "model": "Patient",
+    },
+    {
+        "heading": "Diabetes Type",
+        "model_field": "diabetes_type",
+        "model": "Patient",
+    },
     {
         "heading": "Date of Diabetes Diagnosis",
         "model_field": "diagnosis_date",
@@ -27,28 +41,49 @@ CSV_HEADINGS = (
         "model_field": "reason_leaving_service",
         "model": "Transfer",
     },
-    {"heading": "Death Date", "model_field": "death_date", "model": "Patient"},
+    {
+        "heading": "Death Date",
+        "model_field": "death_date",
+        "model": "Patient",
+    },
     {
         "heading": "GP Practice Code",
         "model_field": "gp_practice_ods_code",
         "model": "Patient",
     },
-    {"heading": "PDU Number", "model_field": "pdu", "model": "Patient"},
+    {
+        "heading": "PDU Number",
+        "model_field": "pdu",
+        # Reference attached to Transfer in csv_upload
+        # Transfer
+    },
     # Visit
     {
         "heading": "Visit/Appointment Date",
         "model_field": "visit_date",
         "model": "Visit",
     },
-    {"heading": "Patient Height (cm)", "model_field": "height", "model": "Visit"},
-    {"heading": "Patient Weight (kg)", "model_field": "weight", "model": "Visit"},
+    {
+        "heading": "Patient Height (cm)",
+        "model_field": "height",
+        "model": "Visit",
+    },
+    {
+        "heading": "Patient Weight (kg)",
+        "model_field": "weight",
+        "model": "Visit",
+    },
     {
         "heading": "Observation Date (Height and weight)",
         "model_field": "height_weight_observation_date",
         "model": "Visit",
     },
     {"heading": "Hba1c Value", "model_field": "hba1c", "model": "Visit"},
-    {"heading": "HbA1c result format", "model_field": "hba1c_format", "model": "Visit"},
+    {
+        "heading": "HbA1c result format",
+        "model_field": "hba1c_format",
+        "model": "Visit",
+    },
     {
         "heading": "Observation Date: Hba1c Value",
         "model_field": "hba1c_date",
@@ -220,6 +255,8 @@ CSV_HEADINGS = (
         "model": "Visit",
     },
 )
+
+HEADINGS_LIST = [item["heading"] for item in CSV_HEADINGS]
 
 ALL_DATES = [
     "Date of Birth",
