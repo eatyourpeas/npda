@@ -17,6 +17,7 @@ from .views import *
 urlpatterns = [
     path("", view=home, name="home"),
     path("home", view=home, name="home"),
+    path("home/download_template", view=download_template, name="download_template"),
     path("view_preference", view=view_preference, name="view_preference"),
     # Submission views
     path(

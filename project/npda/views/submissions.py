@@ -15,7 +15,9 @@ from django.views.generic import ListView
 # RCPCH imports
 from .mixins import LoginAndOTPRequiredMixin
 from ..models import Submission
-from ..general_functions import download_csv, csv_summarize
+from ..general_functions.csv_download import download_csv
+from ..general_functions.csv_summarize import csv_summarize
+from ..general_functions.csv_upload import read_csv
 
 
 class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
@@ -79,7 +81,8 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
             # If a submission exists and it was created by uploading a csv, summarize the csv data
             if self.request.session.get("can_upload_csv"):
                 # check if the user has permission to upload csv (not this function is not available in this brance but is in live)
-                context["data"] = csv_summarize(latest_active_submission.csv_file)
+                parsed_csv = read_csv(latest_active_submission.csv_file)
+                context["data"] = csv_summarize(parsed_csv.df)
                 if latest_active_submission.errors:
                     deserialized_errors = json.loads(latest_active_submission.errors)
                     context["submission_errors"] = deserialized_errors

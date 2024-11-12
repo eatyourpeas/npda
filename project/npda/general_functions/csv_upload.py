@@ -1,8 +1,11 @@
 # python imports
 from datetime import date
+from dataclasses import dataclass
 import logging
 import asyncio
 import collections
+import re
+from pprint import pprint
 
 # django imports
 from django.apps import apps
@@ -15,7 +18,12 @@ import numpy as np
 import httpx
 
 # RCPCH imports
-from ...constants import ALL_DATES, CSV_DATA_TYPES_MINUS_DATES, NONNULL_FIELDS
+from ...constants import (
+    ALL_DATES,
+    CSV_DATA_TYPES_MINUS_DATES,
+    CSV_HEADINGS,
+    HEADINGS_LIST,
+)
 
 # Logging setup
 logger = logging.getLogger(__name__)
@@ -24,18 +32,90 @@ from ..forms.visit_form import VisitForm
 from ..forms.external_patient_validators import validate_patient_async
 
 
+@dataclass
+class ParsedCSVFile:
+    df: pd.DataFrame
+    missing_columns: list[str]
+    additional_columns: list[str]
+    duplicate_columns: list[str]
+    parse_type_error_columns: list[str]
+
+
 def read_csv(csv_file):
     """
     Read the csv file and return a pandas dataframe
     Assigns the correct data types to the columns
     Parses the dates in the columns to the correct format
     """
+    # It is possible the csv file has no header row. In this case, we will use the predefined column names
+    # The predefined column names are in the HEADINGS_LIST constant and if cast to lowercase, in lowercase_headings_list
+    # We will check if the first row of the csv file matches the predefined column names
+    # If it does not, we will use the predefined column names
+    # If it does, we will use the column names in the csv file
 
-    # Parse the dates in the columns to the correct format first
+    # Convert the predefined column names to lowercase
+    lowercase_headings_list = [heading.lower() for heading in HEADINGS_LIST]
+
+    # Read the first row of the csv file
     df = pd.read_csv(csv_file)
+
+    if any(col.lower() in lowercase_headings_list for col in df.columns):
+        # The first row of the csv file matches at least some of the predefined column names
+        # We will use the column names in the csv file
+        pass
+    else:
+        # The first row of the csv file does not match the predefined column names
+        # We will use the predefined column names
+        csv_file.seek(0)
+        df = pd.read_csv(csv_file, header=None, names=HEADINGS_LIST)
+
     # Remove leading and trailing whitespace on column names
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
     df.columns = df.columns.str.strip()
+
+    if df.columns[0].lower() not in lowercase_headings_list:
+        # No header in the source - pass them from our definitions
+        logger.warning(
+            f"CSV file uploaded without column names, using predefined column names"
+        )
+
+        # Have to reset back otherwise we get an empty dataframe
+        csv_file.seek(0)
+
+    # Pandas has strange behaviour for the first line in a CSV - additional cells become row labels
+    # https://github.com/pandas-dev/pandas/issues/47490
+    #
+    # As a heuristic for this, check the row label for the first row is the number 0
+    # If it isn't - you've got too many values in the first row
+    if not df.iloc[0].name == 0:
+        raise ValueError(
+            "Suspected too many values in the first row, please check there are no extra values"
+        )
+
+    # Accept columns case insensitively but replace them with their official version to make life easier later
+    for column in df.columns:
+        if not column in HEADINGS_LIST and column.lower() in lowercase_headings_list:
+            normalised_column = next(
+                c for c in HEADINGS_LIST if c.lower() == column.lower()
+            )
+            df = df.rename(columns={column: normalised_column})
+
+    missing_columns = [column for column in HEADINGS_LIST if not column in df.columns]
+
+    additional_columns = [
+        column for column in df.columns if not column in HEADINGS_LIST
+    ]
+
+    # Duplicate columns appear in the dataframe as XYZ.1, XYZ.2 etc
+    duplicate_columns = []
+
+    parse_type_error_columns = []
+
+    for column in df.columns:
+        result = re.match(r"([\w ]+)\.\d+$", column)
+
+        if result and result.group(1) not in duplicate_columns:
+            duplicate_columns.append(result.group(1))
 
     for column in ALL_DATES:
         if column in df.columns:
@@ -44,21 +124,36 @@ def read_csv(csv_file):
     # Apply the dtype to non-date columns
     for column, dtype in CSV_DATA_TYPES_MINUS_DATES.items():
         try:
-            df[column] = df[column].astype(dtype)
+            if column in df.columns:
+                df[column] = df[column].astype(dtype)
         except ValueError as e:
-            raise ValidationError(
-                f"The data type for {column} cannot be processed. Please make sure the data type is correct."
-            )
-        df[column] = df[column].where(pd.notnull(df[column]), None)
+            parse_type_error_columns.append(column)
+            continue
+        # Convert NaN to None for nullable fields
+        if column in df.columns:
+            df[column] = df[column].where(pd.notnull(df[column]), None)
         # round height and weight if provided to 1 decimal place
-        if column in [
-            "Patient Height (cm)",
-            "Patient Weight (kg)",
-            "Total Cholesterol Level (mmol/l)",
-        ]:
-            df[column] = df[column].round(1)
+        if (
+            column
+            in [
+                "Patient Height (cm)",
+                "Patient Weight (kg)",
+                "Total Cholesterol Level (mmol/l)",
+            ]
+            and column in df.columns
+        ):
+            if df[column].dtype == np.float64:
+                df[column] = df[column].round(1)
+            else:
+                parse_type_error_columns.append(column)
 
-    return df
+    return ParsedCSVFile(
+        df,
+        missing_columns,
+        additional_columns,
+        duplicate_columns,
+        parse_type_error_columns,
+    )
 
 
 async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
@@ -67,11 +162,128 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     Returns the empty dict if successful, otherwise ValidationErrors indexed by the row they occurred at
     Also return the dataframe for later summary purposes
     """
+
+    # Get the models
     Patient = apps.get_model("npda", "Patient")
     Transfer = apps.get_model("npda", "Transfer")
     Visit = apps.get_model("npda", "Visit")
     Submission = apps.get_model("npda", "Submission")
     PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+
+    # Helper functions
+    def csv_value_to_model_value(model_field, value):
+        if pd.isnull(value):
+            return None
+
+        # # Pandas is returning 0 for empty cells in integer columns
+        # if value == 0:
+        #     return None
+
+        # Pandas will convert an integer column to float if it contains missing values
+        # http://pandas.pydata.org/pandas-docs/stable/user_guide/gotchas.html#missing-value-representation-for-numpy-types
+        # if pd.api.types.is_float(value) and model_field.choices:
+        #     return int(value)
+
+        if isinstance(value, pd.Timestamp):
+            return value.to_pydatetime().date()
+
+        # if model_field.choices:
+        #     # If the model field has choices, we need to convert the value to the correct type otherwise 1, 2 will be saved as booleans
+        #     return model_field.to_python(value)
+
+        return value
+
+    def row_to_dict(row, model):
+        ret = {}
+
+        for entry in CSV_HEADINGS:
+            if "model" in entry and apps.get_model("npda", entry["model"]) == model:
+                model_field_name = entry["model_field"]
+                model_field_definition = model._meta.get_field(model_field_name)
+
+                csv_value = row[entry["heading"]]
+                model_field_value = csv_value_to_model_value(
+                    model_field_definition, csv_value
+                )
+
+                ret[model_field_name] = model_field_value
+
+        return ret
+
+    def validate_transfer(row):
+        return row_to_dict(row, Transfer) | {"paediatric_diabetes_unit": pdu}
+
+    async def validate_patient_using_form(row, async_client):
+        fields = row_to_dict(row, Patient)
+
+        form = PatientForm(fields)
+        form.async_validation_results = await validate_patient_async(
+            postcode=fields["postcode"],
+            gp_practice_ods_code=fields["gp_practice_ods_code"],
+            gp_practice_postcode=None,
+            async_client=async_client,
+        )
+
+        return form
+
+    def validate_visit_using_form(patient, row):
+        fields = row_to_dict(
+            row,
+            Visit,
+        )
+
+        form = VisitForm(data=fields, initial={"patient": patient})
+        return form
+
+    async def validate_rows(rows, async_client):
+        first_row = rows.iloc[0]
+        patient_row_index = first_row["row_index"]
+
+        transfer_fields = validate_transfer(first_row)
+        patient_form = await validate_patient_using_form(first_row, async_client)
+        visits = rows.apply(
+            lambda row: (
+                validate_visit_using_form(patient_form.instance, row),
+                row["row_index"],
+            ),
+            axis=1,
+        )
+
+        return (
+            patient_form,
+            transfer_fields,
+            patient_row_index,
+            visits,
+        )
+
+    def create_instance(model, form):
+        # We want to retain fields even if they're invalid so that we can return them to the user
+        # Use the field value from cleaned_data, falling back to data if it's not there
+        if form.is_valid():
+            data = form.cleaned_data
+        else:
+            data = form.data
+        instance = model(**data)
+        instance.is_valid = form.is_valid()
+        instance.errors = (
+            None if form.is_valid() else form.errors.get_json_data(escape_html=True)
+        )
+
+        return instance
+
+    async def validate_rows_in_parallel(rows_by_patient, async_client):
+        tasks = []
+
+        async with asyncio.TaskGroup() as tg:
+            for _, rows in rows_by_patient:
+                task = tg.create_task(validate_rows(rows, async_client))
+                tasks.append(task)
+
+        return [task.result() for task in tasks]
+
+    """"
+    Create the submission and save the csv file
+    """
 
     # get the PDU object
     # TODO #249 MRB: handle case where PDU does not exist
@@ -129,7 +341,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             original_submission_patient_count = await Patient.objects.filter(
                 submissions=original_submission
             ).acount()
-            print(
+            logger.debug(
                 f"Deleting patients from previous submission: {original_submission_patient_count}"
             )
             await Patient.objects.filter(submissions=original_submission).adelete()
@@ -150,187 +362,12 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 {"csv_upload": "Error deactivating previous submission"}
             )
 
-    def csv_value_to_model_value(model_field, value):
-        if pd.isnull(value):
-            return None
-
-        # # Pandas is returning 0 for empty cells in integer columns
-        # if value == 0:
-        #     return None
-
-        # Pandas will convert an integer column to float if it contains missing values
-        # http://pandas.pydata.org/pandas-docs/stable/user_guide/gotchas.html#missing-value-representation-for-numpy-types
-        # if pd.api.types.is_float(value) and model_field.choices:
-        #     return int(value)
-
-        if isinstance(value, pd.Timestamp):
-            return value.to_pydatetime().date()
-
-        # if model_field.choices:
-        #     # If the model field has choices, we need to convert the value to the correct type otherwise 1, 2 will be saved as booleans
-        #     return model_field.to_python(value)
-
-        return value
-
-    def parse_row_using_model(row, model, mapping):
-        model_values = {}
-        field_errors = {}
-
-        for model_field_name, csv_field in mapping.items():
-            try:
-                model_field = model._meta.get_field(model_field_name)
-                csv_value = row[csv_field]
-
-                # print(f"csv_value: {csv_value}, model_field_name: {model_field_name}")
-
-                model_value = csv_value_to_model_value(model_field, csv_value)
-                model_values[model_field_name] = model_value
-            except ValidationError as e:
-                field_errors[model_field_name] = e
-
-        return (model_values, field_errors)
-
-    def validate_transfer(row):
-        return parse_row_using_model(
-            row,
-            Transfer,
-            {
-                "date_leaving_service": "Date of leaving service",
-                "reason_leaving_service": "Reason for leaving service",
-            },
-        )
-
-    async def validate_patient_using_form(row, async_client):
-        (fields, field_errors) = parse_row_using_model(
-            row,
-            Patient,
-            {
-                "nhs_number": "NHS Number",
-                "date_of_birth": "Date of Birth",
-                "postcode": "Postcode of usual address",
-                "sex": "Stated gender",
-                "ethnicity": "Ethnic Category",
-                "diabetes_type": "Diabetes Type",
-                "gp_practice_ods_code": "GP Practice Code",
-                "diagnosis_date": "Date of Diabetes Diagnosis",
-                "death_date": "Death Date",
-            },
-        )
-
-        form = PatientForm(fields)
-        form.async_validation_results = await validate_patient_async(
-            postcode=fields["postcode"],
-            gp_practice_ods_code=fields["gp_practice_ods_code"],
-            gp_practice_postcode=None,
-            async_client=async_client,
-        )
-
-        return (form, field_errors)
-
-    def validate_visit_using_form(patient, row):
-        (fields, field_errors) = parse_row_using_model(
-            row,
-            Visit,
-            {
-                "visit_date": "Visit/Appointment Date",
-                "height": "Patient Height (cm)",
-                "weight": "Patient Weight (kg)",
-                "height_weight_observation_date": "Observation Date (Height and weight)",
-                "hba1c_format": "HbA1c result format",
-                "hba1c_date": "Observation Date: Hba1c Value",
-                "treatment": "Diabetes Treatment at time of Hba1c measurement",
-                "closed_loop_system": "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
-                "glucose_monitoring": "At the time of HbA1c measurement, in addition to standard blood glucose monitoring (SBGM), was the patient using any other method of glucose monitoring?",
-                "systolic_blood_pressure": "Systolic Blood Pressure",
-                "diastolic_blood_pressure": "Diastolic Blood pressure",
-                "blood_pressure_observation_date": "Observation Date (Blood Pressure)",
-                "foot_examination_observation_date": "Foot Assessment / Examination Date",
-                "retinal_screening_observation_date": "Retinal Screening date",
-                "retinal_screening_result": "Retinal Screening Result",
-                "albumin_creatinine_ratio": "Urinary Albumin Level (ACR)",
-                "albumin_creatinine_ratio_date": "Observation Date: Urinary Albumin Level",
-                "albuminuria_stage": "Albuminuria Stage",
-                "total_cholesterol": "Total Cholesterol Level (mmol/l)",
-                "total_cholesterol_date": "Observation Date: Total Cholesterol Level",
-                "thyroid_function_date": "Observation Date: Thyroid Function",
-                "thyroid_treatment_status": "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
-                "coeliac_screen_date": "Observation Date: Coeliac Disease Screening",
-                "gluten_free_diet": "Has the patient been recommended a Gluten-free diet?",
-                "psychological_screening_assessment_date": "Observation Date - Psychological Screening Assessment",
-                "psychological_additional_support_status": "Was the patient assessed as requiring additional psychological/CAMHS support outside of MDT clinics?",
-                "smoking_status": "Does the patient smoke?",
-                "smoking_cessation_referral_date": "Date of offer of referral to smoking cessation service (if patient is a current smoker)",
-                "carbohydrate_counting_level_three_education_date": "Date of Level 3 carbohydrate counting education received",
-                "dietician_additional_appointment_offered": "Was the patient offered an additional appointment with a paediatric dietitian?",
-                "dietician_additional_appointment_date": "Date of additional appointment with dietitian",
-                "ketone_meter_training": "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?",
-                "flu_immunisation_recommended_date": "Date that influenza immunisation was recommended",
-                "sick_day_rules_training_date": "Date of provision of advice ('sick-day rules') about managing diabetes during intercurrent illness or episodes of hyperglycaemia",
-                "hospital_admission_date": "Start date (Hospital Provider Spell)",
-                "hospital_discharge_date": "Discharge date (Hospital provider spell)",
-                "hospital_admission_reason": "Reason for admission",
-                "dka_additional_therapies": "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
-                "hospital_admission_other": "Only complete if OTHER selected: Reason for admission (free text)",
-            },
-        )
-
-        form = VisitForm(data=fields, initial={"patient": patient})
-        return (form, field_errors)
-
-    async def validate_rows(rows, async_client):
-        first_row = rows.iloc[0]
-        patient_row_index = first_row["row_index"]
-
-        (transfer_fields, transfer_field_errors) = validate_transfer(first_row)
-        (patient_form, patient_field_errors) = await validate_patient_using_form(
-            first_row, async_client
-        )
-
-        visits = []
-
-        for _, row in rows.iterrows():
-            (visit_form, visit_field_errors) = validate_visit_using_form(
-                patient_form.instance, row
-            )
-            visits.append((visit_form, visit_field_errors, row["row_index"]))
-
-        first_row_field_errors = transfer_field_errors | patient_field_errors
-
-        return (
-            patient_form,
-            transfer_fields,
-            patient_row_index,
-            first_row_field_errors,
-            visits,
-        )
-
-    def create_instance(model, form):
-        # We want to retain fields even if they're invalid so that we can return them to the user
-        # Use the field value from cleaned_data, falling back to data if it's not there
-        if form.is_valid():
-            data = form.cleaned_data
-        else:
-            data = form.data
-        instance = model(**data)
-        instance.is_valid = form.is_valid()
-        instance.errors = (
-            None if form.is_valid() else form.errors.get_json_data(escape_html=True)
-        )
-
-        return instance
-
-    async def validate_rows_in_parallel(rows_by_patient, async_client):
-        tasks = []
-
-        async with asyncio.TaskGroup() as tg:
-            for _, rows in visits_by_patient:
-                task = tg.create_task(validate_rows(rows, async_client))
-                tasks.append(task)
-
-        return [task.result() for task in tasks]
+    """
+    Process the csv file and validate and save the data in the tables, parsing any errors
+    """
 
     # Remember the original row number to help users find where the problem was in the CSV
-    dataframe["row_index"] = np.arange(dataframe.shape[0])
+    dataframe = dataframe.assign(row_index=np.arange(dataframe.shape[0]))
 
     # We only one to create one patient per NHS number and we can't create their visits if we fail to save the patient model
     visits_by_patient = dataframe.groupby("NHS Number", sort=False, dropna=False)
@@ -341,20 +378,16 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
     async with httpx.AsyncClient() as async_client:
         validation_results_by_patient = await validate_rows_in_parallel(
-            visits_by_patient, async_client
+            rows_by_patient=visits_by_patient, async_client=async_client
         )
 
         for (
             patient_form,
             transfer_fields,
             patient_row_index,
-            first_row_field_errors,
-            visits,
+            # first_row_field_errors,
+            parsed_visits,
         ) in validation_results_by_patient:
-            # Errors parsing the Transfer or Patient fields
-            for field, error in first_row_field_errors.items():
-                errors_to_return[patient_row_index][field].append(error)
-
             # Errors validating the Patient fields
             for field, error in patient_form.errors.as_data().items():
                 errors_to_return[patient_row_index][field].append(error)
@@ -379,11 +412,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
-            for visit_form, visit_field_errors, visit_row_index in visits:
-                # Errors parsing the Visit fields
-                for field, error in visit_field_errors.items():
-                    errors_to_return[visit_row_index][field].append(error)
-
+            for visit_form, visit_row_index in parsed_visits:
                 # Errors validating the Visit fields
                 for field, error in visit_form.errors.as_data().items():
                     errors_to_return[visit_row_index][field].append(error)
