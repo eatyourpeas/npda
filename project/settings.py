@@ -106,7 +106,6 @@ INSTALLED_APPS = [
     "two_factor.plugins.phonenumber",  # we don't use phones currently but required for app to work
     "captcha",
     "citext",
-    "fontawesomefree",
     # application
     "project.npda",
 ]
