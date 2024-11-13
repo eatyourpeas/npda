@@ -10,7 +10,7 @@
       <button class="btn btn-sm">Why?<i class="fa-solid fa-circle-question"></i></button>
     </div>
   </div>
-  <a href="{% static 'npda_base.csv' %}" download="npda_base.csv" class="btn w-full text-lg bg-rcpch_light_blue hover:bg-rcpch_dark_blue focus:bg-rcpch_pink border-rcpch_light_blue text-white"><i class="fa-solid fa-file-arrow-down"></i> Download NPDA CSV template</a>
+  <a href="{% url 'download_template' %}" download="npda_base.csv" class="btn w-full text-lg bg-rcpch_light_blue hover:bg-rcpch_dark_blue focus:bg-rcpch_pink border-rcpch_light_blue text-white"><i class="fa-solid fa-file-arrow-down"></i> Download NPDA CSV template</a>
   <div class="divider">OR</div>
 
   <form method="POST" enctype="multipart/form-data" action="home" class="w-full max-w-xl p-8 border-4 border-dashed border-gray-400" _="on dragover or dragenter halt the event then
@@ -44,12 +44,6 @@
                 </div>
             </div>
         </form>
-
-        <div class="mt-2">
-            <a href="{% url 'download_template' %}">
-                <p class="text-center text-xl font-semibold font-montserrat mb-4 text-rcpch_dark_blue">Download the NPDA CSV template</p>
-            </a>
-        </div>
     
 </div>
 <script>
