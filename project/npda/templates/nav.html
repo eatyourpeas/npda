@@ -1,98 +1,79 @@
 {% load npda_tags %}
 
 <header>
-    <div class="navbar bg-base-100 py-0">
-        <div class="flex-1">
-            <a href="{% url 'dashboard' %}" class="flex flex-row ml-8">
-                <img src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg" class="mr-3 h-6 sm:h-9 " alt="RCPCH Logo" />
-            <div class="text-xl font-semibold whitespace-nowrap light:text-black ml-3 mr-5">
-                National Paediatric Diabetes Audit
-            </div>
-            </a>
-        </div>
-        <div class="flex-none">
-            <ul class="menu menu-horizontal px-1 flex items-center active:rounded-none">
-                {% if user.is_authenticated %}
-                    <li class="ml-auto mr-2 flex items-center">
-                        <a href="{% url 'dashboard' %}"
-                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'dashboard' %}"
-                            aria-current="page">Dashboard</a>
-                    </li>
-                    <li class="ml-auto mr-2 flex items-center">
-                        <a href="{% url 'submissions' %}"
-                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}"
-                            aria-current="page">Submissions</a>
-                    </li>
-                    {% if can_complete_questionnaire %}
-                    <li class="mr-2">
-                        <a href="{% url 'patients' %}"
-                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'patients' %}"
-                            aria-current="page">Questionnaire</a>
-                    </li>
-                    {% endif %}
-                    {% if can_upload_csv %}
-                    <li class="mr-2">
-                        <a href="{% url 'home' %}"
-                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'home' %}"
-                            aria-current="page">Upload  CSV</a>
-                    </li>
-                    {% endif %}
-                    <li class="mr-2">
-                        <a href="{% url 'npda_users' %}"
-                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">
-                            Users</a> 
-                    </li>
-                {% endif %}
-                {% if user.is_superuser %}
-                    <li class="mr-2">
-                        <a href="{% url 'admin:index' %}"
-                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">Admin</a>
-                    </li>
-                {% endif %}
-                <li>
-                    <a href="{% docs_url %}"
-                        class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">
-                        User Guide</a>
-                </li>
-                {% if user.is_authenticated %}
-                    <div class="dropdown dropdown-end">
-                        <div tabindex="0" role="button" class="btn btn-ghost px-1 rounded-none shadow-none hover:bg-white">
-                            {{ user.get_full_name }}
-                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20">
-                                <path
-                                    d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
-                        </div>
-                        <ul
-                        tabindex="0"
-                        class="menu dropdown-content bg-base-100 rounded-none z-[1] mt-4 w-52 p-2 hover:bg-white">
-                            <li><a href="{% url 'two_factor:profile' %}">Two Factor Authentication</a></li>
-                            <form method="POST" action="{% url 'logout' %}">
-                                <li >{% csrf_token%}
-                                    <button type="submit">Log Out</button>
-                                </li>
-                            </form>
-                        </ul>
-                    </div>
-                {% else %}
-                    <ul class="flex justify-end">
-                        <li>
-                            <a href="{% url 'two_factor:login' %}"
-                            class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">
-                            Sign In
-                            </a>
-                        </li>
-                    </ul>
-                {% endif %}
-            </ul>
-        </div>
+  <div class="navbar bg-base-100 py-0">
+    <div class="flex-1">
+      <a href="{% url 'dashboard' %}" class="flex flex-row ml-8">
+        <img src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg" class="mr-3 h-6 sm:h-9" alt="RCPCH Logo" />
+        <div class="text-xl font-semibold whitespace-nowrap light:text-black ml-3 mr-5">National Paediatric Diabetes Audit</div>
+      </a>
     </div>
-    {% if user.is_authenticated %}
-        <div class="navbar bg-base-100 flex justify-end py-0">
-            <div id="global_view_preference">
-                {% include 'partials/view_preference.html'  with view_preference=request.user.view_preference pdu_choices=request.session.pdu_choices chosen_pdu=request.session.pz_code hx_target="#global_view_preference" %}
+    <div class="flex-none">
+      <ul class="menu menu-horizontal px-1 flex items-center active:rounded-none">
+        {% if user.is_authenticated %}
+          <li class="ml-auto mr-2 flex items-center">
+            <a href="{% url 'dashboard' %}" class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'dashboard' %}" aria-current="page">Dashboard</a>
+          </li>
+          <li class="ml-auto mr-2 flex items-center">
+            <a href="{% url 'submissions' %}" class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}" aria-current="page">Submissions</a>
+          </li>
+          {% if can_complete_questionnaire %}
+            <li class="mr-2">
+              <a href="{% url 'patients' %}" class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'patients' %}" aria-current="page">Questionnaire</a>
+            </li>
+          {% endif %}
+          {% if can_upload_csv %}
+            <li class="mr-2">
+              <a href="{% url 'home' %}" class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'home' %}" aria-current="page">Upload CSV</a>
+            </li>
+          {% endif %}
+          <li class="mr-2">
+            <a href="{% url 'npda_users' %}" class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">Users</a>
+          </li>
+        {% endif %}
+        {% if user.is_superuser %}
+          <li class="mr-2">
+            <a href="{% url 'admin:index' %}" class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">Admin</a>
+          </li>
+        {% endif %}
+        <li>
+          <a href="{% docs_url %}" class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">User Guide</a>
+        </li>
+        {% if user.is_authenticated %}
+          <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-ghost px-1 rounded-none shadow-none hover:bg-white">
+              {{ user.get_full_name }}
+              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+              </svg>
             </div>
-        </div>
-    {% endif %}
+            <ul tabindex="0" class="menu dropdown-content bg-base-100 rounded-none z-[1] mt-4 w-52 p-2 hover:bg-white">
+              <li>
+                <a href="{% url 'two_factor:profile' %}">Two Factor Authentication</a>
+              </li>
+              <form method="POST" action="{% url 'logout' %}">
+                <li>
+                  {% csrf_token %}
+                  <button type="submit">Log Out</button>
+                </li>
+              </form>
+            </ul>
+          </div>
+        {% else %}
+          <ul class="flex justify-end">
+            <li>
+              <a href="{% url 'two_factor:login' %}" class="text-xs block font-montserrat font-semibold py-2 pr-4 pl-3 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">Sign In</a>
+            </li>
+          </ul>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+  {% if user.is_authenticated %}
+    <div class="navbar bg-base-100 flex justify-end py-0">
+      <div id="global_view_preference">
+        {% include 'partials/view_preference.html' with view_preference=request.user.view_preference pdu_choices=request.session.pdu_choices chosen_pdu=request.session.pz_code hx_target='#global_view_preference' %}
+      </div>
+    </div>
+  {% endif %}
 </header>

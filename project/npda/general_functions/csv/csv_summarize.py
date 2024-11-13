@@ -8,21 +8,17 @@ from django.apps import apps
 import pandas as pd
 
 # RCPCH imports
-from ...constants import (
+from project.constants.csv_headings import (
     ALL_DATES,
 )
 
 
-def csv_summarize(csv_file):
+def csv_summarize(dataframe):
     """
     This function takes a csv file and processes the file to create a summary of the data
     It returns a dictionary with the status of the operation and the summary data
     """
     Patient = apps.get_model("npda", "Patient")
-
-    dataframe = pd.read_csv(
-        csv_file, parse_dates=ALL_DATES, dayfirst=True, date_format="%d/%m/%Y"
-    )
 
     total_records = len(dataframe)
     number_unique_nhs_numbers = dataframe["NHS Number"].nunique()

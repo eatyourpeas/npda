@@ -1,3 +1,5 @@
+from django.apps import apps
+
 """TODO:
     - [ ] Move constants to a separate file. Currently importing from `seed_submission.py`.
     - [ ] Generalise the parsing of inputs and share between this and `seed_submission.py`.
@@ -609,7 +611,7 @@ class Command(BaseCommand):
         map_model_csv_heading_field = defaultdict(dict)
 
         for item in CSV_HEADINGS:
-            model = item["model"]
+            model = apps.get_model("npda", item["model"])
             csv_heading = item["heading"]
             model_field = item["model_field"]
             map_model_csv_heading_field[model][model_field] = csv_heading

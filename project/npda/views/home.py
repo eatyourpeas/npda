@@ -11,14 +11,15 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.http import HttpResponse
+from django.conf import settings
 
 
 # HTMX imports
 from django_htmx.http import trigger_client_event
 
+from project.npda.general_functions.csv import csv_upload, csv_parse, csv_header
 from ..forms.upload import UploadFileForm
-from ..general_functions.csv_upload import csv_upload
-from ..general_functions.csv_read import csv_read
 from ..general_functions.serialize_validation_errors import serialize_errors
 from ..general_functions.session import (
     get_new_session_fields,
@@ -47,26 +48,39 @@ async def home(request):
 
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
-        file = request.FILES["csv_upload"]
+        user_csv = request.FILES["csv_upload"]
         pz_code = request.session.get("pz_code")
-
-        # summary = csv_summarize(csv_file=file)
-
-        # You can't read the same file twice without resetting it
-        file.seek(0)
-
         if request.session.get("can_upload_csv") is True:
-            try:
-                errors_by_row_index = await csv_upload(
-                    user=request.user,
-                    dataframe=csv_read(file),
-                    csv_file=file,
-                    pdu_pz_code=pz_code,
+            # check to see if the CSV is valid
+            parsed_csv = csv_parse(user_csv)
+            if (
+                parsed_csv.missing_columns
+                or parsed_csv.additional_columns
+                or parsed_csv.duplicate_columns
+            ):
+                message = "Invalid CSV format."
+                if parsed_csv.missing_columns:
+                    message += (
+                        f" Missing columns: [{", ".join(parsed_csv.missing_columns)}]"
+                    )
+                if parsed_csv.additional_columns:
+                    message += f" Unexpected columns: [{", ".join(parsed_csv.additional_columns)}]"
+                if parsed_csv.duplicate_columns:
+                    message += f" Duplicate columns: [{", ".join(parsed_csv.additional_columns)}]"
+                messages.error(
+                    request=request,
+                    message=message,
                 )
-            except ValidationError as e:
-                messages.error(request=request, message=e.message)
                 return redirect("home")
 
+            # CSV is valid, parse any errors and store the data in the tables.
+            errors_by_row_index = await csv_upload(
+                user=request.user,
+                dataframe=parsed_csv.df,
+                csv_file=user_csv,
+                pdu_pz_code=pz_code,
+            )
+            # log user activity
             VisitActivity = apps.get_model("npda", "VisitActivity")
             try:
                 await VisitActivity.objects.acreate(
@@ -77,27 +91,20 @@ async def home(request):
             except Exception as e:
                 logger.error(f"Failed to log user activity: {e}")
 
-            # update the session fields
+            # update the session fields - this stores that the user has uploaded a csv and disables the ability to use the questionnaire
             await refresh_session_object_asynchronously(
                 request=request, user=request.user, pz_code=pz_code
             )
-
             if errors_by_row_index:
-                # get submission and store the errors
+                # get submission and store the errors to report back to the user in the Data Quality Report
                 Submission = apps.get_model("npda", "Submission")
                 submission = await Submission.objects.aget(
                     paediatric_diabetes_unit__pz_code=pz_code,
                     submission_active=True,
                     audit_year=datetime.date.today().year,
                 )
-                pprint(errors_by_row_index)
                 submission.errors = serialize_errors(errors_by_row_index)
-                # submission.errors = json.dumps(errors_by_row_index)
                 await sync_to_async(submission.save)()
-                # row_indices = []
-                # for row_index, errors_by_field in errors_by_row_index.items():
-                #     for field, errors in errors_by_field.items():
-                #         print(errors)
                 messages.error(
                     request=request,
                     message=f"CSV has been uploaded, but errors have been found in {len(errors_by_row_index.items())} rows. Please check the data quality report for details.",
@@ -107,14 +114,14 @@ async def home(request):
                     request=request,
                     message="File uploaded successfully. There are no errors,",
                 )
-
             return redirect("submissions")
         else:
+            # If the user does not have permission to upload csvs, redirect them to the dashboard page
             messages.error(
                 request=request,
                 message=f"You have do not have permission to upload csvs for {pz_code}.",
             )
-            form = UploadFileForm()
+            return redirect("dashboard")
 
     else:
         form = UploadFileForm()
@@ -122,6 +129,17 @@ async def home(request):
     context = {"file_uploaded": False, "form": form}
     template = "home.html"
     return render(request=request, template_name=template, context=context)
+
+
+def download_template(request):
+    """
+    Creates the template csv for users to fill out and upload into NPDA
+    """
+    return HttpResponse(
+        csv_header(),
+        content_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="npda_template.csv"'},
+    )
 
 
 def view_preference(request):

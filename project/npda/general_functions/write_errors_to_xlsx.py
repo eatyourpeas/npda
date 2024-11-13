@@ -9,7 +9,7 @@ from ..models.submission import Submission
 
 # import functions
 from ..general_functions.serialize_validation_errors import serialize_errors
-from ..general_functions.csv_read import csv_read
+from project.npda.general_functions.csv import csv_parse
 
 # import third-party libaries
 import pandas as pd
@@ -32,7 +32,7 @@ def write_errors_to_xlsx(errors: defaultdict[Any, defaultdict[Any, list]], new_s
   xlsx_file: str = new_submission.csv_file.path.replace('.csv','.xlsx')
   
   # Get original data
-  df = csv_read(new_submission.csv_file)
+  df = csv_parse(new_submission.csv_file).df
   # Write an xlsx of the original data.  
   df.to_excel(xlsx_file, sheet_name="Uploaded data (raw)", index=False) 
 

@@ -1,6 +1,6 @@
 from .albuminuria_stage import *
-from .closed_loop_types import *
 from .csv_headings import *
+from .closed_loop_types import *
 from .diabetes_types import *
 from .diabetes_treatment import *
 from .dka_additional_therapies import *
