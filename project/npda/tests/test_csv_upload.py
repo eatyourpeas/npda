@@ -44,7 +44,7 @@ def mock_external_validation_result(**kwargs):
 @pytest.fixture(autouse=True)
 def mock_remote_calls():
     with patch(
-        "project.npda.general_functions.csv_upload.validate_patient_async",
+        "project.npda.general_functions.csv.csv_upload.validate_patient_async",
         AsyncMock(return_value=MOCK_EXTERNAL_VALIDATION_RESULT),
     ):
         yield None
@@ -511,7 +511,7 @@ def test_death_date_before_date_of_birth(test_user, single_row_valid_df):
 
 @pytest.mark.django_db
 @patch(
-    "project.npda.general_functions.csv_upload.validate_patient_async",
+    "project.npda.general_functions.csv.csv_upload.validate_patient_async",
     mock_external_validation_result(postcode=ValidationError("Invalid postcode")),
 )
 def test_invalid_postcode(test_user, single_row_valid_df):
@@ -528,7 +528,7 @@ def test_invalid_postcode(test_user, single_row_valid_df):
 
 @pytest.mark.django_db
 @patch(
-    "project.npda.general_functions.csv_upload.validate_patient_async",
+    "project.npda.general_functions.csv.csv_upload.validate_patient_async",
     mock_external_validation_result(postcode=None),
 )
 def test_error_validating_postcode(test_user, single_row_valid_df):
@@ -543,7 +543,7 @@ def test_error_validating_postcode(test_user, single_row_valid_df):
 
 @pytest.mark.django_db
 @patch(
-    "project.npda.general_functions.csv_upload.validate_patient_async",
+    "project.npda.general_functions.csv.csv_upload.validate_patient_async",
     mock_external_validation_result(
         gp_practice_ods_code=ValidationError("Invalid ODS code")
     ),
@@ -562,7 +562,7 @@ def test_invalid_gp_ods_code(test_user, single_row_valid_df):
 
 @pytest.mark.django_db
 @patch(
-    "project.npda.general_functions.csv_upload.validate_patient_async",
+    "project.npda.general_functions.csv.csv_upload.validate_patient_async",
     mock_external_validation_result(postcode=None),
 )
 def test_error_validating_gp_ods_code(test_user, single_row_valid_df):
@@ -588,7 +588,7 @@ def test_lookup_index_of_multiple_deprivation(test_user, single_row_valid_df):
 
 @pytest.mark.django_db
 @patch(
-    "project.npda.general_functions.csv_upload.validate_patient_async",
+    "project.npda.general_functions.csv.csv_upload.validate_patient_async",
     mock_external_validation_result(index_of_multiple_deprivation_quintile=None),
 )
 def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_valid_df):
