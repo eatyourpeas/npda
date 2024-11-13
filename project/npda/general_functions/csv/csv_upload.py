@@ -293,6 +293,8 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 except Exception as error:
                     errors_to_return[visit_row_index]["__all__"].append(error)
 
-    # Copy csv to a styled xlsx.
-    _ = write_errors_to_xlsx(errors_to_return, new_submission)
+    # Only create xlsx file if the csv file was created.
+    if new_submission.csv_file:
+        _ = write_errors_to_xlsx(errors_to_return, new_submission)
+
     return errors_to_return
