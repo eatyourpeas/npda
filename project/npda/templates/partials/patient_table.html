@@ -3,28 +3,88 @@
 {% url 'patients' as patients_url %}
 {% if request.user.view_preference == 1 %}
     <!-- PDU view   -->
-    <h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">Patients under the care of {{pz_code}}</h1>
+     <div role="alert" class="mt-2 alert bg-slate-200">
+        <p><i class="fa-solid fa-users-viewfinder"></i> Showing patients filtered by:</p>
+            <ul>
+                <li>
+                    <b>Patient Diabetic Unit </b>[<span class="font-mono bg-gray-300 p-1 mx-1">{{pz_code}} only</span>].
+                </li>
+            </ul>
+            <button data-tip="You can change the PDU by using the dropdown below the navigation menu." class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('pz_code_select_name').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); "><i class="fas fa-question-circle"></i> Change PDU</button>
+            <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); document.getElementById('view_preference_2').click();"><i class="fa-solid fa-square-xmark"></i> Remove filter</button>
+            
+    </div>
 {% elif request.user.view_preference == 2 %}
     <!-- national view -->
-    <h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">All patients nationally</h1>
+         <!-- PDU view   -->
+     <div role="alert" class="mt-2 alert bg-slate-200">
+        <p><i class="fa-solid fa-users-viewfinder"></i> Showing patients filtered by:</p>
+            <ul>
+                <li>
+                    <b>National patients</b> [<span class="font-mono bg-gray-300 p-1 mx-1">no filters</span>].
+                </li>
+            </ul>
+            <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); document.getElementById('view_preference_1').click();"><i class="fa-solid fa-square-plus"></i> Apply PDU Filter</button>
+    </div>
 {% endif %}
 
 {% if patient_list %}
-<table class="table table-md w-full text-sm text-left rtl:text-right text-gray-500 text-gray-400 mb-5 font-montserrat">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
-            <tr>
-                <th scope="col" class="px-2 py-3 text-center cursor-pointer">
-                        <span class="flex flex-row">
-                            {% include 'partials/page_elements/filter_icon.html' with hx_get=asc_url hx_target="#patient_table" filter_direction="asc" current_page=current_page sort_field="pk" %}
-                            NPDA ID
-                            {% include 'partials/page_elements/filter_icon.html' with hx_get=desc_url hx_target="#patient_table" filter_direction="desc" current_page=current_page sort_field="pk" %}
+<div class="w-full overflow-x-scroll ">
+<table class="mt-2 table table-md text-sm text-left rtl:text-right  text-gray-400 mb-5 font-montserrat">
+    <thead class="text-xs uppercase  bg-rcpch_dark_blue text-white">
+            <tr class="snap-x">
+                <th scope="col" class="px-2 py-3 text-center">
+                     <span class="flex flex-row">
+                        <div id="npda_id_sort_label"  hx-preserve  class="swap swap-rotate">
+                            <button  hx-preserve hx-get="{{asc_url}}?sort_by=pk&page={{current_page}}&sort=asc"
+                                hx-on:htmx:after-request="document.getElementById('npda_id_sort_label').classList.toggle('swap-active');"
+                                hx-trigger="click throttle:1s"
+                                hx-target="#patient_table"
+                                hx-swap="innerHTML swap:100ms"
+                                class="swap-on">
+                                <i class="fa-solid fa-arrow-up-z-a mr-2"> </i>
+                            </button>
+                            <button  hx-preserve hx-get="{{desc_url}}?sort_by=pk&page={{current_page}}&sort=desc"
+                                hx-on:htmx:after-request="document.getElementById('npda_id_sort_label').classList.toggle('swap-active');"
+                                hx-trigger="click throttle:1s"
+                                hx-target="#patient_table"
+                                hx-swap="innerHTML swap:100ms"
+                                class="swap-off"
+                                >
+                                <i  class="fa-solid fa-arrow-down-a-z mr-2"
+                                ></i>
+                            </button>
+
+                        </div>
+                                               
+                            NPDA Patient ID
                         </span>
                 </th>
-                <th scope="col" class="px-2 py-3 text-center cursor-pointer nhs-number-column">
-                        <span class="flex flex-row">
-                            {% include 'partials/page_elements/filter_icon.html' with hx_get=asc_url hx_target="#patient_table" filter_direction="asc" current_page=current_page sort_field="nhs_number" %}
+                <th scope="col" class="px-2 py-3 text-center nhs-number-column">
+                    <span class="flex flex-row">
+                        <div id="nhs_num_sort_label"  hx-preserve  class="swap swap-rotate">
+                            <button  hx-preserve hx-get="{{asc_url}}?sort_by=nhs_number&page={{current_page}}&sort=asc"
+                                hx-on:htmx:after-request="document.getElementById('nhs_num_sort_label').classList.toggle('swap-active');"
+                                hx-trigger="click throttle:1s"
+                                hx-target="#patient_table"
+                                hx-swap="innerHTML swap:100ms"
+                                class="swap-on">
+                                <i class="fa-solid fa-arrow-up-z-a mr-2"> </i>
+                            </button>
+                            <button  hx-preserve hx-get="{{desc_url}}?sort_by=nhs_number&page={{current_page}}&sort=desc"
+                                hx-on:htmx:after-request="document.getElementById('nhs_num_sort_label').classList.toggle('swap-active');"
+                                hx-trigger="click throttle:1s"
+                                hx-target="#patient_table"
+                                hx-swap="innerHTML swap:100ms"
+                                class="swap-off"
+                                >
+                                <i  class="fa-solid fa-arrow-down-a-z mr-2" 
+                                ></i>
+                            </button>
+
+                        </div>
+                        
                             NHS Number
-                            {% include 'partials/page_elements/filter_icon.html' with hx_get=desc_url hx_target="#patient_table" filter_direction="desc" current_page=current_page sort_field="nhs_number" %}
                         </span>
                 </th>
 
@@ -57,10 +117,17 @@
                     </thead>
                     {% endif %}
                 {% endif %}
-                <tr>
+                {% if forloop.counter|divisibleby:2 %}<tr class="bg-gray-100 hover:bg-gray-200">
+                    {% else %}
+                    <tr class="hover:bg-gray-200"> 
+                    {% endif %} 
                     <td>
-                        <span class="tooltip tooltip-right" data-tip="View patient details">
-                            <a href="{% url 'patient-update' patient.pk %}" class="px-2 flex text-center hover:text-rcpch_pink"><strong>{{ patient.pk }}</strong></a>
+                        <span class="tooltip tooltip-right" data-tip="View patient details (opens new tab)">
+                            <a class="btn hover:text-rcpch_pink" target="_blank" href="{% url 'patient-update' patient.pk %}">
+  <i class="fas fa-hospital-user"></i>
+  <div class="badge"><span class="font-mono text-xs">{{ patient.pk }}</span></div>
+                            </a>
+                           
                         </span>
                     </td>
                     <td class="nhs-number-column {% if patient.errors|error_for_field:'nhs_number' or patient.errors|error_for_field:'gp_practice_ods_code' %} text-rcpch_red {% endif %}">
@@ -213,6 +280,7 @@
                 </tr>
             </tfoot>
     </table>
-{% else %}
+</div>
+    {% else %}
     <h5 class="mb-5 font-montserrat font-semibold">No patients yet!</h5>
 {% endif %}
