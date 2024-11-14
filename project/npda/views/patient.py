@@ -186,7 +186,7 @@ class PatientCreateView(
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."
     model = Patient
     form_class = PatientForm
-    success_message = "New child record created was created successfully"
+    success_message = "New child record created successfully"
     success_url = reverse_lazy("patients")
 
     def get_context_data(self, **kwargs):

@@ -109,12 +109,13 @@ module.exports = {
     },
   },
   plugins: [require("daisyui")],
-  darkMode: "media",
+  darkMode: ['selector', '[data-theme="dark"]'],
   daisyui: {
     themes: ["light", "dark"], // Example themes
     // Add any other DaisyUI-specific configurations here
   },
   safelist: [
+    "dark",
     "bg-rcpch_lightest_grey",
     "bg-rcpch_dark_blue",
     "bg-rcpch_strong_blue",

@@ -46,10 +46,6 @@
   transition: opacity 500ms ease-out;
 }
 
-.hidden {
-  display: none;
-}
-
 .nhs-number-column {
   white-space: nowrap;
   width: auto;
