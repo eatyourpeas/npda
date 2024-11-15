@@ -64,4 +64,4 @@ def calculate_bmi(height, weight):
         raise ValueError("Height must be in cm.")
     if weight > 250:
         raise ValueError("Weight must be in kg.")
-    return weight / (height / 100) ** 2
+    return round(weight / (height / 100) ** 2, 1)
