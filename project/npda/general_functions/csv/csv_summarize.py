@@ -8,7 +8,7 @@ from django.apps import apps
 import pandas as pd
 
 # RCPCH imports
-from ...constants.csv_headings import (
+from project.constants.csv_headings import (
     ALL_DATES,
 )
 

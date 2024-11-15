@@ -15,4 +15,4 @@ def serialize_errors(errors):
             return {k: serialize_error(v) for k, v in error.items()}
         return str(error)
 
-    return json.dumps({k: serialize_error(v) for k, v in errors.items()})
+    return json.dumps({int(k): serialize_error(v) for k, v in errors.items()})

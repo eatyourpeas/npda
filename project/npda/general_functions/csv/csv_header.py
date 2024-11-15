@@ -1,6 +1,6 @@
 import csv
 import io
-from ...constants.csv_headings import HEADINGS_LIST
+from project.constants.csv_headings import HEADINGS_LIST
 
 
 def csv_header():

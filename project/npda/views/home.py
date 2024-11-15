@@ -18,9 +18,8 @@ from django.conf import settings
 # HTMX imports
 from django_htmx.http import trigger_client_event
 
+from project.npda.general_functions.csv import csv_upload, csv_parse, csv_header
 from ..forms.upload import UploadFileForm
-from ..general_functions.csv_upload import csv_upload, read_csv
-from ..general_functions.csv_header import csv_header
 from ..general_functions.serialize_validation_errors import serialize_errors
 from ..general_functions.session import (
     get_new_session_fields,
@@ -53,7 +52,7 @@ async def home(request):
         pz_code = request.session.get("pz_code")
         if request.session.get("can_upload_csv") is True:
             # check to see if the CSV is valid
-            parsed_csv = read_csv(user_csv)
+            parsed_csv = csv_parse(user_csv)
             if (
                 parsed_csv.missing_columns
                 or parsed_csv.additional_columns

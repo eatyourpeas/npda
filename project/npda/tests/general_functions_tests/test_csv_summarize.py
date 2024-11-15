@@ -1,8 +1,7 @@
 import tempfile
 import pytest
 
-from project.npda.general_functions.csv_summarize import csv_summarize
-from project.npda.general_functions.csv_upload import read_csv
+from project.npda.general_functions.csv import csv_summarize, csv_parse
 
 
 def csv_summarize_from_str(contents):
@@ -10,7 +9,7 @@ def csv_summarize_from_str(contents):
         f.write(contents.encode())
         f.seek(0)
 
-        parsed_csv = read_csv(f)
+        parsed_csv = csv_parse(f)
 
         return csv_summarize(parsed_csv.df)
 
