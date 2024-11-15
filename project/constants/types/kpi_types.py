@@ -46,6 +46,36 @@ class KPIResult:
 
 
 @dataclass
+class IndividualPtKPIResults:
+    """Type for individual patient KPI results.
+
+    KPIS 25+26 always have values
+    KPIS 27-31 will be None for pts >= 12yo
+    """
+
+    kpi_25_hba1c: bool
+    kpi_26_bmi: bool
+    kpi_27_thyroid_screen: bool
+    kpi_28_blood_pressure: Optional[bool]
+    kpi_29_urinary_albumin: Optional[bool]
+    kpi_30_retinal_screening: Optional[bool]
+    kpi_31_foot_examination: Optional[bool]
+
+
+@dataclass
+class IndividualPtKPICalculationsObject:
+    """A single record for individual patients' KPI calculations."""
+    nhs_number: str
+    total_passed: int
+    expected_total: int
+    gte_12yo: bool
+    kpi_results: IndividualPtKPIResults
+    transfer_in_period: bool = False
+    diagnosed_in_period: bool = False
+    died_in_period: bool = False
+
+
+@dataclass
 class KPICalculationsObject:
     calculation_datetime: datetime
     audit_start_date: date
