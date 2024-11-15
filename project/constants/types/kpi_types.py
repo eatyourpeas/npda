@@ -1,7 +1,7 @@
 # Object types
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import date, datetime
-from typing import Dict, Optional, Union
+from typing import Dict, Literal, Optional, Union
 
 from django.db.models import QuerySet
 
@@ -61,18 +61,35 @@ class IndividualPtKPIResults:
     kpi_30_retinal_screening: Optional[bool]
     kpi_31_foot_examination: Optional[bool]
 
+    def get_total_passed(self)->int:
+        return sum(
+            value for value in asdict(self).values() if value is not None
+        )
+
 
 @dataclass
 class IndividualPtKPICalculationsObject:
-    """A single record for individual patients' KPI calculations."""
+    """A single record for individual patient's KPI calculations."""
+
+    calculation_datetime: datetime
+    audit_start_date: date
+    audit_end_date: date
     nhs_number: str
-    total_passed: int
-    expected_total: int
     gte_12yo: bool
+    diagnosed_in_period: bool
+    died_in_period: bool
+    transfer_in_period: bool
     kpi_results: IndividualPtKPIResults
-    transfer_in_period: bool = False
-    diagnosed_in_period: bool = False
-    died_in_period: bool = False
+    total_passed: int = None  # Default value to be set later
+    expected_total: Literal[3, 7] = None  # Default value to be set later
+
+    def __post_init__(self):
+
+        # Set total_passed
+        self.total_passed = self.kpi_results.get_total_passed()
+
+        # Set expected_total based on gte_12yo
+        self.expected_total = 7 if self.gte_12yo else 3
 
 
 @dataclass
