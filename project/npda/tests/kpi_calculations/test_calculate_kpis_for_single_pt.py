@@ -32,7 +32,6 @@ def test_ensure_calculate_kpis_for_patient_returns_correct_kpi_subset(
         mock_pt_pdu,
     )
 
-    breakpoint()
     kpi_results_obj = kpi_calc_obj["kpi_results"].keys()
 
     # Check that the KPIs are a subset of the full KPI list
