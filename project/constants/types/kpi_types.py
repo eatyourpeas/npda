@@ -1,7 +1,7 @@
 # Object types
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
-from typing import Dict, Literal, Optional, Union
+from typing import Dict, Literal, Optional, TypedDict, Union
 
 from django.db.models import QuerySet
 
@@ -102,6 +102,25 @@ class KPICalculationsObject:
         KPIResult,
     ]
 
+# TypedDict using dataclass as base
+class IndividualPtKPIResultsDict(TypedDict):
+    kpi_25_hba1c: bool
+    kpi_26_bmi: bool
+    kpi_27_thyroid_screen: bool
+    kpi_28_blood_pressure: bool
+    kpi_29_urinary_albumin: bool
+    kpi_30_retinal_screening: bool
+    kpi_31_foot_examination: bool
+
+class IndividualPtKPICalculationsDict(TypedDict):
+    calculation_datetime: str  # Use ISO 8601 format for datetime
+    audit_start_date: str
+    audit_end_date: str
+    gte_12yo: int
+    diagnosed_in_period: int
+    died_in_period: int
+    transfer_in_period: int
+    kpi_results: IndividualPtKPIResultsDict
 
 """
 Hard coding these for simplicty and readability
