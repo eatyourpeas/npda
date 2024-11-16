@@ -16,8 +16,8 @@
                     <table class="table-auto w-full text-sm text-left text-gray-500 mb-5 font-montserrat">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
                             <tr>
-                                <th class="px-6 py-3">NHS</th>
-                                <th class="px-6 py-3">12+</th>
+                                <th class="px-6 py-3">NHS Number</th>
+                                <th class="px-6 py-3">>= 12yo</th>
                                 <th class="px-6 py-3">HbA1c</th>
                                 <th class="px-6 py-3">BMI</th>
                                 <th class="px-6 py-3">Thyroid Screen</th>
@@ -30,7 +30,14 @@
                         </thead>
                         <tbody>
                             <tr class="bg-white border-b">
-                                <td class="px-6 py-4">{{ patient.nhs_number }}</td>
+
+                                <td class="px-6 py-4">
+                                    <span class="tooltip tooltip-right" data-tip="View patient details (opens new tab)">
+                                        <a class="btn hover:text-rcpch_pink" target="_blank" href="{% url 'patient-update' patient.pk %}">
+                                            {{ patient.nhs_number }}
+                                        </a>
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4">{{ kpi_calculations_object.gte_12yo|yesno:"Y,N" }}</td>
                                 <td class="px-6 py-4">{% if kpi_calculations_object.kpi_results.kpi_25_hba1c %}✔️{% else %}✖️{% endif %}
                                 </td>
