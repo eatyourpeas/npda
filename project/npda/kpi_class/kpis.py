@@ -247,24 +247,24 @@ class CalculateKPIS:
                 ),
             ).exists()
             passed_kpi_29_urinary_albumin = base_visits.filter(
-                Q(visit__albumin_creatinine_ratio__isnull=False),
+                Q(albumin_creatinine_ratio__isnull=False),
                 # Within audit period
                 Q(
-                    visit__albumin_creatinine_ratio_date__range=(
+                    albumin_creatinine_ratio_date__range=(
                         self.AUDIT_DATE_RANGE
                     )
                 ),
             ).exists()
             passed_kpi_30_retinal_screening = base_visits.filter(
                 Q(
-                    visit__retinal_screening_result__in=[
+                    retinal_screening_result__in=[
                         RETINAL_SCREENING_RESULTS[0][0],
                         RETINAL_SCREENING_RESULTS[1][0],
                     ]
                 ),
                 # Within audit period
                 Q(
-                    visit__retinal_screening_observation_date__range=(
+                    retinal_screening_observation_date__range=(
                         self.AUDIT_DATE_RANGE
                     )
                 ),
@@ -272,7 +272,7 @@ class CalculateKPIS:
             passed_kpi_31_foot_examination = base_visits.filter(
                 # Within audit period
                 Q(
-                    visit__foot_examination_observation_date__range=(
+                    foot_examination_observation_date__range=(
                         self.AUDIT_DATE_RANGE
                     )
                 ),
