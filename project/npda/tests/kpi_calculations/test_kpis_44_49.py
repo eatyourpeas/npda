@@ -8,10 +8,8 @@ import pytest
 from dateutil.relativedelta import relativedelta
 
 from project.constants.albuminuria_stage import ALBUMINURIA_STAGES
-from project.constants.diabetes_types import DIABETES_TYPES
 from project.constants.hospital_admission_reasons import \
     HOSPITAL_ADMISSION_REASONS
-from project.constants.smoking_status import SMOKING_STATUS
 from project.constants.yes_no_unknown import YES_NO_UNKNOWN
 from project.npda.kpi_class.kpis import CalculateKPIS, KPIResult
 from project.npda.models import Patient
