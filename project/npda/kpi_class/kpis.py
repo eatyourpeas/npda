@@ -187,7 +187,6 @@ class CalculateKPIS:
             }
         """
 
-
         # Get values that are simple look ups
         calculation_datetime = datetime.now()
         audit_start_date = self.audit_start_date
@@ -3297,9 +3296,6 @@ class CalculateKPIS:
 
         Denominator: Total number of eligible patients (measure 1)
 
-        NOTE: Django does not support Median aggregation function. We do
-        manually through custom `Median` class.
-
         NOTE: for pt querysets, only `eligible` and `ineligible` are valid, the
             others should be discarded.
         """
@@ -3310,40 +3306,29 @@ class CalculateKPIS:
 
         # Calculate median HBa1c for each patient
 
-        # Get the visits that match the valid HbA1c criteria
+        # Retrieve all visits with valid HbA1c values
+        valid_visits = Visit.objects.filter(
+            visit_date__range=self.AUDIT_DATE_RANGE,
+            hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90),
+        ).values("patient__pk", "hba1c")
 
-        # Subquery to filter valid HBA1c values while ensuring visit_date is in
-        # the required range
-        valid_hba1c_subquery = (
-            Visit.objects.filter(
-                visit_date__range=self.AUDIT_DATE_RANGE,
-                hba1c_date__gte=F("patient__diagnosis_date")
-                + timedelta(
-                    days=90
-                ),  # Ensure HbA1c is taken >90 days after diagnosis
-                patient=OuterRef("pk"),
+        # Group HbA1c values by patient ID into a list so can use
+        # calculate_median method
+        # We're doing this in Python instead of Django ORM because median
+        # aggregation gets complicated
+        hba1c_values_by_patient = defaultdict(list)
+        for visit in valid_visits:
+            hba1c_values_by_patient[visit["patient__pk"]].append(
+                visit["hba1c"]
             )
-            # Clear any implicit ordering, select only 'hba1c' for calculating
-            # the median as getting error with the visit_date field
-            .order_by().values("hba1c")
-        )
 
-        # Annotate eligible patients with the median HbA1c value
-        eligible_pts_annotated = eligible_patients.annotate(
-            median_hba1c=Subquery(
-                valid_hba1c_subquery.annotate(
-                    median_hba1c=Median("hba1c")
-                ).values("median_hba1c")[:1]
-            )
-        )
+        # For each patient, calculate the median of their HbA1c values
+        median_hba1cs = []
+        for _, hba1c_values in hba1c_values_by_patient.items():
+            median_hba1cs.append(self.calculate_median(hba1c_values))
 
-        # Calculate the median of the medians and convert to float (as Decimal)
-        median_of_median_hba1cs = (
-            eligible_pts_annotated.aggregate(
-                median_of_median_hba1cs=Avg("median_hba1c")
-            ).get("median_of_median_hba1cs")
-            or 0
-        )
+        # Finally calculate the mean of the medians
+        mean_of_median_hba1cs = self.calculate_mean(median_hba1cs)
 
         # Also set pt querysets to be returned if required
         patient_querysets = self._get_pt_querysets_object(
@@ -3355,7 +3340,7 @@ class CalculateKPIS:
             total_eligible=total_eligible,
             total_ineligible=total_ineligible,
             # Use passed for storing the value
-            total_passed=median_of_median_hba1cs,
+            total_passed=mean_of_median_hba1cs,
             # Failed is not used
             total_failed=-1,
             patient_querysets=patient_querysets,
@@ -3868,8 +3853,23 @@ class CalculateKPIS:
         middle = cleaned_values[length // 2]
         return float(middle)
 
+    def calculate_mean(self, values: list[Decimal]) -> float:
+        """Calculates the mean of a list of values
 
-# Custom Median function for PostgreSQL
-class Median(Func):
-    function = "percentile_cont"
-    template = "%(function)s(0.5) WITHIN GROUP (ORDER BY %(expressions)s)"
+        Args:
+            values (list[Decimal]): List of values to calculate the mean for.
+            assuming used with hba1c values which come in as Decimals. Convert
+            these to floats for convenience.
+
+        Returns:
+            float: Mean of the list of values. Returns -1 if no values
+        """
+        if not values:
+            return float(-1)
+
+        # Remove the None values
+        cleaned_values = [val for val in values if val is not None]
+        if len(cleaned_values) == 0:
+            return float(-1)
+
+        return float(sum(cleaned_values) / len(cleaned_values))
