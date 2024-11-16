@@ -107,6 +107,7 @@ from datetime import datetime
 import os
 import random
 import sys
+import logging
 
 from django.utils import timezone
 from django.core.management.base import BaseCommand
@@ -133,6 +134,9 @@ from project.npda.management.commands.seed_submission import (
     RESET,
     GREEN,
 )
+
+# Logging
+logger = logging.getLogger(__name__)
 
 PZ_CODE = "PZ999"
 GP_ODS_CODES = [
@@ -521,20 +525,28 @@ class Command(BaseCommand):
         return df
 
     def clean_and_cast(self, df, column_types):
-        for column, dtype in column_types.items():
-            if dtype.startswith("Int"):  # Handle nullable integers
-                df[column] = (
-                    df[column]
-                    .replace({np.nan: pd.NA, None: pd.NA})  # Replace missing values
-                    .apply(lambda x: int(x) if pd.notna(x) and x == int(x) else pd.NA)  # Ensure valid integers
-                    .astype(dtype)  # Cast to nullable Int dtype
-                )
-            elif dtype == "string":  # Handle strings
-                df[column] = df[column].replace({np.nan: pd.NA, None: pd.NA}).astype("string")
-            elif dtype.startswith("float"):  # Handle floats
-                df[column] = df[column].replace({None: np.nan}).astype(dtype)
-            else:
-                raise ValueError(f"Unsupported dtype from CSV_DATA_TYPES_MINUS_DATES: {dtype}\n (for {column=} {df[column].dtype=})")
+        try:
+            for column, dtype in column_types.items():
+                if dtype.startswith("Int"):  # Handle nullable integers
+                    df[column] = (
+                        df[column]
+                        .replace({np.nan: pd.NA, None: pd.NA})  # Replace missing values
+                        .apply(lambda x: int(x) if pd.notna(x) and x == int(x) else pd.NA)  # Ensure valid integers
+                        .astype(dtype)  # Cast to nullable Int dtype
+                    )
+                elif dtype == "string":  # Handle strings
+                    df[column] = df[column].replace({np.nan: pd.NA, None: pd.NA}).astype("string")
+                elif dtype.startswith("float"):  # Handle floats
+                    df[column] = df[column].replace({None: np.nan}).astype(dtype)
+                else:
+                    raise ValueError(f"Unsupported dtype from CSV_DATA_TYPES_MINUS_DATES: {dtype}\n (for {column=} {df[column].dtype=})")
+        # Catch and throw error again to log the column and dtype
+        # Cant continue
+        except Exception as e:
+            logger.error(f"ERROR in clean_and_cast: {e}")
+            logger.error(f"CSV_DATA_TYPES_MINUS_DATES {column=} {dtype=}\n{df[column].dtype=}")
+            raise e
+
         return df
 
 
