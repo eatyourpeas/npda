@@ -323,14 +323,14 @@ ALL_VISIT_DATES = [
 ]
 
 CSV_DATA_TYPES_MINUS_DATES = {
-    "NHS Number": "str",
-    "Postcode of usual address": "str",
+    "NHS Number": "string",
+    "Postcode of usual address": "string",
     "Stated gender": "Int8",
-    "Ethnic Category": "str",  # choices are all capital letters
+    "Ethnic Category": "string",  # choices are all capital letters
     "Diabetes Type": "Int8",
     "Reason for leaving service": "Int8",
-    "GP Practice Code": "str",
-    "PDU Number": "str",
+    "GP Practice Code": "string",
+    "PDU Number": "string",
     "Patient Height (cm)": "float64",
     "Patient Weight (kg)": "float64",
     "Hba1c Value": "float64",
@@ -352,7 +352,7 @@ CSV_DATA_TYPES_MINUS_DATES = {
     "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?": "Int8",
     "Reason for admission": "Int8",
     "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?": "Int8",
-    "Only complete if OTHER selected: Reason for admission (free text)": "str",
+    "Only complete if OTHER selected: Reason for admission (free text)": "string",
 }
 
 NONNULL_FIELDS = [
