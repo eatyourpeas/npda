@@ -356,6 +356,7 @@ class Command(BaseCommand):
                 visit_dict = {}
 
                 for model, field_heading_mappings in csv_map.items():
+
                     for (
                         model_field,
                         csv_heading,
@@ -379,7 +380,7 @@ class Command(BaseCommand):
                             visit_dict[csv_heading] = None
 
                 data.append(visit_dict)
-        breakpoint()
+
         df = self._set_valid_dtypes(pd.DataFrame(data))
 
         self.csv_name = self._get_file_name(
@@ -615,7 +616,7 @@ class Command(BaseCommand):
             if item.get("model_field") == 'pdu':
                 model = 'Patient'
             else:
-                model = apps.get_model("npda", item["model"])
+                model = item["model"]
             csv_heading = item["heading"]
             model_field = item["model_field"]
             map_model_csv_heading_field[model][model_field] = csv_heading
