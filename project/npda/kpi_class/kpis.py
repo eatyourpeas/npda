@@ -168,7 +168,6 @@ class CalculateKPIS:
                 ),
                 "audit_start_date": datetime.date(2024, 4, 1),
                 "audit_end_date": datetime.date(2025, 3, 31),
-                "nhs_number": "7195730220",
                 "gte_12yo": False,
                 "diagnosed_in_period": False,
                 "died_in_period": False,
@@ -191,7 +190,6 @@ class CalculateKPIS:
         calculation_datetime = datetime.now()
         audit_start_date = self.audit_start_date
         audit_end_date = self.audit_end_date
-        nhs_number = patient.nhs_number
         gte_12yo = (
             patient.date_of_birth
             <= calculation_datetime.date() - relativedelta(years=12)
@@ -291,7 +289,6 @@ class CalculateKPIS:
             calculation_datetime=calculation_datetime,
             audit_start_date=audit_start_date,
             audit_end_date=audit_end_date,
-            nhs_number=nhs_number,
             gte_12yo=gte_12yo,
             diagnosed_in_period=diagnosed_in_period,
             died_in_period=died_in_period,
