@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+# copy of s/start-dev with -Xfrozen_modules=off flag for debugpy to work
+python manage.py collectstatic --noinput
+python manage.py makemigrations
+python manage.py migrate
+python manage.py seed --mode=seed_groups_and_permissions
+python manage.py seed --mode=seed_paediatric_diabetes_units
+python manage.py create_npda_superuser
+python -Xfrozen_modules=off manage.py runserver 0.0.0.0:8008

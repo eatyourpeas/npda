@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# scripts may need to be made executable on some platforms before they can be run
+# chmod +x <filename> is the command to do this on unixy systems
+
+# starts all docker compose services
+# override the default docker-compose.yml file with the debug version
+docker compose -f docker-compose.yml -f docker-compose-debug.yml up

@@ -31,11 +31,7 @@ services:
       - ./media/submissions/csv/:/app/media/submissions/csv/
     command: s/start-dev
     restart: always
-    ports:
-      # DEBUGPY
-      # Set DEBUGPY_PORT=5678 in .env for development
-      # Omit variable for production
-      - "${DEBUGPY_PORT:-5678}:5678"
+
 
   # PostgreSQL with PostGIS extension
   postgis:
