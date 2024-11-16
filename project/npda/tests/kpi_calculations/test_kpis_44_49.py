@@ -38,68 +38,80 @@ def test_kpi_calculation_44(AUDIT_START_DATE):
     Patient.objects.all().delete()
 
     # Create  Patients and Visits that should be eligible (KPI1)
-    DIAGNOSIS_DATE = AUDIT_START_DATE - relativedelta(days=90)
+    DIAGNOSIS_DATE = AUDIT_START_DATE - relativedelta(days=89)
     eligible_criteria = {
-        "visit__visit_date": AUDIT_START_DATE + relativedelta(days=2),
         "date_of_birth": AUDIT_START_DATE - relativedelta(days=365 * 10),
+        "diagnosis_date": DIAGNOSIS_DATE,
     }
 
     # Create passing pts
-    pt_1_hba1cs = [45, 46, 47]
+    pt_1_hba1cs = [Decimal(n) for n in [45, 46, 47]]
+    # Diagnosis date is 89 days before AUDIT_START_DATE so valid hba1c dates are
+    # all from AUDIT_START_DATE+1day onwards
+    pt_1_hba1c_date_1 = AUDIT_START_DATE+relativedelta(days=2)
     passing_pt_1_median_46 = PatientFactory(
         # KPI1 eligible
         **eligible_criteria,
         postcode="passing_pt_1_median_46",
         # HbA1c measurements within the audit period and after 90 days of diagnosis
-        visit__hba1c_date=DIAGNOSIS_DATE + relativedelta(days=91),
+        visit__visit_date=pt_1_hba1c_date_1,
+        visit__hba1c_date=pt_1_hba1c_date_1,
         visit__hba1c=pt_1_hba1cs[0],
     )
     # 2 more HbA1c measurements
+    pt_1_hba1c_date_2 = AUDIT_START_DATE + relativedelta(months=3)
     VisitFactory(
         patient=passing_pt_1_median_46,
-        visit_date=AUDIT_START_DATE + relativedelta(months=3),
+        visit_date=pt_1_hba1c_date_2,
         # HbA1c measurements within the audit period and after 90 days of diagnosis
-        hba1c_date=DIAGNOSIS_DATE + relativedelta(months=3),
+        hba1c_date=pt_1_hba1c_date_2,
         hba1c=pt_1_hba1cs[1],
     )
+    pt_1_hba1c_date_3 = AUDIT_START_DATE + relativedelta(months=6)
     VisitFactory(
         patient=passing_pt_1_median_46,
-        visit_date=AUDIT_START_DATE + relativedelta(months=6),
+        visit_date=pt_1_hba1c_date_3,
         # HbA1c measurements within the audit period and after 90 days of diagnosis
-        hba1c_date=DIAGNOSIS_DATE + relativedelta(days=6),
+        hba1c_date=pt_1_hba1c_date_3,
         hba1c=pt_1_hba1cs[2],
     )
 
-    pt_2_hba1cs = [47, 48, 49]
+    pt_2_hba1cs = [Decimal(n) for n in [47, 48, 49]]
+    pt_2_hba1c_date_1 = AUDIT_START_DATE+relativedelta(days=2)
     passing_pt_2_median_48 = PatientFactory(
         # KPI1 eligible
         **eligible_criteria,
         postcode="passing_pt_2_median_48",
         # HbA1c measurements within the audit period and after 90 days of diagnosis
-        visit__hba1c_date=DIAGNOSIS_DATE + relativedelta(days=91),
+        visit__visit_date=pt_2_hba1c_date_1,
+        visit__hba1c_date=pt_2_hba1c_date_1,
         visit__hba1c=pt_2_hba1cs[0],
     )
     # 2 more HbA1c measurements
+    pt_2_hba1c_date_2 = AUDIT_START_DATE + relativedelta(months=3)
     VisitFactory(
         patient=passing_pt_2_median_48,
-        visit_date=AUDIT_START_DATE + relativedelta(months=3),
+        visit_date=pt_2_hba1c_date_2,
         # HbA1c measurements within the audit period and after 90 days of diagnosis
-        hba1c_date=DIAGNOSIS_DATE + relativedelta(months=3),
+        hba1c_date=pt_2_hba1c_date_2,
         hba1c=pt_2_hba1cs[1],
     )
+    pt_2_hba1c_date_3 = AUDIT_START_DATE + relativedelta(months=6)
     VisitFactory(
         patient=passing_pt_2_median_48,
-        visit_date=AUDIT_START_DATE + relativedelta(months=6),
+        visit_date=pt_2_hba1c_date_3,
         # HbA1c measurements within the audit period and after 90 days of diagnosis
-        hba1c_date=DIAGNOSIS_DATE + relativedelta(months=6),
+        hba1c_date=pt_2_hba1c_date_3,
         hba1c=pt_2_hba1cs[2],
     )
-    # This measurement should NOT be counted
+    # This measurement should NOT be counted as it's exactly 90 days after diagnosis
+    # even though it's within the audit period
+    pt_2_invalid_hba1c_date_wihtin_90_days_diagnosis = AUDIT_START_DATE + relativedelta(days=1)
     VisitFactory(
         patient=passing_pt_2_median_48,
-        visit_date=DIAGNOSIS_DATE + relativedelta(days=89),
+        visit_date=pt_2_invalid_hba1c_date_wihtin_90_days_diagnosis,
         # HbA1c measurement is within 90 days of diagnosis
-        hba1c_date=DIAGNOSIS_DATE + relativedelta(days=89),
+        hba1c_date=pt_2_invalid_hba1c_date_wihtin_90_days_diagnosis,
         hba1c=1,  # ridiculously low to skew numbers if counted
     )
 
