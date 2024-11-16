@@ -74,7 +74,6 @@ class IndividualPtKPICalculationsObject:
     calculation_datetime: datetime
     audit_start_date: date
     audit_end_date: date
-    nhs_number: str
     gte_12yo: bool
     diagnosed_in_period: bool
     died_in_period: bool
