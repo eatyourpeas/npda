@@ -9,9 +9,7 @@ from django.core.management import call_command
 from project.npda.models.npda_user import NPDAUser
 from project.npda.tests.model_tests.test_submissions import ALDER_HEY_PZ_CODE
 from project.npda.tests.utils import login_and_verify_user
-from project.npda.management.commands.create_csv import (
-    Command as GenerateCSVCommand,
-)
+from project.npda.tests.test_csv_upload import mock_remote_calls
 
 
 # @pytest.mark.skip(reason="CSV upload validation errors")
@@ -20,6 +18,7 @@ def test_generate_csv_upload_to_view(
     seed_groups_fixture,
     seed_users_fixture,
     client,
+    mock_remote_calls,
     tmpdir,
 ):
     """Integration test for CSV generation and upload to home view.
