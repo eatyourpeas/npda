@@ -9,7 +9,7 @@ from datetime import date, datetime, timedelta
 # Python imports
 from decimal import Decimal
 from pprint import pformat
-from typing import Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 from dateutil.relativedelta import relativedelta
 
@@ -42,6 +42,7 @@ from project.constants.retinal_screening_results import (
 )
 from project.constants.smoking_status import SMOKING_STATUS
 from project.constants.types.kpi_types import (
+    IndividualPtKPICalculationsDict,
     IndividualPtKPICalculationsObject,
     IndividualPtKPIResults,
     KPICalculationsObject,
@@ -151,7 +152,7 @@ class CalculateKPIS:
         self,
         patient: Patient,
         pdu: PaediatricDiabetesUnit,
-    ) -> dict:
+    ) -> IndividualPtKPICalculationsDict:
         """Calculate relevant KPIs subset for a single patient.
 
         Params:
@@ -185,6 +186,11 @@ class CalculateKPIS:
                 "expected_total": 3,
             }
         """
+
+        if type(patient) != Patient:
+            raise ValueError(f"patient must be a Patient instance, got {type(patient)}")
+        if type(pdu) != PaediatricDiabetesUnit:
+            raise ValueError(f"pdu must be a PaediatricDiabetesUnit instance, got {type(pdu)}")
 
         # Get values that are simple look ups
         calculation_datetime = datetime.now()
