@@ -25,6 +25,8 @@ def test_generate_csv_upload_to_view(
 
     Use the generate csv manage.py cmd to create a CSV file and upload it to
     the home view.
+
+    Mocks remote calls.
     """
 
     # Get a user
