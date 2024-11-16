@@ -3,27 +3,29 @@ import os
 import pytest
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 
-from project.npda.general_functions.data_generator_extended import (
-    AgeRange,
-    HbA1cTargetRange,
-    VisitType,
-)
+
 from project.npda.models.npda_user import NPDAUser
 from project.npda.tests.model_tests.test_submissions import ALDER_HEY_PZ_CODE
 from project.npda.tests.utils import login_and_verify_user
-from project.npda.management.commands.create_csv import Command as GenerateCSVCommand
+from project.npda.management.commands.create_csv import (
+    Command as GenerateCSVCommand,
+)
 
-@pytest.mark.skip(reason="CSV upload validation errors")
+
+# @pytest.mark.skip(reason="CSV upload validation errors")
 @pytest.mark.django_db
-def test_csv_upload_view(
+def test_generate_csv_upload_to_view(
     seed_groups_fixture,
     seed_users_fixture,
     client,
     tmpdir,
 ):
-    """Use the generate csv function to assert basic behaviors for uploading
-    csv.
+    """Integration test for CSV generation and upload to home view.
+
+    Use the generate csv manage.py cmd to create a CSV file and upload it to
+    the home view.
     """
 
     # Get a user
@@ -32,49 +34,56 @@ def test_csv_upload_view(
     ).first()
     client = login_and_verify_user(client, ah_user)
 
-    # Define parameters for CSV generation
-    audit_start_date = datetime(2024, 4, 1)
-    audit_end_date = datetime(2025, 3, 31)
-    n_pts_to_seed = 5
-    age_range = AgeRange.AGE_11_15
-    hba1c_target = HbA1cTargetRange.TARGET
-    visits = "CDCD DHPC ACDC CDCD"
-    visit_types = [
-        VisitType.CLINIC,
-        VisitType.DIETICIAN,
-        VisitType.CLINIC,
-        VisitType.DIETICIAN,
-        VisitType.DIETICIAN,
-        VisitType.HOSPITAL_ADMISSION,
-        VisitType.PSYCHOLOGY,
-        VisitType.CLINIC,
-        VisitType.ANNUAL_REVIEW,
-        VisitType.CLINIC,
-        VisitType.DIETICIAN,
-        VisitType.CLINIC,
-        VisitType.CLINIC,
-        VisitType.DIETICIAN,
-        VisitType.CLINIC,
-        VisitType.DIETICIAN,
-    ]
-    output_path = tmpdir.mkdir("csv_output")
+    # Directory to store generated CSV files
+    tmpdir_path = str(tmpdir)
 
-    # Generate CSV
-    file_path = os.path.join(output_path, f"npda_seed_data-{n_pts_to_seed}-{visits.replace(' ', '')}.csv")
-    GenerateCSVCommand().generate_csv(
-        audit_start_date=audit_start_date,
-        audit_end_date=audit_end_date,
-        n_pts_to_seed=n_pts_to_seed,
-        age_range=age_range,
-        hba1c_target=hba1c_target,
-        visits=visits,
-        visit_types=visit_types,
-        output_path=str(output_path),
+    # Simulate `create_csv` commands
+    call_command(
+        "create_csv",
+        pts=5,
+        visits="CDCD DHPC ACDC CDCD",
+        hb_target="T",
+        age_range="11_15",
+        build=True,
+        output_path=tmpdir_path,
+    )
+    call_command(
+        "create_csv",
+        pts=5,
+        visits="CDCCD DDCC CACC",
+        hb_target="A",
+        age_range="16_19",
+        build=True,
+        output_path=tmpdir_path,
+    )
+    call_command(
+        "create_csv",
+        pts=5,
+        visits="CDC ACDC CDCD",
+        hb_target="T",
+        age_range="0_4",
+        build=True,
+        output_path=tmpdir_path,
+    )
+    call_command(
+        "create_csv",
+        coalesce=True,
+        output_path=tmpdir_path,
     )
 
-    # Read the generated CSV for upload
-    with open(file_path, "rb") as f:
-        csv_file = SimpleUploadedFile(f.name, f.read(), content_type="text/csv")
+    # Read the generated coalesced CSV for upload
+    tmp_dir_filenames = os.listdir(tmpdir_path)
+    coalesced_csv_name = next(
+        (file for file in tmp_dir_filenames if file.startswith("coalesced_")),
+        None,
+    )
+    coalesced_csv_path = os.path.join(tmpdir_path, coalesced_csv_name)
+    assert os.path.exists(coalesced_csv_path), "CSV file not generated"
+
+    with open(coalesced_csv_path, "rb") as f:
+        csv_file = SimpleUploadedFile(
+            f.name, f.read(), content_type="text/csv"
+        )
 
     # Send POST request with CSV file
     url = reverse("home")
