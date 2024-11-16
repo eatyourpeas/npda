@@ -1,5 +1,5 @@
-from django.apps import apps
 import numpy as np
+from django.core.management.base import CommandError
 
 """TODO:
     - [ ] Move constants to a separate file. Currently importing from `seed_submission.py`.
@@ -184,23 +184,17 @@ class Command(BaseCommand):
             "--pts",
             type=int,
             help="Number of patients to seed.",
-            required="--coalesce"
-            not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--visits",
             type=str,
             help="Visit types (e.g., 'CDCD DHPC ACDC CDCD'). Can have whitespaces, these will be ignored.",
-            required="--coalesce"
-            not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--hb_target",
             type=str,
             choices=["T", "A", "W"],
             help="HBA1C Target range for visit seeding.",
-            required="--coalesce"
-            not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--submission_date",
@@ -222,7 +216,7 @@ class Command(BaseCommand):
         )
 
         # Mutually exclusive group for --build and --coalesce
-        mutex_group = parser.add_mutually_exclusive_group()
+        mutex_group = parser.add_mutually_exclusive_group(required=True)
         mutex_group.add_argument(
             "--build",
             action="store_true",
@@ -241,6 +235,12 @@ class Command(BaseCommand):
             # Only coalesce, ignoring all other arguments
             self._run_coalesce(**options)
             return
+
+        if options["build"]:
+            required_args = ["pts", "visits", "hb_target"]
+        for arg in required_args:
+            if options.get(arg) is None:
+                raise CommandError(f"--{arg} is required when using --build")
 
         if not (parsed_values := self._parse_values_from_options(**options)):
             return
@@ -498,7 +498,9 @@ class Command(BaseCommand):
         for header in df.columns:
             if header in ALL_DATES:
                 continue
-            print(f"Column: {header}, dtype: {df[header].dtype}, unique values: {df[header].unique()}")
+            print(
+                f"Column: {header}, dtype: {df[header].dtype}, unique values: {df[header].unique()}"
+            )
             print(f"Original dtype: {CSV_DATA_TYPES_MINUS_DATES[header]}")
 
         # Set dtypes for non-date columns
@@ -530,25 +532,42 @@ class Command(BaseCommand):
                 if dtype.startswith("Int"):  # Handle nullable integers
                     df[column] = (
                         df[column]
-                        .replace({np.nan: pd.NA, None: pd.NA})  # Replace missing values
-                        .apply(lambda x: int(x) if pd.notna(x) and x == int(x) else pd.NA)  # Ensure valid integers
+                        .replace(
+                            {np.nan: pd.NA, None: pd.NA}
+                        )  # Replace missing values
+                        .apply(
+                            lambda x: (
+                                int(x)
+                                if pd.notna(x) and x == int(x)
+                                else pd.NA
+                            )
+                        )  # Ensure valid integers
                         .astype(dtype)  # Cast to nullable Int dtype
                     )
                 elif dtype == "string":  # Handle strings
-                    df[column] = df[column].replace({np.nan: pd.NA, None: pd.NA}).astype("string")
+                    df[column] = (
+                        df[column]
+                        .replace({np.nan: pd.NA, None: pd.NA})
+                        .astype("string")
+                    )
                 elif dtype.startswith("float"):  # Handle floats
-                    df[column] = df[column].replace({None: np.nan}).astype(dtype)
+                    df[column] = (
+                        df[column].replace({None: np.nan}).astype(dtype)
+                    )
                 else:
-                    raise ValueError(f"Unsupported dtype from CSV_DATA_TYPES_MINUS_DATES: {dtype}\n (for {column=} {df[column].dtype=})")
+                    raise ValueError(
+                        f"Unsupported dtype from CSV_DATA_TYPES_MINUS_DATES: {dtype}\n (for {column=} {df[column].dtype=})"
+                    )
         # Catch and throw error again to log the column and dtype
         # Cant continue
         except Exception as e:
             logger.error(f"ERROR in clean_and_cast: {e}")
-            logger.error(f"CSV_DATA_TYPES_MINUS_DATES {column=} {dtype=}\n{df[column].dtype=}")
+            logger.error(
+                f"CSV_DATA_TYPES_MINUS_DATES {column=} {dtype=}\n{df[column].dtype=}"
+            )
             raise e
 
         return df
-
 
     def _parse_values_from_options(self, **options):
 
