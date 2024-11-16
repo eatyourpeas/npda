@@ -299,6 +299,7 @@ class CalculateKPIS:
             kpi_results=pt_kpi_results,
         )
 
+
         return asdict(return_obj)
 
     def _calculate_kpis(

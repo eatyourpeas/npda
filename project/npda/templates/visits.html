@@ -7,7 +7,7 @@
     <div class="inline-block min-w-full py-2 px-10">
         <div class="relative overflow-x-auto w-full">
         <strong>All {{submission.audit_year}} Audit Visits for {{patient.nhs_number}} (NPDA ID-{{patient.pk}})</strong>
-          
+
         {% if visits %}
           <table class="table table-md w-full text-sm text-left rtl:text-right text-gray-500 text-gray-400 mb-5 font-montserrat">
                   <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
@@ -20,10 +20,10 @@
                   </thead>
                   <tbody>
                         {% for visit in visits %}
-                        <tr 
-                        {% if visit.visit.is_valid %} 
+                        <tr
+                        {% if visit.visit.is_valid %}
                           class="hover:bg-gray-200 border-b bg-white text-rcpch_light_blue border-gray-100"
-                        {% else %} 
+                        {% else %}
                           class="border-b hover:bg-gray-200  bg-white text-black border-gray-100"
                         {% endif %}>
                               <td  class="px-5">
@@ -33,8 +33,8 @@
                               <td class="py-5 flex flex-wrap">
                                 {% for item in visit.categories %}
                                   {% with item.category|colour_for_category as background_colour %}
-                                    {% if item.present %}  
-                                        <span 
+                                    {% if item.present %}
+                                        <span
                                           {% if item.has_error %}
                                             class="bg-rcpch_red hover:bg-rcpch_red_dark_tint px-1 py-0.25 mx-1 my-1 text-sm font-semibold text-white"
                                           {% else %}
@@ -83,12 +83,12 @@
                 <h5>This child has had no visits yet!</h5>
               </div>
           {% endif %}
-          
+
           {% if perms.npda.add_visit %}
             <a href="{% url 'visit-create' patient_id=patient.pk %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Create New Visit</a>
           {% endif %}
           <a href="{% url 'patients' %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Back to Patient List</a>
-          
+
           <div class="py-20">
             <div class="bg-rcpch_light_blue border border-rcpch_light_blue_tint3 text-white px-4 py-3 relative" role="alert">
               <strong class="font-bold">Guidance:</strong>
@@ -98,9 +98,9 @@
               </span>
             </div>
           </div>
-          
+
           <div class="row mt-1">
-            {% include 'partials/kpi_patient.html' with kpi_results=kpi_results patient=patient %}
+            {% include 'partials/kpi_patient.html' with kpi_calculations_object=kpi_calculations_object patient=patient %}
           </div>
       </div>
       </div>

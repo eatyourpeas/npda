@@ -65,7 +65,7 @@ class PatientVisitsListView(
             )
         )
 
-        context["kpi_results"] = kpi_calculations_object
+        context["kpi_calculations_object"] = kpi_calculations_object
 
         return context
 
