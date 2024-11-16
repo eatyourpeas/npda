@@ -57,7 +57,7 @@ def test_ensure_calculate_kpis_for_patient_returns_correct_kpi_subset(
     ],
 )
 @pytest.mark.django_db
-def test_calculate_kpis_for_patient_returns_correct_results(
+def test_calculate_kpis_for_single_patient_returns_correct_results(
     AUDIT_START_DATE,
     gte_12yo,
     pass_kpi_25,
