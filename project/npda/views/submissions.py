@@ -58,6 +58,7 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
             "-submission_active",
             "-submission_date",
         )
+        
         return base_queryset
 
     def get_context_data(self, **kwargs: Any) -> dict:

@@ -1,5 +1,7 @@
 {% load static %}
 {% load npda_tags %}
+{% load humanize %}
+
 <div>
     {% if request.user.view_preference == 1 %}
         <!-- national view -->
@@ -9,29 +11,40 @@
         <h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">All Submissions Nationally</h1>
     {% endif %}
     {% if submissions %}
-                <table class="table table-md w-full text-sm text-left rtl:text-right text-gray-500 text-gray-400 mb-5 font-montserrat">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
-                        <tr>
-                            <th>Submission Date</th>
-                            <th>Submission By</th>
-                            <th>Audit Year</th>
-                            <th>Patient Number</th>
-                            <th>Active</th>
-                            {% if request.user.view_preference == 2 %}<th>PDU</th>{% endif %}
-                            <th>Download</th>
+    <div class="max-h-screen p-4 overflow-clip">
+        <div class="w-full overflow-x-auto overflow-y-auto" style="max-height:inherit">
+                <table class="table table-auto table-pin-cols border-collapse text-sm text-left text-gray-500 mb-5 font-montserrat">
+                    <thead class="text-xs  uppercase  bg-rcpch_dark_blue text-white">
+                        <tr class="bg-rcpch_dark_blue text-white z-40">
+                            <td>Submission Date</td>
+                            <td>Submitted By</td>
+                            <td>Audit Year</td>
+                            <td>Patient Qty</td>
+                            <td>Status</td>
+                            {% if request.user.view_preference == 2 %}<td>PDU</td>{% endif %}
+                            <td>Actions</td>
                         </tr>
                     </thead>
                     <tbody>
                         {% for submission in submissions %}
-                        {% if forloop.first %}
-                        <tr class="border-b bg-white text-rcpch_light_blue border-gray-100 hover:bg-r hover:bg-rcpch_light_blue hover:text-white">
-                        {% else %}
-                        <tr class="border-b bg-rcpch_lightest_grey text-rcpch_light_blue border-gray-100 hover:bg-r hover:bg-rcpch_mid_grey hover:text-white">
-                        {% endif %}
-                                <td>{{  submission.submission_date|date:"d/m/Y H:i s" }} secs</td>
+                            {% if forloop.first %}
+                            <tr class="border-b border-gray-100 hover:text-white
+                            {% if submission_errors %}
+                             text-rcpch_red_light_tint3 bg-rcpch_dark_red hover:bg-rcpch_red_dark_tint
+                             {% else %}
+                             text-rcpch_light_blue hover:bg-rcpch_strong_blue
+                             {% endif %}">
+                            {% else %}
+                            <tr class="border-b bg-slate-100 text-slate-500 border-gray-100 hover:bg-r hover:bg-rcpch_mid_grey hover:text-white">
+                            {% endif %}
+                                <td>
+                                    {% if submission_errors and submission.submission_active %}
+                                    <div class="tooltip tooltip-right" data-tip="We found some errors with this submission. Please check the Quality Report and try to reupload."><i class="fa-solid fa-circle-exclamation"></i></div>
+                                {% endif %}
+                                    <div class="tooltip tooltip-right" data-tip="Uploaded at {{  submission.submission_date|date:"H:i:s" }} on {{  submission.submission_date|date:"d/m/Y" }}">{{ submission.submission_date|naturaltime  }}</div></td>
                                 <td>{{ submission.submission_by}}</td>
                                 <td>{{ submission.audit_year}}</td>
-                                <td>{{ submission.patient_count}}</td>
+                                <td><div class="tooltip" data-tip="Total of {{ submission.patient_count|default:"?"}} patients uploaded in this submission">{{ submission.patient_count|default:"?"}}</div></td>
                                 <td>
                                     {% if submission.submission_active %}
                                         <span class="bg-rcpch_pink px-1 py-0.25 mx-1 my-1 text-sm font-semibold text-white">
@@ -43,22 +56,30 @@
                                         </span>
                                     {% endif %}
                                 </td>
-                                {% if request.user.view_preference == 2 %}<td>{{ submission.paediatric_diabetes_unit.pz_code }} ({{submission.paediatric_diabetes_unit.lead_organisation_name}})</td>{% endif %}
-                                <td class="flex flex-row">
+                                {% if request.user.view_preference == 2 %}
+                                <td>{{ submission.paediatric_diabetes_unit.pz_code }} ({{submission.paediatric_diabetes_unit.lead_organisation_name}})</td>
+                                {% endif %}
+                                <td class="flex flex-row gap-2 justify-between flex-wrap">
                                     <form method="post" action="{% url 'submissions' %}" class="join">
                                         {% csrf_token %}
                                         <input type="hidden" name="audit_id" value="{{submission.pk}}">
                                         {% if submission.submission_active %}
+                                        <!-- data quality report only visible for PDU view -->
+            {% if request.user.view_preference == 1 %}
                                         <button 
                                                 name="submit-data"
                                                 value="download-report"  
                                                 type="submit" 
-                                                class="join-item mr-2 bg-rcpch_pink text-white font-semibold hover:text-white py-1 px-2 hover:bg-rcpch_pink_light_tint1 btn-sm rounded-none">View Report</button>
+                                                class=" mr-2 bg-rcpch_light_blue text-white font-semibold hover:text-white py-1 px-2 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue btn-sm rounded-none h-auto">
+                                                <div class="tooltip tooltip-bottom" data-tip="Download a spreadsheet (.xlsx) that shows your uploaded data with validation comments"><i class="fa-solid fa-file-excel"></i> Quality Report</div></button>
+                                                {% endif %}
                                             <button 
                                                 name="submit-data" 
                                                 value="download-data" 
                                                 type="submit" 
-                                                class="join-item bg-rcpch_light_blue text-white font-semibold hover:text-white py-1 px-2 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue btn-sm rounded-none">Download</button>
+                                                class=" bg-rcpch_light_blue text-white font-semibold hover:text-white py-1 px-2 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue btn-sm rounded-none  h-auto">
+                                                <div class="tooltip tooltip-bottom" data-tip="Download a copy of the uploaded .CSV file"><i class="fa-solid fa-file-csv"></i> 
+                                                Raw Data</div></button>
                                         {% else %}
                                             
                                             <button 
@@ -66,25 +87,22 @@
                                                 disabled="true"
                                                 value="delete-data"  
                                                 type="submit" 
-                                                class="join-item bg-rcpch_red text-white font-semibold hover:text-white py-1 px-2 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint btn-sm rounded-none {% if submission.submission_active %}opacity-50 cursor-not-allowed {% endif %}">Delete</button>
+                                                class="join-item bg-rcpch_red text-white font-semibold hover:text-white py-1 px-2 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint btn-sm rounded-none {% if submission.submission_active %}opacity-50 cursor-not-allowed {% endif %}  h-auto">Delete</button>
                                         {% endif %}
                                     </form>
                                     {% if submission.submission_active %}
-                                        <a href="{% url 'patients' %}">
-                                            <svg
-                                                class="h-8 w-8 text-rcpch_pink self-center hover:text-white"
-                                                width="24" height="24" viewBox="0 0 24 24" stroke-width="2" 
-                                                stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  
-                                                <path stroke="none" d="M0 0h24v24H0z"/>  <polyline points="9 6 15 12 9 18" />
-                                            </svg>
-                                        </a>
+                                    <a href="{% url 'patients' %}"
+                                                class="join-item bg-rcpch_light_blue text-white font-semibold hover:text-white py-1 px-2 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue btn-sm rounded-none h-auto">
+                                                
+                                                <div class="tooltip tooltip-left" data-tip="View submission details, including the patients uploaded.">View Submission <i class="fa-solid fa-eye"></i></div></a>
+
                                     {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}
                     </tbody>
                     <tfoot>
-                        <tr class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white py-5">
+                        <tr class="text-xs uppercase  bg-rcpch_dark_blue text-white py-5">
                             <th colspan="11" class="px-2">
                                 <strong>
                                 
@@ -93,8 +111,9 @@
                         </tr>
                     </tfoot>
                 </table>
-
+            </div>
         </div>
+        
         {% if data is not None %}
             <!-- data quality report only visible for PDU view -->
             {% if request.user.view_preference == 1 %}
@@ -114,4 +133,5 @@
             <p class="text-gray-400">No submissions created yet for {{request.session.pz_code}}. {% text_for_data_submission can_upload_csv can_complete_questionnaire %}</p>
         {% endif %}
     {% endif %}
+</div>
 </div>

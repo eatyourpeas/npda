@@ -1,15 +1,19 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<div class="flex flex-col justify-center px-10" hx-get="/submissions" hx-trigger="submissions from:body" hx-target="#submissions_table">
-    <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
-      <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
-          <div class="relative overflow-x-auto">
-            <div id="submissions_table">
+<section class="mb-5 container-mx-auto flex items-center justify-center">
+  <div class="w-full" hx-get="/submissions" hx-trigger="submissions from:body" hx-target="#submissions_table">
+    <div class="flex flex-col justify-center px-10">
+      <div class="">
+        <div class="">
+          <div class="relative">
+            <div id="submissions_table" class="w-full mt-5 mx-2">
               {% include 'partials/submission_history.html' with submissions=object_list data=data submission_errors=submission_errors patients=patients %}
             </div>
           </div>
+        </div>
       </div>
     </div>
-</div>
+  </div>
+</section>
 {% endblock %}
