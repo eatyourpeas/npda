@@ -12,9 +12,9 @@
         <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
                   {% if user.is_authenticated %}
           <li class="flex items-center hover:inner-shadow">
-            <div class="tooltip tooltip-bottom" data-tip="Dashboard">
-              <a href="{% url 'dashboard' %}" class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'dashboard' %}" aria-current="page"><i class="fa-solid fa-house"></i></a>
-            </div>
+            <a href="{% url 'dashboard' %}"
+              class="text-xs block font-montserrat font-semibold text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'dashboard' %}"
+              aria-current="page">Dashboard</a>
           </li>
           <li class="flex items-center hover:inner-shadow">
             <a href="{% url 'submissions' %}" class="text-xs block font-montserrat font-semibold text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'submissions' %}" aria-current="page">Submissions</a>
@@ -66,9 +66,9 @@
       <ul class="menu menu-horizontal px-1 flex gap-x-2 place-items-center">
         {% if user.is_authenticated %}
           <li class="flex items-center hover:inner-shadow">
-            <div class="tooltip tooltip-bottom" data-tip="Dashboard">
-              <a href="{% url 'dashboard' %}" class="text-xs block font-montserrat font-semibold  dark:text-rcpch_lightest_grey text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}" aria-current="page"><i class="fa-solid fa-house"></i></a>
-            </div>
+            <a href="{% url 'dashboard' %}"
+              class="text-xs block font-montserrat font-semibold dark:text-rcpch_lightest_grey text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'dashboard' %}"
+              aria-current="page">Dashboard</a>
           </li>
           <li class="flex items-center hover:inner-shadow">
             <a href="{% url 'submissions' %}" class="text-xs block font-montserrat font-semibold dark:text-rcpch_lightest_grey text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'submissions' %}" aria-current="page">Submissions</a>
