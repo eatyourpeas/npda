@@ -1,7 +1,7 @@
 # Object types
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import date, datetime
-from typing import Dict, Optional, Union
+from typing import Dict, Literal, Optional, TypedDict, Union
 
 from django.db.models import QuerySet
 
@@ -46,6 +46,52 @@ class KPIResult:
 
 
 @dataclass
+class IndividualPtKPIResults:
+    """Type for individual patient KPI results.
+
+    KPIS 25+26 always have values
+    KPIS 27-31 will be None for pts >= 12yo
+    """
+
+    kpi_25_hba1c: bool
+    kpi_26_bmi: bool
+    kpi_27_thyroid_screen: bool
+    kpi_28_blood_pressure: Optional[bool]
+    kpi_29_urinary_albumin: Optional[bool]
+    kpi_30_retinal_screening: Optional[bool]
+    kpi_31_foot_examination: Optional[bool]
+
+    def get_total_passed(self)->int:
+        return sum(
+            value for value in asdict(self).values() if value is not None
+        )
+
+
+@dataclass
+class IndividualPtKPICalculationsObject:
+    """A single record for individual patient's KPI calculations."""
+
+    calculation_datetime: datetime
+    audit_start_date: date
+    audit_end_date: date
+    gte_12yo: bool
+    diagnosed_in_period: bool
+    died_in_period: bool
+    transfer_in_period: bool
+    kpi_results: IndividualPtKPIResults
+    total_passed: int = None  # Default value to be set later
+    expected_total: Literal[3, 7] = None  # Default value to be set later
+
+    def __post_init__(self):
+
+        # Set total_passed
+        self.total_passed = self.kpi_results.get_total_passed()
+
+        # Set expected_total based on gte_12yo
+        self.expected_total = 7 if self.gte_12yo else 3
+
+
+@dataclass
 class KPICalculationsObject:
     calculation_datetime: datetime
     audit_start_date: date
@@ -56,6 +102,25 @@ class KPICalculationsObject:
         KPIResult,
     ]
 
+# TypedDict using dataclass as base
+class IndividualPtKPIResultsDict(TypedDict):
+    kpi_25_hba1c: bool
+    kpi_26_bmi: bool
+    kpi_27_thyroid_screen: bool
+    kpi_28_blood_pressure: bool
+    kpi_29_urinary_albumin: bool
+    kpi_30_retinal_screening: bool
+    kpi_31_foot_examination: bool
+
+class IndividualPtKPICalculationsDict(TypedDict):
+    calculation_datetime: str  # Use ISO 8601 format for datetime
+    audit_start_date: str
+    audit_end_date: str
+    gte_12yo: int
+    diagnosed_in_period: int
+    died_in_period: int
+    transfer_in_period: int
+    kpi_results: IndividualPtKPIResultsDict
 
 """
 Hard coding these for simplicty and readability

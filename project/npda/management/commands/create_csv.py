@@ -1,4 +1,5 @@
-from django.apps import apps
+import numpy as np
+from django.core.management.base import CommandError
 
 """TODO:
     - [ ] Move constants to a separate file. Currently importing from `seed_submission.py`.
@@ -106,12 +107,17 @@ from datetime import datetime
 import os
 import random
 import sys
+import logging
 
 from django.utils import timezone
 from django.core.management.base import BaseCommand
 import pandas as pd
 
-from project.constants.csv_headings import ALL_DATES, CSV_HEADINGS
+from project.constants.csv_headings import (
+    ALL_DATES,
+    CSV_DATA_TYPES_MINUS_DATES,
+    CSV_HEADINGS,
+)
 from project.npda.general_functions.audit_period import (
     get_audit_period_for_date,
 )
@@ -128,6 +134,9 @@ from project.npda.management.commands.seed_submission import (
     RESET,
     GREEN,
 )
+
+# Logging
+logger = logging.getLogger(__name__)
 
 PZ_CODE = "PZ999"
 GP_ODS_CODES = [
@@ -175,23 +184,17 @@ class Command(BaseCommand):
             "--pts",
             type=int,
             help="Number of patients to seed.",
-            required="--coalesce"
-            not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--visits",
             type=str,
             help="Visit types (e.g., 'CDCD DHPC ACDC CDCD'). Can have whitespaces, these will be ignored.",
-            required="--coalesce"
-            not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--hb_target",
             type=str,
             choices=["T", "A", "W"],
             help="HBA1C Target range for visit seeding.",
-            required="--coalesce"
-            not in sys.argv,  # Set required only if --coalesce is not used
         )
         parser.add_argument(
             "--submission_date",
@@ -213,7 +216,7 @@ class Command(BaseCommand):
         )
 
         # Mutually exclusive group for --build and --coalesce
-        mutex_group = parser.add_mutually_exclusive_group()
+        mutex_group = parser.add_mutually_exclusive_group(required=True)
         mutex_group.add_argument(
             "--build",
             action="store_true",
@@ -232,6 +235,12 @@ class Command(BaseCommand):
             # Only coalesce, ignoring all other arguments
             self._run_coalesce(**options)
             return
+
+        if options["build"]:
+            required_args = ["pts", "visits", "hb_target"]
+        for arg in required_args:
+            if options.get(arg) is None:
+                raise CommandError(f"--{arg} is required when using --build")
 
         if not (parsed_values := self._parse_values_from_options(**options)):
             return
@@ -281,7 +290,9 @@ class Command(BaseCommand):
             visit_types[i : i + 4] for i in range(0, len(visit_types), 4)
         ]
         for chunk in visit_types_chunks:
-            self.print_info("    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk))
+            self.print_info(
+                "    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk)
+            )
 
         self.generate_csv(
             audit_start_date,
@@ -294,9 +305,13 @@ class Command(BaseCommand):
             output_path,
             build_flag,
         )
-        self.print_success(f"✨ CSV generated successfully at {self.csv_name}.\n")
+        self.print_success(
+            f"✨ CSV generated successfully at {self.csv_name}.\n"
+        )
         if build_flag:
-            self.print_info(f"Coalesce the build csv files using the --coalesce flag.")
+            self.print_info(
+                f"Coalesce the build csv files using the --coalesce flag."
+            )
 
     def generate_csv(
         self,
@@ -356,12 +371,15 @@ class Command(BaseCommand):
                 visit_dict = {}
 
                 for model, field_heading_mappings in csv_map.items():
+
                     for (
                         model_field,
                         csv_heading,
                     ) in field_heading_mappings.items():
                         if model == "Visit":
-                            visit_dict[csv_heading] = getattr(visit, model_field)
+                            visit_dict[csv_heading] = getattr(
+                                visit, model_field
+                            )
                         elif model == "Patient":
                             # Foreign key so need to manually set the value
                             if model_field == "pdu":
@@ -400,10 +418,14 @@ class Command(BaseCommand):
 
         # Get the existing build files
         existing_build_files = [
-            f for f in os.listdir(options["output_path"]) if f.startswith("build")
+            f
+            for f in os.listdir(options["output_path"])
+            if f.startswith("build")
         ]
         if not existing_build_files:
-            self.print_error(f"No build files to coalesce in {options['output_path']}/")
+            self.print_error(
+                f"No build files to coalesce in {options['output_path']}/"
+            )
             return
         self.print_info(f"{CYAN}Existing build files: {RESET}\n")
         for file in existing_build_files:
@@ -429,14 +451,18 @@ class Command(BaseCommand):
 
         df.info()
 
-        csv_file_name = f"coalesced_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        csv_file_name = (
+            f"coalesced_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        )
         full_csv_path = os.path.join(options["output_path"], csv_file_name)
         df.to_csv(
             full_csv_path,
             index=False,
         )
 
-        self.print_success(f"\n✨ CSV coalesced successfully at {full_csv_path}.\n")
+        self.print_success(
+            f"\n✨ CSV coalesced successfully at {full_csv_path}.\n"
+        )
 
         # PRINT OUT DIFFERENCE IN DATA TYPES
         comparison_csv = "dummy_sheet_invalid.csv"
@@ -451,7 +477,9 @@ class Command(BaseCommand):
                 mismatched_dtypes[col] = (orig_dtypes[col], new_dtypes[col])
 
         # Print out mismatched columns and their respective data types
-        self.print_error(f"Columns with differing data types from {comparison_csv}:")
+        self.print_error(
+            f"Columns with differing data types from {comparison_csv}:"
+        )
         self.print_info("NOTE: columns with Nan are cast to float")
         for col, (orig_type, new_type) in mismatched_dtypes.items():
             print(
@@ -467,6 +495,16 @@ class Command(BaseCommand):
         """Sets the correct data types for the dataframe, making them same as original
         dummy_sheet_invalid.csv file (to ensure we handle errors).
         """
+        for header in df.columns:
+            if header in ALL_DATES:
+                continue
+            print(
+                f"Column: {header}, dtype: {df[header].dtype}, unique values: {df[header].unique()}"
+            )
+            print(f"Original dtype: {CSV_DATA_TYPES_MINUS_DATES[header]}")
+
+        # Set dtypes for non-date columns
+        df = self.clean_and_cast(df, CSV_DATA_TYPES_MINUS_DATES)
 
         df = (
             df.assign(
@@ -477,10 +515,6 @@ class Command(BaseCommand):
                     )
                     for date_header in ALL_DATES
                 },
-                **{
-                    # Convert mismatched columns to the correct data type
-                    "NHS Number": lambda x: x["NHS Number"].astype(str),
-                },
             )
             # Reorder columns
             [TEMPLATE_HEADERS]
@@ -489,6 +523,49 @@ class Command(BaseCommand):
         # Ensure the formatting is right for validation
         for date_header in ALL_DATES:
             df[date_header] = df[date_header].dt.strftime("%d/%m/%Y")
+
+        return df
+
+    def clean_and_cast(self, df, column_types):
+        try:
+            for column, dtype in column_types.items():
+                if dtype.startswith("Int"):  # Handle nullable integers
+                    df[column] = (
+                        df[column]
+                        .replace(
+                            {np.nan: pd.NA, None: pd.NA}
+                        )  # Replace missing values
+                        .apply(
+                            lambda x: (
+                                int(x)
+                                if pd.notna(x) and x == int(x)
+                                else pd.NA
+                            )
+                        )  # Ensure valid integers
+                        .astype(dtype)  # Cast to nullable Int dtype
+                    )
+                elif dtype == "string":  # Handle strings
+                    df[column] = (
+                        df[column]
+                        .replace({np.nan: pd.NA, None: pd.NA})
+                        .astype("string")
+                    )
+                elif dtype.startswith("float"):  # Handle floats
+                    df[column] = (
+                        df[column].replace({None: np.nan}).astype(dtype)
+                    )
+                else:
+                    raise ValueError(
+                        f"Unsupported dtype from CSV_DATA_TYPES_MINUS_DATES: {dtype}\n (for {column=} {df[column].dtype=})"
+                    )
+        # Catch and throw error again to log the column and dtype
+        # Cant continue
+        except Exception as e:
+            logger.error(f"ERROR in clean_and_cast: {e}")
+            logger.error(
+                f"CSV_DATA_TYPES_MINUS_DATES {column=} {dtype=}\n{df[column].dtype=}"
+            )
+            raise e
 
         return df
 
@@ -502,12 +579,16 @@ class Command(BaseCommand):
                     datetime.strptime(submission_date_str, "%Y-%m-%d")
                 ).date()
             except ValueError:
-                self.print_error("Invalid submission_date format. Use YYYY-MM-DD.")
+                self.print_error(
+                    "Invalid submission_date format. Use YYYY-MM-DD."
+                )
                 return
         else:
             submission_date = timezone.now().date()
 
-        audit_start_date, audit_end_date = get_audit_period_for_date(submission_date)
+        audit_start_date, audit_end_date = get_audit_period_for_date(
+            submission_date
+        )
 
         # Number of patients to seed (pts)
         n_pts_to_seed = options["pts"]
@@ -611,7 +692,11 @@ class Command(BaseCommand):
         map_model_csv_heading_field = defaultdict(dict)
 
         for item in CSV_HEADINGS:
-            model = apps.get_model("npda", item["model"])
+            # pdu no longer has model defined
+            if item.get("model_field") == "pdu":
+                model = "Patient"
+            else:
+                model = item["model"]
             csv_heading = item["heading"]
             model_field = item["model_field"]
             map_model_csv_heading_field[model][model_field] = csv_heading

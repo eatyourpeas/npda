@@ -9,7 +9,7 @@ media/submissions/csv/*
 __pycache__
 .DS_Store
 /.cache
-.vscode
+.vscode/settings.json
 *.code-workspace
 .vscode
 

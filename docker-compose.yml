@@ -32,6 +32,7 @@ services:
     command: s/start-dev
     restart: always
 
+
   # PostgreSQL with PostGIS extension
   postgis:
     <<: *global # this will inherit all the envs from x-global-environment

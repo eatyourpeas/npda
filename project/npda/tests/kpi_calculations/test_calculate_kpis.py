@@ -6,7 +6,7 @@ Also contains utils / helper functions for testing the CalculateKPIS class.
 import logging
 from datetime import date
 
-from project.npda.tests.factories.patient_factory import PatientFactory
+
 import pytest
 
 from project.npda.kpi_class.kpis import CalculateKPIS, KPIResult, kpi_registry
@@ -34,7 +34,9 @@ def assert_kpi_result_equal(
             f"expected must be of type KPIResult (current: {type(expected)}"
         )
     if isinstance(actual, KPIResult) is False:
-        raise TypeError(f"actual must be of type KPIResult (current: {type(actual)}")
+        raise TypeError(
+            f"actual must be of type KPIResult (current: {type(actual)}"
+        )
 
     mismatches = []
 
@@ -129,7 +131,9 @@ def test_kpi_calculations_dont_break_when_no_patients(
     kpi_calculation_method = getattr(kpi_calculator, calculation_method)
     kpi_calculations_object = kpi_calculation_method(**calculation_args)
 
-    for kpi, results in kpi_calculations_object["calculated_kpi_values"].items():
+    for kpi, results in kpi_calculations_object[
+        "calculated_kpi_values"
+    ].items():
         # remove the kpi_label key from the results
         results.pop("kpi_label", None)
         # also remove the patient_querysets key from the results
@@ -159,7 +163,9 @@ def test_calculate_kpis_return_obj_has_correct_kpi_labels(AUDIT_START_DATE):
     """
     kpi_calculator = CalculateKPIS(calculation_date=AUDIT_START_DATE)
 
-    kpi_calc_obj = kpi_calculator.calculate_kpis_for_patients(Patient.objects.all())
+    kpi_calc_obj = kpi_calculator.calculate_kpis_for_patients(
+        Patient.objects.all()
+    )
 
     kpi_results_obj = kpi_calc_obj["calculated_kpi_values"]
 
@@ -185,27 +191,4 @@ def test_calculate_kpis_return_obj_has_correct_kpi_labels(AUDIT_START_DATE):
         ), f"KPI {actual_kpi_attribute_name} has incorrect label: {actual_kpi_label}"
 
 
-@pytest.mark.django_db
-def test_ensure_calculate_kpis_for_patient_returns_correct_kpi_subset(AUDIT_START_DATE):
-    """Tests that the `calculate_kpis_for_single_patient()` method
-    returns the correct subset of KPIs for a single patient.
-    """
-    kpi_calculator = CalculateKPIS(calculation_date=AUDIT_START_DATE)
 
-    kpi_calc_obj = kpi_calculator.calculate_kpis_for_single_patient(
-        PatientFactory(),
-    )
-
-    kpi_results_obj = kpi_calc_obj["calculated_kpi_values"].keys()
-
-    # Check that the KPIs are a subset of the full KPI list
-    EXPECTED_KPIS_SUBSET = list(range(13, 32)) + [321, 322, 323] + (list(range(33, 50)))
-    EXPECTED_KPI_KEYS = [
-        kpi_calculator.kpi_name_registry.get_attribute_name(i)
-        for i in EXPECTED_KPIS_SUBSET
-    ]
-
-    for expected_kpi_key in EXPECTED_KPI_KEYS:
-        assert (
-            expected_kpi_key in kpi_results_obj
-        ), f"Expected KPI {expected_kpi_key} in single patient subset, but not present in results"

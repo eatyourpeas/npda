@@ -64,3 +64,6 @@ mkdocs-with-pdf==0.9.3 # PDF export feature
 
 # for colored logs
 colorlog==6.8.2
+
+# Vscode debugger
+debugpy==1.8.8

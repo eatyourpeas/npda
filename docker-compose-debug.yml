@@ -1,0 +1,9 @@
+# Separate debuggpy override file to ensure we don't mix up the production and development settings
+services:
+  django:
+    ports:
+      # DEBUGPY
+      - "5678:5678"
+    environment:
+      - PYDEVD_DISABLE_FILE_VALIDATION=1
+    command: s/start-dev-debug

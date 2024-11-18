@@ -58,9 +58,14 @@ class PatientVisitsListView(
         )
         # Calculate the KPIs for this patient, returning only subset relevant
         # for a single patient's calculation
-        kpi_calculations_object = calculate_kpis.calculate_kpis_for_single_patient(patient)
+        kpi_calculations_object = (
+            calculate_kpis.calculate_kpis_for_single_patient(
+                patient,
+                pdu,
+            )
+        )
 
-        context["kpi_results"] = kpi_calculations_object
+        context["kpi_calculations_object"] = kpi_calculations_object
 
         return context
 
