@@ -57,6 +57,14 @@ class VisitForm(forms.ModelForm):
             "hospital_admission_reason",
             "dka_additional_therapies",
             "hospital_admission_other",
+            # calculated fields
+            "height_centile",
+            "height_sds",
+            "weight_centile",
+            "weight_sds",
+            "bmi",
+            "bmi_centile",
+            "bmi_sds",
         ]
 
         widgets = {
@@ -100,7 +108,23 @@ class VisitForm(forms.ModelForm):
             "hospital_admission_reason": forms.Select(),
             "dka_additional_therapies": forms.Select(),
             "hospital_admission_other": forms.TextInput(attrs={"class": TEXT_INPUT}),
+            # calculated fields as hidden inputs
+            "height_centile": forms.HiddenInput(),
+            "height_sds": forms.HiddenInput(),
+            "weight_centile": forms.HiddenInput(),
+            "weight_sds": forms.HiddenInput(),
+            "bmi": forms.HiddenInput(),
+            "bmi_centile": forms.HiddenInput(),
+            "bmi_sds": forms.HiddenInput(),
         }
+
+    height_centile = forms.CharField(widget=forms.HiddenInput(), required=False)
+    height_sds = forms.CharField(widget=forms.HiddenInput(), required=False)
+    weight_centile = forms.CharField(widget=forms.HiddenInput(), required=False)
+    weight_sds = forms.CharField(widget=forms.HiddenInput(), required=False)
+    bmi = forms.CharField(widget=forms.HiddenInput(), required=False)
+    bmi_centile = forms.CharField(widget=forms.HiddenInput(), required=False)
+    bmi_sds = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     categories = [
         "Measurements",

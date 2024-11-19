@@ -117,6 +117,21 @@ def heading_for_field(field):
     return None
 
 
+@register.simple_tag
+def centile_sds(field):
+    """
+    Returns the centile and SDS for a given field
+    """
+    if field.id_for_label == "id_height":
+        return field.form.instance.height_centile, field.form.instance.height_sds
+    elif field.id_for_label == "id_weight":
+        return field.form.instance.weight_centile, field.form.instance.weight_sds
+    elif field.id_for_label == "id_bmi":
+        return field.form.instance.bmi_centile, field.form.instance.bmi_sds
+    else:
+        return None, None
+
+
 @register.filter
 def join_with_comma(value):
     if isinstance(value, list):
