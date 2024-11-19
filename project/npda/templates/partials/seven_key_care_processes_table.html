@@ -40,73 +40,45 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-4 w-1/11">
-                                    {% if kpi_calculations_object.gte_12yo %}
-                                        <i class="fa-solid fa-check fa-lg"></i>
-                                    {% else %}
-                                        <i class="fa-solid fa-xmark fa-lg"></i>
-                                    {% endif %}
+                                    {% include 'partials/page_elements/status_icon.html' with size='lg' success=kpi_calculations_object.gte_12yo %}
                                 </td>
                                 <td class="px-4 py-4 w-1/11">
-                                    {% if kpi_calculations_object.kpi_results.kpi_25_hba1c %}
-                                    <i class="fa-solid fa-check fa-lg"></i>
-                                    {% else %}
-                                    <i class="fa-solid fa-xmark fa-lg"></i>
-                                    {% endif %}
+                                    {% include 'partials/page_elements/status_icon.html' with size='lg' success=kpi_calculations_object.kpi_results.kpi_25_hba1c %}
                                 </td>
                                 <td class="px-4 py-4 w-1/11">
-                                    {% if kpi_calculations_object.kpi_results.kpi_26_bmi %}
-                                        <i class="fa-solid fa-check fa-lg"></i>
-                                    {% else %}
-                                        <i class="fa-solid fa-xmark fa-lg"></i>
-                                    {% endif %}
+                                    {% include 'partials/page_elements/status_icon.html' with size='lg' success=kpi_calculations_object.kpi_results.kpi_26_bmi %}
                                 </td>
                                 <td class="px-4 py-4 w-1/11">
-                                    {% if kpi_calculations_object.kpi_results.kpi_27_thyroid_screen %}
-                                        <i class="fa-solid fa-check fa-lg"></i>
-                                    {% else %}
-                                        <i class="fa-solid fa-xmark fa-lg"></i>
-                                    {%endif %}
+                                    {% include 'partials/page_elements/status_icon.html' with size='lg' success=kpi_calculations_object.kpi_results.kpi_27_thyroid_screen %}
                                 </td>
                                 <td class="px-4 py-4 w-1/11">
-                                    {% if kpi_calculations_object.kpi_results.kpi_28_blood_pressure is not None %}
-                                        {% if kpi_calculations_object.kpi_results.kpi_28_blood_pressure %}
-                                            <i class="fa-solid fa-check fa-lg"></i>
-                                        {% else %}
-                                            <i class="fa-solid fa-xmark fa-lg"></i>
-                                        {% endif %}
+                                    {% if kpi_calculations_object.kpi_results. is not None %}
+                                        {% include 'partials/page_elements/status_icon.html' with size='lg'
+                                        success=kpi_calculations_object.kpi_results.kpi_28_blood_pressure %}
                                     {% else %}
                                         N/A
                                     {% endif %}
                                 </td>
                                 <td class="px-4 py-4 w-1/11">
                                     {% if kpi_calculations_object.kpi_results.kpi_29_urinary_albumin is not None %}
-                                        {% if kpi_calculations_object.kpi_results.kpi_29_urinary_albumin %}
-                                            <i class="fa-solid fa-check fa-lg"></i>
-                                        {% else %}
-                                            <i class="fa-solid fa-xmark fa-lg"></i>
-                                        {% endif %}
+                                        {% include 'partials/page_elements/status_icon.html' with size='lg'
+                                        success=kpi_calculations_object.kpi_results.kpi_29_urinary_albumin %}
                                     {% else %}
                                         N/A
                                     {% endif %}
                                 </td>
                                 <td class="px-4 py-4 w-1/11">
                                     {% if kpi_calculations_object.kpi_results.kpi_30_retinal_screening is not None %}
-                                        {% if kpi_calculations_object.kpi_results.kpi_30_retinal_screening %}
-                                            <i class="fa-solid fa-check fa-lg"></i>
-                                        {% else %}
-                                            <i class="fa-solid fa-xmark fa-lg"></i>
-                                        {% endif %}
+                                        {% include 'partials/page_elements/status_icon.html' with size='lg'
+                                        success=kpi_calculations_object.kpi_results.kpi_30_retinal_screening %}
                                     {% else %}
                                         N/A
                                     {% endif %}
                                 </td>
                                 <td class="px-4 py-4 w-1/11">
                                     {% if kpi_calculations_object.kpi_results.kpi_31_foot_examination is not None %}
-                                        {% if kpi_calculations_object.kpi_results.kpi_31_foot_examination %}
-                                            <i class="fa-solid fa-check fa-lg"></i>
-                                        {% else %}
-                                            <i class="fa-solid fa-xmark fa-lg"></i>
-                                        {% endif %}
+                                        {% include 'partials/page_elements/status_icon.html' with size='lg'
+                                        success=kpi_calculations_object.kpi_results.kpi_31_foot_examination %}
                                     {% else %}
                                         N/A
                                     {% endif %}
