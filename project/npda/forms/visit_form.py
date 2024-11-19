@@ -732,6 +732,22 @@ class VisitForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
+        # prevent calculated fields from being saved as empty strings
+        if cleaned_data["height_centile"] == "":
+            cleaned_data["height_centile"] = None
+        if cleaned_data["height_sds"] == "":
+            cleaned_data["height_sds"] = None
+        if cleaned_data["weight_centile"] == "":
+            cleaned_data["weight_centile"] = None
+        if cleaned_data["weight_sds"] == "":
+            cleaned_data["weight_sds"] = None
+        if cleaned_data["bmi"] == "":
+            cleaned_data["bmi"] = None
+        if cleaned_data["bmi_centile"] == "":
+            cleaned_data["bmi_centile"] = None
+        if cleaned_data["bmi_sds"] == "":
+            cleaned_data["bmi_sds"] = None
+
         hba1c_value = cleaned_data["hba1c"]
         hba1c_format = cleaned_data["hba1c_format"]
 
