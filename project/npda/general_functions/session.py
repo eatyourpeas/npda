@@ -60,6 +60,7 @@ def create_session_object(user):
         "pdu_choices": list(pdu_choices),
         "can_upload_csv": can_upload_csv,
         "can_complete_questionnaire": can_complete_questionnaire,
+        "selected_audit_year": datetime.now().year,
     }
 
     return session

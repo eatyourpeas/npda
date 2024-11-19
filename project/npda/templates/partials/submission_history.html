@@ -1,6 +1,7 @@
 {% load static %}
 {% load npda_tags %}
 <div>
+
     {% if request.user.view_preference == 1 %}
         <!-- national view -->
         <h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">All Submissions for {{pz_code}}</h1>
@@ -8,6 +9,7 @@
         <!-- PDU view   -->
         <h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">All Submissions Nationally</h1>
     {% endif %}
+
     {% if submissions %}
                 <table class="table table-md w-full text-sm text-left rtl:text-right text-gray-500 text-gray-400 mb-5 font-montserrat">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">

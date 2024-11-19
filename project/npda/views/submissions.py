@@ -49,10 +49,11 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         )
         if self.request.user.view_preference == 1:
             base_queryset = self.model.objects.filter(
-                paediatric_diabetes_unit=pdu, audit_year=date.today().year
+                paediatric_diabetes_unit=pdu,
+                audit_year=self.request.session.get("selected_audit_year"),
             )
         else:
-            base_queryset = self.model.objects.all().all()
+            base_queryset = self.model.objects.all()
 
         final = base_queryset.annotate(
             patient_count=Count("patients"),
@@ -74,32 +75,38 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         """
         context = super().get_context_data(**kwargs)
         context["pz_code"] = self.request.session.get("pz_code")
+        context["selected_audit_year"] = self.request.session.get("selected_audit_year")
         Patient = apps.get_model("npda", "Patient")
         context["data"] = None  # data stores csv summary data if a submission exists
-        latest_active_submission = self.object_list.filter(
+        requested_active_submission = self.object_list.filter(
             submission_active=True,
-            audit_year=date.today().year,
+            audit_year=self.request.session.get("selected_audit_year"),
             paediatric_diabetes_unit__pz_code=self.request.session.get("pz_code"),
         ).first()  # there can be only one of these
-        if latest_active_submission:
+        if requested_active_submission:
             # If a submission exists and it was created by uploading a csv, summarize the csv data
             if self.request.session.get("can_upload_csv"):
                 # check if the user has permission to upload csv (not this function is not available in this brance but is in live)
-                parsed_csv = csv_parse(latest_active_submission.csv_file)
+                parsed_csv = csv_parse(requested_active_submission.csv_file)
                 context["data"] = csv_summarize(parsed_csv.df)
-                if latest_active_submission.errors:
-                    deserialized_errors = json.loads(latest_active_submission.errors)
+                if requested_active_submission.errors:
+                    deserialized_errors = json.loads(requested_active_submission.errors)
                     context["submission_errors"] = deserialized_errors
                 else:
                     context["submission_errors"] = None
 
             # Get some summary data about the patients in the submission...
             context["patients"] = Patient.objects.filter(
-                submissions=latest_active_submission
+                submissions=requested_active_submission
             ).annotate(
                 visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
                 visit_count=Count("visit"),
             )
+        audit_years = [
+            year for year in range(date.today().year - 5, date.today().year + 1)
+        ]
+        context["audit_years"] = audit_years
+
         return context
 
     def get(self, request, *args, **kwargs):
@@ -109,7 +116,15 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         self.object_list = self.get_queryset().order_by("-submission_date")
         context = self.get_context_data(object_list=self.object_list)
         template = self.template_name
+
         if request.htmx:
+
+            if request.GET.get("audit_year"):
+                session = request.session
+                session["selected_audit_year"] = int(request.GET.get("audit_year"))
+                request.session = session
+                request.session.modified = True
+                context = self.get_context_data(object_list=self.object_list)
             # If the request is an HTMX request from the PDU selector, returns the partial template
             # Otherwise, returns the full template
             # The partial template is used to update the submission history table when a new PDU is selected
