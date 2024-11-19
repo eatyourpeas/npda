@@ -23,10 +23,28 @@ def calculate_centiles_z_scores(
 
     url = f"{settings.RCPCH_DGC_API_URL}/uk-who/calculation"
 
+    # test if any of the parameters are none
+    if not all(
+        [
+            birth_date,
+            observation_date,
+            sex,
+            observation_value,
+            measurement_method,
+        ]
+    ):
+        logger.warning(f"Missing parameters in calculate_centiles_z_scores")
+        return None, None
+
     if sex == 1:
         sex = "male"
     elif sex == 2:
         sex = "female"
+    elif sex == 9 or sex == 0:
+        logger.warning(
+            "Sex is not known or not specified. Cannot calculate centiles and z-scores."
+        )
+        return None, None
 
     body = {
         "measurement_method": measurement_method,
@@ -53,10 +71,19 @@ def calculate_centiles_z_scores(
         )
         return {"error": ERROR_STRING}
 
-    return (
-        response.json()["measurement_calculated_measurements"]["corrected_centile"],
-        response.json()["measurement_calculated_measurements"]["corrected_sds"],
-    )
+    if (
+        response.json()["measurement_calculated_values"]["corrected_centile"]
+        is not None
+    ):
+        centile = round(
+            response.json()["measurement_calculated_values"]["corrected_centile"], 1
+        )
+    if response.json()["measurement_calculated_values"]["corrected_sds"] is not None:
+        z_score = round(
+            response.json()["measurement_calculated_values"]["corrected_sds"], 1
+        )
+
+    return (centile, z_score)
 
 
 def calculate_bmi(height, weight):

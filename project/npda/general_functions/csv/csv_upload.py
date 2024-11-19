@@ -287,10 +287,19 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
+            no_errors_preventing_centile_calcuation = True
             for visit_form, visit_row_index in parsed_visits:
                 # Errors validating the Visit fields
                 for field, error in visit_form.errors.as_data().items():
                     errors_to_return[visit_row_index][field].append(error)
+                    if field in [
+                        "height",
+                        "weight",
+                        "height_weight_observation_date",
+                        "sex",
+                        "date_of_birth",
+                    ]:
+                        no_errors_preventing_centile_calcuation = False
 
                 try:
                     visit = create_instance(Visit, visit_form)
@@ -302,6 +311,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                         and visit.patient
                         and visit.patient.date_of_birth
                         and visit.patient.sex
+                        and no_errors_preventing_centile_calcuation
                     ):
                         patient = visit.patient
                         if visit.height:
@@ -343,6 +353,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                             )
                             visit.bmi_centile = centile
                             visit.bmi_sds = sds
+
                     await visit.asave()
                 except Exception as error:
                     errors_to_return[visit_row_index]["__all__"].append(error)
