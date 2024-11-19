@@ -1,4 +1,5 @@
 # python imports
+import logging
 
 # django imports
 from django.contrib.gis.db import models
@@ -19,6 +20,9 @@ from ...constants import (
     TREATMENT_TYPES,
     YES_NO_UNKNOWN,
 )
+from ..general_functions import calculate_bmi
+
+logger = logging.getLogger(__name__)
 
 
 class Visit(models.Model, HelpTextMixin):
@@ -47,13 +51,111 @@ class Visit(models.Model, HelpTextMixin):
         category="Measurements",
     )
 
+    height_centile = CategorisedDecimalField(
+        verbose_name="Height Centile",
+        help_text={
+            "label": "This is a calculated field. Centile value for height if available. If not available, can be blank.",
+            "reference": "Using the UK-WHO growth charts, the centile value for height is calculated based on the height in cm and age of the patient. This is used to assess the growth of the patient.",
+        },
+        max_digits=3,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        default=None,
+        category="Measurements",
+    )
+
+    height_sds = CategorisedDecimalField(
+        verbose_name="Height SDS",
+        help_text={
+            "label": "This is a calculated field. Centile value for height if available. If not available, can be blank.",
+            "reference": "Using the UK-WHO growth charts, the sds value for height is calculated based on the height in cm and age of the patient. This is used to assess the growth of the patient.",
+        },
+        max_digits=3,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        default=None,
+        category="Measurements",
+    )
+
     weight = CategorisedDecimalField(
         verbose_name="Patient Weight (kg)",
         help_text={
             "label": "Patient Weight (kg)",
-            "reference": "By providing ALL measurements of HbA1c a more powerful data analysis can be performed centrally. Allows means/median values for the year to be calculated. Data from first 3 months following diagnosis should be supplied but will be analysed independently as early measurements of HbA1c are not representative of overall diabetes control. NG18: 1 1.2.71 Offer children and young people with type 1 diabetes measurement of their HbA1c level 4 times a year (more frequent testing may be appropriate if there is concern about suboptimal blood glucose control). NG18: 1.3.28 Measure HbA1c levels every 3 months in children and young people with type 2 diabetes.",
+            "reference": "NG18: 1.2.45 At each clinic visit for children and young people with type 1 diabetes measure height and weight and plot on an appropriate growth chart. Check for normal growth and/or significant changes in weight because these may reflect changes in blood glucose control. [2004, amended 2015], NG18: 1.3.20 At each clinic visit for children and young people with type 2 diabetes: • measure height and weight and plot on an appropriate growth chart • calculate BMI. Check for normal growth and/or significant changes in weight because these may reflect changes in blood glucose control. [2004, amended 2015]",
         },
         max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        default=None,
+        category="Measurements",
+    )
+
+    weight_centile = CategorisedDecimalField(
+        verbose_name="Weight Centile",
+        help_text={
+            "label": "This is a calculated field. Centile value for weight if available. If not available, can be blank.",
+            "reference": "Using the UK-WHO growth charts, the centile value for weight is calculated based on the weight in kg and age of the patient. This is used to assess the growth of the patient.",
+        },
+        max_digits=3,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        default=None,
+        category="Measurements",
+    )
+
+    weight_sds = CategorisedDecimalField(
+        verbose_name="Weight SDS",
+        help_text={
+            "label": "This is a calculated field. Centile value for weight if available. If not available, can be blank.",
+            "reference": "Using the UK-WHO growth charts, the sds value for weight is calculated based on the weight in kg and age of the patient. This is used to assess the growth of the patient.",
+        },
+        max_digits=3,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        default=None,
+        category="Measurements",
+    )
+
+    bmi = CategorisedDecimalField(
+        verbose_name="Body Mass Index",
+        help_text={
+            "label": "This is a calculated field. BMI value for the patient.",
+            "reference": "The BMI is calculated using the height and weight of the patient. This is used to calculate the body mass index sds and centile of the patient.",
+        },
+        max_digits=3,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        default=None,
+        category="Measurements",
+    )
+
+    bmi_centile = CategorisedDecimalField(
+        verbose_name="Body Mass Index Centile",
+        help_text={
+            "label": "This is a calculated field. Centile value for height if available. If not available, can be blank.",
+            "reference": "Using the UK-WHO growth charts, the centile value for height is calculated based on the height in cm and age of the patient. This is used to assess the growth of the patient.",
+        },
+        max_digits=3,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        default=None,
+        category="Measurements",
+    )
+
+    bmi_sds = CategorisedDecimalField(
+        verbose_name="Body Mass Index SDS",
+        help_text={
+            "label": "This is a calculated field. Centile value for body mass index if height and weight are available. If not available, can be blank.",
+            "reference": "Using the UK-WHO growth charts, the sds value for body mass index is calculated based on the body mass index in kg/m² and age of the patient. This is used to assess the growth of the patient.",
+        },
+        max_digits=3,
         decimal_places=1,
         null=True,
         blank=True,
