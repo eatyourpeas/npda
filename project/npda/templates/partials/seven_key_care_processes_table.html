@@ -1,8 +1,8 @@
 <div class="min-w-full px-10">
     <div class="flex flex-row min-h-screen justify-center">
-        <div class="overflow-x-auto w-full">
+        <div class="w-full">
             <div class="inline-block min-w-full py-2">
-                <div class="relative overflow-x-auto w-full">
+                <div class="relative w-full">
 
                     <h2>Seven Key Care Processes</h2>
                     <p>
@@ -13,70 +13,118 @@
                         only mandatory for patients aged 12 and above.
                     </p>
 
-                    <table class="table-auto w-full text-sm text-left text-gray-500 mb-5 font-montserrat">
+                    <table class="table-auto w-full table-fixed text-sm text-center text-gray-500 mb-5 font-montserrat">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
                             <tr>
-                                <th class="px-6 py-3">NHS Number</th>
-                                <th class="px-6 py-3">>= 12yo</th>
-                                <th class="px-6 py-3">HbA1c</th>
-                                <th class="px-6 py-3">BMI</th>
-                                <th class="px-6 py-3">Thyroid Screen</th>
-                                <th class="px-6 py-3">Blood Pressure</th>
-                                <th class="px-6 py-3">Urinary Albumin</th>
-                                <th class="px-6 py-3">Eye Screen</th>
-                                <th class="px-6 py-3">Foot Exam</th>
-                                <th class="px-6 py-3">Total</th>
-                                <th class="px-6 py-3">Status</th>
+                                <th class="px-4 py-3 w-1/11">NHS Number</th>
+                                <th class="px-4 py-3 w-1/11">>= 12yo</th>
+                                <th class="px-4 py-3 w-1/11">HbA1c</th>
+                                <th class="px-4 py-3 w-1/11">BMI</th>
+                                <th class="px-4 py-3 w-1/11">Thyroid Screen</th>
+                                <th class="px-4 py-3 w-1/11">Blood Pressure</th>
+                                <th class="px-4 py-3 w-1/11">Urinary Albumin</th>
+                                <th class="px-4 py-3 w-1/11">Eye Screen</th>
+                                <th class="px-4 py-3 w-1/11">Foot Exam</th>
+                                <th class="px-4 py-3 w-1/11">Total</th>
+                                <th class="px-4 py-3 w-1/11">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="bg-white border-b">
 
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4 w-1/11">
                                     <span class="tooltip tooltip-right" data-tip="View patient details (opens new tab)">
-                                        <a class="btn hover:text-rcpch_pink" target="_blank" href="{% url 'patient-update' patient.pk %}">
+                                        <a class="hover:text-rcpch_pink" target="_blank" href="{% url 'patient-update' patient.pk %}">
                                             {{ patient.nhs_number }}
                                         </a>
                                     </span>
                                 </td>
-                                <td class="px-6 py-4">{{ kpi_calculations_object.gte_12yo|yesno:"Y,N" }}</td>
-                                <td class="px-6 py-4">{% if kpi_calculations_object.kpi_results.kpi_25_hba1c %}✔️{% else %}✖️{% endif %}
+                                <td class="px-4 py-4 w-1/11">
+                                    {% if kpi_calculations_object.gte_12yo %}
+                                        <i class="fa-solid fa-check fa-lg"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-xmark fa-lg"></i>
+                                    {% endif %}
                                 </td>
-                                <td class="px-6 py-4">{% if kpi_calculations_object.kpi_results.kpi_26_bmi %}✔️{% else %}✖️{% endif %}
+                                <td class="px-4 py-4 w-1/11">
+                                    {% if kpi_calculations_object.kpi_results.kpi_25_hba1c %}
+                                    <i class="fa-solid fa-check fa-lg"></i>
+                                    {% else %}
+                                    <i class="fa-solid fa-xmark fa-lg"></i>
+                                    {% endif %}
                                 </td>
-                                <td class="px-6 py-4">{% if kpi_calculations_object.kpi_results.kpi_27_thyroid_screen %}✔️{% else %}✖️{%endif %}</td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4 w-1/11">
+                                    {% if kpi_calculations_object.kpi_results.kpi_26_bmi %}
+                                        <i class="fa-solid fa-check fa-lg"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-xmark fa-lg"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 w-1/11">
+                                    {% if kpi_calculations_object.kpi_results.kpi_27_thyroid_screen %}
+                                        <i class="fa-solid fa-check fa-lg"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-xmark fa-lg"></i>
+                                    {%endif %}
+                                </td>
+                                <td class="px-4 py-4 w-1/11">
                                     {% if kpi_calculations_object.kpi_results.kpi_28_blood_pressure is not None %}
-                                    {% if kpi_calculations_object.kpi_results.kpi_28_blood_pressure %}✔️{% else %}✖️{% endif %}
-                                    {% else %}N/A{% endif %}
+                                        {% if kpi_calculations_object.kpi_results.kpi_28_blood_pressure %}
+                                            <i class="fa-solid fa-check fa-lg"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-xmark fa-lg"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4 w-1/11">
                                     {% if kpi_calculations_object.kpi_results.kpi_29_urinary_albumin is not None %}
-                                    {% if kpi_calculations_object.kpi_results.kpi_29_urinary_albumin %}✔️{% else %}✖️{% endif %}
-                                    {% else %}N/A{% endif %}
+                                        {% if kpi_calculations_object.kpi_results.kpi_29_urinary_albumin %}
+                                            <i class="fa-solid fa-check fa-lg"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-xmark fa-lg"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4 w-1/11">
                                     {% if kpi_calculations_object.kpi_results.kpi_30_retinal_screening is not None %}
-                                    {% if kpi_calculations_object.kpi_results.kpi_30_retinal_screening %}✔️{% else %}✖️{% endif %}
-                                    {% else %}N/A{% endif %}
+                                        {% if kpi_calculations_object.kpi_results.kpi_30_retinal_screening %}
+                                            <i class="fa-solid fa-check fa-lg"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-xmark fa-lg"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4 w-1/11">
                                     {% if kpi_calculations_object.kpi_results.kpi_31_foot_examination is not None %}
-                                    {% if kpi_calculations_object.kpi_results.kpi_31_foot_examination %}✔️{% else %}✖️{% endif %}
-                                    {% else %}N/A{% endif %}
+                                        {% if kpi_calculations_object.kpi_results.kpi_31_foot_examination %}
+                                            <i class="fa-solid fa-check fa-lg"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-xmark fa-lg"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
                                 </td>
-                                <td class="px-6 py-4">{{ kpi_calculations_object.total_passed }}/{{ kpi_calculations_object.expected_total }}</td>
-                                <td class="px-6 py-4">
-                                    <div class="hidden lg:block tooltip tooltip-top" data-tip="Diagnosed in period">
-                                        <i class="fa-solid fa-hospital text-rcpch_light_{% if kpi_calculations_object.diagnosed_in_period %}blue{% else %}grey{% endif %}"></i>
+                                <td class="px-4 py-4 w-1/11">{{ kpi_calculations_object.total_passed }}/{{ kpi_calculations_object.expected_total }}</td>
+                                <td class="px-4 py-4 w-1/11">
+                                    <div class="tooltip tooltip-top" data-tip="{% if kpi_calculations_object.diagnosed_in_period %}Diagnosed{% else %}Not diagnosed{% endif %} in period">
+                                        <i
+                                            class="fa-solid fa-hospital text-{% if kpi_calculations_object.diagnosed_in_period %}rcpch_light_blue{% else %}rcpch_lightest_grey{% endif %}"></i>
                                     </div>
-                                    <div class="hidden lg:block tooltip tooltip-top" data-tip="Transfer in period">
-                                        <i class="fa-solid fa-shuffle text-rcpch_light_{% if kpi_calculations_object.transfer_in_period %}blue{% else %}grey{% endif %}"></i>
+                                    <div class="tooltip tooltip-top" data-tip="{% if kpi_calculations_object.transfer_in_period %}Transferred{% else %}Not transferred{% endif %} in period">
+                                        <i
+                                            class="fa-solid fa-shuffle text-{% if kpi_calculations_object.transfer_in_period %}rcpch_light_blue{% else %}rcpch_lightest_grey{% endif %}"></i>
                                     </div>
-                                    <div class="hidden lg:block tooltip tooltip-top" data-tip="Died in period">
-                                        <i class="fa-solid fa-circle text-rcpch_light_{% if kpi_calculations_object.died_in_period %}blue{% else %}grey{% endif %}"></i>
+                                    <div class="tooltip tooltip-top" data-tip="{% if kpi_calculations_object.died_in_period %}Died{% else %}Did not die{% endif %} in period">
+                                        <i
+                                            class="fa-solid fa-circle text-{% if kpi_calculations_object.died_in_period %}rcpch_light_blue{% else %}rcpch_lightest_grey{% endif %}"></i>
                                     </div>
-
                                 </td>
                             </tr>
                         </tbody>
