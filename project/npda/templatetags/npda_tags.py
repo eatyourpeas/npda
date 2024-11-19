@@ -123,13 +123,22 @@ def centile_sds(field):
     Returns the centile and SDS for a given field
     """
     if field.id_for_label == "id_height":
-        return field.form.instance.height_centile, field.form.instance.height_sds
+        centile = field.form.instance.height_centile
+        sds = field.form.instance.height_sds
     elif field.id_for_label == "id_weight":
-        return field.form.instance.weight_centile, field.form.instance.weight_sds
+        centile = field.form.instance.weight_centile
+        sds = field.form.instance.weight_sds
     elif field.id_for_label == "id_bmi":
-        return field.form.instance.bmi_centile, field.form.instance.bmi_sds
+        centile = field.form.instance.bmi_centile
+        sds = field.form.instance.bmi_sds
     else:
         return None, None
+
+    if centile is not None and centile >= 99.9:
+        centile = " ≥99.6ᵗʰ"
+    elif centile is not None and centile < 0.4:
+        centile = "≤0.4ᵗʰ"
+    return centile, sds
 
 
 @register.filter
