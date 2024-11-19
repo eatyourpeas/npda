@@ -15,7 +15,13 @@ from django.views.generic import ListView
 # RCPCH imports
 from .mixins import LoginAndOTPRequiredMixin
 from ..models import Submission
-from ..general_functions.csv import download_csv, download_xlsx, csv_summarize, csv_parse
+from ..general_functions.csv import (
+    download_csv,
+    download_xlsx,
+    csv_summarize,
+    csv_parse,
+)
+
 
 class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
     """
@@ -42,23 +48,24 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
             pz_code=self.request.session.get("pz_code"),
         )
         if self.request.user.view_preference == 1:
-            base_queryset = self.model.objects.filter(paediatric_diabetes_unit=pdu)
+            base_queryset = self.model.objects.filter(
+                paediatric_diabetes_unit=pdu, audit_year=date.today().year
+            )
         else:
-            base_queryset = self.model.objects.all()
+            base_queryset = self.model.objects.all().all()
 
-        base_queryset.values("submission_date", "audit_year").annotate(
+        final = base_queryset.annotate(
             patient_count=Count("patients"),
-            submission_active=F("submission_active"),
-            submission_by=Concat(
+            full_name_submission_by=Concat(
                 "submission_by__first_name", Value(" "), "submission_by__surname"
             ),
-            pk=F("id"),
         ).order_by(
             "audit_year",
             "-submission_active",
             "-submission_date",
         )
-        return base_queryset
+
+        return final
 
     def get_context_data(self, **kwargs: Any) -> dict:
         """
@@ -152,7 +159,7 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
                 pk=request.POST.get("audit_id")
             ).get()
             return download_csv(request, submission.id)
-        
+
         if button_name == "download-report":
             submission = Submission.objects.filter(
                 pk=request.POST.get("audit_id")
