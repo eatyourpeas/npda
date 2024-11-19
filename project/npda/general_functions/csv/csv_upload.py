@@ -352,8 +352,12 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                             )
                             visit.bmi_centile = centile
                             visit.bmi_sds = sds
-
-                    await visit.asave()
+                    try:
+                        await visit.asave()
+                    except Exception as error:
+                        print(
+                            f"Error saving visit: {error}, height: {visit.height} (centile: {visit.height_centile, visit.height_sds}) {visit.weight} ({visit.weight_centile}, {visit.weight_sds}), {visit.bmi} ({visit.bmi_centile}, {visit.bmi_sds}), visit.patient: {visit.patient}"
+                        )
                 except Exception as error:
                     errors_to_return[visit_row_index]["__all__"].append(error)
 

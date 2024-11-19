@@ -61,15 +61,11 @@ def calculate_centiles_z_scores(
         response = requests.post(url=url, json=body, timeout=10)
         response.raise_for_status()
     except HTTPError as http_err:
-        logger.error(
-            f"HTTP error occurred fetching organisation details from {url=}: {http_err.response.text}"
-        )
-        return {"error": ERROR_STRING}
+        logger.error(f"{ERROR_STRING} Error: http error {http_err.response.text}")
+        return None, None
     except Exception as err:
-        logger.error(
-            f"An error occurred fetching organisation details from {url=}: {err}"
-        )
-        return {"error": ERROR_STRING}
+        logger.error(f"{ERROR_STRING} Error: {err}")
+        return None, None
 
     if (
         response.json()["measurement_calculated_values"]["corrected_centile"]
@@ -82,6 +78,9 @@ def calculate_centiles_z_scores(
         z_score = round(
             response.json()["measurement_calculated_values"]["corrected_sds"], 1
         )
+
+    if centile is not None and centile > 99.9:
+        centile = 99.9
 
     return (centile, z_score)
 
@@ -98,4 +97,7 @@ def calculate_bmi(height, weight):
         raise ValueError("Height must be in cm.")
     if weight > 250:
         raise ValueError("Weight must be in kg.")
-    return round(weight / (height / 100) ** 2, 1)
+    bmi = round(weight / (height / 100) ** 2, 1)
+    if bmi > 99:
+        return None
+    return bmi
