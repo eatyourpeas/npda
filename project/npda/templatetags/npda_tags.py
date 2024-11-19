@@ -141,6 +141,22 @@ def centile_sds(field):
     return centile, sds
 
 
+@register.simple_tag
+def is_not_excluded_centile_field(field):
+    exclude = [
+        "id_height_centile",
+        "id_height_sds",
+        "id_weight_centile",
+        "id_weight_sds",
+        "id_bmi_centile",
+        "id_bmi_sds",
+        "id_bmi",
+    ]
+    if field.id_for_label not in exclude:
+        return True
+    return False
+
+
 @register.filter
 def join_with_comma(value):
     if isinstance(value, list):

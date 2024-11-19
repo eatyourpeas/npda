@@ -79,7 +79,8 @@
                 {% if field.field.category == field_category %}
                   <div class="flex flex-row flex-wrap my-2 mx-2">
                     <div class="flex items-center justify-start w-full md:w-1/3">
-                      {% if field.id_for_label == 'id_height' or field.id_for_label == 'id_weight' %}
+                        {% is_not_excluded_centile_field field as included_field %}
+                        {% if included_field %}
                         <label for="{{ field.id_for_label }}" class="block text-gray-700 font-bold mb-1 md:mb-0 pr-4"><small>{{ field.label }}</small></label>
                       {% endif %}
                     </div>
@@ -99,25 +100,27 @@
                       {% else %}
 
                       <!-- these are the field labels: do not want to show centile/sds  -->
-                        {% if field.id_for_label == 'id_height' or field.id_for_label == 'id_weight' or field.id_for_label == 'id_bmi' %}
+                          {% is_not_excluded_centile_field field as included_field %}
+                          {% if included_field or field.id_for_label == 'id_bmi' %}
 
-                          {% if field.id_for_label == 'id_bmi' %}
-                            <label for="{{ field.id_for_label }}" class="block text-gray-700 font-bold mb-1 md:mb-0 pr-4"><small>Body Mass Index: {{ field.value }} kg/m²</small></label>
-                          {% else %}
-                            <input type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text rounded-none" {% if field.field.required %} placeholder="Required" {% endif %} {% if field.value %} value={{ field.value }} {% elif field.value == 0 %} value="0.0" {% endif %}>
+                            {% if field.id_for_label == 'id_bmi' %}
+                              <label for="{{ field.id_for_label }}" class="block text-gray-700 font-bold mb-1 md:mb-0 pr-4"><small>Body Mass Index: {{ field.value }} kg/m²</small></label>
+                            {% else %}
+                              <input type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text rounded-none" {% if field.field.required %} placeholder="Required" {% endif %} {% if field.value %} value={{ field.value }} {% elif field.value == 0 %} value="0.0" {% endif %}>
+                            {% endif %}
+
+                            {% centile_sds field as centile_sds %}
+                            {% with centile=centile_sds.0 sds=centile_sds.1 %}
+                              {% if centile %}
+                              <span>
+                                <label><small>Centile: {{centile}}</small></label>
+                                <label><small>SDS: {{sds}}</small></label>
+                                {% endif %}
+                              </span>
+                            {% endwith %}
+
                           {% endif %}
-
-                          {% centile_sds field as centile_sds %}
-                          {% with centile=centile_sds.0 sds=centile_sds.1 %}
-                            {% if centile %}
-                            <span>
-                              <label><small>Centile: {{centile}}</small></label>
-                              <label><small>SDS: {{sds}}</small></label>
-                              {% endif %}
-                            </span>
-                          {% endwith %}
-
-                        {% endif %}
+                        
 
                       {% endif %}
                       {% for error in field.errors %}
