@@ -54,7 +54,6 @@ RCPCH_CENSUS_PLATFORM_URL = os.getenv("RCPCH_CENSUS_PLATFORM_URL")
 RCPCH_CENSUS_PLATFORM_TOKEN = os.getenv("RCPCH_CENSUS_PLATFORM_TOKEN")
 # TODO #83  - Fix the broken env in Azure and remove hardcoded URL
 RCPCH_NHS_ORGANISATIONS_API_URL = os.getenv("RCPCH_NHS_ORGANISATIONS_API_URL")
-RCPCH_NHS_ORGANISATIONS_API_URL = "https://rcpch-nhs-organisations.azurewebsites.net"
 
 RCPCH_DGC_API_URL = os.getenv("RCPCH_DGC_API_URL")
 

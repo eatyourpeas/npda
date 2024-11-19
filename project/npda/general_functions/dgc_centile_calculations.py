@@ -1,3 +1,5 @@
+import datetime
+import json
 import logging
 import requests
 from requests.exceptions import HTTPError
@@ -21,11 +23,16 @@ def calculate_centiles_z_scores(
 
     url = f"{settings.RCPCH_DGC_API_URL}/uk-who/calculation"
 
+    if sex == 1:
+        sex = "male"
+    elif sex == 2:
+        sex = "female"
+
     body = {
         "measurement_method": measurement_method,
-        "birth_date": birth_date,
-        "observation_date": observation_date,
-        "observation_value": observation_value,
+        "birth_date": birth_date.strftime("%Y-%m-%d"),
+        "observation_date": observation_date.strftime("%Y-%m-%d"),
+        "observation_value": float(observation_value),
         "sex": sex,
         "gestation_weeks": 40,
         "gestation_days": 0,
@@ -33,7 +40,7 @@ def calculate_centiles_z_scores(
 
     ERROR_STRING = "An error occurred while fetching centile and z score details."
     try:
-        response = requests.post(url=url, data=body, timeout=10)
+        response = requests.post(url=url, json=body, timeout=10)
         response.raise_for_status()
     except HTTPError as http_err:
         logger.error(

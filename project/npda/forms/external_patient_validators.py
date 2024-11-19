@@ -26,34 +26,6 @@ class PatientExternalValidationResult:
     gp_practice_ods_code: str | ValidationError | None
     gp_practice_postcode: str | ValidationError | None
     index_of_multiple_deprivation_quintile: str | None
-    height: float | ValidationError | None
-    weight: float | ValidationError | None
-    # dependent parameters
-    birth_date: str | None
-    observation_date: str | None
-    sex: str | None
-
-
-async def _centiles_z_scores_for_measurement(
-    birth_date: date,
-    observation_date: date,
-    measurement_method: str,
-    observation_value: float,
-    sex: str,
-) -> tuple[float, float] | None:
-
-    try:
-        centiles_z_scores = await calculate_centiles_z_scores(
-            birth_date=date.format(birth_date, "%Y-%m-%d"),
-            observation_date=date.format(observation_date, "%Y-%m-%d"),
-            measurement_method=measurement_method,
-            observation_value=observation_value,
-            sex=sex,
-        )
-    except HTTPError as err:
-        logger.warning(f"Error calculating centiles and z-scores: {err}")
-
-    return centiles_z_scores
 
 
 async def _validate_postcode(
@@ -192,22 +164,6 @@ def validate_patient_sync(
         async with AsyncClient() as client:
             ret = await validate_patient_async(
                 postcode, gp_practice_ods_code, gp_practice_postcode, client
-            )
-            return ret
-
-    return async_to_sync(wrapper)()
-
-
-def get_centiles_z_scores_sync(
-    birth_date: date,
-    observation_date: date,
-    measurement_method: str,
-    observation_value: float,
-) -> PatientExternalValidationResult:
-    async def wrapper():
-        async with AsyncClient() as client:
-            ret = await _centiles_z_scores_for_measurement(
-                birth_date, observation_date, measurement_method, observation_value
             )
             return ret
 

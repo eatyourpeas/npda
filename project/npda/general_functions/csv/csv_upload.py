@@ -23,8 +23,10 @@ logger = logging.getLogger(__name__)
 
 from project.npda.forms.patient_form import PatientForm
 from project.npda.forms.visit_form import VisitForm
-from project.npda.forms.external_patient_validators import (
-    validate_patient_async,
+from project.npda.forms.external_patient_validators import validate_patient_async
+
+from project.npda.general_functions.dgc_centile_calculations import (
+    calculate_bmi,
     calculate_centiles_z_scores,
 )
 
@@ -285,14 +287,10 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
-            height_weight_fields_error_free = True
-
             for visit_form, visit_row_index in parsed_visits:
                 # Errors validating the Visit fields
                 for field, error in visit_form.errors.as_data().items():
                     errors_to_return[visit_row_index][field].append(error)
-                    if field in ["height", "weight", "height_weight_observation_date"]:
-                        height_weight_fields_error_free = False
 
                 try:
                     visit = create_instance(Visit, visit_form)
@@ -301,17 +299,20 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                     if (
                         (visit.height or visit.weight)
                         and visit.height_weight_observation_date
-                        and height_weight_fields_error_free
+                        and visit.patient
+                        and visit.patient.date_of_birth
+                        and visit.patient.sex
                     ):
+                        patient = visit.patient
                         if visit.height:
                             measurement_method = "height"
                             observation_value = visit.height
                             centile, sds = calculate_centiles_z_scores(
-                                birth_date=patient.birth_date,
+                                birth_date=visit.patient.date_of_birth,
                                 observation_date=visit.height_weight_observation_date,
                                 measurement_method=measurement_method,
                                 observation_value=observation_value,
-                                sex=patient.sex,
+                                sex=visit.patient.sex,
                             )
                             visit.height_centile = centile
                             visit.height_sds = sds
@@ -319,27 +320,29 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                             measurement_method = "weight"
                             observation_value = visit.weight
                             centile, sds = calculate_centiles_z_scores(
-                                birth_date=patient.birth_date,
+                                birth_date=visit.patient.date_of_birth,
                                 observation_date=visit.height_weight_observation_date,
                                 measurement_method=measurement_method,
                                 observation_value=observation_value,
-                                sex=patient.sex,
+                                sex=visit.patient.sex,
                             )
                             visit.weight_centile = centile
                             visit.weight_sds = sds
                         if visit.height and visit.weight:
                             measurement_method = "bmi"
+                            visit.bmi = calculate_bmi(
+                                height=visit.height, weight=visit.weight
+                            )
                             observation_value = visit.bmi
                             centile, sds = calculate_centiles_z_scores(
-                                birth_date=patient.birth_date,
+                                birth_date=visit.patient.date_of_birth,
                                 observation_date=visit.height_weight_observation_date,
                                 measurement_method=measurement_method,
                                 observation_value=observation_value,
-                                sex=patient.sex,
+                                sex=visit.patient.sex,
                             )
                             visit.bmi_centile = centile
                             visit.bmi_sds = sds
-
                     await visit.asave()
                 except Exception as error:
                     errors_to_return[visit_row_index]["__all__"].append(error)
