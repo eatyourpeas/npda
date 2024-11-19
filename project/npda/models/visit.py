@@ -641,19 +641,3 @@ class Visit(models.Model, HelpTextMixin):
 
     def __str__(self) -> str:
         return f"Patient visit for {self.patient} on {self.visit_date}"
-
-    def save(self, force_insert=..., force_update=..., using=..., update_fields=...):
-        if self.height and self.weight:
-            try:
-                self.bmi = calculate_bmi(height=self.height, weight=self.weight)
-            except ZeroDivisionError:
-                self.bmi = None
-                logger.warning(
-                    f"Could not calculate BMI for {self.patient} on {self.visit_date} as height or weight is 0"
-                )
-            except Exception as e:
-                self.bmi = None
-                logger.error(
-                    f"Could not calculate BMI for {self.patient} on {self.visit_date} due to error: {e}"
-                )
-        return super().save(force_insert, force_update, using, update_fields)
