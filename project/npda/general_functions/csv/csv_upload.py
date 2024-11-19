@@ -355,7 +355,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
                     await visit.asave()
                 except Exception as error:
-                    print(error)
                     errors_to_return[visit_row_index]["__all__"].append(error)
 
     # Only create xlsx file if the csv file was created.
