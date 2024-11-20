@@ -323,20 +323,6 @@ class PatientUpdateView(
 
     def form_valid(self, form: BaseForm) -> HttpResponse:
         patient = form.save(commit=False)
-        # check that the patient is active in the current audit year and current submission
-        if not (
-            self.PatientSubmission.objects.filter(
-                patient__nhs_number=patient.nhs_number,
-                submission__audit_year=date.today().year,
-                submission__submission_active=True,
-            )
-            .exclude(pk=self.pk)
-            .exists()
-        ):
-            raise ValidationError(
-                f"{patient} does not have an active submission. Cannot update this record."
-            )
-
         patient.is_valid = True
         patient.errors = None
         # TODO MRB: this calls patient.save twice. super.form_valid calls it too (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/335)

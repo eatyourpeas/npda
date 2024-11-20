@@ -215,33 +215,14 @@ class VisitUpdateView(
         visit = form.save(commit=True)
         visit.errors = None
         visit.is_valid = True
-
-        # if this visit relates to a submission that is not active or not the current audit year, set is_valid to False
-        submission = visit.patient.submissions.filter(
-            submission_active=True,
-            audit_year=datetime.date.today().year,
-        ).first()
-        if submission is None:
-            visit.is_valid = False
-            messages.add_message(
-                self.request,
-                messages.WARNING,
-                "This visit cannot be edited as it is not part of the current audit submission. Changes have not been saved.",
-            )
-            return HttpResponseRedirect(
-                reverse(
-                    "patient_visits", kwargs={"patient_id": self.kwargs["patient_id"]}
-                )
-            )
-        else:
-            visit.save(update_fields=["errors", "is_valid"])
-            context = {"patient_id": self.kwargs["patient_id"]}
-            messages.add_message(
-                self.request, messages.SUCCESS, "Visit edited successfully"
-            )
-            return HttpResponseRedirect(
-                redirect_to=reverse("patient_visits", kwargs=context)
-            )
+        visit.save(update_fields=["errors", "is_valid"])
+        context = {"patient_id": self.kwargs["patient_id"]}
+        messages.add_message(
+            self.request, messages.SUCCESS, "Visit edited successfully"
+        )
+        return HttpResponseRedirect(
+            redirect_to=reverse("patient_visits", kwargs=context)
+        )
 
 
 class VisitDeleteView(
