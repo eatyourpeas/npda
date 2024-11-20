@@ -24,7 +24,7 @@ from ..general_functions.csv import (
 
 
 class SubmissionsListView(
-    LoginAndOTPRequiredMixin, ListView, CheckCurrentAuditYearMixin
+    LoginAndOTPRequiredMixin, CheckCurrentAuditYearMixin, ListView
 ):
     """
     The SubmissionsListView class.

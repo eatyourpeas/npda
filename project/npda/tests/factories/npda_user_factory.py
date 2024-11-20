@@ -7,13 +7,17 @@ import uuid
 import factory
 
 # Project imports
-from project.npda.general_functions.pdus import (PDUWithOrganisations,
-                                                 get_single_pdu_from_pz_code)
+from project.npda.general_functions.pdus import (
+    PDUWithOrganisations,
+    get_single_pdu_from_pz_code,
+)
 from project.npda.models import NPDAUser
-from project.npda.tests.factories.organisation_employer_factory import \
-    OrganisationEmployerFactory
-from project.npda.tests.factories.paediatrics_diabetes_unit_factory import \
-    PaediatricsDiabetesUnitFactory
+from project.npda.tests.factories.organisation_employer_factory import (
+    OrganisationEmployerFactory,
+)
+from project.npda.tests.factories.paediatrics_diabetes_unit_factory import (
+    PaediatricsDiabetesUnitFactory,
+)
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -30,13 +34,16 @@ class NPDAUserFactory(factory.django.DjangoModelFactory):
         model = NPDAUser
         skip_postgeneration_save = True
 
-    email = factory.LazyAttribute(lambda _: f'npda_test_user_{str(uuid.uuid4())}@nhs.net')
+    email = factory.LazyAttribute(
+        lambda _: f"npda_test_user_{str(uuid.uuid4())}@nhs.net"
+    )
 
     first_name = "Mandel"
     surname = "Brot"
     is_active = True
     is_superuser = False
     email_confirmed = True
+    is_rcpch_audit_team_member = False
 
     @factory.post_generation
     def groups(self, create, extracted, **kwargs):

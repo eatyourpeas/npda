@@ -17,6 +17,7 @@ from ..general_functions import get_visit_categories
 from ..kpi_class.kpis import CalculateKPIS
 from ..models import Patient, Transfer, Visit
 from .mixins import (
+    CheckCanCompleteQuestionnaireMixin,
     CheckCurrentAuditYearMixin,
     CheckPDUInstanceMixin,
     CheckPDUListMixin,
@@ -90,8 +91,9 @@ class VisitCreateView(
     LoginAndOTPRequiredMixin,
     PermissionRequiredMixin,
     SuccessMessageMixin,
-    CreateView,
     CheckCurrentAuditYearMixin,
+    CheckCanCompleteQuestionnaireMixin,
+    CreateView,
 ):
     permission_required = "npda.add_visit"
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."
@@ -131,8 +133,9 @@ class VisitUpdateView(
     LoginAndOTPRequiredMixin,
     CheckPDUInstanceMixin,
     PermissionRequiredMixin,
-    UpdateView,
     CheckCurrentAuditYearMixin,
+    CheckCanCompleteQuestionnaireMixin,
+    UpdateView,
 ):
     permission_required = "npda.change_visit"
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."
@@ -230,8 +233,9 @@ class VisitDeleteView(
     CheckPDUInstanceMixin,
     PermissionRequiredMixin,
     SuccessMessageMixin,
-    DeleteView,
     CheckCurrentAuditYearMixin,
+    CheckCanCompleteQuestionnaireMixin,
+    DeleteView,
 ):
     permission_required = "npda.delete_visit"
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."

@@ -32,6 +32,7 @@ from project.npda.models import NPDAUser
 from ..models import Patient
 from ..forms.patient_form import PatientForm
 from .mixins import (
+    CheckCanCompleteQuestionnaireMixin,
     CheckCurrentAuditYearMixin,
     CheckPDUInstanceMixin,
     CheckPDUListMixin,
@@ -180,8 +181,9 @@ class PatientCreateView(
     LoginAndOTPRequiredMixin,
     PermissionRequiredMixin,
     SuccessMessageMixin,
-    CreateView,
     CheckCurrentAuditYearMixin,
+    CheckCanCompleteQuestionnaireMixin,
+    CreateView,
 ):
     """
     Handle creation of new patient in audit - should link the patient to the current audit year and the logged in user's PDU
@@ -285,8 +287,9 @@ class PatientUpdateView(
     CheckPDUInstanceMixin,
     PermissionRequiredMixin,
     SuccessMessageMixin,
-    UpdateView,
     CheckCurrentAuditYearMixin,
+    CheckCanCompleteQuestionnaireMixin,
+    UpdateView,
 ):
     """
     Handle update of patient in audit
@@ -335,8 +338,9 @@ class PatientDeleteView(
     CheckPDUInstanceMixin,
     PermissionRequiredMixin,
     SuccessMessageMixin,
-    DeleteView,
     CheckCurrentAuditYearMixin,
+    CheckCanCompleteQuestionnaireMixin,
+    DeleteView,
 ):
     """
     Handle deletion of child from audit

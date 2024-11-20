@@ -1,6 +1,6 @@
 """Defines custom mixins used throughout our Class Based Views"""
 
-import datetime
+from datetime import datetime
 import logging
 
 from django.apps import apps
@@ -171,9 +171,8 @@ class CheckCurrentAuditYearMixin(AccessMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-
         # Check if the user is trying to access data for the current audit year
-        if request.session.get("selected_audit_year") != datetime.now().year:
+        if request.session.get("selected_audit_year") != datetime.today().year:
             logger.warning(
                 f"User {request.user} tried to create/edit or delete data in a previous audit year."
             )
@@ -182,5 +181,25 @@ class CheckCurrentAuditYearMixin(AccessMixin):
                 return super().dispatch(request, *args, **kwargs)
 
             raise PermissionDenied()
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+class CheckCanCompleteQuestionnaireMixin(AccessMixin):
+    """
+    A mixin that checks whether the user has the permission to complete the questionnaire
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        # Check if the user has the permission to complete the questionnaire
+        if not request.session.get("can_complete_questionnaire"):
+            logger.warning(
+                f"User {request.user} tried to complete the questionnaire without the permission to do so."
+            )
+            if request.user.is_superuser or request.user.is_rcpch_audit_team_member:
+                # Allow superusers and RCPCH audit team members to complete the questionnaire
+                return super().dispatch(request, *args, **kwargs)
+
+            return HttpResponseForbidden()
 
         return super().dispatch(request, *args, **kwargs)

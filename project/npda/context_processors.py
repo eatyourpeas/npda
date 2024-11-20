@@ -19,11 +19,13 @@ def can_alter_this_audit_year_submission(request):
     If the user is an admin, they can always alter the submission.
     If the user is not an admin, they can only alter the submission if the audit year is the current year.
     """
+    if hasattr(request.user, "is_rcpch_audit_team_member"):
+        if request.user.is_rcpch_audit_team_member:
+            return {"can_alter_this_audit_year_submission": True}
 
     if (
         request.session.get("selected_audit_year") == datetime.now().year
         or request.user.is_superuser
-        or request.user.is_rcpch_audit_team_member
     ):
         return {
             "can_alter_this_audit_year_submission": True,
@@ -38,10 +40,12 @@ def can_use_questionnaire(request):
     If the user is an admin, they can always use the questionnaire.
     If the user is not an admin, they can only use the questionnaire if they have not uploaded a csv.
     """
-    if (
-        request.user.is_superuser
-        or request.user.is_rcpch_audit_team_member
-        or request.session.get("can_complete_questionnaire", True)
+    if hasattr(request.user, "is_rcpch_audit_team_member"):
+        if request.user.is_rcpch_audit_team_member:
+            return {"can_use_questionnaire": True}
+
+    if request.user.is_superuser or request.session.get(
+        "can_complete_questionnaire", True
     ):
         return {"can_use_questionnaire": True}
     return {
