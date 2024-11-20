@@ -20,11 +20,13 @@ from project.npda.tests.factories.paediatrics_diabetes_unit_factory import (
 )
 from project.constants.user import RCPCH_AUDIT_TEAM
 from project.npda.forms.patient_form import PatientForm
-from project.npda.models import NPDAUser, Submission
+from project.npda.forms.visit_form import VisitForm
+from project.npda.models import NPDAUser, Visit
 from project.npda.models import Patient
 from project.npda.tests.utils import login_and_verify_user
 from project.npda.tests.UserDataClasses import test_user_audit_centre_editor_data
 from project.npda.general_functions import audit_period
+from project.npda.tests.factories.visit_factory import VisitFactory, COMPLETED_VISIT
 
 logger = logging.getLogger(__name__)
 
@@ -161,3 +163,74 @@ class TestQuestionnaireView:
         assert (
             Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is False
         )
+
+    def test_rcpch_users_without_questionnaire_permissions_can_still_save_patient(self):
+        """
+        Test that RCPCH audit users who do not have the questionnaire permission can still save a patient through the questionnaire view.
+        (Though this is theoretical as they have the permission by default)
+        """
+        # Modify the session
+        session = self.client.session
+        session["can_complete_questionnaire"] = False
+        session.save()
+
+        # Give the user the RCPCH audit team group
+        self.ah_user.is_rcpch_audit_team_member = True
+        self.ah_user.save()
+
+        # Create a patient
+        form = PatientForm(VALID_FIELDS)
+
+        # url
+        url = reverse("patient-add")
+
+        # Post the patient data
+        response = self.client.post(url, form.data)
+
+        assert response.status_code == 302
+        assert (
+            Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is True
+        )
+
+    def test_users_with_correct_permissions_can_save_visit(self):
+        """
+        Test that users who do have questionnaire permission can save a visit through the questionnaire view.
+        """
+        # Create a patient
+        patient = PatientFactory()
+
+        form = VisitForm(data=COMPLETED_VISIT, initial={"patient": patient})
+
+        # url
+        url = reverse("visit-create", kwargs={"patient_id": patient.pk})
+
+        # Post the patient data
+        response = self.client.post(url, form.data)
+
+        # Cannot check that the visit was saved as a visit is created in the VisitForm instance
+        assert response.status_code == 200
+
+    def test_users_with_correct_permissions_without_questionnaire_permission_cannot_save_visit(
+        self,
+    ):
+        """
+        Test that users who do have questionnaire permission can save a visit through the questionnaire view.
+        """
+        # Create a patient
+        patient = PatientFactory()
+
+        form = VisitForm(data=COMPLETED_VISIT, initial={"patient": patient})
+
+        # Modify the session
+        session = self.client.session
+        session["can_complete_questionnaire"] = False
+        session.save()
+
+        # url
+        url = reverse("visit-create", kwargs={"patient_id": patient.pk})
+
+        # Post the patient data
+        response = self.client.post(url, form.data)
+
+        assert response.status_code == 403
+        # Cannot check if the visit was not saved as a visit is created in the VisitForm instance

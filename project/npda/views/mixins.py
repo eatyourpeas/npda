@@ -200,6 +200,6 @@ class CheckCanCompleteQuestionnaireMixin(AccessMixin):
                 # Allow superusers and RCPCH audit team members to complete the questionnaire
                 return super().dispatch(request, *args, **kwargs)
 
-            return HttpResponseForbidden()
+            raise PermissionDenied()
 
         return super().dispatch(request, *args, **kwargs)
