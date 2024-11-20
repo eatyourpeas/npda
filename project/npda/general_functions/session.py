@@ -1,5 +1,5 @@
 from asgiref.sync import sync_to_async
-from datetime import datetime
+from datetime import datetime, date
 import logging
 
 from django.core.exceptions import PermissionDenied
@@ -31,6 +31,8 @@ def create_session_object(user):
         )
     )
 
+    audit_years = [year for year in range(date.today().year - 5, date.today().year + 1)]
+
     can_upload_csv = True
     can_complete_questionnaire = True
 
@@ -61,6 +63,7 @@ def create_session_object(user):
         "can_upload_csv": can_upload_csv,
         "can_complete_questionnaire": can_complete_questionnaire,
         "selected_audit_year": datetime.now().year,
+        "audit_years": audit_years,
     }
 
     return session
@@ -128,6 +131,16 @@ def get_new_session_fields(user, pz_code):
         ret["can_complete_questionnaire"] = can_complete_questionnaire
 
     return ret
+
+
+def refresh_audit_years_in_session(request, selected_audit_year):
+    """
+    Refresh the audit years in the session object.
+    """
+    audit_years = [year for year in range(date.today().year - 5, date.today().year + 1)]
+    request.session["audit_years"] = audit_years
+    request.session["selected_audit_year"] = selected_audit_year
+    request.session.modified = True
 
 
 async def refresh_session_object_asynchronously(request, user, pz_code):

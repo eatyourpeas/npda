@@ -53,7 +53,9 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
                 audit_year=self.request.session.get("selected_audit_year"),
             )
         else:
-            base_queryset = self.model.objects.all()
+            base_queryset = self.model.objects.filter(
+                audit_year=self.request.session.get("selected_audit_year")
+            ).all()
 
         final = base_queryset.annotate(
             patient_count=Count("patients"),
@@ -102,10 +104,6 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
                 visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
                 visit_count=Count("visit"),
             )
-        audit_years = [
-            year for year in range(date.today().year - 5, date.today().year + 1)
-        ]
-        context["audit_years"] = audit_years
 
         return context
 
@@ -118,13 +116,6 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         template = self.template_name
 
         if request.htmx:
-
-            if request.GET.get("audit_year"):
-                session = request.session
-                session["selected_audit_year"] = int(request.GET.get("audit_year"))
-                request.session = session
-                request.session.modified = True
-                context = self.get_context_data(object_list=self.object_list)
             # If the request is an HTMX request from the PDU selector, returns the partial template
             # Otherwise, returns the full template
             # The partial template is used to update the submission history table when a new PDU is selected
