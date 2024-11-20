@@ -71,7 +71,10 @@ class PatientListView(
 
         # apply filters and annotations to the queryset
         pz_code = self.request.session.get("pz_code")
-        filtered_patients = Q(submissions__submission_active=True)
+        filtered_patients = Q(
+            submissions__submission_active=True,
+            submissions__audit_year=self.request.session.get("selected_audit_year"),
+        )
         # filter by contents of the search bar
         search = self.request.GET.get("search-input")
         if search:
