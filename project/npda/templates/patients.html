@@ -46,10 +46,17 @@
                   </li>
                   {% if perms.npda.add_patient %}
                     <li>
-                      <a href="{% url 'patient-add' %}" class="underline decoration-rcpch_strong_blue hover:decoration-rcpch_pink decoration-2 underline-offset-4">
-                        <i class="fa-solid fa-person-circle-plus"></i>
-                        Add child
-                      </a>
+                      {% if can_alter_this_audit_year_submission %}
+                        <a href="{% url 'patient-add' %}" class="underline decoration-rcpch_strong_blue hover:decoration-rcpch_pink decoration-2 underline-offset-4">
+                          <i class="fa-solid fa-person-circle-plus"></i>
+                          Add child
+                        </a>
+                      {% else %}
+                        <span class="underline decoration-rcpch_strong_blue decoration-2 underline-offset-4 opacity-40 pointer-events-none">
+                          <i class="fa-solid fa-person-circle-plus"></i>
+                          Add child
+                        </span>
+                      {% endif %}
                     </li>
                   {% endif %}
                 </ul>

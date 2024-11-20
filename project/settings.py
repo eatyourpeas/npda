@@ -76,18 +76,27 @@ if DEBUG is True:
     LOCAL_DEV_ADMIN_EMAIL = os.getenv("LOCAL_DEV_ADMIN_EMAIL")
     LOCAL_DEV_ADMIN_PASSWORD = os.getenv("LOCAL_DEV_ADMIN_PASSWORD")
 
-    if os.environ.get("RUN_MAIN") == "true":  # Prevent double execution during reloading
+    if (
+        os.environ.get("RUN_MAIN") == "true"
+    ):  # Prevent double execution during reloading
         import debugpy
+
         DEBUGPY_PORT = os.getenv("DEBUGPY_PORT", None)
         if DEBUGPY_PORT is None:
             logger.error("DEBUGPY_PORT not set in environment")
         else:
             try:
                 DEBUGPY_PORT = int(DEBUGPY_PORT)  # Convert to integer
-                debugpy.listen(("0.0.0.0", DEBUGPY_PORT))  # Ensure port matches in VSCode config
-                logger.debug(f"Debugging is enabled on port {DEBUGPY_PORT}, waiting for debugger to attach...")
+                debugpy.listen(
+                    ("0.0.0.0", DEBUGPY_PORT)
+                )  # Ensure port matches in VSCode config
+                logger.debug(
+                    f"Debugging is enabled on port {DEBUGPY_PORT}, waiting for debugger to attach..."
+                )
             except ValueError:
-                logger.error(f"Invalid DEBUGPY_PORT value: {DEBUGPY_PORT}. Must be an integer.")
+                logger.error(
+                    f"Invalid DEBUGPY_PORT value: {DEBUGPY_PORT}. Must be an integer."
+                )
 
 
 # GENERAL CAPTCHA SETTINGS
@@ -160,6 +169,8 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "project.npda.build_info.get_build_info",
                 "project.npda.context_processors.session_data",
+                "project.npda.context_processors.can_alter_this_audit_year_submission",
+                "project.npda.context_processors.can_use_questionnaire",
             ],
         },
     },
