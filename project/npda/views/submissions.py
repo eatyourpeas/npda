@@ -13,7 +13,7 @@ from django.shortcuts import render
 from django.views.generic import ListView
 
 # RCPCH imports
-from .mixins import LoginAndOTPRequiredMixin
+from .mixins import CheckCurrentAuditYearMixin, LoginAndOTPRequiredMixin
 from ..models import Submission
 from ..general_functions.csv import (
     download_csv,
@@ -23,7 +23,9 @@ from ..general_functions.csv import (
 )
 
 
-class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
+class SubmissionsListView(
+    LoginAndOTPRequiredMixin, ListView, CheckCurrentAuditYearMixin
+):
     """
     The SubmissionsListView class.
 
@@ -31,6 +33,7 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
 
     Users with permisson should be able to view all submissions for the PDU & ODS code in the session for all audit years/quarters.
     Only one submission per audit year/quarter should be active.
+    It is only possible to create/update/delete a submission for the current audit year/quarter.
     """
 
     model = apps.get_model(app_label="npda", model_name="Submission")
@@ -116,7 +119,7 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         template = self.template_name
 
         if request.htmx:
-            # If the request is an HTMX request from the PDU selector, returns the partial template
+            # If the request is an HTMX request from the PDU selector or Audit Year selector, returns the partial template
             # Otherwise, returns the full template
             # The partial template is used to update the submission history table when a new PDU is selected
             # This is done with a custom htmx trigger in the PDU selector
