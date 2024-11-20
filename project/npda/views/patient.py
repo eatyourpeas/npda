@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count, Case, When, Max, Q, F
-from django.forms import BaseForm
+from django.forms import BaseForm, ValidationError
 from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -32,6 +32,7 @@ from project.npda.models import NPDAUser
 from ..models import Patient
 from ..forms.patient_form import PatientForm
 from .mixins import (
+    CheckCurrentAuditYearMixin,
     CheckPDUInstanceMixin,
     CheckPDUListMixin,
     LoginAndOTPRequiredMixin,
@@ -180,9 +181,11 @@ class PatientCreateView(
     PermissionRequiredMixin,
     SuccessMessageMixin,
     CreateView,
+    CheckCurrentAuditYearMixin,
 ):
     """
     Handle creation of new patient in audit - should link the patient to the current audit year and the logged in user's PDU
+    Note that patients can only be created in the current audit year
     """
 
     permission_required = "npda.add_patient"
@@ -283,9 +286,11 @@ class PatientUpdateView(
     PermissionRequiredMixin,
     SuccessMessageMixin,
     UpdateView,
+    CheckCurrentAuditYearMixin,
 ):
     """
     Handle update of patient in audit
+    Note patients can only be updated in the current audit year
     """
 
     permission_required = "npda.change_patient"
@@ -295,6 +300,7 @@ class PatientUpdateView(
     success_message = "New child record updated successfully"
     success_url = reverse_lazy("patients")
     Submission = apps.get_model("npda", "Submission")
+    PatientSubmission = apps.get_model("npda", "PatientSubmission")
 
     def get_context_data(self, **kwargs):
         Transfer = apps.get_model("npda", "Transfer")
@@ -317,6 +323,20 @@ class PatientUpdateView(
 
     def form_valid(self, form: BaseForm) -> HttpResponse:
         patient = form.save(commit=False)
+        # check that the patient is active in the current audit year and current submission
+        if not (
+            self.PatientSubmission.objects.filter(
+                patient__nhs_number=patient.nhs_number,
+                submission__audit_year=date.today().year,
+                submission__submission_active=True,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                f"{patient} does not have an active submission. Cannot update this record."
+            )
+
         patient.is_valid = True
         patient.errors = None
         # TODO MRB: this calls patient.save twice. super.form_valid calls it too (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/335)
@@ -330,6 +350,7 @@ class PatientDeleteView(
     PermissionRequiredMixin,
     SuccessMessageMixin,
     DeleteView,
+    CheckCurrentAuditYearMixin,
 ):
     """
     Handle deletion of child from audit

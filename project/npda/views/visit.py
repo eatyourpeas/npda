@@ -16,7 +16,12 @@ from ..forms.visit_form import VisitForm
 from ..general_functions import get_visit_categories
 from ..kpi_class.kpis import CalculateKPIS
 from ..models import Patient, Transfer, Visit
-from .mixins import CheckPDUInstanceMixin, CheckPDUListMixin, LoginAndOTPRequiredMixin
+from .mixins import (
+    CheckCurrentAuditYearMixin,
+    CheckPDUInstanceMixin,
+    CheckPDUListMixin,
+    LoginAndOTPRequiredMixin,
+)
 
 # Third party imports
 
@@ -24,6 +29,16 @@ from .mixins import CheckPDUInstanceMixin, CheckPDUListMixin, LoginAndOTPRequire
 class PatientVisitsListView(
     LoginAndOTPRequiredMixin, CheckPDUListMixin, PermissionRequiredMixin, ListView
 ):
+    """
+    The PatientVisitsListView class.
+
+    This class is used to display a list of visits for a patient.
+    Note that it is possible to view the visits for a patient that are not part of the current audit submission as they are filtered against the audit year in the session.
+
+    Users with permission should be able to view all visits for a patient.
+    Users should NOT be able to add, edit or delete visits for a patient in a submission that is not active, or that is not the current audit year/quarter.
+    """
+
     permission_required = "npda.view_visit"
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."
     model = Visit
@@ -33,7 +48,10 @@ class PatientVisitsListView(
         patient_id = self.kwargs.get("patient_id")
         context = super(PatientVisitsListView, self).get_context_data(**kwargs)
         patient = Patient.objects.get(pk=patient_id)
-        submission = patient.submissions.filter(submission_active=True).first()
+        submission = patient.submissions.filter(
+            submission_active=True,
+            audit_year=self.request.session.get("selected_audit_year"),
+        ).first()
         visits = Visit.objects.filter(patient=patient).order_by("is_valid", "id")
         calculated_visits = []
         for visit in visits:
@@ -58,11 +76,9 @@ class PatientVisitsListView(
         )
         # Calculate the KPIs for this patient, returning only subset relevant
         # for a single patient's calculation
-        kpi_calculations_object = (
-            calculate_kpis.calculate_kpis_for_single_patient(
-                patient,
-                pdu,
-            )
+        kpi_calculations_object = calculate_kpis.calculate_kpis_for_single_patient(
+            patient,
+            pdu,
         )
 
         context["kpi_calculations_object"] = kpi_calculations_object
@@ -71,7 +87,11 @@ class PatientVisitsListView(
 
 
 class VisitCreateView(
-    LoginAndOTPRequiredMixin, PermissionRequiredMixin, SuccessMessageMixin, CreateView
+    LoginAndOTPRequiredMixin,
+    PermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+    CheckCurrentAuditYearMixin,
 ):
     permission_required = "npda.add_visit"
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."
@@ -108,7 +128,11 @@ class VisitCreateView(
 
 
 class VisitUpdateView(
-    LoginAndOTPRequiredMixin, CheckPDUInstanceMixin, PermissionRequiredMixin, UpdateView
+    LoginAndOTPRequiredMixin,
+    CheckPDUInstanceMixin,
+    PermissionRequiredMixin,
+    UpdateView,
+    CheckCurrentAuditYearMixin,
 ):
     permission_required = "npda.change_visit"
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."
@@ -191,14 +215,33 @@ class VisitUpdateView(
         visit = form.save(commit=True)
         visit.errors = None
         visit.is_valid = True
-        visit.save(update_fields=["errors", "is_valid"])
-        context = {"patient_id": self.kwargs["patient_id"]}
-        messages.add_message(
-            self.request, messages.SUCCESS, "Visit edited successfully"
-        )
-        return HttpResponseRedirect(
-            redirect_to=reverse("patient_visits", kwargs=context)
-        )
+
+        # if this visit relates to a submission that is not active or not the current audit year, set is_valid to False
+        submission = visit.patient.submissions.filter(
+            submission_active=True,
+            audit_year=datetime.date.today().year,
+        ).first()
+        if submission is None:
+            visit.is_valid = False
+            messages.add_message(
+                self.request,
+                messages.WARNING,
+                "This visit cannot be edited as it is not part of the current audit submission. Changes have not been saved.",
+            )
+            return HttpResponseRedirect(
+                reverse(
+                    "patient_visits", kwargs={"patient_id": self.kwargs["patient_id"]}
+                )
+            )
+        else:
+            visit.save(update_fields=["errors", "is_valid"])
+            context = {"patient_id": self.kwargs["patient_id"]}
+            messages.add_message(
+                self.request, messages.SUCCESS, "Visit edited successfully"
+            )
+            return HttpResponseRedirect(
+                redirect_to=reverse("patient_visits", kwargs=context)
+            )
 
 
 class VisitDeleteView(
@@ -207,6 +250,7 @@ class VisitDeleteView(
     PermissionRequiredMixin,
     SuccessMessageMixin,
     DeleteView,
+    CheckCurrentAuditYearMixin,
 ):
     permission_required = "npda.delete_visit"
     permission_denied_message = "You do not have the appropriate permissions to access this page/feature. Contact your Coordinator for assistance."
