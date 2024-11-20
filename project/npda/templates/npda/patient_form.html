@@ -13,7 +13,7 @@
           </div>
           <div class="md:w-2/3">
             {% if field.field.widget|is_select %}
-              <select id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="select rcpch-select">
+              <select id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="select rcpch-select {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}">
                 {% for choice in field.field.choices %}
                   <option
                     value="{{choice.0}}"
@@ -29,7 +29,7 @@
               <input
                 id="{{ field.id_for_label }}"
                 name="{{ field.html_name }}"
-                class="input rcpch-input-text"
+                class="input rcpch-input-text {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}"
                 {% if field.field.widget|is_dateinput %}
                   type="date"
                 {% else %}
@@ -52,10 +52,10 @@
       
       <div class="flex justify-end">
         <a role="button" class="btn rcpch-light-blue-btn" href='{% url 'patients' %}'>Back to list</a>
-        <button type="submit" value="Submit" class="btn rcpch-light-blue-btn">{{button_title}}</button>
+        <button type="submit" value="Submit" class="btn rcpch-light-blue-btn {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}">{{button_title}}</button>
       </div>
       {% if form_method == 'update' and perms.npda.delete_patient %}
-        <a class="bg-rcpch_red text-white font-semibold hover:text-white py-2.5 px-3 mt-20 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint" href="{% url 'patient-delete' patient_id %}">Delete</a>
+        <a class="bg-rcpch_red text-white font-semibold hover:text-white py-2.5 px-3 mt-20 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}" href="{% url 'patient-delete' patient_id %}">Delete</a>
       {% endif %}
     </form>
   </div>
