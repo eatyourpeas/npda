@@ -1,6 +1,11 @@
-# Runs the Pytest test suite when PRs are made against any branch
+# Runs the PR check script
+# The workflow is named pytest.yml to maintain history in GitHub actions
 
-name: Run Pytest via Docker Compose on all PRs
+name: Run PR checks
+
+permissions:
+  id-token: write
+  contents: read
 
 on:
   pull_request:
@@ -17,18 +22,15 @@ jobs:
         with:
           fetch-depth: 0 # to allow git_context_processor.py to still work
 
-      - name: Create .env file from repo secrets
-        run: |
-          echo -n "${{ secrets.ENVIRONMENT }}" | base64 -d > envs/.env
+      - name: 'Login via Azure CLI'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get install -y docker-compose
-
-      - name: Build Docker images and run containers with compose
-        run: |
-          docker compose up -d
-
-      - name: Run tests
-        run: |
-          docker compose exec django pytest -vv
+      - name: 'Run PR check script'
+        env:
+          AZURE_CONFIG_STORAGE_ACCOUNT: ${{ secrets.AZURE_CONFIG_STORAGE_ACCOUNT }}
+          AZURE_CONFIG_FILE_SHARE: ${{ secrets.AZURE_CONFIG_FILE_SHARE }}
+        run: s/pr-check
