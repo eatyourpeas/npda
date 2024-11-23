@@ -773,12 +773,17 @@ def test_upload_without_headers(test_user, one_patient_two_visits):
 
     csv = "\n".join(lines)
 
-    df = read_csv_from_str(csv).df
+    # The first row of the csv file does not match any of the predefined column names - this is a fatal error and the csv should be rejected and the user notified
+    with pytest.raises(
+        ValueError,
+        match="The first row of the csv file does not match any of the predefined column names. Please include these and upload the file again.",
+    ):
+        df = read_csv_from_str(csv).df
+        csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
 
-    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
-
-    assert Patient.objects.count() == 1
-    assert Visit.objects.count() == 2
+    # No patients or associated visits should be saved
+    assert Patient.objects.count() == 0
+    assert Visit.objects.count() == 0
 
 
 @pytest.mark.django_db

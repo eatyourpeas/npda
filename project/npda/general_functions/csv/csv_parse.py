@@ -3,6 +3,9 @@ from dataclasses import dataclass
 import logging
 import re
 
+# Django imports
+from django.core.exceptions import ValidationError
+
 # Third-party imports
 import pandas as pd
 import numpy as np
@@ -18,6 +21,7 @@ from project.constants import (
 # Logging setup
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ParsedCSVFile:
     df: pd.DataFrame
@@ -25,6 +29,7 @@ class ParsedCSVFile:
     additional_columns: list[str]
     duplicate_columns: list[str]
     parse_type_error_columns: list[str]
+
 
 def csv_parse(csv_file):
     """
@@ -37,6 +42,7 @@ def csv_parse(csv_file):
     # We will check if the first row of the csv file matches the predefined column names
     # If it does not, we will use the predefined column names
     # If it does, we will use the column names in the csv file
+    # The exception is if the first row of the csv file does not match any of the predefined column names, in which case we will reject the csv
 
     # Convert the predefined column names to lowercase
     lowercase_headings_list = [heading.lower() for heading in HEADINGS_LIST]
@@ -50,9 +56,10 @@ def csv_parse(csv_file):
         pass
     else:
         # The first row of the csv file does not match the predefined column names
-        # We will use the predefined column names
-        csv_file.seek(0)
-        df = pd.read_csv(csv_file, header=None, names=HEADINGS_LIST)
+        # We will reject this csv (#391)
+        raise ValueError(
+            "The first row of the csv file does not match any of the predefined column names. Please include these and upload the file again."
+        )
 
     # Remove leading and trailing whitespace on column names
     # The template published on the RCPCH website has trailing spaces on 'Observation Date: Thyroid Function '
