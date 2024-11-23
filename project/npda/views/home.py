@@ -51,8 +51,16 @@ async def home(request):
         user_csv = request.FILES["csv_upload"]
         pz_code = request.session.get("pz_code")
         if request.session.get("can_upload_csv") is True:
-            # check to see if the CSV is valid
-            parsed_csv = csv_parse(user_csv)
+            # check to see if the CSV is valid - cannot accept CSVs with no header. All other header errors are non-lethal but are reported back to the user
+            try:
+                parsed_csv = csv_parse(user_csv)
+            except ValueError as e:
+                messages.error(
+                    request=request,
+                    message=f"Invalid CSV format: {e}",
+                )
+                return redirect("home")
+
             if (
                 parsed_csv.missing_columns
                 or parsed_csv.additional_columns
