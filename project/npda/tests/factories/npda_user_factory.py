@@ -7,8 +7,6 @@ import uuid
 import factory
 
 # Project imports
-from project.npda.general_functions.pdus import (PDUWithOrganisations,
-                                                 get_single_pdu_from_pz_code)
 from project.npda.models import NPDAUser
 from project.npda.tests.factories.organisation_employer_factory import \
     OrganisationEmployerFactory
@@ -73,12 +71,6 @@ class NPDAUserFactory(factory.django.DjangoModelFactory):
         else:
             # If pz_codes are provided, create OrganisationEmployer for each pz_code
             for pz_code in extracted:
-                pdu_data = get_single_pdu_from_pz_code(pz_number=pz_code)
-
-                # Raise error if not a PDU object
-                if not isinstance(pdu_data, PDUWithOrganisations):
-                    raise ValueError(f"Invalid PDU object {pdu_data=}")
-
                 pdu = PaediatricsDiabetesUnitFactory(
                     pz_code=pz_code,
                 )
