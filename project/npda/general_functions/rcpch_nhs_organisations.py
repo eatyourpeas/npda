@@ -21,20 +21,6 @@ from requests.exceptions import HTTPError
 logger = logging.getLogger(__name__)
 
 
-def call_rcpch_nhs_organisations_api(path: str):
-    BASE_URL = settings.RCPCH_NHS_ORGANISATIONS_API_URL
-    API_KEY = settings.RCPCH_NHS_ORGANISATIONS_API_KEY
-
-    request_url = f"{BASE_URL}/{path}"
-
-    headers = {
-        "Ocp-Apim-Subscription-Key": API_KEY
-    }
-
-    response = requests.get(request_url, headers=headers, timeout=10)
-    return response
-
-
 def get_all_pz_codes_with_their_trust_and_primary_organisation() -> (
     List[Tuple[str, str]]
 ):
