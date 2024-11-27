@@ -58,7 +58,9 @@ def calculate_centiles_z_scores(
 
     ERROR_STRING = "An error occurred while fetching centile and z score details."
     try:
-        response = requests.post(url=url, json=body, timeout=10)
+        response = requests.post(url=url, json=body, timeout=10, headers={
+            "Subscription-Key": f"{settings.RCPCH_DGC_API_KEY}"
+        })
         response.raise_for_status()
     except HTTPError as http_err:
         logger.error(f"{ERROR_STRING} Error: http error {http_err.response.text}")
