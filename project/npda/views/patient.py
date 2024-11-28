@@ -132,6 +132,7 @@ class PatientListView(
             .count()
         )
         context["pz_code"] = self.request.session.get("pz_code")
+        context["selected_audit_year"] = self.request.session.get("selected_audit_year", "None")
         context["total_valid_patients"] = total_valid_patients
         context["total_invalid_patients"] = (
             Patient.objects.filter(submissions__submission_active=True).count()
