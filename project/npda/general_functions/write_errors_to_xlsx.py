@@ -21,111 +21,140 @@ from openpyxl.comments import Comment
 # import csv mappings
 from ...constants.csv_headings import CSV_HEADINGS
 
-def write_errors_to_xlsx(errors: defaultdict[Any, defaultdict[Any, list]], new_submission: Submission) -> bool:
-  """
-  Write errors to an Excel file. This .xlsx file can later be downloaded by the user to highlight invalid cells when attempting to upload CSV data. 
 
-  Args:
-    errors (defaultdict[Any, defaultdict[Any, list]]): A dictionary containing errors grouped by row index and field.
+def write_errors_to_xlsx(
+    errors: defaultdict[Any, defaultdict[Any, list]], new_submission: Submission
+) -> bool:
+    """
+    Write errors to an Excel file. This .xlsx file can later be downloaded by the user to highlight invalid cells when attempting to upload CSV data.
 
-  """
-  xlsx_file: str = new_submission.csv_file.path.replace('.csv','.xlsx')
-  
-  # Get original data
-  df = csv_parse(new_submission.csv_file).df
-  # Write an xlsx of the original data.  
-  df.to_excel(xlsx_file, sheet_name="Uploaded data (raw)", index=False) 
+    Args:
+      errors (defaultdict[Any, defaultdict[Any, list]]): A dictionary containing errors grouped by row index and field.
 
-  # Serialize the errors to get text.
-  errors = json_loads(serialize_errors(errors))
-  flattened_errors = flatten_errors(errors, df['NHS Number'])
-  print("flattened")
-  print(flattened_errors)
+    """
+    xlsx_file: str = new_submission.csv_file.path.replace(".csv", ".xlsx")
 
-  
-  # Add sheet that lists the errors.
-  with pd.ExcelWriter(xlsx_file, mode='a', engine='openpyxl') as writer:
-      df_new = pd.DataFrame(flattened_errors)  # Example DataFrame; replace with your actual data
-      df_new.to_excel(writer, sheet_name='Errors - Overview', index=False)  
+    # Get original data
+    df = csv_parse(new_submission.csv_file).df
+    # Write an xlsx of the original data.
+    df.to_excel(xlsx_file, sheet_name="Uploaded data (raw)", index=False)
 
-  # Load the workbook in openpyxl
-  wb: Workbook = load_workbook(xlsx_file)
-  
-  # Set text to red
-  overview_sheet = wb["Errors - Overview"]
-  for row in overview_sheet.iter_rows(min_row=2, min_col=3):
-    for cell in row:
-        cell.font = Font(color="FF0000")
-        
+    # Serialize the errors to get text.
+    errors = json_loads(serialize_errors(errors))
+    flattened_errors = flatten_errors(errors, df["NHS Number"])
 
-  # Setup the styled worksheet
-  styled_sheet: Worksheet = wb.copy_worksheet(wb["Uploaded data (raw)"])
-  styled_sheet.title = "Uploaded data (comments)"  # You can set any name for the copied sheet
+    # Add sheet that lists the errors.
+    with pd.ExcelWriter(xlsx_file, mode="a", engine="openpyxl") as writer:
+        df_new = pd.DataFrame(
+            flattened_errors
+        )  # Example DataFrame; replace with your actual data
+        df_new.to_excel(writer, sheet_name="Errors - Overview", index=False)
 
+    # Load the workbook in openpyxl
+    wb: Workbook = load_workbook(xlsx_file)
 
-  # Style the openpyxl worksheet to highlight in red erroneous/invalid cells.
-  # Also add comments to annotate the actual error.
-  for patient_errors in flattened_errors:
-    row_index = patient_errors['metadata_patient_row']+1
-    for field_name, field_error in patient_errors.items():
-      column_index = find_column_index_by_name(field_name, styled_sheet)
-      if column_index:
-        styled_sheet.cell(row=row_index, column=column_index).fill = PatternFill(patternType='solid', fgColor='FFC9C9')  # Change color to red.
-        styled_sheet.cell(row=row_index, column=column_index).comment = Comment(field_error, "Data Validator [Automated: RCPCH]", height=300, width=300)
+    # Set text to red
+    overview_sheet = wb["Errors - Overview"]
+    for row in overview_sheet.iter_rows(min_row=2, min_col=3):
+        for cell in row:
+            cell.font = Font(color="FF0000")
 
+    # Setup the styled worksheet
+    styled_sheet: Worksheet = wb.copy_worksheet(wb["Uploaded data (raw)"])
+    styled_sheet.title = (
+        "Uploaded data (comments)"  # You can set any name for the copied sheet
+    )
 
-  # Specify the desired order by reordering the `workbook.worksheets` list
-  wb._sheets = [wb["Uploaded data (raw)"], wb["Uploaded data (comments)"], wb["Errors - Overview"]]
+    # Style the openpyxl worksheet to highlight in red erroneous/invalid cells.
+    # Also add comments to annotate the actual error.
+    for patient_errors in flattened_errors:
+        row_index = patient_errors["metadata_patient_row"] + 1
+        for field_name, field_error in patient_errors.items():
+            column_index = find_column_index_by_name(field_name, styled_sheet)
+            if column_index:
+                styled_sheet.cell(row=row_index, column=column_index).fill = (
+                    PatternFill(patternType="solid", fgColor="FFC9C9")
+                )  # Change color to red.
+                styled_sheet.cell(row=row_index, column=column_index).comment = Comment(
+                    field_error,
+                    "Data Validator [Automated: RCPCH]",
+                    height=300,
+                    width=300,
+                )
 
-  # Save the styled sheet.
-  wb.save(xlsx_file)
+    # Specify the desired order by reordering the `workbook.worksheets` list
+    wb._sheets = [
+        wb["Uploaded data (raw)"],
+        wb["Uploaded data (comments)"],
+        wb["Errors - Overview"],
+    ]
 
+    # Save the styled sheet.
+    wb.save(xlsx_file)
 
-  # Return True/False based on successful .xlsx creation.
-  print("Running write_errors_to_xlsx")
-  return True
+    # Return True/False based on successful .xlsx creation.
+    print("Running write_errors_to_xlsx")
+    return True
 
 
 def find_column_index_by_name(column_name: str, ws: Worksheet) -> int | None:
-  column_index = None
-  for col in ws.iter_cols(1, ws.max_column, 1, 1):  # Check headers in the first row only
-      if col[0].value == column_name:
-          column_index = col[0].column  # Get the column index
-          break
-  return column_index
+    column_index = None
+    for col in ws.iter_cols(
+        1, ws.max_column, 1, 1
+    ):  # Check headers in the first row only
+        if col[0].value == column_name:
+            column_index = col[0].column  # Get the column index
+            break
+    return column_index
 
-def flatten_errors(errors: defaultdict[int, defaultdict[Any, list]], uploaded_nhs_numbers: "pd.Series[str]") -> "List[Dict[str, Union[int, str]]]":
-  """
-  Flatten a nested dictionary of errors into a list of dictionaries, where each dictionary represents a row with
-  its errors.
 
-  Args:
-      errors (defaultdict[int, defaultdict[Any, list]]): A nested dictionary containing
-          errors grouped by row number and field name. The structure is:
-          {row_number: {field_name: [error_messages]}}
+def flatten_errors(
+    errors: defaultdict[int, defaultdict[Any, list]],
+    uploaded_nhs_numbers: "pd.Series[str]",
+) -> "List[Dict[str, Union[int, str]]]":
+    """
+    Flatten a nested dictionary of errors into a list of dictionaries, where each dictionary represents a row with
+    its errors.
 
-  Returns:
-      list: A list of dictionaries, where each dictionary contains:
-          - 'row': The row number (as an integer)
-          - Field names as keys and concatenated error messages as values
+    Args:
+        errors (defaultdict[int, defaultdict[Any, list]]): A nested dictionary containing
+            errors grouped by row number and field name. The structure is:
+            {row_number: {field_name: [error_messages]}}
 
-  """
-  flattened_data: "List[Dict[str, Union[int, str]]]" = []
+    Returns:
+        list: A list of dictionaries, where each dictionary contains:
+            - 'row': The row number (as an integer)
+            - Field names as keys and concatenated error messages as values
 
-  for row_num, errors in errors.items():
-      # Add patient_row and NHS Number to the row dictionary.
-      row_dict = {"metadata_patient_row": int(row_num)+1}
-      row_dict["metadata_nhs_number"] = uploaded_nhs_numbers.tolist()[int(row_num)]
-      
-      for field, error_list in errors.items():
-          # Flatten nested error messages into a single string
-          error_messages = "; ".join(
-              [msg for sublist1 in error_list for sublist2 in sublist1 for msg in sublist2]
-          )
-          # Map field name to human-readable string ("date_of_birth" -> "Date of Birth")
-          field: dict[str, str] = next((item for item in CSV_HEADINGS if item["model_field"] == field), {"heading": "Unable to get header", "model_field": "error", "model": "error"})
-          field_heading = field.get("heading", "Heading not found")
-          row_dict[f'{field_heading}'] = error_messages
-          
-      flattened_data.append(row_dict)
-  return flattened_data
+    """
+    flattened_data: "List[Dict[str, Union[int, str]]]" = []
+
+    for row_num, errors in errors.items():
+        # Add patient_row and NHS Number to the row dictionary.
+        row_dict = {"metadata_patient_row": int(row_num) + 1}
+        row_dict["metadata_nhs_number"] = uploaded_nhs_numbers.tolist()[int(row_num)]
+
+        for field, error_list in errors.items():
+            # Flatten nested error messages into a single string
+            error_messages = "; ".join(
+                [
+                    msg
+                    for sublist1 in error_list
+                    for sublist2 in sublist1
+                    for msg in sublist2
+                ]
+            )
+            # Map field name to human-readable string ("date_of_birth" -> "Date of Birth")
+            field: dict[str, str] = next(
+                (item for item in CSV_HEADINGS if item["model_field"] == field),
+                {
+                    "heading": "Unable to get header",
+                    "model_field": "error",
+                    "model": "error",
+                },
+            )
+            field_heading = field.get("heading", "Heading not found")
+            row_dict[f"{field_heading}"] = error_messages
+
+        flattened_data.append(row_dict)
+    return flattened_data

@@ -117,6 +117,46 @@ def heading_for_field(field):
     return None
 
 
+@register.simple_tag
+def centile_sds(field):
+    """
+    Returns the centile and SDS for a given field
+    """
+    if field.id_for_label == "id_height":
+        centile = field.form.instance.height_centile
+        sds = field.form.instance.height_sds
+    elif field.id_for_label == "id_weight":
+        centile = field.form.instance.weight_centile
+        sds = field.form.instance.weight_sds
+    elif field.id_for_label == "id_bmi":
+        centile = field.form.instance.bmi_centile
+        sds = field.form.instance.bmi_sds
+    else:
+        return None, None
+
+    if centile is not None and centile >= 99.9:
+        centile = " ≥99.6ᵗʰ"
+    elif centile is not None and centile < 0.4:
+        centile = "≤0.4ᵗʰ"
+    return centile, sds
+
+
+@register.simple_tag
+def is_not_excluded_centile_field(field):
+    exclude = [
+        "id_height_centile",
+        "id_height_sds",
+        "id_weight_centile",
+        "id_weight_sds",
+        "id_bmi_centile",
+        "id_bmi_sds",
+        "id_bmi",
+    ]
+    if field.id_for_label not in exclude:
+        return True
+    return False
+
+
 @register.filter
 def join_with_comma(value):
     if isinstance(value, list):

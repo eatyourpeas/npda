@@ -9,7 +9,6 @@ from project.npda.tests.UserDataClasses import (
     test_user_audit_centre_coordinator_data,
     test_user_rcpch_audit_team_data,
 )
-from project.npda.general_functions.rcpch_nhs_organisations import get_nhs_organisation
 from project.npda.models import OrganisationEmployer
 from project.npda.tests.factories.npda_user_factory import NPDAUserFactory
 from project.constants.user import RCPCH_AUDIT_TEAM
@@ -20,8 +19,6 @@ users = [
     test_user_audit_centre_coordinator_data,
     test_user_rcpch_audit_team_data,
 ]
-
-GOSH_ORGANISATION_DETAILS_OBJ = get_nhs_organisation(ods_code="RP401")
 
 NPDAUserFactory(
     first_name=test_user_audit_centre_reader_data.role_str,

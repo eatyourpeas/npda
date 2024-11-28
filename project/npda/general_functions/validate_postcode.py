@@ -28,6 +28,5 @@ async def validate_postcode(postcode: str, async_client: httpx.AsyncClient):
     response.raise_for_status()
 
     normalised_postcode = response.json()["result"]["postcode"]
-    print(f"!! normalised_postcode={normalised_postcode}")
 
     return normalised_postcode
