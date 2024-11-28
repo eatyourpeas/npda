@@ -5,13 +5,17 @@
     <!-- PDU view   -->
      <div role="alert" class="mt-2 alert bg-slate-200">
         <p><i class="fa-solid fa-users-viewfinder"></i> Showing patients filtered by:</p>
-            <ul>
+            <ul class="list-disc list-inside">
+                <li>
+                    <b>Audit Year </b>[<span class="font-mono bg-gray-300 p-1 mx-1">{{selected_audit_year}} only</span>].
+                </li>
                 <li>
                     <b>Patient Diabetic Unit </b>[<span class="font-mono bg-gray-300 p-1 mx-1">{{pz_code}} only</span>].
                 </li>
             </ul>
-            <button data-tip="You can change the PDU by using the dropdown below the navigation menu." class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('pz_code_select_name').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); "><i class="fas fa-question-circle"></i> Change PDU</button>
-            <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); document.getElementById('view_preference_2').click();"><i class="fa-solid fa-square-xmark"></i> Remove filter</button>
+            <button data-tip="You can change the audit year by using the filters below the navigation menu. You may need to expand the view by pressing 'Filters' on the right." class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('audit_year_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); "><i class="fas fa-question-circle"></i> Change Audit Year</button>
+            <button data-tip="You can change the PDU by using the dropdown below the navigation menu." class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full');  window.scrollTo(0, 0); document.getElementById('pz_code_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); "><i class="fas fa-question-circle"></i> Change PDU</button>
+            <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full');  document.getElementById('view_preference_2').click();"><i class="fa-solid fa-square-xmark"></i> Remove filter</button>
             
     </div>
 {% elif request.user.view_preference == 2 %}
@@ -24,7 +28,7 @@
                     <b>National patients</b> [<span class="font-mono bg-gray-300 p-1 mx-1">no filters</span>].
                 </li>
             </ul>
-            <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); document.getElementById('view_preference_1').click();"><i class="fa-solid fa-square-plus"></i> Apply PDU Filter</button>
+            <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation();  document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('view_preference_1').click();"><i class="fa-solid fa-square-plus"></i> Apply PDU Filter</button>
     </div>
 {% endif %}
 
@@ -282,5 +286,18 @@
     </table>
 </div>
     {% else %}
-    <h5 class="mb-5 font-montserrat font-semibold">No patients yet!</h5>
+    <div role="alert" class="alert mt-2">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    class="h-6 w-6 shrink-0 stroke-current"
+    fill="none"
+    viewBox="0 0 24 24">
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+  <span>No patients uploaded yet.</span>
+</div>
 {% endif %}
