@@ -104,7 +104,9 @@
                           {% if included_field or field.id_for_label == 'id_bmi' %}
 
                             {% if field.id_for_label == 'id_bmi' %}
-                              <label for="{{ field.id_for_label }}" class="block text-gray-700 font-bold mb-1 md:mb-0 pr-4"><small>Body Mass Index: {{ field.value }} kg/m²</small></label>
+                              {% if field.value is not None %}
+                                <label for="{{ field.id_for_label }}" class="block text-gray-700 font-bold mb-1 md:mb-0 pr-4"><small>Body Mass Index: {{ field.value }} kg/m²</small></label>
+                                {% endif %}
                             {% else %}
                               <input type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text rounded-none {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}" {% if field.field.required %} placeholder="Required" {% endif %} {% if field.value %} value={{ field.value }} {% elif field.value == 0 %} value="0.0" {% endif %}>
                             {% endif %}
