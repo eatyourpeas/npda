@@ -1,7 +1,9 @@
 {
   "indent": 2,
   "preserve_blank_lines": false,
+  "ignore_inline_styles": true,
   "single_quote": true,
+  "ignore":"H022,H021,H006,H013",
   "max_line_length": 80,
   "newline_after_block": true,
   "strip_spaces": true,
