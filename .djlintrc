@@ -1,0 +1,24 @@
+{
+  "indent": 2,
+  "preserve_blank_lines": false,
+  "single_quote": true,
+  "max_line_length": 80,
+  "newline_after_block": true,
+  "strip_spaces": true,
+  "require_single_line_if_statement": true,
+  "require_single_line_for": true,
+  "preserve_attribute_whitespace": true,
+  "self_closing_tags": true,
+  "custom_attributes": [
+    "hx-get",
+    "hx-post",
+    "hx-put",
+    "hx-delete",
+    "hx-target",
+    "hx-swap",
+    "hx-trigger",
+    "x-data",
+    "x-bind",
+    "x-on"
+  ]
+}
