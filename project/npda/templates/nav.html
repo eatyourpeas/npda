@@ -57,7 +57,7 @@
                 <i class="fa-solid fa-solar-panel"></i> Control Panel
               </div>
               <div class="flex justify-center">
-                <li class="">
+                <li>
                   <a href="{% url 'admin:index' %}"
                      target="_blank"
                      class="text-xs block font-montserrat font-semibold py-2 bg-rcpch_dark_blue hover:bg-rcpch_light_blue_tint1 active:bg-rcpch_pink focus:bg-rcpch_pink text-white"><i class="fa-solid fa-up-right-from-square"></i> Admin</a>
@@ -141,7 +141,7 @@
                 <i class="fa-solid fa-solar-panel"></i> Control Panel
               </div>
               <div class="flex justify-center">
-                <li class="">
+                <li>
                   <a href="{% url 'admin:index' %}"
                      target="_blank"
                      class="text-xs block font-montserrat font-semibold py-2 bg-rcpch_dark_blue hover:bg-rcpch_light_blue_tint1 active:bg-rcpch_pink focus:bg-rcpch_pink text-white"><i class="fa-solid fa-up-right-from-square"></i> Admin</a>
@@ -177,7 +177,7 @@
               <li>
                 <a href="{% url 'two_factor:profile' %}"><i class="fa-solid fa-shield"></i>Two Factor Authentication</a>
               </li>
-              <form method="POST" action="{% url 'logout' %}">
+              <form method="post" action="{% url 'logout' %}">
                 <li>
                   {% csrf_token %}
                   <button type="submit">
@@ -243,7 +243,7 @@
     // Set the data-theme attribute on the body
     document.body.setAttribute('data-theme', desiredTheme);
     localStorage.setItem('theme', desiredTheme);
-  }  
+  }
   </script>
   <style>
 .tooltip::before {

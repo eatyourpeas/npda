@@ -4,19 +4,19 @@
 {% block content %}
   {% url 'dashboard' as hx_get %}
   <section class="bg-rcpch_dark_blue font-montserrat">
-    <div class="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12">
-      <h1 class="mb-4 text-4xl font-extrabold font-arial tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl text-white">
+    <div class="mx-auto max-w-screen-xl px-4 py-8 text-center lg:px-12 lg:py-16">
+      <h1 class="font-arial mb-4 text-4xl font-extrabold tracking-tight leading-none text-white text-gray-900 lg:text-6xl md:text-5xl">
         National Paediatric Diabetes Audit
       </h1>
-      <p class="mb-8 text-lg font-normal lg:text-xl sm:px-16 xl:px-48 text-white">
+      <p class="mb-8 text-lg font-normal text-white lg:text-xl sm:px-16 xl:px-48">
         We are now accepting data for the 2023-24 audit year. <b>{% text_for_data_submission can_upload_csv can_complete_questionnaire %}</b>
         For more information check out our user guide.
       </p>
-      <div class="flex flex-col mb-8 lg:mb-16 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
+      <div class="flex flex-col mb-8 space-y-4 lg:mb-16 sm:flex-row sm:justify-center sm:space-x-4 sm:space-y-0">
         <a href="http://0.0.0.0:8007/"
-           class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:ring-primary-900">
+           class="bg-primary-700 inline-flex justify-center items-center px-5 py-3 text-base font-medium text-center text-white rounded-lg focus:ring-primary-300 focus:ring-primary-900 focus:ring-4 hover:bg-primary-800"><!-- noqa -->
           Learn more
-          <svg class="ml-2 -mr-1 w-5 h-5"
+          <svg class="-mr-1 w-5 h-5 ml-2"
                fill="currentColor"
                viewBox="0 0 20 20"
                xmlns="http://www.w3.org/2000/svg">
@@ -27,11 +27,11 @@
       </div>
     </div>
   </section>
-  <section class="mb-5 container-mx-auto flex items-center justify-center"
+  <section class="container-mx-auto flex justify-center items-center mb-5"
            hx-get="{{ hx_get }}"
            hx-trigger="dashboard from:body"
            hx-target="#dashboard">
-    <div id="dashboard" class="max-h-screen w-full mt-5 mx-2">
+    <div id="dashboard" class="w-full max-h-screen mx-2 mt-5">
       {% include 'partials/kpi_table.html' with kpi_results=kpi_results pdu=pdu aggregation_level=aggregation_level %}
     </div>
   </section>

@@ -1,9 +1,11 @@
 {% extends "two_factor/_base_focus.html" %}
 {% load i18n %}
-{% block extra_media %}{{ form.media }}{% endblock %}
+{% block extra_media %}
+  {{ form.media }}
+{% endblock extra_media %}
 {% block content %}
-  <div class=" flex flex-col justify-center items-center">
-    <h1 class="font-montserrat font-semibold text-lg mb-5">
+  <div class="flex flex-col justify-center items-center">
+    <h1 class="font-montserrat mb-5 text-lg font-semibold">
       {% block title %}
         {% trans "Enable Two-Factor Authentication" %}
       {% endblock %}
@@ -26,7 +28,7 @@
         like to use:
       </p>
     {% elif wizard.steps.current == 'generator' %}
-      <div class="flex flex-col justify-center font-montserrat"
+      <div class="font-montserrat flex flex-col justify-center">
         <p>
           <b>To set up your two-factor authentication, follow these steps:</b>
         </p>
@@ -57,7 +59,7 @@
         Please check your registered email for your one-time login code.
       </p>
       {% if not challenge_succeeded %}
-        <p class="text-rcpch_red font-montserrat italic" role="alert">
+        <p class="font-montserrat text-rcpch_red italic" role="alert">
           {% blocktrans trimmed %}
             We've
             encountered an issue with the selected authentication method. Please
@@ -76,4 +78,4 @@
       {% include "two_factor/_wizard_actions.html" %}
     </form>
   </div>
-{% endblock %}
+{% endblock content %}

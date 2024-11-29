@@ -2,14 +2,18 @@
 {% load i18n %}
 {% load two_factor_tags %}
 {% load static %}
-{% block extra_media %}{{ form.media }}{% endblock %}
-{% block title %}Login{% endblock %}
+{% block extra_media %}
+  {{ form.media }}
+{% endblock extra_media %}
+{% block title %}
+  Login
+{% endblock title %}
 {% block content %}
-  <div class=" flex flex-col justify-center items-center">
+  <div class="flex flex-col justify-center items-center">
     {% if wizard.steps.current == 'auth' %}
       <div>
-        <h2 class="font-montserrat text-lg font-semibold mt-5 text-center">Sign In</h2>
-        <img src='{% static "npda-logo.png" %}' class="w-15 h-15 mt-5 mb-5">
+        <h2 class="font-montserrat mt-5 text-lg font-semibold text-center">Sign In</h2>
+        <img src="{% static "npda-logo.png" %}" class="h-15 w-15 mt-5 mb-5">
       </div>
     {% elif wizard.steps.current == 'token' %}
       <p class="font-montserrat mb-5">
@@ -32,6 +36,4 @@
       {% include "two_factor/_wizard_actions.html" %}
     </form>
   </div>
-</div>
-</div>
-{% endblock %}
+{% endblock content %}

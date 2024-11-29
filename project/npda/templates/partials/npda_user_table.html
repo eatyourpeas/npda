@@ -1,14 +1,14 @@
 {% load npda_tags %}
-<h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">
+<h1 class="font-montserrat text-md text-rcpch_dark_blue font-semibold">
   NPDA Users at {{ chosen_pdu }}
 </h1>
 {% if npdauser_list %}
-  <table class="table table-md w-full text-sm text-left rtl:text-right text-gray-500 text-gray-400 mb-5 font-montserrat">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
+  <table class="font-montserrat table-md w-full table mb-5 text-sm text-left text-gray-400 text-gray-500 rtl:text-right">
+    <thead class="bg-rcpch_dark_blue text-xs text-white text-gray-700 uppercase bg-gray-50">
       <tr>
         <th scope="col" class="w-1/12">NPDA UserID</th>
         <th scope="col" class="w-2/12">Name</th>
-        <th scope="col" class="px-0 w-3/12">Email</th>
+        <th scope="col" class="w-3/12 px-0">Email</th>
         <th scope="col" class="-mx-6 w-3/12 text-left">Memberships</th>
         <th scope="col" class="w-2/12">Role</th>
         <th class="w-1/12 text-center">Logs</th>
@@ -16,11 +16,11 @@
     </thead>
     <tbody>
       {% for npda_user in npdauser_list %}
-        <tr class="border-b bg-white text-rcpch_light_blue border-gray-100 hover:bg-r hover:bg-rcpch_light_blue hover:text-white">
+        <tr class="text-rcpch_light_blue bg-white border-b border-gray-100 hover:bg-r hover:bg-rcpch_light_blue hover:text-white">
           <td class="text-left">
             <div class="tooltip tooltip-right" data-tip="NPDA User Unique ID">
               <a href="{% url 'npdauser-update' npda_user.pk %}"
-                 class="px-2 text-rcpch_pink hover:text-rcpch_dark_blue">
+                 class="text-rcpch_pink px-2 hover:text-rcpch_dark_blue">
                 <strong>{{ npda_user.pk }}</strong>
               </a>
             </div>
@@ -29,9 +29,9 @@
           <td>
             <div class="tooltip tooltip-top" data-tip="{{ npda_user.email }}">
               {{ npda_user.email }}
-              <div class='tooltip tooltip-right bg-rcpch_pink'
-                   data-tip="Email confirmed">
-                {% if npda_user.email_confirmed %}
+              {% if npda_user.email_confirmed %}
+                <div class="bg-rcpch_pink tooltip tooltip-right"
+                     data-tip="Email confirmed">
                   <svg xmlns="http://www.w3.org/2000/svg"
                        viewBox="0 0 32 32"
                        width="16"
@@ -47,7 +47,7 @@
                   </svg>
                 </div>
               {% else %}
-                <div class='tooltip tooltip-top bg-rcpch_pink'
+                <div class="bg-rcpch_pink tooltip tooltip-top"
                      data-tip="Pending confirmation">
                   <svg xmlns="http://www.w3.org/2000/svg"
                        id="Layer_1"
@@ -60,12 +60,12 @@
                   </svg>
                 </div>
               {% endif %}
-            </span>
+            </div>
           </td>
-          <td class="grid grid-cols-4 gap-1 px-5 place-content-evenly items-center mt-5">
+          <td class="grid grid-cols-4 items-center place-content-evenly gap-1 px-5 mt-5">
             <span class="flex flex-row">
               {% if npda_user.is_staff %}
-                <div class='tooltip tooltip-top' data-tip="Has admin access">
+                <div class="tooltip tooltip-top" data-tip="Has admin access">
                   <svg xmlns="http://www.w3.org/2000/svg"
                        id="Layer_1"
                        data-name="Layer 1"
@@ -77,7 +77,7 @@
                 </div>
               {% endif %}
               {% if npda_user.is_superuser %}
-                <div class='tooltip tooltip-top' data-tip="Superuser">
+                <div class="tooltip tooltip-top" data-tip="Superuser">
                   <svg xmlns="http://www.w3.org/2000/svg"
                        id="Layer_1"
                        data-name="Layer 1"
@@ -89,7 +89,7 @@
                 </div>
               {% endif %}
               {% if npda_user.is_rcpch_audit_team_member %}
-                <div class='tooltip tooltip-top' data-tip="RCPCH Audit Team Member">
+                <div class="tooltip tooltip-top" data-tip="RCPCH Audit Team Member">
                   <svg xmlns="http://www.w3.org/2000/svg"
                        xmlns:xlink="http://www.w3.org/1999/xlink"
                        version="1.1"
@@ -140,7 +140,7 @@
                 </div>
               {% endif %}
               {% if npda_user.is_rcpch_staff %}
-                <div class='tooltip tooltip-top' data-tip="RCPCH Staff Member">
+                <div class="tooltip tooltip-top" data-tip="RCPCH Staff Member">
                   <svg xmlns="http://www.w3.org/2000/svg"
                        id="Layer_1"
                        height="16"
@@ -155,11 +155,11 @@
             </span>
           </td>
           <td class="px-6 text-left">{{ npda_user.get_role_display }}</td>
-          <td class="px-2 text-right w-80">
+          <td class="w-80 px-2 text-right">
             <div class="tooltip tooltip-left" data-tip="View user logs for {{ user }}">
               <a href="{% url 'npdauser-logs' npda_user.pk %}"
-                 class="text-rcpch_pink px-2 flex justify-center items-center">
-                <svg class="h-8 w-8 text-rcpch_pink"
+                 class="text-rcpch_pink flex justify-center items-center px-2">
+                <svg class="text-rcpch_pink w-8 h-8"
                      width="24"
                      height="24"
                      viewBox="0 0 24 24"
@@ -179,7 +179,7 @@
     </tbody>
     <tfoot>
       {% if npdauser_list %}
-        <tr class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white py-5">
+        <tr class="bg-rcpch_dark_blue py-5 text-xs text-white text-gray-700 uppercase bg-gray-50">
           <th colspan="9" class="px-2">
             <strong>
               Total: {{ npdauser_list|length }} User
@@ -188,7 +188,7 @@
           </th>
         </tr>
       {% else %}
-        <tr class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white py-5">
+        <tr class="bg-rcpch_dark_blue py-5 text-xs text-white text-gray-700 uppercase bg-gray-50">
           <th>
             <h5>No NPDA users yet!</h5>
           </th>
