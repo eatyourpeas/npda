@@ -1,26 +1,23 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block content %}
-<section class="bg-rcpch_dark_blue font-montserrat">
-  <div class="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12">
-    <h1
-      class="mb-4 text-4xl font-extrabold font-arial tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl text-white">
-      Oops... There was an error</h1>
-    <h2 class="mb-8 text-lg font-normal lg:text-xl sm:px-16 xl:px-48 text-white">Error Status Code:
-      {% block error_number %}
-      Null
-      {% endblock %}
-    </h2>
-    <div class="flex flex-col mb-8 lg:mb-16 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
-
-      {% block error_msg %}
-      <p class="mb-8 text-lg font-normal lg:text-xl sm:px-16 xl:px-48 text-white">We're sorry about this, but there was
-        an error.</p>
-      {% endblock %}
-
+  <section class="bg-rcpch_dark_blue font-montserrat">
+    <div class="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12">
+      <h1 class="mb-4 text-4xl font-extrabold font-arial tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl text-white">
+        Oops... There was an error
+      </h1>
+      <h2 class="mb-8 text-lg font-normal lg:text-xl sm:px-16 xl:px-48 text-white">
+        Error Status Code:
+        {% block error_number %}Null{% endblock %}
+      </h2>
+      <div class="flex flex-col mb-8 lg:mb-16 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
+        {% block error_msg %}
+          <p class="mb-8 text-lg font-normal lg:text-xl sm:px-16 xl:px-48 text-white">
+            We're sorry about this, but there was
+            an error.
+          </p>
+        {% endblock %}
+      </div>
     </div>
-  </div>
-</section>
-
+  </section>
 {% endblock %}
