@@ -9,7 +9,8 @@ We recommend the use of the popular [VSCode](https://code.visualstudio.com/) edi
 
 The below instructions regarding linting and formatting assume the use of VSCode
 
-## Linter
+## Python (.py) files
+### Linter
 
 We use the PyLint linter. It promotes consistency if all of the team use the same linting and formatting rules.
 
@@ -24,9 +25,9 @@ You may need to install the `pylint_django` plugin and add `--load-plugins=pylin
 
 - In `Python > Linting Pylint Args` add `--load-plugins=pylint_django`
 
-## Formatter
+### Formatter
 
-## Imports
+### Imports
 
 Python imports should be categorised:
 
@@ -43,3 +44,15 @@ In addition, both packages and individual functions/classes should be listed alp
 All of the above measures help to prevent duplicates, ensures tidiness and maintainability, and lets us see easily which of our imports are most reliable and trusted.
 
 Further details on RCPCH code style and preferences are found in the [RCPCH Playbook](https://playbook.rcpch.tech/)
+
+## Django Template Files (templates/**/*/.html)
+
+### Linter + Formatter
+We utilise [djlint](https://djlint.com/) for both formatting and linting of template DJANGO files. We recommend the development environment has the [djlint vscode extension](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) installed.
+
+#### Running djlint
+To lint:
+`djlint ./project/npda/templates/* --configuration .djlintrc --lint`
+To reformat (automatically fix) files:
+`djlint ./project/npda/templates/* --configuration .djlintrc --reformat`
+
