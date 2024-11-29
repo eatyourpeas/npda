@@ -234,5 +234,13 @@ module.exports = {
     "border-rcpch_dark_red",
     'border-"bg-rcpch_lightest_grey",',
     'border-"bg-rcpch_dark_blue",',
+    'btn-info',
+    'btn-success',
+    'btn-warning',
+    'btn-error',
+    'alert-info',
+    'alert-success',
+    'alert-warning',
+    'alert-error',
   ],
 };

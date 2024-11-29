@@ -70,7 +70,7 @@ class SubmissionsListView(
             "-submission_active",
             "-submission_date",
         )
-
+        
         return final
 
     def get_context_data(self, **kwargs: Any) -> dict:

@@ -116,12 +116,12 @@ async def home(request):
                 await sync_to_async(submission.save)()
                 messages.error(
                     request=request,
-                    message=f"CSV has been uploaded, but errors have been found in {len(errors_by_row_index.items())} rows. Please check the data quality report for details.",
+                    message=f"CSV has been uploaded, but errors were found in {len(errors_by_row_index.items())} rows. Please check the data quality report for details.",
                 )
             else:
                 messages.success(
                     request=request,
-                    message="File uploaded successfully. There are no errors,",
+                    message="Submission completed. There were no errors.",
                 )
             return redirect("submissions")
         else:
