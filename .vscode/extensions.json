@@ -9,7 +9,6 @@
     "otovo-oss.htmx-tags", // htmx Tag Support (Auto-completion)
     "dbaeumer.vscode-eslint", // ESLint for JS Linting
     "bradlc.vscode-tailwindcss", // TailwindCSS Intellisense
-    "heybourn.headwind", // TailwindCSS Class Sorter and De-duplicator (Headwind)
   ],
   "unwantedRecommendations": [
     // Discouraged extensions...
