@@ -109,9 +109,11 @@ module.exports = {
     },
   },
   plugins: [require("daisyui")],
-  darkMode: ['selector', '[data-theme="dark"]'],
+  // darkMode: ['selector', '[data-theme="dark"]'], # To reinstate dark mode, uncomment this line
   daisyui: {
-    themes: ["light", "dark"], // Example themes
+    themes: ["light",
+      // "dark"  # To reinstate dark mode, uncomment this line
+    ], // Example themes
     // Add any other DaisyUI-specific configurations here
   },
   safelist: [
