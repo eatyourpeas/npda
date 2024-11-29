@@ -1,8 +1,13 @@
+from decimal import Decimal, ROUND_HALF_UP
 from django import forms
 from django.core.exceptions import ValidationError
 from ...constants.styles import *
 from ...constants import *
 from ..general_functions.validate_dates import validate_date
+from ..general_functions.dgc_centile_calculations import (
+    calculate_centiles_z_scores,
+    calculate_bmi,
+)
 from ..models import Visit
 
 
@@ -118,13 +123,19 @@ class VisitForm(forms.ModelForm):
             "bmi_sds": forms.HiddenInput(),
         }
 
-    height_centile = forms.CharField(widget=forms.HiddenInput(), required=False)
-    height_sds = forms.CharField(widget=forms.HiddenInput(), required=False)
-    weight_centile = forms.CharField(widget=forms.HiddenInput(), required=False)
-    weight_sds = forms.CharField(widget=forms.HiddenInput(), required=False)
-    bmi = forms.CharField(widget=forms.HiddenInput(), required=False)
-    bmi_centile = forms.CharField(widget=forms.HiddenInput(), required=False)
-    bmi_sds = forms.CharField(widget=forms.HiddenInput(), required=False)
+    height_centile = forms.DecimalField(widget=forms.HiddenInput(), required=False)
+    height_sds = forms.DecimalField(
+        widget=forms.HiddenInput(), required=False, decimal_places=1
+    )
+    weight_centile = forms.DecimalField(widget=forms.HiddenInput(), required=False)
+    weight_sds = forms.DecimalField(
+        widget=forms.HiddenInput(), required=False, decimal_places=1
+    )
+    bmi = forms.DecimalField(widget=forms.HiddenInput(), required=False)
+    bmi_centile = forms.DecimalField(
+        widget=forms.HiddenInput(), required=False, decimal_places=1
+    )
+    bmi_sds = forms.DecimalField(widget=forms.HiddenInput(), required=False)
 
     categories = [
         "Measurements",
@@ -748,6 +759,97 @@ class VisitForm(forms.ModelForm):
         if cleaned_data["bmi_sds"] == "":
             cleaned_data["bmi_sds"] = None
 
+        def round_to_one_decimal_place(value):
+            return Decimal(value).quantize(
+                Decimal("0.1"), rounding=ROUND_HALF_UP
+            )  # round to 1 decimal place: although the rounding is done in the clean methods for height and weight, this is a final check
+
+        # calculate centile and SDS for measurements if present
+        basic_params = all(
+            param is not None
+            for param in [
+                self.patient.date_of_birth,
+                cleaned_data["height_weight_observation_date"],
+                self.patient.sex,
+            ]
+        )  # check if all required parameters are present. Observation date has already been cleaned and validated at this point
+        if "height" in cleaned_data:
+            height = cleaned_data["height"]
+        else:
+            height = None
+        if "weight" in cleaned_data:
+            weight = cleaned_data["weight"]
+        else:
+            weight = None
+        birth_date = self.patient.date_of_birth
+        observation_date = cleaned_data["height_weight_observation_date"]
+        sex = self.patient.sex
+
+        if height is not None:
+            cleaned_data["height"] = round_to_one_decimal_place(height)
+        if weight is not None:
+            cleaned_data["weight"] = round_to_one_decimal_place(weight)
+
+        if basic_params and height is not None:
+            # cleaned_data["height"] = round_to_one_decimal_place(height)
+            try:
+                centile, sds = calculate_centiles_z_scores(
+                    birth_date=birth_date,
+                    observation_date=observation_date,
+                    measurement_method="height",
+                    observation_value=round_to_one_decimal_place(height),
+                    sex=sex,
+                )
+                cleaned_data["height_centile"] = round_to_one_decimal_place(centile)
+                cleaned_data["height_sds"] = round_to_one_decimal_place(sds)
+            except Exception as e:
+                cleaned_data["height_centile"] = None
+                cleaned_data["height_sds"] = None
+                # we are not raising a validation error here as sds and centile are not required fields
+                pass
+        if basic_params and weight is not None:
+            # cleaned_data["weight"] = round_to_one_decimal_place(weight)
+            try:
+                centile, sds = calculate_centiles_z_scores(
+                    birth_date=birth_date,
+                    observation_date=observation_date,
+                    measurement_method="weight",
+                    observation_value=round_to_one_decimal_place(weight),
+                    sex=sex,
+                )
+                cleaned_data["weight_centile"] = round_to_one_decimal_place(centile)
+                cleaned_data["weight_sds"] = round_to_one_decimal_place(sds)
+            except Exception as e:
+                cleaned_data["weight_centile"] = None
+                cleaned_data["weight_sds"] = None
+                # we are not raising a validation error here as sds and centile are not required fields
+                pass
+        # calculate BMI, BMI centile and BMI SDS, if height and weight are present
+        if basic_params and height is not None and weight is not None:
+            cleaned_data["bmi"] = calculate_bmi(height, weight)
+            if (
+                cleaned_data["bmi"] is None
+            ):  # the BMI calculation returns None if BMI is > 99
+                cleaned_data["bmi_centile"] = None
+                cleaned_data["bmi_sds"] = None
+            else:
+                try:
+                    centile, sds = calculate_centiles_z_scores(
+                        birth_date=birth_date,
+                        observation_date=observation_date,
+                        measurement_method="bmi",
+                        observation_value=round(cleaned_data["bmi"], 1),
+                        sex=sex,
+                    )
+                    cleaned_data["bmi_centile"] = round_to_one_decimal_place(centile)
+                    cleaned_data["bmi_sds"] = round_to_one_decimal_place(sds)
+                except Exception as e:
+                    cleaned_data["bmi_centile"] = None
+                    cleaned_data["bmi_sds"] = None
+                    # we are not raising a validation error here as sds and centile are not required fields
+                    pass
+
+        # Check that the hba1c value is within the correct range
         hba1c_value = cleaned_data["hba1c"]
         hba1c_format = cleaned_data["hba1c_format"]
 
