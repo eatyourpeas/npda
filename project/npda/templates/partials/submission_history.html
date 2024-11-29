@@ -1,6 +1,7 @@
 {% load static %}
 {% load npda_tags %}
 <div>
+
     {% if request.user.view_preference == 1 %}
         <!-- national view -->
         <h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">All Submissions for {{pz_code}}</h1>
@@ -8,6 +9,7 @@
         <!-- PDU view   -->
         <h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">All Submissions Nationally</h1>
     {% endif %}
+
     {% if submissions %}
                 <table class="table table-md w-full text-sm text-left rtl:text-right text-gray-500 text-gray-400 mb-5 font-montserrat">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
@@ -29,9 +31,9 @@
                         <tr class="border-b bg-rcpch_lightest_grey text-rcpch_light_blue border-gray-100 hover:bg-r hover:bg-rcpch_mid_grey hover:text-white">
                         {% endif %}
                                 <td>{{  submission.submission_date|date:"d/m/Y H:i s" }} secs</td>
-                                <td>{{ submission.submission_by}}</td>
+                                <td>{{ submission.full_name_submission_by}}</td>
                                 <td>{{ submission.audit_year}}</td>
-                                <td>{{ submission.patient_count}}</td>
+                                <td>{% if submission.patient_count %}{{ submission.patient_count }}{% else %}-{% endif %}</td>
                                 <td>
                                     {% if submission.submission_active %}
                                         <span class="bg-rcpch_pink px-1 py-0.25 mx-1 my-1 text-sm font-semibold text-white">

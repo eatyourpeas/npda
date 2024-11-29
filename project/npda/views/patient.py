@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count, Case, When, Max, Q, F
-from django.forms import BaseForm
+from django.forms import BaseForm, ValidationError
 from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -32,6 +32,8 @@ from project.npda.models import NPDAUser
 from ..models import Patient
 from ..forms.patient_form import PatientForm
 from .mixins import (
+    CheckCanCompleteQuestionnaireMixin,
+    CheckCurrentAuditYearMixin,
     CheckPDUInstanceMixin,
     CheckPDUListMixin,
     LoginAndOTPRequiredMixin,
@@ -71,7 +73,10 @@ class PatientListView(
 
         # apply filters and annotations to the queryset
         pz_code = self.request.session.get("pz_code")
-        filtered_patients = Q(submissions__submission_active=True)
+        filtered_patients = Q(
+            submissions__submission_active=True,
+            submissions__audit_year=self.request.session.get("selected_audit_year"),
+        )
         # filter by contents of the search bar
         search = self.request.GET.get("search-input")
         if search:
@@ -127,6 +132,7 @@ class PatientListView(
             .count()
         )
         context["pz_code"] = self.request.session.get("pz_code")
+        context["selected_audit_year"] = self.request.session.get("selected_audit_year", "None")
         context["total_valid_patients"] = total_valid_patients
         context["total_invalid_patients"] = (
             Patient.objects.filter(submissions__submission_active=True).count()
@@ -176,10 +182,13 @@ class PatientCreateView(
     LoginAndOTPRequiredMixin,
     PermissionRequiredMixin,
     SuccessMessageMixin,
+    CheckCurrentAuditYearMixin,
+    CheckCanCompleteQuestionnaireMixin,
     CreateView,
 ):
     """
     Handle creation of new patient in audit - should link the patient to the current audit year and the logged in user's PDU
+    Note that patients can only be created in the current audit year
     """
 
     permission_required = "npda.add_patient"
@@ -279,10 +288,13 @@ class PatientUpdateView(
     CheckPDUInstanceMixin,
     PermissionRequiredMixin,
     SuccessMessageMixin,
+    CheckCurrentAuditYearMixin,
+    CheckCanCompleteQuestionnaireMixin,
     UpdateView,
 ):
     """
     Handle update of patient in audit
+    Note patients can only be updated in the current audit year
     """
 
     permission_required = "npda.change_patient"
@@ -292,6 +304,7 @@ class PatientUpdateView(
     success_message = "New child record updated successfully"
     success_url = reverse_lazy("patients")
     Submission = apps.get_model("npda", "Submission")
+    PatientSubmission = apps.get_model("npda", "PatientSubmission")
 
     def get_context_data(self, **kwargs):
         Transfer = apps.get_model("npda", "Transfer")
@@ -326,6 +339,8 @@ class PatientDeleteView(
     CheckPDUInstanceMixin,
     PermissionRequiredMixin,
     SuccessMessageMixin,
+    CheckCurrentAuditYearMixin,
+    CheckCanCompleteQuestionnaireMixin,
     DeleteView,
 ):
     """
