@@ -1,17 +1,22 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<div class="flex flex-col justify-center px-10" hx-get="/npda_users" hx-trigger="npda_users from:body" hx-target="#npda_user_table">
+  <div class="flex flex-col justify-center px-10"
+       hx-get="/npda_users"
+       hx-trigger="npda_users from:body"
+       hx-target="#npda_user_table">
     <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
-          <div class="relative overflow-x-auto" id="npda_user_table">
-            {% include 'partials/npda_user_table.html' with npdauser_list=npdauser_list %}
-          </div>
-            {% if perms.npda.add_npdauser %}
-              <a href="{% url 'npdauser-create' %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Add NPDA User</a>
-            {% endif %}
-            <a href="{% url 'home' %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Home</a>
+        <div class="relative overflow-x-auto" id="npda_user_table">
+          {% include 'partials/npda_user_table.html' with npdauser_list=npdauser_list %}
         </div>
+        {% if perms.npda.add_npdauser %}
+          <a href="{% url 'npdauser-create' %}"
+             class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Add NPDA User</a>
+        {% endif %}
+        <a href="{% url 'home' %}"
+           class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Home</a>
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}

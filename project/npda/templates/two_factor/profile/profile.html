@@ -2,36 +2,43 @@
 {% load i18n %}
 {% load two_factor_tags %}
 {% load npda_tags %}
-
 {% block content %}
-<div class=" flex flex-col justify-center items-center">
-  
-      <h1 class="text-lg font-montserrat font-semibold mt-5 mb-5">{% block title %}{% trans "Account Settings" %}{% endblock %}</h1>
-
-      {% if default_device %}
-        <p  class="mb-5">Your method of two-factor authentication is now working. If you wish to change to a different method of authentication at any point, you can reset <a class="text-rcpch_light_blue" href="{% url 'two_factor:disable' %}">here</a>.</p>
-          
-          <div>
-              <a href="{% url 'home'  %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Home</a>
-          </div>
-
-      {% else %}
+  <div class=" flex flex-col justify-center items-center">
+    <h1 class="text-lg font-montserrat font-semibold mt-5 mb-5">
+      {% block title %}
+        {% trans "Account Settings" %}
+      {% endblock %}
+    </h1>
+    {% if default_device %}
+      <p class="mb-5">
+        Your method of two-factor authentication is now working. If you wish to change to a different method of authentication at any point, you can reset <a class="text-rcpch_light_blue" href="{% url 'two_factor:disable' %}">here</a>.
+      </p>
+      <div>
+        <a href="{% url 'home' %}"
+           class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Home</a>
+      </div>
+    {% else %}
+      <div>
         <div>
           <div>
-            <div>
-              <h2 class="text-lg font-montserrat font-semibold mt-5 mb-5">Enable two-factor authentication</h2>
-            </div>
-            <p class="mb-5 font-montserrat">
-            {% blocktrans trimmed %}Two-factor authentication is not enabled for your
-            account. You must enable this to use the National Paediatric Diabetes Audit platform.{% endblocktrans %}
-            </p>
-            <p>
-              <a href="{% url 'two_factor:setup' %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">
-                {% trans "Enable two-factor authentication" %}
-              </a>
-            </p>
+            <h2 class="text-lg font-montserrat font-semibold mt-5 mb-5">
+              Enable two-factor authentication
+            </h2>
           </div>
+          <p class="mb-5 font-montserrat">
+            {% blocktrans trimmed %}
+              Two-factor authentication is not enabled for your
+              account. You must enable this to use the National Paediatric Diabetes Audit platform.
+            {% endblocktrans %}
+          </p>
+          <p>
+            <a href="{% url 'two_factor:setup' %}"
+               class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">
+              {% trans "Enable two-factor authentication" %}
+            </a>
+          </p>
         </div>
-      {% endif %}
-</div>
+      </div>
+    {% endif %}
+  </div>
 {% endblock %}

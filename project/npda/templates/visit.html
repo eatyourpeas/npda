@@ -1,185 +1,189 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<div class="flex flex-row min-h-screen justify-center">
+  <div class="flex flex-row min-h-screen justify-center">
     <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
-        <h1 class="bg-rcpch_light_blue text-white px-2"><strong>NHS Number: {{patient.nhs_number}}</strong></h1>
+        <h1 class="bg-rcpch_light_blue text-white px-2">
+          <strong>NHS Number: {{ patient.nhs_number }}</strong>
+        </h1>
         {% if visits %}
-            {% for visit in visits %}
+          {% for visit in visits %}
             <div class="py-2">
-                <div class="group relative w-max">   
-                    <strong>Visit Date:</strong> {{ visit.visit_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_visit_date_help_label_text}}</small>
-                    </span>
-                </div>
+              <div class="group relative w-max">
+                <strong>Visit Date:</strong> {{ visit.visit_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_visit_date_help_label_text }}</small>
+                </span>
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Observation date:</strong> {{ visit.height_weight_observation_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_height_weight_observation_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.height }} cm
-                    {{ visit.weight }} kg
-                </div>
+              <div class="group relative w-max">
+                <strong>Observation date:</strong> {{ visit.height_weight_observation_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_height_weight_observation_date_help_label_text }}</small>
+                </span>
+                {{ visit.height }} cm
+                {{ visit.weight }} kg
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>A1c Date:</strong> {{ visit.hba1c_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_hba1c_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.hba1c }} {{ visit.get_hba1c_format_display }}
-                </div>
+              <div class="group relative w-max">
+                <strong>A1c Date:</strong> {{ visit.hba1c_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_hba1c_date_help_label_text }}</small>
+                </span>
+                {{ visit.hba1c }} {{ visit.get_hba1c_format_display }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Treatment:</strong> {{ visit.get_treatment_display }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_treatment_help_label_text }}</small>
-                    </span>
-                    <strong>Closed loop?:</strong> {{ visit.get_closed_loop_system_display }}
-                </div>
+              <div class="group relative w-max">
+                <strong>Treatment:</strong> {{ visit.get_treatment_display }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_treatment_help_label_text }}</small>
+                </span>
+                <strong>Closed loop?:</strong> {{ visit.get_closed_loop_system_display }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>CGM:</strong> {{ visit.get_glucose_monitoring_display }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_get_glucose_monitoring_display_help_label_text }}</small>
-                    </span>
-                </div>
+              <div class="group relative w-max">
+                <strong>CGM:</strong> {{ visit.get_glucose_monitoring_display }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_get_glucose_monitoring_display_help_label_text }}</small>
+                </span>
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Blood pressure date:</strong> {{ visit.blood_pressure_observation_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_blood_pressure_observation_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.systolic_blood_pressure }} / {{ visit.diastolic_blood_pressure }}
-                </div>
+              <div class="group relative w-max">
+                <strong>Blood pressure date:</strong> {{ visit.blood_pressure_observation_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_blood_pressure_observation_date_help_label_text }}</small>
+                </span>
+                {{ visit.systolic_blood_pressure }} / {{ visit.diastolic_blood_pressure }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Foot examination:</strong> {{ visit.foot_examination_observation_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_foot_examination_observation_date_help_label_text }}</small>
-                    </span>
-                </div>
+              <div class="group relative w-max">
+                <strong>Foot examination:</strong> {{ visit.foot_examination_observation_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_foot_examination_observation_date_help_label_text }}</small>
+                </span>
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Retinal screening date:</strong> {{ visit.retinal_screening_observation_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_retinal_screening_observation_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.retinal_screening_result }}
-                </div>
+              <div class="group relative w-max">
+                <strong>Retinal screening date:</strong> {{ visit.retinal_screening_observation_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_retinal_screening_observation_date_help_label_text }}</small>
+                </span>
+                {{ visit.retinal_screening_result }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>ACR:</strong> {{ visit.albumin_creatinine_ratio_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_albumin_creatinine_ratio_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.albumin_creatinine_ratio }} {{ visit.get_albuminuria_stage_display }}
-                </div>
+              <div class="group relative w-max">
+                <strong>ACR:</strong> {{ visit.albumin_creatinine_ratio_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_albumin_creatinine_ratio_date_help_label_text }}</small>
+                </span>
+                {{ visit.albumin_creatinine_ratio }} {{ visit.get_albuminuria_stage_display }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Cholesterol/TAG:</strong> {{ visit.total_cholesterol_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_total_cholesterol_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.total_cholesterol }} mmol/L
-                </div>
+              <div class="group relative w-max">
+                <strong>Cholesterol/TAG:</strong> {{ visit.total_cholesterol_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_total_cholesterol_date_help_label_text }}</small>
+                </span>
+                {{ visit.total_cholesterol }} mmol/L
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Thyroid function:</strong> {{ visit.thyroid_function_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_thyroid_function_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.get_thyroid_treatment_status_display }}
-                </div>
+              <div class="group relative w-max">
+                <strong>Thyroid function:</strong> {{ visit.thyroid_function_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_thyroid_function_date_help_label_text }}</small>
+                </span>
+                {{ visit.get_thyroid_treatment_status_display }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Coeliac status:</strong> {{ visit.coeliac_screen_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_coeliac_screen_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.get_gluten_free_diet_display }}
-                </div>
+              <div class="group relative w-max">
+                <strong>Coeliac status:</strong> {{ visit.coeliac_screen_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_coeliac_screen_date_help_label_text }}</small>
+                </span>
+                {{ visit.get_gluten_free_diet_display }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Psychology:</strong> {{ visit.psychological_screening_assessment_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_psychological_screening_assessment_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.get_psychological_additional_support_status_display }}
-                </div>
+              <div class="group relative w-max">
+                <strong>Psychology:</strong> {{ visit.psychological_screening_assessment_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_psychological_screening_assessment_date_help_label_text }}</small>
+                </span>
+                {{ visit.get_psychological_additional_support_status_display }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Smoking cessation referral:</strong> {{ visit.smoking_cessation_referral_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_smoking_cessation_referral_date_help_label_text }}</small>
-                    </span>
-                    {{ visit.get_smoking_status_display }}
-                </div>
+              <div class="group relative w-max">
+                <strong>Smoking cessation referral:</strong> {{ visit.smoking_cessation_referral_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_smoking_cessation_referral_date_help_label_text }}</small>
+                </span>
+                {{ visit.get_smoking_status_display }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>CHO counting (Level 3):</strong> {{ visit.carbohydrate_counting_level_three_education_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_carbohydrate_counting_level_three_education_date_help_label_text }}</small>
-                    </span>
-                    <strong>Dietician offered:</strong> {{ visit.get_dietician_additional_appointment_offered_display }}
-                    Date seen: {{ visit.dietician_additional_appointment_date }}
-                </div>
+              <div class="group relative w-max">
+                <strong>CHO counting (Level 3):</strong> {{ visit.carbohydrate_counting_level_three_education_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_carbohydrate_counting_level_three_education_date_help_label_text }}</small>
+                </span>
+                <strong>Dietician offered:</strong> {{ visit.get_dietician_additional_appointment_offered_display }}
+                Date seen: {{ visit.dietician_additional_appointment_date }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Sick day rules training:</strong> {{ visit.sick_day_rules_training_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_sick_day_rules_training_date_help_label_text }}</small>
-                    </span>
-                    <strong>ketones:</strong> {{ visit.get_ketone_meter_training_display }}
-                </div>
+              <div class="group relative w-max">
+                <strong>Sick day rules training:</strong> {{ visit.sick_day_rules_training_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_sick_day_rules_training_date_help_label_text }}</small>
+                </span>
+                <strong>ketones:</strong> {{ visit.get_ketone_meter_training_display }}
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Flu jab date:</strong> {{ visit.flu_immunisation_recommended_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_flu_immunisation_recommended_date_help_label_text }}</small>
-                    </span>
-                </div>
+              <div class="group relative w-max">
+                <strong>Flu jab date:</strong> {{ visit.flu_immunisation_recommended_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_flu_immunisation_recommended_date_help_label_text }}</small>
+                </span>
+              </div>
             </div>
             <div class="py-2">
-                <div class="group relative w-max">
-                    <strong>Hospital admission:</strong>  {{ visit.hospital_admission_date }}
-                    <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
-                        <small>{{visit.get_hospital_admission_date_help_label_text }}</small>
-                    </span>
-                    <strong>Hospital discharge:</strong> {{ visit.hospital_discharge_date }}
-                    <strong>Reason:</strong> {{ visit.get_hospital_admission_reason_display }}
-                    <strong>Treatments:</strong> {{ visit.get_dka_additional_therapies_display }}
-                    <strong>Other admissions:</strong> {{ visit.get_hospital_admission_other_display }}
-                </div>
+              <div class="group relative w-max">
+                <strong>Hospital admission:</strong>  {{ visit.hospital_admission_date }}
+                <span class="pointer-events-none absolute -top-7 left-0 w-max opacity-0 transition-opacity group-hover:opacity-100 bg-gray-600 text-white px-5">
+                  <small>{{ visit.get_hospital_admission_date_help_label_text }}</small>
+                </span>
+                <strong>Hospital discharge:</strong> {{ visit.hospital_discharge_date }}
+                <strong>Reason:</strong> {{ visit.get_hospital_admission_reason_display }}
+                <strong>Treatments:</strong> {{ visit.get_dka_additional_therapies_display }}
+                <strong>Other admissions:</strong> {{ visit.get_hospital_admission_other_display }}
+              </div>
             </div>
             <hr>
-
-            {% endfor %}
+          {% endfor %}
         {% else %}
-        <h5 class="py-2"><i>This child/young person has no visit data currently...</i></h5>
+          <h5 class="py-2">
+            <i>This child/young person has no visit data currently...</i>
+          </h5>
         {% endif %}
         <div class="py-5">
-            <a href="{% url 'patients' %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Go back</a>
+          <a href="{% url 'patients' %}"
+             class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Go back</a>
         </div>
+      </div>
     </div>
-    </div>
-</div>
+  </div>
 {% endblock %}

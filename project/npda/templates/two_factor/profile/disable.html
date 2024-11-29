@@ -1,18 +1,25 @@
 {% extends "two_factor/_base_focus.html" %}
 {% load i18n %}
-
 {% block content %}
-<div class=" flex flex-col justify-center items-center">
-
-      <h1 class="text-lg font-montserrat font-semibold mt-5 mb-5">{% block title %}{% trans "Reset Two-factor Authentication" %}{% endblock %}</h1>
-      <p>{% blocktrans trimmed %}You are about to disable Two-factor authentication. This will need to be reset to access the National Paediatric Diabetes Audit platform.{% endblocktrans %}</p>
-      <p>Are you sure?</p>
-      <form method="post">
-        {% csrf_token %}
-        <table>{{ form.as_table }}</table>
-        <button class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue"
-                type="submit">{% trans "Disable" %}</button>
-      </form>
-
-</div>
+  <div class=" flex flex-col justify-center items-center">
+    <h1 class="text-lg font-montserrat font-semibold mt-5 mb-5">
+      {% block title %}
+        {% trans "Reset Two-factor Authentication" %}
+      {% endblock %}
+    </h1>
+    <p>
+      {% blocktrans trimmed %}
+        You are about to disable Two-factor authentication. This will need to be reset to access the National Paediatric Diabetes Audit platform.
+      {% endblocktrans %}
+    </p>
+    <p>Are you sure?</p>
+    <form method="post">
+      {% csrf_token %}
+      <table>
+        {{ form.as_table }}
+      </table>
+      <button class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue"
+              type="submit">{% trans "Disable" %}</button>
+    </form>
+  </div>
 {% endblock %}

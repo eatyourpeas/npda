@@ -1,33 +1,31 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-
-<section class="bg-rcpch_dark_blue font-montserrat">
-    <div
-  class="hero min-h-screen bg-rcpch_dark_blue font-montserrat "
-  style="background-image: url({% static 'images/procedural-generation-bg.gif'  %});">
-  <div class="hero-overlay bg-opacity-70 backdrop-hue-rotate-30	backdrop-blur-sm"></div>
-  <div class="w-full hero-content text-neutral-content flex flex-wrap items-center justify-around">
-     <img
-      src="{% static 'npda-logo.png' %}"
-      class="rounded-lg shadow-2xl order-2 md:order-1 max-w-[50%]" />
-    <div class="max-w-md order-1 md:order-2">
-      <h1 class="mb-5 text-5xl font-bold text-center">National Paediatric Diabetes Audit</h1>
-      <p class="mb-5 text-center">
-        We are now accepting data for the 2023-24 audit year. Download the current dataset, templates for submitting data via CSV and questionnaire and our user guide.
-      </p>
-      <a href="http://0.0.0.0:8007/" class="btn w-full">Read User Guide</a>
+  <section class="bg-rcpch_dark_blue font-montserrat">
+    <div class="hero min-h-screen bg-rcpch_dark_blue font-montserrat "
+         style="background-image: url({% static 'images/procedural-generation-bg.gif' %})">
+      <div class="hero-overlay bg-opacity-70 backdrop-hue-rotate-30	backdrop-blur-sm">
+      </div>
+      <div class="w-full hero-content text-neutral-content flex flex-wrap items-center justify-around">
+        <img src="{% static 'npda-logo.png' %}"
+             class="rounded-lg shadow-2xl order-2 md:order-1 max-w-[50%]" />
+        <div class="max-w-md order-1 md:order-2">
+          <h1 class="mb-5 text-5xl font-bold text-center">
+            National Paediatric Diabetes Audit
+          </h1>
+          <p class="mb-5 text-center">
+            We are now accepting data for the 2023-24 audit year. Download the current dataset, templates for submitting data via CSV and questionnaire and our user guide.
+          </p>
+          <a href="http://0.0.0.0:8007/" class="btn w-full">Read User Guide</a>
+        </div>
+        <img src="{% static 'rcpch-logo.jpg' %}"
+             class="rounded-lg shadow-2xl order-3  max-w-[50%]" />
+      </div>
     </div>
-    <img
-      src="{% static 'rcpch-logo.jpg' %}"
-      class="rounded-lg shadow-2xl order-3  max-w-[50%]" />
-  </div>
-</div>
-</section>
-{% if can_upload_csv %}
-<section class="container-mx-auto pt-4 px-4 flex items-center justify-center rounded-none">
-    {% include 'partials/file_upload.html' %}
-</section>
-{% endif %}
-
+  </section>
+  {% if can_upload_csv %}
+    <section class="container-mx-auto pt-4 px-4 flex items-center justify-center rounded-none">
+      {% include 'partials/file_upload.html' %}
+    </section>
+  {% endif %}
 {% endblock %}

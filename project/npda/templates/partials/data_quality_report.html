@@ -1,9 +1,12 @@
 {% load static %}
 {% load npda_tags %}
 <div class="overflow-x-auto">
-  <h2 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">Data Quality Report</h2>
+  <h2 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">
+    Data Quality Report
+  </h2>
   <div class="max-h-screen">
-    <div class="w-full overflow-x-auto overflow-y-auto" style="max-height:inherit">
+    <div class="w-full overflow-x-auto overflow-y-auto"
+         style="max-height:inherit">
       <table class="table table-auto table-pin-cols table-pin-rows border-collapse text-sm text-left text-gray-500 mb-5 font-montserrat">
         <thead class="text-xs uppercase bg-rcpch_dark_blue text-white">
           <tr class="bg-rcpch_dark_blue text-white z-40">
@@ -23,13 +26,14 @@
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="100%" class="text-gray-900">This table shows the number of visits for each patient and the number of visits with errors for the current active submission.</td>
+            <td colspan="100%" class="text-gray-900">
+              This table shows the number of visits for each patient and the number of visits with errors for the current active submission.
+            </td>
           </tr>
         </tfoot>
       </table>
     </div>
   </div>
-
   {% if submission_errors %}
     <table class="table-auto w-full text-sm text-left text-gray-500 mb-5 font-montserrat">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
@@ -56,7 +60,9 @@
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="3" class="text-gray-900">This table shows the errors found in the CSV file for the current active submission.</td>
+          <td colspan="3" class="text-gray-900">
+            This table shows the errors found in the CSV file for the current active submission.
+          </td>
         </tr>
       </tfoot>
     </table>

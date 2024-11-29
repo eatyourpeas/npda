@@ -2,42 +2,36 @@
 {% load i18n %}
 {% load two_factor_tags %}
 {% load static %}
-
-{% block extra_media %}
-{{ form.media }}
-{% endblock %}
-
+{% block extra_media %}{{ form.media }}{% endblock %}
 {% block title %}Login{% endblock %}
-
 {% block content %}
-
-<div class=" flex flex-col justify-center items-center">
-
-      {% if wizard.steps.current == 'auth' %}
+  <div class=" flex flex-col justify-center items-center">
+    {% if wizard.steps.current == 'auth' %}
       <div>
         <h2 class="font-montserrat text-lg font-semibold mt-5 text-center">Sign In</h2>
         <img src='{% static "npda-logo.png" %}' class="w-15 h-15 mt-5 mb-5">
       </div>
-
-      {% elif wizard.steps.current == 'token' %}
-        <p class="font-montserrat mb-5">Enter the one-time login code from your registered method of two-factor authentication:</p>
-      {% elif wizard.steps.current == 'backup' %}
-        <p>{% blocktrans trimmed %}Use this form for entering backup tokens for logging in.
+    {% elif wizard.steps.current == 'token' %}
+      <p class="font-montserrat mb-5">
+        Enter the one-time login code from your registered method of two-factor authentication:
+      </p>
+    {% elif wizard.steps.current == 'backup' %}
+      <p>
+        {% blocktrans trimmed %}
+          Use this form for entering backup tokens for logging in.
           These tokens have been generated for you to print and keep safe. Please
-          enter one of these backup tokens to login to your account.{% endblocktrans %}</p>
-      {% endif %}
-
-      <form action="" method="post" class="w-full max-w-md flex flex-col">
-        {% csrf_token %}
-        {% include "two_factor/_wizard_forms.html" %}
-
-        {# hidden submit button to enable [enter] key #}
-        <input type="submit" value="" hidden />
-
-        {% include "two_factor/_wizard_actions.html" %}
-      </form>
-
-    </div>
+          enter one of these backup tokens to login to your account.
+        {% endblocktrans %}
+      </p>
+    {% endif %}
+    <form action="" method="post" class="w-full max-w-md flex flex-col">
+      {% csrf_token %}
+      {% include "two_factor/_wizard_forms.html" %}
+      {# hidden submit button to enable [enter] key #}
+      <input type="submit" value="" hidden />
+      {% include "two_factor/_wizard_actions.html" %}
+    </form>
   </div>
+</div>
 </div>
 {% endblock %}

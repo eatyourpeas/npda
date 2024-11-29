@@ -2,306 +2,462 @@
 {% load npda_tags %}
 {% url 'patients' as patients_url %}
 {% if request.user.view_preference == 1 %}
-    <!-- PDU view   -->
-     <div role="alert" class="mt-2 alert bg-slate-200">
-        <p><i class="fa-solid fa-users-viewfinder"></i> Showing patients filtered by:</p>
-            <ul class="list-disc list-inside">
-                <li>
-                    <b>Audit Year </b>[<span class="font-mono bg-gray-300 p-1 mx-1">{{selected_audit_year}} only</span>].
-                </li>
-                <li>
-                    <b>Patient Diabetic Unit </b>[<span class="font-mono bg-gray-300 p-1 mx-1">{{pz_code}} only</span>].
-                </li>
-            </ul>
-            <button data-tip="You can change the audit year by using the filters below the navigation menu." class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('audit_year_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); "><i class="fas fa-question-circle"></i> Change Audit Year</button>
-            <button data-tip="You can change the PDU by using the dropdown below the navigation menu." class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full');  window.scrollTo(0, 0); document.getElementById('pz_code_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); "><i class="fas fa-question-circle"></i> Change PDU</button>
-            <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full');  document.getElementById('view_preference_2').click();"><i class="fa-solid fa-square-xmark"></i> Remove filter</button>
-            
-    </div>
+  <!-- PDU view   -->
+  <div role="alert" class="mt-2 alert bg-slate-200">
+    <p>
+      <i class="fa-solid fa-users-viewfinder"></i> Showing patients filtered by:
+    </p>
+    <ul class="list-disc list-inside">
+      <li>
+        <b>Audit Year </b>[<span class="font-mono bg-gray-300 p-1 mx-1">{{ selected_audit_year }} only</span>].
+      </li>
+      <li>
+        <b>Patient Diabetic Unit </b>[<span class="font-mono bg-gray-300 p-1 mx-1">{{ pz_code }} only</span>].
+      </li>
+    </ul>
+    <button data-tip="You can change the audit year by using the filters below the navigation menu."
+            class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2"
+            hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('audit_year_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); ">
+      <i class="fas fa-question-circle"></i> Change Audit Year
+    </button>
+    <button data-tip="You can change the PDU by using the dropdown below the navigation menu."
+            class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2"
+            hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full');  window.scrollTo(0, 0); document.getElementById('pz_code_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); ">
+      <i class="fas fa-question-circle"></i> Change PDU
+    </button>
+    <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2"
+            hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full');  document.getElementById('view_preference_2').click();">
+      <i class="fa-solid fa-square-xmark"></i> Remove filter
+    </button>
+  </div>
 {% elif request.user.view_preference == 2 %}
-    <!-- national view -->
-         <!-- PDU view   -->
-     <div role="alert" class="mt-2 alert bg-slate-200">
-        <p><i class="fa-solid fa-users-viewfinder"></i> Showing patients filtered by:</p>
-                    <ul class="list-disc list-inside">
-                <li>
-                    <b>Audit Year </b>[<span class="font-mono bg-gray-300 p-1 mx-1">{{selected_audit_year}} only</span>].
-                </li>
-                <li>
-                    <b>National patients</b> [<span class="font-mono bg-gray-300 p-1 mx-1">no filters</span>].
-                </li>
-            </ul>
-            <button data-tip="You can change the audit year by using the filters below the navigation menu." class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('audit_year_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); "><i class="fas fa-question-circle"></i> Change Audit Year</button>
-            <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2" hx-on:click="event.stopPropagation();  document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('view_preference_1').click();"><i class="fa-solid fa-square-plus"></i> Apply PDU Filter</button>
-    </div>
+  <!-- national view -->
+  <!-- PDU view   -->
+  <div role="alert" class="mt-2 alert bg-slate-200">
+    <p>
+      <i class="fa-solid fa-users-viewfinder"></i> Showing patients filtered by:
+    </p>
+    <ul class="list-disc list-inside">
+      <li>
+        <b>Audit Year </b>[<span class="font-mono bg-gray-300 p-1 mx-1">{{ selected_audit_year }} only</span>].
+      </li>
+      <li>
+        <b>National patients</b> [<span class="font-mono bg-gray-300 p-1 mx-1">no filters</span>].
+      </li>
+    </ul>
+    <button data-tip="You can change the audit year by using the filters below the navigation menu."
+            class="tooltip text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2"
+            hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('audit_year_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); ">
+      <i class="fas fa-question-circle"></i> Change Audit Year
+    </button>
+    <button class="text-rcpch_pink hover:text-rcpch_pink_light_tint1 hover:bg-gray-50 p-2"
+            hx-on:click="event.stopPropagation();  document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('view_preference_1').click();">
+      <i class="fa-solid fa-square-plus"></i> Apply PDU Filter
+    </button>
+  </div>
 {% endif %}
-
 {% if patient_list %}
-<div class="w-full overflow-x-scroll ">
-<table class="mt-2 table table-md text-sm text-left rtl:text-right  text-gray-400 mb-5 font-montserrat">
-    <thead class="text-xs uppercase  bg-rcpch_dark_blue text-white">
-            <tr class="snap-x">
-                <th scope="col" class="px-2 py-3 text-center">
-                     <span class="flex flex-row">
-                        <div id="npda_id_sort_label"  hx-preserve  class="swap swap-rotate">
-                            <button  hx-preserve hx-get="{{asc_url}}?sort_by=pk&page={{current_page}}&sort=asc"
-                                hx-on:htmx:after-request="document.getElementById('npda_id_sort_label').classList.toggle('swap-active');"
-                                hx-trigger="click throttle:1s"
-                                hx-target="#patient_table"
-                                hx-swap="innerHTML swap:100ms"
-                                class="swap-on">
-                                <i class="fa-solid fa-arrow-up-z-a mr-2"> </i>
-                            </button>
-                            <button  hx-preserve hx-get="{{desc_url}}?sort_by=pk&page={{current_page}}&sort=desc"
-                                hx-on:htmx:after-request="document.getElementById('npda_id_sort_label').classList.toggle('swap-active');"
-                                hx-trigger="click throttle:1s"
-                                hx-target="#patient_table"
-                                hx-swap="innerHTML swap:100ms"
-                                class="swap-off"
-                                >
-                                <i  class="fa-solid fa-arrow-down-a-z mr-2"
-                                ></i>
-                            </button>
-
-                        </div>
-                                               
-                            NPDA Patient ID
-                        </span>
+  <div class="w-full overflow-x-scroll ">
+    <table class="mt-2 table table-md text-sm text-left rtl:text-right  text-gray-400 mb-5 font-montserrat">
+      <thead class="text-xs uppercase  bg-rcpch_dark_blue text-white">
+        <tr class="snap-x">
+          <th scope="col" class="px-2 py-3 text-center">
+            <span class="flex flex-row">
+              <div id="npda_id_sort_label"  hx-preserve  class="swap swap-rotate">
+                <button hx-preserve
+                        hx-get="{{ asc_url }}?sort_by=pk&page={{ current_page }}&sort=asc"
+                        hx-on:htmx:after-request="document.getElementById('npda_id_sort_label').classList.toggle('swap-active');"
+                        hx-trigger="click throttle:1s"
+                        hx-target="#patient_table"
+                        hx-swap="innerHTML swap:100ms"
+                        class="swap-on">
+                  <i class="fa-solid fa-arrow-up-z-a mr-2"> </i>
+                </button>
+                <button hx-preserve
+                        hx-get="{{ desc_url }}?sort_by=pk&page={{ current_page }}&sort=desc"
+                        hx-on:htmx:after-request="document.getElementById('npda_id_sort_label').classList.toggle('swap-active');"
+                        hx-trigger="click throttle:1s"
+                        hx-target="#patient_table"
+                        hx-swap="innerHTML swap:100ms"
+                        class="swap-off">
+                  <i class="fa-solid fa-arrow-down-a-z mr-2"></i>
+                </button>
+              </div>
+              NPDA Patient ID
+            </span>
+          </th>
+          <th scope="col" class="px-2 py-3 text-center nhs-number-column">
+            <span class="flex flex-row">
+              <div id="nhs_num_sort_label"  hx-preserve  class="swap swap-rotate">
+                <button hx-preserve
+                        hx-get="{{ asc_url }}?sort_by=nhs_number&page={{ current_page }}&sort=asc"
+                        hx-on:htmx:after-request="document.getElementById('nhs_num_sort_label').classList.toggle('swap-active');"
+                        hx-trigger="click throttle:1s"
+                        hx-target="#patient_table"
+                        hx-swap="innerHTML swap:100ms"
+                        class="swap-on">
+                  <i class="fa-solid fa-arrow-up-z-a mr-2"> </i>
+                </button>
+                <button hx-preserve
+                        hx-get="{{ desc_url }}?sort_by=nhs_number&page={{ current_page }}&sort=desc"
+                        hx-on:htmx:after-request="document.getElementById('nhs_num_sort_label').classList.toggle('swap-active');"
+                        hx-trigger="click throttle:1s"
+                        hx-target="#patient_table"
+                        hx-swap="innerHTML swap:100ms"
+                        class="swap-off">
+                  <i class="fa-solid fa-arrow-down-a-z mr-2"></i>
+                </button>
+              </div>
+              NHS Number
+            </span>
+          </th>
+          <th scope="col" class="px-2 py-3 text-center">Sex</th>
+          <th scope="col" class="px-2 py-3 text-center">Date of Birth</th>
+          <th scope="col" class="px-2 py-3 text-center">Postcode</th>
+          <th scope="col" class="px-2 py-3 text-center">Ethnicity</th>
+          <th scope="col" class="px-2 py-3 text-center">Diabetes Type</th>
+          <th scope="col" class="px-2 py-3 text-center">Diagnosis Date</th>
+          <th scope="col" class="px-2 py-3 text-center">Date Uploaded</th>
+          <th scope="col" class="px-2 py-3 text-center">Audit Year</th>
+          <th scope="col" class="px-2 py-3 text-center">Latest Quarter</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for patient in patient_list %}
+          {% if patient.is_valid and patient.visit_error_count < 1 and forloop.counter0 == 0 %}
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_strong_blue text-white">
+              <tr>
+                <th colspan="12" class="px-6 py-3">
+                  Patients where all records have been validated: {{ total_valid_patients }}
                 </th>
-                <th scope="col" class="px-2 py-3 text-center nhs-number-column">
-                    <span class="flex flex-row">
-                        <div id="nhs_num_sort_label"  hx-preserve  class="swap swap-rotate">
-                            <button  hx-preserve hx-get="{{asc_url}}?sort_by=nhs_number&page={{current_page}}&sort=asc"
-                                hx-on:htmx:after-request="document.getElementById('nhs_num_sort_label').classList.toggle('swap-active');"
-                                hx-trigger="click throttle:1s"
-                                hx-target="#patient_table"
-                                hx-swap="innerHTML swap:100ms"
-                                class="swap-on">
-                                <i class="fa-solid fa-arrow-up-z-a mr-2"> </i>
-                            </button>
-                            <button  hx-preserve hx-get="{{desc_url}}?sort_by=nhs_number&page={{current_page}}&sort=desc"
-                                hx-on:htmx:after-request="document.getElementById('nhs_num_sort_label').classList.toggle('swap-active');"
-                                hx-trigger="click throttle:1s"
-                                hx-target="#patient_table"
-                                hx-swap="innerHTML swap:100ms"
-                                class="swap-off"
-                                >
-                                <i  class="fa-solid fa-arrow-down-a-z mr-2" 
-                                ></i>
-                            </button>
-
-                        </div>
-                        
-                            NHS Number
-                        </span>
-                </th>
-
-                <th scope="col" class="px-2 py-3 text-center">Sex</th>
-                <th scope="col" class="px-2 py-3 text-center">Date of Birth</th>
-                <th scope="col" class="px-2 py-3 text-center">Postcode</th>
-                <th scope="col" class="px-2 py-3 text-center">Ethnicity</th>
-                <th scope="col" class="px-2 py-3 text-center">Diabetes Type</th>
-                <th scope="col" class="px-2 py-3 text-center">Diagnosis Date</th>
-                <th scope="col" class="px-2 py-3 text-center">Date Uploaded</th>
-                <th scope="col" class="px-2 py-3 text-center">Audit Year</th>
-                <th scope="col" class="px-2 py-3 text-center">Latest Quarter</th>
-                <th scope="col"></th>
-            </tr>
-        </thead>
-        <tbody>
-                {% for patient in patient_list %}
-                {% if patient.is_valid and patient.visit_error_count < 1 and forloop.counter0 == 0 %}
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_strong_blue text-white">
-                    <tr>
-                        <th colspan="12" class="px-6 py-3">Patients where all records have been validated: {{total_valid_patients}}</th>
-                    </tr>
-                </thead>
-                {% else %}
-                    {% if forloop.counter == index_of_first_invalid_patient %}
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_strong_blue text-white">
-                        <tr>
-                            <th colspan="12" class="px-6 py-3">Patients with records failing validation: {{total_invalid_patients}}</th>
-                        </tr>
-                    </thead>
-                    {% endif %}
+              </tr>
+            </thead>
+          {% else %}
+            {% if forloop.counter == index_of_first_invalid_patient %}
+              <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_strong_blue text-white">
+                <tr>
+                  <th colspan="12" class="px-6 py-3">
+                    Patients with records failing validation: {{ total_invalid_patients }}
+                  </th>
+                </tr>
+              </thead>
+            {% endif %}
+          {% endif %}
+          {% if forloop.counter|divisibleby:2 %}
+            <tr class="bg-gray-100 hover:bg-gray-200">
+            {% else %}
+              <tr class="hover:bg-gray-200">
+              {% endif %}
+              <td>
+                <span class="tooltip tooltip-right"
+                      data-tip="View patient details (opens new tab)">
+                  <a class="btn hover:text-rcpch_pink"
+                     target="_blank"
+                     href="{% url 'patient-update' patient.pk %}">
+                    <i class="fas fa-hospital-user"></i>
+                    <div class="badge">
+                      <span class="font-mono text-xs">{{ patient.pk }}</span>
+                    </div>
+                  </a>
+                </span>
+              </td>
+              <td class="nhs-number-column {% if patient.errors|error_for_field:'nhs_number' or patient.errors|error_for_field:'gp_practice_ods_code' %} text-rcpch_red {% endif %}">
+                {% if patient.errors|error_for_field:"nhs_number" or patient.errors|error_for_field:"gp_practice_ods_code" %}
+                  {% if patient.errors|error_for_field:"gp_practice_ods_code" %}
+                    <span class="tooltip tooltip-right"
+                          data-tip="{{ patient.errors|error_for_field:'gp_practice_ods_code' }}">
+                      <svg class="mr-2"
+                           height="16"
+                           style="overflow:visible;
+                                  enable-background:new 0 0 32 32"
+                           viewBox="0 0 32 32"
+                           width="16"
+                           xml:space="preserve"
+                           xmlns="http://www.w3.org/2000/svg"
+                           xmlns:xlink="http://www.w3.org/1999/xlink">
+                        <g>
+                        <g id="Error_1_">
+                        <g id="Error">
+                        <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
+                        <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                        </g>
+                        </g>
+                        </g>
+                      </svg>
+                    </span>
+                  {% endif %}
+                  {% if patient.errors|error_for_field:"nhs_number" %}
+                    <span class="tooltip tooltip-right"
+                          data-tip="{{ patient.errors|error_for_field:'nhs_number' }}">
+                      <svg class="mr-2"
+                           height="16"
+                           style="overflow:visible;
+                                  enable-background:new 0 0 32 32"
+                           viewBox="0 0 32 32"
+                           width="16"
+                           xml:space="preserve"
+                           xmlns="http://www.w3.org/2000/svg"
+                           xmlns:xlink="http://www.w3.org/1999/xlink">
+                        <g>
+                        <g id="Error_1_">
+                        <g id="Error">
+                        <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
+                        <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                        </g>
+                        </g>
+                        </g>
+                      </svg>
+                    </span>
+                  {% endif %}
                 {% endif %}
-                {% if forloop.counter|divisibleby:2 %}<tr class="bg-gray-100 hover:bg-gray-200">
-                    {% else %}
-                    <tr class="hover:bg-gray-200"> 
-                    {% endif %} 
-                    <td>
-                        <span class="tooltip tooltip-right" data-tip="View patient details (opens new tab)">
-                            <a class="btn hover:text-rcpch_pink" target="_blank" href="{% url 'patient-update' patient.pk %}">
-  <i class="fas fa-hospital-user"></i>
-  <div class="badge"><span class="font-mono text-xs">{{ patient.pk }}</span></div>
-                            </a>
-                           
-                        </span>
-                    </td>
-                    <td class="nhs-number-column {% if patient.errors|error_for_field:'nhs_number' or patient.errors|error_for_field:'gp_practice_ods_code' %} text-rcpch_red {% endif %}">
-                        {% if patient.errors|error_for_field:"nhs_number" or patient.errors|error_for_field:"gp_practice_ods_code" %}
-                          {% if patient.errors|error_for_field:"gp_practice_ods_code" %}
-                            <span class="tooltip tooltip-right" data-tip="{{patient.errors|error_for_field:'gp_practice_ods_code'}}">
-                            <svg class="mr-2" height="16" style="overflow:visible;enable-background:new 0 0 32 32" viewBox="0 0 32 32" width="16" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g><g id="Error_1_"><g id="Error"><circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;"/><path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;"/></g></g></g></svg>
-                            </span>
-                          {% endif %}
-                          {% if patient.errors|error_for_field:"nhs_number" %}
-                            <span class="tooltip tooltip-right" data-tip="{{patient.errors|error_for_field:'nhs_number'}}">
-                            <svg class="mr-2" height="16" style="overflow:visible;enable-background:new 0 0 32 32" viewBox="0 0 32 32" width="16" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g><g id="Error_1_"><g id="Error"><circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;"/><path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;"/></g></g></g></svg>
-                            </span>
-                          {% endif %}
-                        {% endif %}
-                        {{ patient.nhs_number }}
-                    </td>
-                    <td class="px-6 py-4 text-center items-center {% if patient.errors|error_for_field:'sex' %} text-rcpch_red {% endif %}">
-                        {% if patient.errors|error_for_field:"sex" %}
-                                <div class="tooltip tooltip-right" data-tip="{{patient.errors|error_for_field:'sex'}}">
-                                <svg height="16" style="overflow:visible;enable-background:new 0 0 32 32" viewBox="0 0 32 32" width="16" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g><g id="Error_1_"><g id="Error"><circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;"/><path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;"/></g></g></g></svg>
-                            </div>&nbsp;
-                        {% endif %}
-                        {{ patient.get_sex_display }}
-                    </td>
-                    <td class="px-6 py-4 items-center {% if patient.errors|error_for_field:'date_of_birth' %} text-rcpch_red {% endif %}">
-                        {% if patient.errors|error_for_field:"date_of_birth" %}
-                        <div class="tooltip tooltip-top" data-tip="{{patient.errors|error_for_field:'date_of_birth'}}">
-                            <svg 
-                                height="16" 
-                                style="overflow:visible;enable-background:new 0 0 32 32" 
-                                viewBox="0 0 32 32" width="16" 
-                                xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g>
-                                    <g id="Error_1_"><g id="Error"><circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;"/><path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;"/></g></g></g>
-                                </svg>
-                        </div>&nbsp;
-                        {% endif %}
-                        {{ patient.date_of_birth }}
-                    </td>
-                    <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'postcode' %} text-rcpch_red {% endif %}">
-                        {% if patient.errors|error_for_field:"postcode" %}
-                        <div class="tooltip tooltip-top" data-tip="{{patient.errors|error_for_field:'postcode'}}">
-                        <svg height="16" style="overflow:visible;enable-background:new 0 0 32 32" viewBox="0 0 32 32" width="16" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g><g id="Error_1_"><g id="Error"><circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;"/><path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;"/></g></g></g></svg>
-                        </div>&nbsp;
-                        {% endif %}
-                        {{ patient.postcode }}
-                    </td>
-                    <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'ethnicity' %} text-rcpch_red {% endif %}">
-                        {% if patient.errors|error_for_field:"ethnicity" %}
-                        <div class="tooltip tooltip-top" data-tip="{{patient.errors|error_for_field:'ethnicity'}}">
-                        <svg height="16" style="overflow:visible;enable-background:new 0 0 32 32" viewBox="0 0 32 32" width="16" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g><g id="Error_1_"><g id="Error"><circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;"/><path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;"/></g></g></g></svg>
-                        </div>&nbsp;
-                        {% endif %}
-                        {{ patient.get_ethnicity_display }}
-                    </td>
-                    <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'diabetes_type' %} text-rcpch_red {% endif %}">
-                        {% if patient.errors|error_for_field:"diabetes_type" %}
-                        <div class="tooltip tooltip-top" data-tip="{{patient.errors|error_for_field:'diabetes_type'}}">
-                        <svg height="16" style="overflow:visible;enable-background:new 0 0 32 32" viewBox="0 0 32 32" width="16" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g><g id="Error_1_"><g id="Error"><circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;"/><path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;"/></g></g></g></svg>
-                        </div>&nbsp;
-                        {% endif %}
-                        {{ patient.get_diabetes_type_display }}
-                    </td>
-                    <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'diagnosis_date' %} text-rcpch_red {% endif %}">
-                        {% if patient.errors|error_for_field:"diagnosis_date" %}
-                        <div class="tooltip tooltip-top" data-tip="{{patient.errors|error_for_field:'diagnosis_date'}}">
-                        <svg height="16" style="overflow:visible;enable-background:new 0 0 32 32" viewBox="0 0 32 32" width="16" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g><g id="Error_1_"><g id="Error"><circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;"/><path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;"/></g></g></g></svg>
-                        </div>&nbsp;
-                        {% endif %}
-                        {{ patient.diagnosis_date }}
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                            {{patient.last_upload_date|date:"d/m/Y H:m:s"}}
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                            {{patient.audit_year}}
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                            {{ patient.latest_quarter|default:'-' }}</td>
-                    <td class="px-2 text-right w-80 relative group">
-                        
-                        <a 
-                        href="{% url 'patient_visits' patient.pk %}" 
-                        {% if patient.is_valid and patient.visit_error_count < 1 %} 
-                        class="text-rcpch_pink px-2 flex justify-end align-center hover:text-white"
-                        {% else %}
-                        class="text-rcpch_red hover:text-white flex justify-end"
-                        {% endif %}
-                        >
-                            {% if patient.visit_error_count > 0 %}
-                                <strong class="text-rcpch_red px-2 self-center">Visits ({{patient.visit_set.all.count}})</strong>
-                                <svg 
-                                    class="self-center text-rcpch_red" 
-                                    height="16" style="overflow:visible;enable-background:new 0 0 32 32" 
-                                    viewBox="0 0 32 32" width="16" 
-                                    xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                                    <g><g id="Error_1_"><g id="Error">
-                                    <circle cx="16" cy="16" id="BG" r="16" fill="currentColor"/>
-                                    <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;"/>
-                                    </g></g></g>
-                                </svg>
-                            <div class="tooltip-content hidden group-hover:block absolute rounded shadow-lg px-2 py-2 bg-gray-800 text-white -mt-20 text-left font-montserrat">
-                                {{patient.visit_error_count}} visit{{patient.visit_error_count|pluralize}} {{patient.visit_error_count|pluralize:'has, have'}} errors that need addressing.<br>Items have been saved but will not be included until rectified.
-                            </div>
-                            {% else %}
-                            <strong class="text-rcpch_pink self-center">Visits ({{patient.visit_set.all.count}})</strong>
-                            {% endif %}
-                            <!-- caret -->
-                            <svg
-                                {% if patient.is_valid and patient.visit_error_count < 1 %}
-                                class="h-8 w-8 text-rcpch_pink self-center"
-                                {% else %}
-                                class="h-8 w-8 text-rcpch_red self-center"
-                                {% endif %}
-                                width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">  
-                                <path stroke="none" d="M0 0h24v24H0z"/>  <polyline points="9 6 15 12 9 18" />
-                                </svg>
-                            </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white py-5">
-                    <th colspan="10" class="px-2">
-                        <strong>
-                        Total: {{patient_list.count}} patients
-                        </strong>
-                    </th>
-                    <th colspan="2">
-                        <!-- Pagination controls -->
-                        <div class="pagination text-right">
-                            <span class="step-links">
-                                {% if page_obj.has_previous %}
-                                    <a href="?page=1" >&laquo; first</a>
-                                    <a href="?page={{ page_obj.previous_page_number }}" >previous</a>
-                                {% endif %}
-
-                                <span class="current">
-                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-                                </span>
-
-                                {% if page_obj.has_next %}
-                                    <a href="?page={{ page_obj.next_page_number }}" >next</a>
-                                    <a href="?page={{ page_obj.paginator.num_pages }}" >last &raquo;</a>
-                                {% endif %}
-                            </span>
-                        </div>
-                    </th>
-                </tr>
-            </tfoot>
-    </table>
-</div>
-    {% else %}
+                {{ patient.nhs_number }}
+              </td>
+              <td class="px-6 py-4 text-center items-center {% if patient.errors|error_for_field:'sex' %}text-rcpch_red{% endif %}">
+                {% if patient.errors|error_for_field:"sex" %}
+                  <div class="tooltip tooltip-right"
+                       data-tip="{{ patient.errors|error_for_field:'sex' }}">
+                    <svg height="16"
+                         style="overflow:visible;
+                                enable-background:new 0 0 32 32"
+                         viewBox="0 0 32 32"
+                         width="16"
+                         xml:space="preserve"
+                         xmlns="http://www.w3.org/2000/svg"
+                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                      <g>
+                      <g id="Error_1_">
+                      <g id="Error">
+                      <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
+                      <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                      </g>
+                      </g>
+                      </g>
+                    </svg>
+                  </div>
+                  &nbsp;
+                {% endif %}
+                {{ patient.get_sex_display }}
+              </td>
+              <td class="px-6 py-4 items-center {% if patient.errors|error_for_field:'date_of_birth' %} text-rcpch_red {% endif %}">
+                {% if patient.errors|error_for_field:"date_of_birth" %}
+                  <div class="tooltip tooltip-top"
+                       data-tip="{{ patient.errors|error_for_field:'date_of_birth' }}">
+                    <svg height="16"
+                         style="overflow:visible;
+                                enable-background:new 0 0 32 32"
+                         viewBox="0 0 32 32"
+                         width="16"
+                         xml:space="preserve"
+                         xmlns="http://www.w3.org/2000/svg"
+                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                      <g>
+                      <g id="Error_1_">
+                      <g id="Error">
+                      <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
+                      <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                      </g>
+                      </g>
+                      </g>
+                    </svg>
+                  </div>
+                  &nbsp;
+                {% endif %}
+                {{ patient.date_of_birth }}
+              </td>
+              <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'postcode' %}text-rcpch_red{% endif %}">
+                {% if patient.errors|error_for_field:"postcode" %}
+                  <div class="tooltip tooltip-top"
+                       data-tip="{{ patient.errors|error_for_field:'postcode' }}">
+                    <svg height="16"
+                         style="overflow:visible;
+                                enable-background:new 0 0 32 32"
+                         viewBox="0 0 32 32"
+                         width="16"
+                         xml:space="preserve"
+                         xmlns="http://www.w3.org/2000/svg"
+                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                      <g>
+                      <g id="Error_1_">
+                      <g id="Error">
+                      <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
+                      <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                      </g>
+                      </g>
+                      </g>
+                    </svg>
+                  </div>
+                  &nbsp;
+                {% endif %}
+                {{ patient.postcode }}
+              </td>
+              <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'ethnicity' %}text-rcpch_red{% endif %}">
+                {% if patient.errors|error_for_field:"ethnicity" %}
+                  <div class="tooltip tooltip-top"
+                       data-tip="{{ patient.errors|error_for_field:'ethnicity' }}">
+                    <svg height="16"
+                         style="overflow:visible;
+                                enable-background:new 0 0 32 32"
+                         viewBox="0 0 32 32"
+                         width="16"
+                         xml:space="preserve"
+                         xmlns="http://www.w3.org/2000/svg"
+                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                      <g>
+                      <g id="Error_1_">
+                      <g id="Error">
+                      <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
+                      <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                      </g>
+                      </g>
+                      </g>
+                    </svg>
+                  </div>
+                  &nbsp;
+                {% endif %}
+                {{ patient.get_ethnicity_display }}
+              </td>
+              <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'diabetes_type' %} text-rcpch_red {% endif %}">
+                {% if patient.errors|error_for_field:"diabetes_type" %}
+                  <div class="tooltip tooltip-top"
+                       data-tip="{{ patient.errors|error_for_field:'diabetes_type' }}">
+                    <svg height="16"
+                         style="overflow:visible;
+                                enable-background:new 0 0 32 32"
+                         viewBox="0 0 32 32"
+                         width="16"
+                         xml:space="preserve"
+                         xmlns="http://www.w3.org/2000/svg"
+                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                      <g>
+                      <g id="Error_1_">
+                      <g id="Error">
+                      <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
+                      <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                      </g>
+                      </g>
+                      </g>
+                    </svg>
+                  </div>
+                  &nbsp;
+                {% endif %}
+                {{ patient.get_diabetes_type_display }}
+              </td>
+              <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'diagnosis_date' %} text-rcpch_red {% endif %}">
+                {% if patient.errors|error_for_field:"diagnosis_date" %}
+                  <div class="tooltip tooltip-top"
+                       data-tip="{{ patient.errors|error_for_field:'diagnosis_date' }}">
+                    <svg height="16"
+                         style="overflow:visible;
+                                enable-background:new 0 0 32 32"
+                         viewBox="0 0 32 32"
+                         width="16"
+                         xml:space="preserve"
+                         xmlns="http://www.w3.org/2000/svg"
+                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                      <g>
+                      <g id="Error_1_">
+                      <g id="Error">
+                      <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
+                      <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                      </g>
+                      </g>
+                      </g>
+                    </svg>
+                  </div>
+                  &nbsp;
+                {% endif %}
+                {{ patient.diagnosis_date }}
+              </td>
+              <td class="px-6 py-4 text-center">
+                {{ patient.last_upload_date|date:"d/m/Y H:m:s" }}
+              </td>
+              <td class="px-6 py-4 text-center">{{ patient.audit_year }}</td>
+              <td class="px-6 py-4 text-center">{{ patient.latest_quarter|default:'-' }}</td>
+              <td class="px-2 text-right w-80 relative group">
+                <a href="{% url 'patient_visits' patient.pk %}"
+                   {% if patient.is_valid and patient.visit_error_count < 1 %} class="text-rcpch_pink px-2 flex justify-end align-center hover:text-white" {% else %} class="text-rcpch_red hover:text-white flex justify-end" {% endif %}>
+                  {% if patient.visit_error_count > 0 %}
+                    <strong class="text-rcpch_red px-2 self-center">Visits ({{ patient.visit_set.all.count }})</strong>
+                    <svg class="self-center text-rcpch_red"
+                         height="16"
+                         style="overflow:visible;
+                                enable-background:new 0 0 32 32"
+                         viewBox="0 0 32 32"
+                         width="16"
+                         xml:space="preserve"
+                         xmlns="http://www.w3.org/2000/svg"
+                         xmlns:xlink="http://www.w3.org/1999/xlink">
+                      <g>
+                      <g id="Error_1_">
+                      <g id="Error">
+                      <circle cx="16" cy="16" id="BG" r="16" fill="currentColor" />
+                      <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                      </g>
+                      </g>
+                      </g>
+                    </svg>
+                    <div class="tooltip-content hidden group-hover:block absolute rounded shadow-lg px-2 py-2 bg-gray-800 text-white -mt-20 text-left font-montserrat">
+                      {{ patient.visit_error_count }} visit{{ patient.visit_error_count|pluralize }} {{ patient.visit_error_count|pluralize:'has, have' }} errors that need addressing.
+                      <br>
+                      Items have been saved but will not be included until rectified.
+                    </div>
+                  {% else %}
+                    <strong class="text-rcpch_pink self-center">Visits ({{ patient.visit_set.all.count }})</strong>
+                  {% endif %}
+                  <!-- caret -->
+                  <svg {% if patient.is_valid and patient.visit_error_count < 1 %} class="h-8 w-8 text-rcpch_pink self-center" {% else %} class="h-8 w-8 text-rcpch_red self-center" {% endif %}
+                       width="24"
+                       height="24"
+                       viewBox="0 0 24 24"
+                       stroke-width="2"
+                       stroke="currentColor"
+                       fill="none"
+                       stroke-linecap="round"
+                       stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" />
+                    <polyline points="9 6 15 12 9 18" />
+                  </svg>
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white py-5">
+            <th colspan="10" class="px-2">
+              <strong>Total: {{ patient_list.count }} patients</strong>
+            </th>
+            <th colspan="2">
+              <!-- Pagination controls -->
+              <div class="pagination text-right">
+                <span class="step-links">
+                  {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                  {% endif %}
+                  <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                  </span>
+                  {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                  {% endif %}
+                </span>
+              </div>
+            </th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  {% else %}
     <div role="alert" class="alert mt-2">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    class="h-6 w-6 shrink-0 stroke-current"
-    fill="none"
-    viewBox="0 0 24 24">
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="2"
-      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-  </svg>
-  <span>No patients uploaded yet.</span>
-</div>
-{% endif %}
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="h-6 w-6 shrink-0 stroke-current"
+           fill="none"
+           viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <span>No patients uploaded yet.</span>
+    </div>
+  {% endif %}
