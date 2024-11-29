@@ -3,6 +3,7 @@
 {% load humanize %}
 
 <div>
+
     {% if request.user.view_preference == 1 %}
         <!-- national view -->
         <h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">All Submissions for {{pz_code}}</h1>
@@ -10,6 +11,7 @@
         <!-- PDU view   -->
         <h1 class="text-md font-montserrat font-semibold text-rcpch_dark_blue">All Submissions Nationally</h1>
     {% endif %}
+
     {% if submissions %}
     <div class="max-h-screen p-4 overflow-clip">
         <div class="w-full overflow-x-auto overflow-y-auto" style="max-height:inherit">

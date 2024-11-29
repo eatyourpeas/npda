@@ -1,15 +1,15 @@
 {% load npda_tags %}
 
-<header>
+<header class="sticky top-0 z-[70]">
   <div class="navbar bg-base-100 p-0 min-h-14">
-    <div class="navbar-start">
-      <div class="dropdown z-10">
+    <div class="navbar-start w-full">
+      <div class="dropdown z-[70]">
         <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
           </svg>
         </div>
-        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-52 p-2 shadow">
                   {% if user.is_authenticated %}
           <li class="flex items-center hover:inner-shadow">
             <div class="tooltip tooltip-bottom" data-tip="Dashboard">
@@ -60,7 +60,11 @@
           </li>
         </ul>
       </div>
-      <a href="{% url 'home' %}" class="btn btn-ghost text-xl dark:text-rcpch_lightest_grey" style="max-width:100%"><img src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg" class="mr-3 h-6 sm:h-9" alt="RCPCH Logo" /><span class="xl:hidden">NPDA</span><span class="hidden xl:block">National Paediatric Diabetes Audit</span></a>
+      <div class="flex md:flex-wrap justify-around">
+      <a href="{% url 'home' %}" class="btn btn-ghost text-xl dark:text-rcpch_lightest_grey h-auto" style="max-width:100%"><img src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg" class="mr-3 h-12" alt="RCPCH Logo" /></a>
+      <a href="{% url 'home' %}" class="btn btn-ghost text-xl dark:text-rcpch_lightest_grey h-auto" style="max-width:100%">
+        <span class="xl:hidden">NPDA</span><span class="hidden xl:block">National Paediatric <br>Diabetes Audit</span></a>
+      </div>
     </div>
     <div class="navbar-center hidden lg:flex">
       <ul class="menu menu-horizontal px-1 flex gap-x-2 place-items-center">
@@ -114,7 +118,7 @@
             <i class="fas fa-user-gear h-full w-full text-white"></i>
           </div>
         </div>
-        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-60 p-2 shadow-xl dark:drop-shadow-[0_35px_35px_rgba(1,0,0,0.25)">
+        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-60 p-2 shadow-xl dark:drop-shadow-[0_35px_35px_rgba(1,0,0,0.25)">
           <label class="hidden flex cursor-pointer gap-2 mx-auto my-2 items-center">
             <i class="fa-solid fa-sun"></i>
             <input type="checkbox" value="dark" id="theme-selector" class="toggle theme-controller" hx-on:click="event.stopPropagation(); setTheme(event.target.checked ? 'dark' : 'light');
@@ -150,24 +154,38 @@
     </div>
   </div>
   {% if user.is_authenticated %}
-    <div class="w-full flex justify-end overflow-hidden mb-2">
-      <div class="max-w-[90%] md:max-w-[75%] indicator transition-transform ease-in-out delay-150" id="global_view_preference_wrapper">
-        <span class="indicator-item indicator-middle indicator-start badge badge-ghost bg-rcpch_dark_blue border-0 text-white">
+  <div class="w-full absolute flex justify-end mb-2 overflow-x-clip pointer-events-none">
+  <div class="max-w-[80%] md:max-w-[75%] indicator transition-transform ease-in-out delay-150 translate-x-full min-h-24" id="global_view_preference_wrapper">
+        <span class="indicator-item indicator-middle indicator-start badge badge-ghost bg-rcpch_dark_blue border-1 border-rcpch_light_blue_tint3 text-white -left-4 h-full max-h-8 absolute top-12 opacity-80 hover:opacity-100 rotate-90 pointer-events-auto
+        ">
           <label class="swap">
             <!-- this hidden checkbox controls the state -->
-            <input type="checkbox" class="peer" hx-on:click="event.stopPropagation(); document.getElementById('global_view_preference_wrapper').classList.toggle('translate-x-3/4');
+            <input type="checkbox" class="peer" hx-on:click="event.stopPropagation(); document.getElementById('global_view_preference_wrapper').classList.toggle('translate-x-full');
         " />
-            <i class="fa-solid fa-angles-left swap-on"></i>
-            <i class="swap-off fa-solid fa-angles-left fa-rotate-180"></i>
+            <span class="swap-off">
+              <i class="fa-solid fa-filter fa-rotate-270"></i>
+              <span class="font-semibold mb-1 hidden md:inline-flex">Filters</span
+                > <i class="fa-solid fa-angles-left fa-rotate-270"></i>
+              </span>
+                
+            <span class="swap-on">
+              <i class="fa-solid fa-filter fa-rotate-270"></i>
+              <span class="font-semibold mb-1 hidden md:inline-flex">Filters</span>
+              <i class="fa-solid fa-angles-left fa-rotate-90"></i></span>
           </label>
         </span>
-        <div class="navbar bg-base-100 py-0 ">
-          <div id="global_view_preference">
-            {% include 'partials/view_preference.html' with view_preference=request.user.view_preference pdu_choices=request.session.pdu_choices chosen_pdu=request.session.pz_code hx_target='#global_view_preference' %}
-          </div>
-        </div>
+          <div class="navbar p-0 mx-0 pointer-events-auto items-stretch">
+              <div class="text-center text-nowrap pl-4 p-2 text-sm bg-rcpch_light_blue_tint3 text-slate-700 gap-2 flex-wrap items-stretch">
+                <div id="global_audit_year" class="join-item items-stretch flex-grow basis-1/5">
+                  {% include 'partials/audit_year_select.html' with audit_years=request.session.audit_years selected_audit_year=request.session.selected_audit_year hx_target='#global_audit_year' %}
+                </div>
+                <div id="global_view_preference" class="join-item items-stretch flex-grow  basis-2/4">
+                {% include 'partials/view_preference.html' with view_preference=request.user.view_preference pdu_choices=request.session.pdu_choices chosen_pdu=request.session.pz_code hx_target='#global_view_preference' %}
+              </div>
+            </div>
       </div>
     </div>
+  </div>
   {% endif %}
 </header>
 <script>

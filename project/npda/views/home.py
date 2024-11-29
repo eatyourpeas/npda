@@ -2,7 +2,7 @@
 from asgiref.sync import sync_to_async
 import datetime
 import logging
-from pprint import pprint
+from datetime import date
 
 
 # Django imports
@@ -23,6 +23,7 @@ from ..forms.upload import UploadFileForm
 from ..general_functions.serialize_validation_errors import serialize_errors
 from ..general_functions.session import (
     get_new_session_fields,
+    refresh_audit_years_in_session,
     refresh_session_object_asynchronously,
     refresh_session_object_synchronously,
 )
@@ -251,3 +252,53 @@ def dashboard(request):
     }
 
     return render(request, template_name=template, context=context)
+
+
+@login_and_otp_required()
+def audit_year(request):
+    """
+    View to change the audit year for the KPIs and submissions.
+    """
+    if request.method == "POST":
+        audit_year = request.POST.get("audit_year_select_name", None)
+        refresh_audit_years_in_session(request, audit_year)
+
+    context = {
+        "audit_years": request.session.get("audit_years"),
+        "selected_audit_year": request.session.get("selected_audit_year"),
+    }
+
+    response = render(
+        request, template_name="partials/audit_year_select.html", context=context
+    )
+
+    patients_list_view_url = reverse("patients")
+    submissions_list_view_url = reverse("submissions")
+    npdauser_list_view_url = reverse("npda_users")
+    dashboard_url = reverse("dashboard")
+
+    trigger_client_event(
+        response=response,
+        name="npda_users",
+        params={"method": "GET", "url": npdauser_list_view_url},
+    )  # reloads the npdauser table
+
+    trigger_client_event(
+        response=response,
+        name="submissions",
+        params={"method": "GET", "url": submissions_list_view_url},
+    )  # reloads the submissions table
+
+    trigger_client_event(
+        response=response,
+        name="patients",
+        params={"method": "GET", "url": patients_list_view_url},
+    )  # reloads the patients table
+
+    trigger_client_event(
+        response=response,
+        name="dashboard",
+        params={"method": "GET", "url": dashboard_url},
+    )  # reloads the dashboard
+
+    return response

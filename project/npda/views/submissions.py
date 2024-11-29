@@ -13,11 +13,19 @@ from django.shortcuts import render
 from django.views.generic import ListView
 
 # RCPCH imports
-from .mixins import LoginAndOTPRequiredMixin
+from .mixins import CheckCurrentAuditYearMixin, LoginAndOTPRequiredMixin
 from ..models import Submission
-from ..general_functions.csv import download_csv, download_xlsx, csv_summarize, csv_parse
+from ..general_functions.csv import (
+    download_csv,
+    download_xlsx,
+    csv_summarize,
+    csv_parse,
+)
 
-class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
+
+class SubmissionsListView(
+    LoginAndOTPRequiredMixin, CheckCurrentAuditYearMixin, ListView
+):
     """
     The SubmissionsListView class.
 
@@ -25,6 +33,7 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
 
     Users with permisson should be able to view all submissions for the PDU & ODS code in the session for all audit years/quarters.
     Only one submission per audit year/quarter should be active.
+    It is only possible to create/update/delete a submission for the current audit year/quarter.
     """
 
     model = apps.get_model(app_label="npda", model_name="Submission")
@@ -42,24 +51,27 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
             pz_code=self.request.session.get("pz_code"),
         )
         if self.request.user.view_preference == 1:
-            base_queryset = self.model.objects.filter(paediatric_diabetes_unit=pdu)
+            base_queryset = self.model.objects.filter(
+                paediatric_diabetes_unit=pdu,
+                audit_year=self.request.session.get("selected_audit_year"),
+            )
         else:
-            base_queryset = self.model.objects.all()
+            base_queryset = self.model.objects.filter(
+                audit_year=self.request.session.get("selected_audit_year")
+            ).all()
 
-        base_queryset.values("submission_date", "audit_year").annotate(
+        final = base_queryset.annotate(
             patient_count=Count("patients"),
-            submission_active=F("submission_active"),
-            submission_by=Concat(
+            full_name_submission_by=Concat(
                 "submission_by__first_name", Value(" "), "submission_by__surname"
             ),
-            pk=F("id"),
         ).order_by(
             "audit_year",
             "-submission_active",
             "-submission_date",
         )
         
-        return base_queryset
+        return final
 
     def get_context_data(self, **kwargs: Any) -> dict:
         """
@@ -68,32 +80,34 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         """
         context = super().get_context_data(**kwargs)
         context["pz_code"] = self.request.session.get("pz_code")
+        context["selected_audit_year"] = self.request.session.get("selected_audit_year")
         Patient = apps.get_model("npda", "Patient")
         context["data"] = None  # data stores csv summary data if a submission exists
-        latest_active_submission = self.object_list.filter(
+        requested_active_submission = self.object_list.filter(
             submission_active=True,
-            audit_year=date.today().year,
+            audit_year=self.request.session.get("selected_audit_year"),
             paediatric_diabetes_unit__pz_code=self.request.session.get("pz_code"),
         ).first()  # there can be only one of these
-        if latest_active_submission:
+        if requested_active_submission:
             # If a submission exists and it was created by uploading a csv, summarize the csv data
             if self.request.session.get("can_upload_csv"):
                 # check if the user has permission to upload csv (not this function is not available in this brance but is in live)
-                parsed_csv = csv_parse(latest_active_submission.csv_file)
+                parsed_csv = csv_parse(requested_active_submission.csv_file)
                 context["data"] = csv_summarize(parsed_csv.df)
-                if latest_active_submission.errors:
-                    deserialized_errors = json.loads(latest_active_submission.errors)
+                if requested_active_submission.errors:
+                    deserialized_errors = json.loads(requested_active_submission.errors)
                     context["submission_errors"] = deserialized_errors
                 else:
                     context["submission_errors"] = None
 
             # Get some summary data about the patients in the submission...
             context["patients"] = Patient.objects.filter(
-                submissions=latest_active_submission
+                submissions=requested_active_submission
             ).annotate(
                 visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
                 visit_count=Count("visit"),
             )
+
         return context
 
     def get(self, request, *args, **kwargs):
@@ -103,8 +117,9 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
         self.object_list = self.get_queryset().order_by("-submission_date")
         context = self.get_context_data(object_list=self.object_list)
         template = self.template_name
+
         if request.htmx:
-            # If the request is an HTMX request from the PDU selector, returns the partial template
+            # If the request is an HTMX request from the PDU selector or Audit Year selector, returns the partial template
             # Otherwise, returns the full template
             # The partial template is used to update the submission history table when a new PDU is selected
             # This is done with a custom htmx trigger in the PDU selector
@@ -153,7 +168,7 @@ class SubmissionsListView(LoginAndOTPRequiredMixin, ListView):
                 pk=request.POST.get("audit_id")
             ).get()
             return download_csv(request, submission.id)
-        
+
         if button_name == "download-report":
             submission = Submission.objects.filter(
                 pk=request.POST.get("audit_id")

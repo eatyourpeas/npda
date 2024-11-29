@@ -85,7 +85,11 @@
           {% endif %}
 
           {% if perms.npda.add_visit %}
-            <a href="{% url 'visit-create' patient_id=patient.pk %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Create New Visit</a>
+              {% if can_alter_this_audit_year_submission %}
+                <a href="{% url 'visit-create' patient_id=patient.pk %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Create New Visit</a>
+              {% else %}
+                <span class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue opacity-40 pointer-events-none">Create New Visit</span>
+              {% endif %}
           {% endif %}
           <a href="{% url 'patients' %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Back to Patient List</a>
 

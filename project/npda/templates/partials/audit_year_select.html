@@ -1,0 +1,26 @@
+{% load static %}
+<div class="flex flex-wrap md:flex-nowrap justify-normal h-full" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <label for="audit_year_select_id" class="order-1 inline-flex flex-grow justify-center items-center text-center text-nowrap pl-4 p-2 font-semibold text-sm  bg-rcpch_light_blue text-white">
+        Audit Year
+    </label>
+    <span class="loading loading-spinner loading-lg text-rcpch_pink htmx-indicator" id="spinner"></span>
+        <select 
+            id="audit_year_select_id" 
+            name="audit_year_select_name" 
+            class="order-last md:order-3 select rcpch-select rounded-none text-sm h-auto flex-grow w-max font-mono bg-gray-500 text-nowrap text-white border-2 border-rcpch_light_blue_tint1" 
+            hx-post="{% url 'audit-year' %}" 
+            hx-target="#global_audit_year" 
+            hx-trigger="change" 
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'  
+            hx-include="[name='audit_year_select_name']"
+        >
+            {% for audit_year in audit_years %}
+                <option value="{{audit_year|stringformat:'s'}}" {% if selected_audit_year|stringformat:"s" == audit_year|stringformat:"s" %} selected {% endif %}>
+                {{ audit_year }}
+                </option>
+
+            {% endfor %}
+        </select>
+
+        
+</div>
