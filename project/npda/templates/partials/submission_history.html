@@ -39,7 +39,7 @@
                             {% else %}
                             <tr class="border-b bg-slate-100 text-slate-500 border-gray-100 hover:bg-r hover:bg-rcpch_mid_grey hover:text-white">
                             {% endif %}
-                                <td>
+                                <td class="text-nowrap">
                                     {% if submission_errors and submission.submission_active %}
                                     <div class="tooltip tooltip-right" data-tip="We found some errors with this submission. Please check the Quality Report and try to reupload."><i class="fa-solid fa-circle-exclamation"></i></div>
                                 {% endif %}
@@ -61,16 +61,16 @@
                                 {% if request.user.view_preference == 2 %}
                                 <td>{{ submission.paediatric_diabetes_unit.pz_code }} ({{submission.paediatric_diabetes_unit.lead_organisation_name}})</td>
                                 {% endif %}
-                                <td class="flex flex-row gap-2 justify-between flex-wrap items-center">
-                                    <form method="post" action="{% url 'submissions' %}" class="join">
+                                <td class="flex flex-row gap-2 flex-wrap xl:flex-nowrap items-stretch justify-start">
+                                    <form method="post" action="{% url 'submissions' %}" class="join grow xl:max-w-max">
                                         {% csrf_token %}
                                         <input type="hidden" name="audit_id" value="{{submission.pk}}">
                                         {% if submission.submission_active %}
                                         <!-- data quality report only visible for PDU view -->
             {% if request.user.view_preference == 1 %}
-            <div class="join join-vertical lg:join-horizontal items-center 
+            <div class="grow join join-vertical lg:join-horizontal items-center 
              ">
-                <div class="bg-gray-400 h-full items-center flex px-2 text-white"><i class="fas fa-download mr-1"></i> Download: </div>
+                <div class="bg-gray-400 h-full items-center flex px-2 text-white grow"><i class="fas fa-download mr-1"></i> Download: </div>
                 <div class="bg-gray-400 h-full items-center flex p-1 text-white">
                                         <button 
                                                 name="submit-data"
@@ -103,7 +103,7 @@
                                     </form>
                                     {% if submission.submission_active %}
                                     <a href="{% url 'patients' %}"
-                                                class="join-item bg-rcpch_light_blue text-white font-semibold hover:text-white py-1 px-2 border border-rcpch_light_blue hover:bg-rcpch_pink hover:border-rcpch_strong_blue btn-sm rounded-none h-auto">
+                                                class="grow text-center bg-rcpch_light_blue text-white font-semibold hover:text-white py-1 px-2 border-[6px] border-rcpch_light_blue hover:bg-rcpch_pink hover:border-rcpch_pink btn-sm rounded-none h-auto w-full xl:max-w-max">
                                                 
                                                 <div class="tooltip tooltip-left" data-tip="View submission details, including the patients uploaded.">View Submission <i class="fa-solid fa-eye"></i></div></a>
 
