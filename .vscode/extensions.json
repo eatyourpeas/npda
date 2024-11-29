@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    // Recommended extensions...
+    "streetsidesoftware.code-spell-checker", // Source code spell checker
+    "ms-python.black-formatter", // Python formatter
+    "batisteo.vscode-django", // Django support
+    "junstyle.vscode-django-support", // Django Template Support + Linting Support for .html
+    "otovo-oss.htmx-tags", // htmx Tag Support (Auto-completion)
+    "dbaeumer.vscode-eslint", // ESLint for JS Linting
+    "bradlc.vscode-tailwindcss", // TailwindCSS Intellisense
+    "heybourn.headwind", // Opinionated TailwindCSS Class Sorter (Headwind)
+  ],
+  "unwantedRecommendations": [
+    // Discouraged extensions...
+  ]
+}

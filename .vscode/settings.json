@@ -1,0 +1,12 @@
+{
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "off",
+  "files.associations": {
+    "**/templates/**/*.html": "django-html",
+    "*.tpl": "django-html"
+  },
+  "[django-html]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "junstyle.vscode-django-support"
+  },
+}
