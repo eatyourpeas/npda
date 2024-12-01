@@ -59,6 +59,9 @@ RCPCH_NHS_ORGANISATIONS_API_KEY = os.getenv("RCPCH_NHS_ORGANISATIONS_API_KEY")
 RCPCH_DGC_API_URL = os.getenv("RCPCH_DGC_API_URL")
 RCPCH_DGC_API_KEY = os.getenv("RCPCH_DGC_API_KEY")
 
+# Mapbox API key
+MAPBOX_API_KEY = os.getenv("MAPBOX_API_KEY")
+
 # This is the NHS Spine services - it does not require authentication
 # It is possible to retrieve the ods code from the NHS API above, but not to narrow down
 # by organisation type - many practices host multiple entities (pharmacies, private companies etc)

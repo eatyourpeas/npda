@@ -2,6 +2,7 @@ from .dgc_centile_calculations import *
 from .email import *
 from .group_for_group import *
 from .index_multiple_deprivation import *
+from .map import *
 from .nhs_ods_requests import *
 from .organisations_adapter import *
 from .quarter_for_date import *
