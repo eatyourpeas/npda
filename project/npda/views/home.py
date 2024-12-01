@@ -284,7 +284,8 @@ def dashboard(request):
     # generate scatterplot of patients by distance from the selected organisation
     scatterplot_of_cases_for_selected_organisation = (
         generate_distance_from_organisation_scatterplot_figure(
-            geo_df=patient_distances_dataframe, organisation=pdu_lead_organisation
+            geo_df=patient_distances_dataframe,
+            pdu_lead_organisation=pdu_lead_organisation,
         )
     )
 

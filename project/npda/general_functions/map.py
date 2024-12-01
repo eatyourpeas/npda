@@ -15,6 +15,8 @@ import plotly.graph_objects as go
 # RCPCH imports
 from project.constants import RCPCH_LIGHT_BLUE, RCPCH_PINK, RCPCH_DARK_BLUE
 
+from project.npda.general_functions.validate_postcode import location_for_postcode
+
 
 """
 Functions to return scatter plot of children by postcode
@@ -34,34 +36,45 @@ def get_children_by_pdu_audit_year(
         audit_year=audit_year, paediatric_diabetes_unit=paediatric_diabetes_unit
     ).first()
 
-    if submission:
-        return (
-            Patient.objects.filter(
-                ~Q(postcode__isnull=True)
-                | ~Q(postcode__exact=""),  # Exclude patients with no postcode
-                Q(
-                    ~Q(location_wgs=None)
-                    | ~Q(location_wgs84=None)
-                    | ~Q(location_bng=None)  # Exclude patients with no location data
-                ),
-                submission=submission,  # Filter by submission
-            )
-            .annotate(
-                distance_from_lead_organisation=Distance(
-                    "location_wgs84",
-                    Point(
-                        paediatric_diabetes_unit_lead_organisation.longitude,
-                        paediatric_diabetes_unit_lead_organisation.latitude,
-                        srid=4326,
-                    ),
+    if submission is None:
+        return Patient.objects.none()
+
+    patients = submission.patients.all()
+
+    print(patients)
+
+    if patients:
+        filtered_patients = patients.filter(
+            ~Q(postcode__isnull=True)
+            | ~Q(postcode__exact=""),  # Exclude patients with no postcode
+            submission=submission,  # Filter by submission
+        )
+
+        for patient in filtered_patients:
+            if patient.postcode and not any(
+                patient.location_wgs84 is None, patient.location_bng is None
+            ):
+                # add the location data to the queryset - note these fields do not exist in the model
+                lon, lat, location_wgs84, location_bng = location_for_postcode(
+                    patient.postcode
                 )
-            )
-            .values(
-                "pk",
-                "location_bng",
+                patient.location_wgs84 = location_wgs84
+                patient.location_bng = location_bng
+
+        filtered_patients = filtered_patients.annotate(
+            distance_from_lead_organisation=Distance(
                 "location_wgs84",
-                "distance_from_lead_organisation",
+                Point(
+                    paediatric_diabetes_unit_lead_organisation.longitude,
+                    paediatric_diabetes_unit_lead_organisation.latitude,
+                    srid=4326,
+                ),
             )
+        ).values(
+            "pk",
+            "location_bng",
+            "location_wgs84",
+            "distance_from_lead_organisation",
         )
     else:
         return Patient.objects.none()
@@ -95,7 +108,8 @@ def generate_distance_from_organisation_scatterplot_figure(
         mapbox_style="carto-positron",
         mapbox_zoom=10,
         mapbox_center=dict(
-            lat=pdu_lead_organisation.latitude, lon=pdu_lead_organisation.longitude
+            lat=pdu_lead_organisation["latitude"],
+            lon=pdu_lead_organisation["longitude"],
         ),
         height=590,
         mapbox_accesstoken=settings.MAPBOX_API_KEY,
@@ -110,14 +124,14 @@ def generate_distance_from_organisation_scatterplot_figure(
     # Add a scatterplot point for the organization
     fig.add_trace(
         go.Scattermapbox(
-            lat=[pdu_lead_organisation.latitude],
-            lon=[pdu_lead_organisation.longitude],
+            lat=[pdu_lead_organisation["latitude"]],
+            lon=[pdu_lead_organisation["longitude"]],
             mode="markers",
             marker=go.scattermapbox.Marker(
                 size=12,
                 color=RCPCH_DARK_BLUE,  # Set the color of the point
             ),
-            text=[pdu_lead_organisation.name],  # Set the hover text for the point
+            text=[pdu_lead_organisation["name"]],  # Set the hover text for the point
             hovertemplate="%{text}<extra></extra>",  # Custom hovertemplate just for the lead organisation
             showlegend=False,
         )
