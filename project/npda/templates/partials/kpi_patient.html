@@ -1,76 +1,117 @@
 <div class="min-w-full px-10">
-    <div class="flex flex-row min-h-screen justify-center">
-        <div class="overflow-x-auto w-full">
-            <div class="inline-block min-w-full py-2">
-                <div class="relative overflow-x-auto w-full">
-
-                    <h2>Seven Key Care Processes</h2>
-                    <p>
-                        These care processes show the completion rate per patient for all 7 key care processes for Type
-                        1 patients.
-                        Three of these are mandatory for patients of all ages: HbA1c, BMI, and Thyroid. The other care
-                        processes are
-                        only mandatory for patients aged 12 and above.
-                    </p>
-
-                    <table class="table-auto w-full text-sm text-left text-gray-500 mb-5 font-montserrat">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
-                            <tr>
-                                <th class="px-6 py-3">NHS Number</th>
-                                <th class="px-6 py-3">>= 12yo</th>
-                                <th class="px-6 py-3">HbA1c</th>
-                                <th class="px-6 py-3">BMI</th>
-                                <th class="px-6 py-3">Thyroid Screen</th>
-                                <th class="px-6 py-3">Blood Pressure</th>
-                                <th class="px-6 py-3">Urinary Albumin</th>
-                                <th class="px-6 py-3">Eye Screen</th>
-                                <th class="px-6 py-3">Foot Exam</th>
-                                <th class="px-6 py-3">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="bg-white border-b">
-
-                                <td class="px-6 py-4">
-                                    <span class="tooltip tooltip-right" data-tip="View patient details (opens new tab)">
-                                        <a class="btn hover:text-rcpch_pink" target="_blank" href="{% url 'patient-update' patient.pk %}">
-                                            {{ patient.nhs_number }}
-                                        </a>
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">{{ kpi_calculations_object.gte_12yo|yesno:"Y,N" }}</td>
-                                <td class="px-6 py-4">{% if kpi_calculations_object.kpi_results.kpi_25_hba1c %}✔️{% else %}✖️{% endif %}
-                                </td>
-                                <td class="px-6 py-4">{% if kpi_calculations_object.kpi_results.kpi_26_bmi %}✔️{% else %}✖️{% endif %}
-                                </td>
-                                <td class="px-6 py-4">{% if kpi_calculations_object.kpi_results.kpi_27_thyroid_screen %}✔️{% else %}✖️{%endif %}</td>
-                                <td class="px-6 py-4">
-                                    {% if kpi_calculations_object.kpi_results.kpi_28_blood_pressure is not None %}
-                                    {% if kpi_calculations_object.kpi_results.kpi_28_blood_pressure %}✔️{% else %}✖️{% endif %}
-                                    {% else %}N/A{% endif %}
-                                </td>
-                                <td class="px-6 py-4">
-                                    {% if kpi_calculations_object.kpi_results.kpi_29_urinary_albumin is not None %}
-                                    {% if kpi_calculations_object.kpi_results.kpi_29_urinary_albumin %}✔️{% else %}✖️{% endif %}
-                                    {% else %}N/A{% endif %}
-                                </td>
-                                <td class="px-6 py-4">
-                                    {% if kpi_calculations_object.kpi_results.kpi_30_retinal_screening is not None %}
-                                    {% if kpi_calculations_object.kpi_results.kpi_30_retinal_screening %}✔️{% else %}✖️{% endif %}
-                                    {% else %}N/A{% endif %}
-                                </td>
-                                <td class="px-6 py-4">
-                                    {% if kpi_calculations_object.kpi_results.kpi_31_foot_examination is not None %}
-                                    {% if kpi_calculations_object.kpi_results.kpi_31_foot_examination %}✔️{% else %}✖️{% endif %}
-                                    {% else %}N/A{% endif %}
-                                </td>
-                                <td class="px-6 py-4">{{ kpi_calculations_object.total_passed }}/{{ kpi_calculations_object.expected_total }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                </div>
-            </div>
+  <div class="flex flex-row min-h-screen justify-center">
+    <div class="overflow-x-auto w-full">
+      <div class="inline-block min-w-full py-2">
+        <div class="relative overflow-x-auto w-full">
+          <h2>Seven Key Care Processes</h2>
+          <p>
+            These care processes show the completion rate per patient for all 7 key care processes for Type
+            1 patients.
+            Three of these are mandatory for patients of all ages: HbA1c, BMI, and Thyroid. The other care
+            processes are
+            only mandatory for patients aged 12 and above.
+          </p>
+          <table class="table-auto w-full text-sm text-left text-gray-500 mb-5 font-montserrat">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
+              <tr>
+                <th class="px-6 py-3">NHS Number</th>
+                <th class="px-6 py-3">>= 12yo</th>
+                <th class="px-6 py-3">HbA1c</th>
+                <th class="px-6 py-3">BMI</th>
+                <th class="px-6 py-3">Thyroid Screen</th>
+                <th class="px-6 py-3">Blood Pressure</th>
+                <th class="px-6 py-3">Urinary Albumin</th>
+                <th class="px-6 py-3">Eye Screen</th>
+                <th class="px-6 py-3">Foot Exam</th>
+                <th class="px-6 py-3">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="bg-white border-b">
+                <td class="px-6 py-4">
+                  <span class="tooltip tooltip-right"
+                        data-tip="View patient details (opens new tab)">
+                    <a class="btn hover:text-rcpch_pink"
+                       target="_blank"
+                       href="{% url 'patient-update' patient.pk %}">
+                      {{ patient.nhs_number }}
+                    </a>
+                  </span>
+                </td>
+                <td class="px-6 py-4">{{ kpi_calculations_object.gte_12yo|yesno:"Y,N" }}</td>
+                <td class="px-6 py-4">
+                  {% if kpi_calculations_object.kpi_results.kpi_25_hba1c %}
+                    ✔️
+                  {% else %}
+                    ✖️
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                  {% if kpi_calculations_object.kpi_results.kpi_26_bmi %}
+                    ✔️
+                  {% else %}
+                    ✖️
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                  {% if kpi_calculations_object.kpi_results.kpi_27_thyroid_screen %}
+                    ✔️
+                  {% else %}
+                    ✖️
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                  {% if kpi_calculations_object.kpi_results.kpi_28_blood_pressure is not None %}
+                    {% if kpi_calculations_object.kpi_results.kpi_28_blood_pressure %}
+                      ✔️
+                    {% else %}
+                      ✖️
+                    {% endif %}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                  {% if kpi_calculations_object.kpi_results.kpi_29_urinary_albumin is not None %}
+                    {% if kpi_calculations_object.kpi_results.kpi_29_urinary_albumin %}
+                      ✔️
+                    {% else %}
+                      ✖️
+                    {% endif %}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                  {% if kpi_calculations_object.kpi_results.kpi_30_retinal_screening is not None %}
+                    {% if kpi_calculations_object.kpi_results.kpi_30_retinal_screening %}
+                      ✔️
+                    {% else %}
+                      ✖️
+                    {% endif %}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                  {% if kpi_calculations_object.kpi_results.kpi_31_foot_examination is not None %}
+                    {% if kpi_calculations_object.kpi_results.kpi_31_foot_examination %}
+                      ✔️
+                    {% else %}
+                      ✖️
+                    {% endif %}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4">
+                  {{ kpi_calculations_object.total_passed }}/{{ kpi_calculations_object.expected_total }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+      </div>
     </div>
+  </div>
 </div>

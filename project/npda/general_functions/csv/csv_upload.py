@@ -292,71 +292,15 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # Errors validating the Visit fields
                 for field, error in visit_form.errors.as_data().items():
                     errors_to_return[visit_row_index][field].append(error)
-                    if field in [
-                        "height",
-                        "weight",
-                        "height_weight_observation_date",
-                        "sex",
-                        "date_of_birth",
-                    ]:
-                        no_errors_preventing_centile_calcuation = False
 
                 try:
                     visit = create_instance(Visit, visit_form)
                     visit.patient = patient
-                    # retrieve centiles and sds from RCPCH dGC API only if a measurement is supplied with a date and no errors
-                    if (
-                        (visit.height or visit.weight)
-                        and visit.height_weight_observation_date
-                        and visit.patient
-                        and visit.patient.date_of_birth
-                        and visit.patient.sex
-                        and no_errors_preventing_centile_calcuation
-                    ):
-                        if visit.height:
-                            measurement_method = "height"
-                            observation_value = visit.height
-                            centile, sds = calculate_centiles_z_scores(
-                                birth_date=visit.patient.date_of_birth,
-                                observation_date=visit.height_weight_observation_date,
-                                measurement_method=measurement_method,
-                                observation_value=observation_value,
-                                sex=visit.patient.sex,
-                            )
-                            visit.height_centile = centile
-                            visit.height_sds = sds
-                        if visit.weight:
-                            measurement_method = "weight"
-                            observation_value = visit.weight
-                            centile, sds = calculate_centiles_z_scores(
-                                birth_date=visit.patient.date_of_birth,
-                                observation_date=visit.height_weight_observation_date,
-                                measurement_method=measurement_method,
-                                observation_value=observation_value,
-                                sex=visit.patient.sex,
-                            )
-                            visit.weight_centile = centile
-                            visit.weight_sds = sds
-                        if visit.height and visit.weight:
-                            measurement_method = "bmi"
-                            visit.bmi = calculate_bmi(
-                                height=visit.height, weight=visit.weight
-                            )
-                            observation_value = visit.bmi
-                            centile, sds = calculate_centiles_z_scores(
-                                birth_date=visit.patient.date_of_birth,
-                                observation_date=visit.height_weight_observation_date,
-                                measurement_method=measurement_method,
-                                observation_value=observation_value,
-                                sex=visit.patient.sex,
-                            )
-                            visit.bmi_centile = centile
-                            visit.bmi_sds = sds
                     try:
                         await visit.asave()
                     except Exception as error:
                         print(
-                            f"Error saving visit: {error}, height: {visit.height} (centile: {visit.height_centile, visit.height_sds}) {visit.weight} ({visit.weight_centile}, {visit.weight_sds}), {visit.bmi} ({visit.bmi_centile}, {visit.bmi_sds}), visit.patient: {visit.patient}"
+                            f"Error saving visit: {error}"  # , height: {visit.height} (centile: {visit.height_centile, visit.height_sds}) {visit.weight} ({visit.weight_centile}, {visit.weight_sds}), {visit.bmi} ({visit.bmi_centile}, {visit.bmi_sds}), visit.patient: {visit.patient}"
                         )
                 except Exception as error:
                     errors_to_return[visit_row_index]["__all__"].append(error)

@@ -1,59 +1,62 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<div class="flex flex-row min-h-screen justify-center px-10">
+  <div class="flex flex-row min-h-screen justify-center px-10">
     <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
-          <div class="relative overflow-x-auto">
-            <strong>NPDA Audit Access Logs for {{npdauser.get_full_name}} (NPDA User ID-{{npdauser.pk}})</strong>
-            <p class="text-gray-400 font-montserrat">
-              <small>Password last set: {{npdauser.password_last_set}}</small><br/>
-              <small>Account created: {{npdauser.date_joined}}</small> 
-            </p>
-            {% if visitactivities %}
-              <table class="lg-table-fixed table-fixed w-full text-sm text-left rtl:text-left text-gray-500 text-gray-400 mb-5 font-montserrat">
-                  <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
-                    <tr>
-                        <th scope="col" class="py-3 w-1/12">Visit Date</th>
-                        <th scope="col" class="py-3 w-1/12">Visit Type</th>
-                        <th scope="col" class="py-3 w-1/12">IP Address</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                        {% for visitactivity in visitactivities %}
-                          <tr class="border-b bg-white text-rcpch_light_blue border-gray-100 hover:bg-r hover:bg-rcpch_light_blue hover:text-white">
-                            <td>{{ visitactivity.activity_datetime }}</td>
-                            <td>{{ visitactivity.get_activity_display }}</td>
-                            <td>{{ visitactivity.ip_address }}</td>
-                          </tr>
-                        {% endfor %}
-                  </tbody>
-                  <tfoot>
-                    {% if visitactivities %}
-                    <tr class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white py-5">
-                        <th class="px-2">
-                            <strong>
-                                Total: {{ visitactivities|length }} User visit{% if visitactivities|length > 1 %}s{% endif %}
-                            </strong>
-                        </th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                    {% else %}
-                    <tr class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white py-5">
-                        <th>
-                            <h5>No activity yet!</h5>
-                        </th>
-                    </tr>
-                  {% endif %}
-                </tfoot>
-              </table>
-              {% else %}
-              <h5 class="py-5">No activity yet!</h5>
-              {% endif %}
-                </div>
-                <a href="{% url 'npda_users' %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Back to NPDA User List</a>
+        <div class="relative overflow-x-auto">
+          <strong>NPDA Audit Access Logs for {{ npdauser.get_full_name }} (NPDA User ID-{{ npdauser.pk }})</strong>
+          <p class="text-gray-400 font-montserrat">
+            <small>Password last set: {{ npdauser.password_last_set }}</small>
+            <br />
+            <small>Account created: {{ npdauser.date_joined }}</small>
+          </p>
+          {% if visitactivities %}
+            <table class="lg-table-fixed table-fixed w-full text-sm text-left rtl:text-left text-gray-500 text-gray-400 mb-5 font-montserrat">
+              <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
+                <tr>
+                  <th scope="col" class="py-3 w-1/12">Visit Date</th>
+                  <th scope="col" class="py-3 w-1/12">Visit Type</th>
+                  <th scope="col" class="py-3 w-1/12">IP Address</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for visitactivity in visitactivities %}
+                  <tr class="border-b bg-white text-rcpch_light_blue border-gray-100 hover:bg-r hover:bg-rcpch_light_blue hover:text-white">
+                    <td>{{ visitactivity.activity_datetime }}</td>
+                    <td>{{ visitactivity.get_activity_display }}</td>
+                    <td>{{ visitactivity.ip_address }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                {% if visitactivities %}
+                  <tr class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white py-5">
+                    <th class="px-2">
+                      <strong>
+                        Total: {{ visitactivities|length }} User visit
+                        {% if visitactivities|length > 1 %}s{% endif %}
+                      </strong>
+                    </th>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                {% else %}
+                  <tr class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white py-5">
+                    <th>
+                      <h5>No activity yet!</h5>
+                    </th>
+                  </tr>
+                {% endif %}
+              </tfoot>
+            </table>
+          {% else %}
+            <h5 class="py-5">No activity yet!</h5>
+          {% endif %}
         </div>
+        <a href="{% url 'npda_users' %}"
+           class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Back to NPDA User List</a>
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}

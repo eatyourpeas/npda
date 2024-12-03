@@ -1,0 +1,48 @@
+{
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "off",
+  "files.associations": {
+    "**/templates/**/*.html": "django-html",
+  },
+  "breadcrumbs.enabled": true, // Enable breadcrumbs for file navigation
+  "explorer.autoReveal": true, // Automatically reveal the active file in the explorer
+  "[django-html]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "monosans.djlint",
+    // Indentation and formatting
+    "editor.tabSize": 2, // Use 2 spaces for tabs
+    "editor.insertSpaces": true, // Converts tabs to spaces
+    "editor.trimAutoWhitespace": true, // Removes unnecessary whitespace
+    "editor.formatOnType": true, // Automatically formats code while typing
+    "editor.autoIndent": "full", // Applies auto-indentation in Django HTML files
+    "editor.folding": true, // Enable folding for better navigation
+    "editor.foldingStrategy": "indentation",
+    "files.trimTrailingWhitespace": true, // Remove trailing whitespace on save
+    "files.insertFinalNewline": true, // Ensure files end with a newline
+    // Brackets and pairs
+    "editor.guides.indentation": true, // Shows vertical indentation guides
+    "editor.guides.bracketPairsHorizontal": true, // Horizontal guides for bracket pairs
+    "editor.autoClosingBrackets": "always", // Automatically close brackets
+    "editor.autoClosingQuotes": "always", // Automatically close quotes
+    // Word wrapping
+    "editor.wordWrap": "on", // Enables word wrapping
+    "editor.wordWrapColumn": 80, // Wraps lines at 80 characters
+    // Cursor and selection
+    "editor.cursorSmoothCaretAnimation": "on", // Smooth cursor movement
+    "editor.cursorBlinking": "expand", // Makes the cursor more noticeable
+    "editor.selectionHighlight": true, // Highlights similar selections
+    "editor.occurrencesHighlight": "singleFile", // Highlights other occurrences of a word
+    // Scrolling
+    "editor.minimap.enabled": true, // Enable the minimap on the right
+    "editor.scrollBeyondLastLine": false, // Prevent excessive scrolling past the end
+    "editor.smoothScrolling": true, // Smooth scrolling for a better user experience
+    // Code actions
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always", // Organize imports automatically
+      "source.fixAll": "always" // Fix simple issues automatically
+    },
+    "editor.linkedEditing": true,
+    "editor.guides.bracketPairs": true,
+  },
+  "djlint.configuration": ".djlintrc",
+}

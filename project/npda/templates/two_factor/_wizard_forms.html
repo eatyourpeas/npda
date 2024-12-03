@@ -1,28 +1,21 @@
 {{ wizard.management_form }}
-
 {% for field_error in wizard.form.non_field_errors %}
-<div>
+  <div>
     <p class="font-montserrat text-rcpch_red small italic mb-5">
-        <small>
-            {{field_error}}
-        </small>
+      <small>{{ field_error }}</small>
     </p>
-</div>
+  </div>
 {% endfor %}
-
 {% for field in wizard.form %}
-    {% csrf_token %}
-    <p>
+  {% csrf_token %}
+  <p>
     <h5 class="text-gray font-montserrat">{{ field.label_tag }}</h5>
-        {{field}}
+    {{ field }}
     {% if field.help_text %}
-        <small class="text-gray font-montserrat">{{ field.help_text }}</small>
+      <small class="text-gray font-montserrat">{{ field.help_text }}</small>
     {% endif %}
     {% for error in field.errors %}
-        <div class='text-rcpch_red font-montserrat text-sm'>{{ error }}</div>
+      <div class="text-rcpch_red font-montserrat text-sm">{{ error }}</div>
     {% endfor %}
-    </p>
-
+  </p>
 {% endfor %}
-
-

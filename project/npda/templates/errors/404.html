@@ -1,13 +1,9 @@
 {% extends "errors/error_base.html" %}
-
-{% block error_number %}
-404
-{% endblock %}
-
+{% block error_number %}404{% endblock %}
 {% block error_msg %}
-<p class="mb-8 text-lg font-normal lg:text-xl sm:px-16 xl:px-48 text-white">
-  The page you requested does not exist or the link is broken.
-  <br />
-  Please check the web address and try again.
-</p>
+  <p class="mb-8 text-lg font-normal lg:text-xl sm:px-16 xl:px-48 text-white">
+    The page you requested does not exist or the link is broken.
+    <br />
+    Please check the web address and try again.
+  </p>
 {% endblock %}
