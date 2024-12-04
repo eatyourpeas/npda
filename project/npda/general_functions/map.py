@@ -146,7 +146,25 @@ def generate_distance_from_organisation_scatterplot_figure(
             font=dict(color="white", family="Montserrat-Regular"),
             bordercolor=RCPCH_LIGHT_BLUE,
         ),
-    )
+        mapbox=dict(
+            style="carto-positron",
+            zoom=10,
+            center=dict(
+                lat=pdu_lead_organisation["latitude"],
+                lon=pdu_lead_organisation["longitude"],
+            ),
+        ),
+        mapbox_layers=[
+            {
+                "below": "traces",
+                "sourcetype": "raster",
+                "sourceattribution": "Source: Office for National Statistics licensed under the Open Government Licence v.3.0",
+                "source": [
+                    "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+                ],
+            }
+        ],
+    ),
 
     # Convert the Plotly figure to JSON
     return pio.to_json(fig)

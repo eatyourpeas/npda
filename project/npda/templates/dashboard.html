@@ -1,4 +1,8 @@
-{% extends 'base.html' %} {% load static %} {% load npda_tags %} {% block content %} {% url 'dashboard' as hx_get %}
+{% extends 'base.html' %} 
+{% load static %} 
+{% load npda_tags %} 
+{% block content %} 
+{% url 'dashboard' as hx_get %}
 
 <section class="bg-rcpch_dark_blue font-montserrat">
   <div class="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12">
@@ -38,7 +42,17 @@
     </div>
   </div>
 </section>
-<div id="organisation_cases_map" style="width:100%; height: 700px;"></div>
+<div class="container-mx-auto my-20 mt-10 flex justify-center">
+  <div class="card bg-base-100 w-96 shadow-xl">
+    <figure>
+      <div id="organisation_cases_map" style="width: 100%; height: 700px"></div>
+    </figure>
+    <div class="card-body">
+      <h2 class="card-title">Patients</h2>
+        <p>Distribution of all patients at {{ session.pz_code }}</p>
+    </div>
+  </div>
+</div>
 
 <section
   class="mb-5 container-mx-auto flex items-center justify-center"
@@ -50,10 +64,9 @@
     {% include 'partials/kpi_table.html' with kpi_results=kpi_results pdu=pdu aggregation_level=aggregation_level %}
   </div>
 </section>
+<script>
+  var organisation_plotly_map = {{ scatterplot_of_cases_for_selected_organisation|safe }}
+  Plotly.newPlot('organisation_cases_map', organisation_plotly_map.data, organisation_plotly_map.layout);
+</script>
 {% endblock %}
 
-<script>
-    var organisation_plotly_map = {{ scatterplot_of_cases_for_selected_organisation|safe }}
-    Plotly.newPlot('organisation_cases_map-div', organisation_plotly_map.data, organisation_plotly_map.layout);
-    
-</script>
