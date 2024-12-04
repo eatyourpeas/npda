@@ -1,61 +1,72 @@
 {% load static %}
-<div class="max-w-xl w-full mt-5">
-  <div role="alert" class="alert shadow-lg border-t-1 border-blue-400">
-    <i class="fa-solid fa-file-csv fa-2xl"></i>
+<div class="w-full max-w-xl mt-5">
+  <div role="alert" class="alert border-t-1 border-blue-400 shadow-lg">
+    <i class="fa-2xl fa-file-csv fa-solid"></i>
     <div>
       <h3 class="font-bold">Template - Audit Template (.csv)</h3>
-      <div class="text-xs">Our upload facility is built for .csv files with a specific structure. It is heavily encouraged to use our .csv file as a template.</div>
+      <div class="text-xs">
+        Our upload facility is built for .csv files with a specific structure. It is heavily encouraged to use our .csv file as a template.
+      </div>
     </div>
-    <div class="tooltip" data-tip="To avoid unpredictable results, specific columns are expected in all uploaded .csv files. To keep it simple - we recommend populating our template file before uploading it.">
-      <button class="btn btn-sm">Why?<i class="fa-solid fa-circle-question"></i></button>
+    <div class="tooltip"
+         data-tip="To avoid unpredictable results, specific columns are expected in all uploaded .csv files. To keep it simple - we recommend populating our template file before uploading it.">
+      <button class="btn btn-sm">
+        Why?<i class="fa-circle-question fa-solid"></i>
+      </button>
     </div>
   </div>
-  <a href="{% url 'download_template' %}" download="npda_base.csv" class="btn w-full text-lg bg-rcpch_light_blue hover:bg-rcpch_dark_blue focus:bg-rcpch_pink border-rcpch_light_blue text-white"><i class="fa-solid fa-file-arrow-down"></i> Download NPDA CSV template</a>
+  <a href="{% url 'download_template' %}"
+     download="npda_base.csv"
+     class="bg-rcpch_light_blue border-rcpch_light_blue btn w-full text-lg text-white focus:bg-rcpch_pink hover:bg-rcpch_dark_blue"><i class="fa-file-arrow-down fa-solid"></i> Download NPDA CSV template</a>
   <div class="divider">OR</div>
-
-  <form method="POST" enctype="multipart/form-data" action="home" class="w-full max-w-xl p-8 border-4 border-dashed border-gray-400" _="on dragover or dragenter halt the event then
-                        add .bg-rcpch_light_grey
-                on dragleave or drop remove .bg-rcpch_light_grey
-                on drop halt the event then
-                    get event.dataTransfer.files then put it into #upload_input.files then call updateFilename(#upload_input)">
-    <p class="text-center text-xl font-semibold font-montserrat mb-4 text-rcpch_dark_blue">Drag &amp; drop your NPDA CSV file here, or</p>
-    <div class="flex justify-center items-center bg-rcpch_dark_blue py-4 px-6 mb-4">
-      <label class="mr-4 bg-gray-600 text-white font-montserrat py-2 px-4 cursor-pointer">Choose file<input id="upload_input" type="file" name="csv_upload" class="hidden" onchange="updateFilename(this)" accept=".csv" /></label>
-      <span id="file-name-display" class="text-white font-montserrat">No file chosen</span>
+  <form method="post"
+        enctype="multipart/form-data"
+        action="home"
+        class="w-full max-w-xl p-8 border-4 border-gray-400 border-dashed"
+        _="on dragover or dragenter halt the event then add .bg-rcpch_light_grey on dragleave or drop remove .bg-rcpch_light_grey on drop halt the event then get event.dataTransfer.files then put it into #upload_input.files then call updateFilename(#upload_input)">
+    <p class="font-montserrat text-rcpch_dark_blue mb-4 text-xl font-semibold text-center">
+      Drag &amp; drop your NPDA CSV file here, or
+    </p>
+    <div class="bg-rcpch_dark_blue flex justify-center items-center px-6 py-4 mb-4">
+      <label class="font-montserrat px-4 py-2 mr-4 text-white bg-gray-600 cursor-pointer">
+        Choose file
+        <input id="upload_input"
+               type="file"
+               name="csv_upload"
+               class="hidden"
+               onchange="updateFilename(this)"
+               accept=".csv" />
+      </label>
+      <span id="file-name-display" class="font-montserrat text-white">No file chosen</span>
     </div>
     {% csrf_token %}
-
     <div class="relative">
-      <button id="submit-button" class="w-full bg-gray-400 text-white font-montserrat py-2 px-4 tooltip-trigger" type="submit" disabled _="on click remove .hidden from #upload-spinner">
+      <button id="submit-button"
+              class="font-montserrat tooltip-trigger w-full px-4 py-2 text-white bg-gray-400"
+              type="submit"
+              disabled
+              _="on click remove .hidden from #upload-spinner">
         Submit data
-        <span class="loading loading-spinner loading-lg text-rcpch_pink hidden" id="upload-spinner"></span>
+        <span class="loading loading-lg loading-spinner text-rcpch_pink hidden"
+              id="upload-spinner"></span>
       </button>
-      <div class="tooltip-content absolute left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-rcpch_pink text-white text-center rounded p-2 opacity-0 transition-opacity duration-300 pointer-events-none" _="
-                        on mouseenter from #submit-button 
-                        if the #submit-button's disabled 
-                            add .opacity-100
-                        end
-                        on mouseleave from #submit-button 
-                        if the #submit-button's disabled 
-                            remove .opacity-100
-                        end
-                    ">
-                    Upload your NPDA CSV file to submit data! 
-                </div>
-            </div>
-        </form>
-    
+      <div class="-translate-x-1/2 bg-rcpch_pink tooltip-content transform w-48 absolute left-1/2 p-2 mt-2 text-center text-white rounded opacity-0 transition-opacity duration-300 pointer-events-none"
+           _=" on mouseenter from #submit-button if the #submit-button's disabled add .opacity-100 end on mouseleave from #submit-button if the #submit-button's disabled remove .opacity-100 end ">
+        Upload your NPDA CSV file to submit data!
+      </div>
+    </div>
+  </form>
 </div>
 <script>
   function updateFilename(input) {
     const fileNameDisplay = document.getElementById('file-name-display')
     const submitButton = document.getElementById('submit-button')
-  
+
     if (input.files.length > 0) {
       const file = input.files[0]
       const fileName = file.name
       const fileExtension = fileName.split('.').pop().toLowerCase()
-  
+
       if (fileExtension === 'csv') {
         fileNameDisplay.textContent = fileName
         submitButton.classList.replace('bg-gray-400', 'bg-rcpch_light_blue')

@@ -1,35 +1,42 @@
 {% for organisation_employer in organisation_employers %}
-    {% if organisation_employer.is_primary_employer %}
-        <div><strong>{{ organisation_employer.paediatric_diabetes_unit.lead_organisation_name }} Primary Employer</strong></div>
-    {% else %}
-        <div>
-            {{ organisation_employer.paediatric_diabetes_unit.lead_organisation_name }}
-            <button class="bg-rcpch_light_blue text-white font-semibold hover:text-white border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue p-1 m-1" hx-post="{% url 'npdauser-update' npda_user.pk %}" hx-target="#primary_pdu" hx-swap="innerHTML" hx-vals='{"organisation_employer_id":"{{organisation_employer.pk}}", "update":"update" }'>Set Primary</button>
-            <button class="bg-rcpch_red text-white font-semibold hover:text-white border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint p-1 m-1" hx-post="{% url 'npdauser-update' npda_user.pk %}" hx-target="#primary_pdu" hx-swap="innerHTML" hx-vals='{"organisation_employer_id":"{{organisation_employer.pk}}", "update":"delete" }'>Delete</button>
-        </div>
-    {% endif %}                      
+  {% if organisation_employer.is_primary_employer %}
+    <div>
+      <strong>{{ organisation_employer.paediatric_diabetes_unit.lead_organisation_name }} Primary Employer</strong>
+    </div>
+  {% else %}
+    <div>
+      {{ organisation_employer.paediatric_diabetes_unit.lead_organisation_name }}
+      <button class="bg-rcpch_light_blue text-white font-semibold hover:text-white border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue p-1 m-1"
+              hx-post="{% url 'npdauser-update' npda_user.pk %}"
+              hx-target="#primary_pdu"
+              hx-swap="innerHTML"
+              hx-vals='{"organisation_employer_id":"{{ organisation_employer.pk }}", "update":"update" }'>
+        Set Primary
+      </button>
+      <button class="bg-rcpch_red text-white font-semibold hover:text-white border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint p-1 m-1"
+              hx-post="{% url 'npdauser-update' npda_user.pk %}"
+              hx-target="#primary_pdu"
+              hx-swap="innerHTML"
+              hx-vals='{"organisation_employer_id":"{{ organisation_employer.pk }}", "update":"delete" }'>
+        Delete
+      </button>
+    </div>
+  {% endif %}
 {% endfor %}
 <div id="rcpch_organisation_select">
-    <div id="add_organisation_button">
-        <button type="button" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-1.5 px-2 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue mb-2 text-xs" 
-            _="on click 
-                toggle .hidden on #id_add_employer 
-                then toggle .hidden on #add_submit_button 
-                then if my innerHTML is 'Add Employer' 
-                    set my innerHTML to 'Hide Employers' 
-                else 
-                    set my innerHTML to 'Add Employer'">Add Employer</button>
-    </div>
-    
-    <div class="flex flex-row">
-        {% include 'partials/rcpch_organisation_select.html' with employer_choices=employer_choices selected_organisation=field.value hidden_on_load=True %}
-            <button 
-                id="add_submit_button" 
-                class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2 px-2 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue mb-2 text-xs hidden"
-                hx-post="{% url 'npdauser-update' npda_user.pk %}"
-                hx-swap="innerHTML"
-                hx-target="#primary_pdu"
-            >Add</button>
-            
-    </div>
+  <div id="add_organisation_button">
+    <button type="button"
+            class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-1.5 px-2 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue mb-2 text-xs"
+            _="on click toggle .hidden on #id_add_employer then toggle .hidden on #add_submit_button then if my innerHTML is 'Add Employer' set my innerHTML to 'Hide Employers' else set my innerHTML to 'Add Employer'">
+      Add Employer
+    </button>
   </div>
+  <div class="flex flex-row">
+    {% include 'partials/rcpch_organisation_select.html' with employer_choices=employer_choices selected_organisation=field.value hidden_on_load=True %}
+    <button id="add_submit_button"
+            class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2 px-2 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue mb-2 text-xs hidden"
+            hx-post="{% url 'npdauser-update' npda_user.pk %}"
+            hx-swap="innerHTML"
+            hx-target="#primary_pdu">Add</button>
+  </div>
+</div>

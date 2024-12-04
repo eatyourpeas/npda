@@ -1,5 +1,10 @@
-<select id="id_add_employer" name="add_employer" class="select rcpch-select rounded-none {% if hidden_on_load %} hidden {% endif %}">
-    {% for choice in employer_choices %}
-        <option value="{{choice.0}}" {% if selected_organisation == choice.0 %} selected="{{ choice.0 }}" {% endif %}>{{choice.1}}</option>
-    {% endfor %}
+<select id="id_add_employer"
+        name="add_employer"
+        class="select rcpch-select rounded-none {% if hidden_on_load %}hidden{% endif %}">
+  {% for choice in employer_choices %}
+    <option value="{{ choice.0 }}"
+            {% if selected_organisation == choice.0 %}selected="{{ choice.0 }}"{% endif %}>
+      {{ choice.1 }}
+    </option>
+  {% endfor %}
 </select>

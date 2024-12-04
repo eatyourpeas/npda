@@ -1,28 +1,38 @@
 {% extends "two_factor/_base_focus.html" %}
 {% load i18n %}
-
-<div class=" flex flex-col justify-center items-center">
-
+<div class="flex flex-col justify-center items-center">
   {% block content %}
-    <h1 class="font-montserrat font-semibold text-center">{% block title %}<strong>{% trans "Permission Denied" %}</strong>{% endblock %}</h1>
-  
-    <p class="font-montserrat text-left">{% blocktrans trimmed %}<div class="flex flex-row justify-center font-montserrat text-left">
-      The page you requested, enforces users to verify using
-      two-factor authentication for security reasons. You need to enable these
-      security features in order to access this page.{% endblocktrans %}</div></p>
-
-    <p class="font-montserrat text-left">{% blocktrans trimmed %}<div class="flex flex-row justify-center font-montserrat text-left">Two-factor authentication is not enabled for your
-      account. Enable two-factor authentication for enhanced account
-      security.</div>{% endblocktrans %}</p>
+    <h1 class="font-montserrat font-semibold text-center">
+      {% block title %}
+        <strong>{% trans "Permission Denied" %}</strong>
+      {% endblock %}
+    </h1>
+    <p class="font-montserrat text-left">
+      {% blocktrans trimmed %}
+        <div class="font-montserrat flex flex-row justify-center text-left">
+          The page you requested, enforces users to verify using
+          two-factor authentication for security reasons. You need to enable these
+          security features in order to access this page.
+        {% endblocktrans %}
+      </div>
+    </p>
+    <p class="font-montserrat text-left">
+      {% blocktrans trimmed %}
+        <div class="font-montserrat flex flex-row justify-center text-left">
+          Two-factor authentication is not enabled for your
+          account. Enable two-factor authentication for enhanced account
+          security.
+        </div>
+      {% endblocktrans %}
+    </p>
   </div>
-  <div class="flex flex-row justify-center font-montserrat text-left mt-5">
+  <div class="font-montserrat flex flex-row justify-center mt-5 text-left">
     <p>
       <a href="{% url 'two_factor:setup' %}"
-      class="bg-rcpch_light_blue border-white text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">{% trans "Go back" %}</a>
-      <a href="{% url 'two_factor:setup' %}" class="bg-rcpch_light_blue border-white text-white font-semibold hover:text-white py-2.5 px-3 mt-40 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">
+         class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border border-white hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">{% trans "Go back" %}</a>
+      <a href="{% url 'two_factor:setup' %}"
+         class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border border-white hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">
       {% trans "Enable Two-Factor Authentication" %}</a>
     </p>
   </div>
-  {% endblock %}
-
-</div>
+{% endblock %}

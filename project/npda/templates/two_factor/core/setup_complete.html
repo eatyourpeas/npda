@@ -1,17 +1,23 @@
 {% extends "two_factor/_base_focus.html" %}
 {% load i18n %}
-
 {% block content %}
-<div class=" flex flex-col justify-center items-center">
-  
-      <h1 class="font-montserrat text-lg font-semibold mt-5">{% block title %}{% trans "Enable Two-Factor Authentication" %}{% endblock %}</h1>
-
-      <p class="mb-5 font-montserrat">{% blocktrans trimmed %}Congratulations, you've successfully enabled two-factor
-        authentication.{% endblocktrans %}</p>
-        
-      {% if request.user %}
-        <p><a href="{% url 'home'  %}" class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">{% trans "Go to CSV Upload " %}</a></p>
-      {% endif %}
-      
-</div>
+  <div class=" flex flex-col justify-center items-center">
+    <h1 class="font-montserrat text-lg font-semibold mt-5">
+      {% block title %}
+        {% trans "Enable Two-Factor Authentication" %}
+      {% endblock %}
+    </h1>
+    <p class="mb-5 font-montserrat">
+      {% blocktrans trimmed %}
+        Congratulations, you've successfully enabled two-factor
+        authentication.
+      {% endblocktrans %}
+    </p>
+    {% if request.user %}
+      <p>
+        <a href="{% url 'home' %}"
+           class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">{% trans "Go to CSV Upload " %}</a>
+      </p>
+    {% endif %}
+  </div>
 {% endblock %}

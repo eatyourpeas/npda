@@ -1,30 +1,50 @@
 {% extends "two_factor/_base_focus.html" %}
 {% load i18n %}
-
 {% block extra_media %}
-{{ form.media }}
-{% endblock %}
-
+  {{ form.media }}
+{% endblock extra_media %}
 {% block content %}
-<div class=" flex flex-col justify-center items-center">
-  
-  
-      <h1 class="font-montserrat font-semibold text-lg mb-5">{% block title %}{% trans "Enable Two-Factor Authentication" %}{% endblock %}</h1>
-      {% if wizard.steps.current == 'welcome' %}
+  <div class="flex flex-col justify-center items-center">
+    <h1 class="font-montserrat mb-5 text-lg font-semibold">
+      {% block title %}
+        {% trans "Enable Two-Factor Authentication" %}
+      {% endblock %}
+    </h1>
+    {% if wizard.steps.current == 'welcome' %}
       <div class="font-montserrat text-left">
-        <p>{% blocktrans trimmed %}Follow the steps to enable two-factor authentication.</p>
-        <p>This is a requirement to use the National Paediatric Diabetes Audit platform{% endblocktrans %}.</p>
+        <p>
+          {% blocktrans trimmed %}
+            Follow the steps to enable two-factor authentication.
+          </p>
+          <p>
+            This is a requirement to use the National Paediatric Diabetes Audit platform
+          {% endblocktrans %}
+          .
+        </p>
       </div>
-      {% elif wizard.steps.current == 'method' %}
-        <p class="font-montserrat text-left">Please select which authentication method you would
-            like to use:</p>
-      {% elif wizard.steps.current == 'generator' %}
-      <div class="flex flex-col justify-center font-montserrat"
-        <p><b>To set up your two-factor authentication, follow these steps:</b></p>
+    {% elif wizard.steps.current == 'method' %}
+      <p class="font-montserrat text-left">
+        Please select which authentication method you would
+        like to use:
+      </p>
+    {% elif wizard.steps.current == 'generator' %}
+      <div class="font-montserrat flex flex-col justify-center">
+        <p>
+          <b>To set up your two-factor authentication, follow these steps:</b>
+        </p>
         <ol>
-          <li><p>Ensure you have the <a class="text-rcpch_light_blue" href="https://www.microsoft.com/en-gb/security/mobile-authenticator-app">Microsoft Authenticator app</a> downloaded on your mobile device.</p></li>
-          <li>Click on the <code>+</code> button on the top right to add a <em>Work or school account</em>.</li>
-          <li>Choose <em>'Scan QR code'</em> and scan below:</li>
+          <li>
+            <p>
+              Ensure you have the <a class="text-rcpch_light_blue"
+    href="https://www.microsoft.com/en-gb/security/mobile-authenticator-app">Microsoft Authenticator app</a> downloaded on your mobile device.
+            </p>
+          </li>
+          <li>
+            Click on the <code>+</code> button on the top right to add a <em>Work or school account</em>.
+          </li>
+          <li>
+            Choose <em>'Scan QR code'</em> and scan below:
+          </li>
           <p class="flex flex-row justify-center">
             <img src="{{ QR_URL }}" alt="QR Code" class="bg-white" />
           </p>
@@ -33,27 +53,29 @@
           </li>
           <li>Finally, enter the 6 digit number token provided:</li>
         </ol>
-        </div>
-
-      {% elif wizard.steps.current == 'validation' %}
-        <p class="font-montserrat">Please check your registered email for your one-time login code.</p>
-        {% if not challenge_succeeded %}
-        <p class="text-rcpch_red font-montserrat italic" role="alert">{% blocktrans trimmed %}We've
-          encountered an issue with the selected authentication method. Please
-          go back and verify that you entered your information correctly, try
-          again, or use a different authentication method instead. If the issue
-          persists, contact the site coordinator.{% endblocktrans %}</p>
-        {% endif %}
+      </div>
+    {% elif wizard.steps.current == 'validation' %}
+      <p class="font-montserrat">
+        Please check your registered email for your one-time login code.
+      </p>
+      {% if not challenge_succeeded %}
+        <p class="font-montserrat text-rcpch_red italic" role="alert">
+          {% blocktrans trimmed %}
+            We've
+            encountered an issue with the selected authentication method. Please
+            go back and verify that you entered your information correctly, try
+            again, or use a different authentication method instead. If the issue
+            persists, contact the site coordinator.
+          {% endblocktrans %}
+        </p>
       {% endif %}
-
-      <form action="" method="post">{% csrf_token %}
-        {% include "two_factor/_wizard_forms.html" %}
-
-        {# hidden submit button to enable [enter] key #}
-        <input type="submit" value="" hidden />
-
-        {% include "two_factor/_wizard_actions.html" %}
-      </form>
-
-</div>
-{% endblock %}
+    {% endif %}
+    <form action="" method="post">
+      {% csrf_token %}
+      {% include "two_factor/_wizard_forms.html" %}
+      {# hidden submit button to enable [enter] key #}
+      <input type="submit" value="" hidden />
+      {% include "two_factor/_wizard_actions.html" %}
+    </form>
+  </div>
+{% endblock content %}

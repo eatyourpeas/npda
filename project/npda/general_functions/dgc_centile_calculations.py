@@ -25,15 +25,19 @@ def calculate_centiles_z_scores(
 
     # test if any of the parameters are none
     if not all(
-        [
+        item
+        for item in [
             birth_date,
             observation_date,
             sex,
             observation_value,
             measurement_method,
         ]
+        if item is None
     ):
-        logger.warning(f"Missing parameters in calculate_centiles_z_scores")
+        logger.warning(
+            f"Missing parameters in calculate_centiles_z_scores: {[item for item in [birth_date, observation_date, sex, observation_value, measurement_method] if item is None]}"
+        )
         return None, None
 
     if sex == 1:
@@ -58,9 +62,12 @@ def calculate_centiles_z_scores(
 
     ERROR_STRING = "An error occurred while fetching centile and z score details."
     try:
-        response = requests.post(url=url, json=body, timeout=10, headers={
-            "Subscription-Key": f"{settings.RCPCH_DGC_API_KEY}"
-        })
+        response = requests.post(
+            url=url,
+            json=body,
+            timeout=10,
+            headers={"Subscription-Key": f"{settings.RCPCH_DGC_API_KEY}"},
+        )
         response.raise_for_status()
     except HTTPError as http_err:
         logger.error(f"{ERROR_STRING} Error: http error {http_err.response.text}")

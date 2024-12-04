@@ -1,34 +1,30 @@
 {% load i18n %}
-
 <div class="flex flex-col justify-center items-center">
-
   <button type="submit"
-    class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">
+          class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">
     {% trans "Next" %}
   </button>
-
   {% if wizard.steps.prev %}
-  <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}"
-    class="justify-center items-center bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">
-    Back
-  </button>
-</div>
+    <button name="wizard_goto_step"
+            type="submit"
+            value="{{ wizard.steps.prev }}"
+            class="justify-center items-center bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">
+      Back
+    </button>
+  </div>
 {% endif %}
-
 <!--IF NO PREV BUTTON -> MUST BE AT FIRST SIGNIN PAGE -->
 {% if not wizard.steps.prev %}
-<div class="flex flex-col justify-center items-center">
-  <a href="{% url 'password_reset' %}"
-    class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Reset
+  <div class="flex flex-col justify-center items-center">
+    <a href="{% url 'password_reset' %}"
+       class="bg-rcpch_light_blue text-white font-semibold hover:text-white py-2.5 px-3 mt-5 border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue">Reset
     Password</a>
-  <div class="mt-5">
-    <div
-      class="mt-2 bg-gray-100 border border-gray-200 text-sm text-gray-800 rounded-lg p-4 dark:bg-white/10 dark:border-white/20 dark:text-white font-montserrat"
-      role="alert">
-      <span class="font-bold">NOTE</span> For users of the old platform, you will require a new username and password to
-      access this new platform. Please contact your Coordinator or <a
-        href="mailto:npda@rcpch.ac.uk">npda@rcpch.ac.uk</a> for assistance.
+    <div class="mt-5">
+      <div class="mt-2 bg-gray-100 border border-gray-200 text-sm text-gray-800 rounded-lg p-4 dark:bg-white/10 dark:border-white/20 dark:text-white font-montserrat"
+           role="alert">
+        <span class="font-bold">NOTE</span> For users of the old platform, you will require a new username and password to
+        access this new platform. Please contact your Coordinator or <a href="mailto:npda@rcpch.ac.uk">npda@rcpch.ac.uk</a> for assistance.
+      </div>
     </div>
   </div>
-</div>
 {% endif %}

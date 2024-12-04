@@ -1,16 +1,18 @@
 {% load npda_tags %}
-
-<div class="w-full overflow-x-auto overflow-y-auto" style="max-height: inherit;">
-    <table class="table table-auto table-pin-cols table-pin-rows border-collapse text-sm text-left text-gray-500 mb-5 font-montserrat">
-      <caption class="caption-top font-montserrat text-rcpch_strong_blue font-bold">
-        Table: {{ aggregation_level }}-Level Key Performance Indicators for {{ pdu.lead_organisation_name }} (<span class="font-mono">{{ pdu.pz_code }}</span>)
-            {% if pdu.parent_name is not None %}
-                - ({{ pdu.parent_name }}) - {{ pdu.paediatric_diabetes_network_name }} ({{ pdu.paediatric_diabetes_network_code }})
-        {% endif %}
-      </caption>
+<div class="w-full overflow-x-auto overflow-y-auto"
+     style="max-height: inherit">
+  <table class="table table-auto table-pin-cols table-pin-rows border-collapse text-sm text-left text-gray-500 mb-5 font-montserrat">
+    <caption class="caption-top font-montserrat text-rcpch_strong_blue font-bold">
+      Table: {{ aggregation_level }}-Level Key Performance Indicators for {{ pdu.lead_organisation_name }} (<span class="font-mono">{{ pdu.pz_code }}</span>)
+      {% if pdu.parent_name is not None %}
+        - ({{ pdu.parent_name }}) - {{ pdu.paediatric_diabetes_network_name }} ({{ pdu.paediatric_diabetes_network_code }})
+      {% endif %}
+    </caption>
     <thead class="text-xs text-gray-700 uppercase  ">
       <tr class="bg-rcpch_dark_blue text-white z-40">
-        <th class="px-6 py-3 bg-rcpch_strong_blue_dark_tint text-white min-w-96">KPI</th>
+        <th class="px-6 py-3 bg-rcpch_strong_blue_dark_tint text-white min-w-96">
+          KPI
+        </th>
         <td class="px-6 py-3">Total Eligible</td>
         <td class="px-6 py-3">Total Ineligible</td>
         <td class="px-6 py-3">Total Passed</td>
@@ -25,14 +27,19 @@
               <span class="text-rcpch_light_blue hover:text-rcpch_pink">{{ kpi_key|extract_digits:0 }}.</span>{{ kpi_value.kpi_label }}
             </th>
             <td class="px-6 py-4 z-10">
-              <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.eligible|join_by_comma }}">{{ kpi_value.total_eligible }}</span>
+              <span class="tooltip"
+                    data-tip="Patients: {{ kpi_value.patient_querysets.eligible|join_by_comma }}">{{ kpi_value.total_eligible }}</span>
             </td>
             <td class="px-6 py-4 z-10">
-              <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.ineligible|join_by_comma }}">{{ kpi_value.total_ineligible }}</span>
+              <span class="tooltip"
+                    data-tip="Patients: {{ kpi_value.patient_querysets.ineligible|join_by_comma }}">{{ kpi_value.total_ineligible }}</span>
             </td>
             <td class="px-6 py-4 z-10">
               <span class="tooltip" data-tip="Does not apply to this measure">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12px" height="12px" viewBox="0 0 24 24">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     width="12px"
+                     height="12px"
+                     viewBox="0 0 24 24">
                   <path d="M6 12C6 12.5523 6.44772 13 7 13L17 13C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H7C6.44772 11 6 11.4477 6 12Z" fill="#e00087" />
                   <path fill-rule="evenodd" clip-rule="evenodd" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 1 1 5.92487 1 12C1 18.0751 5.92487 23 12 23ZM12 20.9932C7.03321 20.9932 3.00683 16.9668 3.00683 12C3.00683 7.03321 7.03321 3.00683 12 3.00683C16.9668 3.00683 20.9932 7.03321 20.9932 12C20.9932 16.9668 16.9668 20.9932 12 20.9932Z" fill="#e00087" />
                 </svg>
@@ -40,7 +47,11 @@
             </td>
             <td class="px-6 py-4 z-10">
               <span class="tooltip" data-tip="Does not apply to this measure">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12px" height="12px" viewBox="0 0 24 24" fill="none">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     width="12px"
+                     height="12px"
+                     viewBox="0 0 24 24"
+                     fill="none">
                   <path d="M6 12C6 12.5523 6.44772 13 7 13L17 13C17.5523 13 18 12.5523 18 12C18 11.4477 17.5523 11 17 11H7C6.44772 11 6 11.4477 6 12Z" fill="#e00087" />
                   <path fill-rule="evenodd" clip-rule="evenodd" d="M12 23C18.0751 23 23 18.0751 23 12C23 5.92487 18.0751 1 12 1C5.92487 1 1 5.92487 1 12C1 18.0751 5.92487 23 12 23ZM12 20.9932C7.03321 20.9932 3.00683 16.9668 3.00683 12C3.00683 7.03321 7.03321 3.00683 12 3.00683C16.9668 3.00683 20.9932 7.03321 20.9932 12C20.9932 16.9668 16.9668 20.9932 12 20.9932Z" fill="#e00087" />
                 </svg>
@@ -55,16 +66,20 @@
                   <span class="text-rcpch_light_blue">{{ kpi_key|extract_digits:0 }} - {{ kpi_key|extract_digits:1 }}.</span> {{ kpi_value.kpi_label }}
                 </th>
                 <td class="px-6 py-4 z-10">
-                  <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.eligible|join_by_comma }}">{{ kpi_value.total_eligible }}</span>
+                  <span class="tooltip"
+                        data-tip="Patients: {{ kpi_value.patient_querysets.eligible|join_by_comma }}">{{ kpi_value.total_eligible }}</span>
                 </td>
                 <td class="px-6 py-4 z-10">
-                  <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.ineligible|join_by_comma }}">{{ kpi_value.total_ineligible }}</span>
+                  <span class="tooltip"
+                        data-tip="Patients: {{ kpi_value.patient_querysets.ineligible|join_by_comma }}">{{ kpi_value.total_ineligible }}</span>
                 </td>
                 <td class="px-6 py-4 z-10">
-                  <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.passed|join_by_comma }}">{{ kpi_value.total_passed }}</span>
+                  <span class="tooltip"
+                        data-tip="Patients: {{ kpi_value.patient_querysets.passed|join_by_comma }}">{{ kpi_value.total_passed }}</span>
                 </td>
                 <td class="px-6 py-4 z-10">
-                  <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.failed|join_by_comma }}">{{ kpi_value.total_failed }}</span>
+                  <span class="tooltip"
+                        data-tip="Patients: {{ kpi_value.patient_querysets.failed|join_by_comma }}">{{ kpi_value.total_failed }}</span>
                 </td>
               </tr>
             {% else %}
@@ -73,16 +88,20 @@
                   <span class="text-rcpch_light_blue">{{ kpi_key|extract_digits:0 }}.</span> {{ kpi_value.kpi_label }}
                 </th>
                 <td class="px-6 py-4 z-10">
-                  <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.eligible|join_by_comma }}">{{ kpi_value.total_eligible }}</span>
+                  <span class="tooltip"
+                        data-tip="Patients: {{ kpi_value.patient_querysets.eligible|join_by_comma }}">{{ kpi_value.total_eligible }}</span>
                 </td>
                 <td class="px-6 py-4 z-10">
-                  <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.ineligible|join_by_comma }}">{{ kpi_value.total_ineligible }}</span>
+                  <span class="tooltip"
+                        data-tip="Patients: {{ kpi_value.patient_querysets.ineligible|join_by_comma }}">{{ kpi_value.total_ineligible }}</span>
                 </td>
                 <td class="px-6 py-4 z-10">
-                  <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.passed|join_by_comma }}">{{ kpi_value.total_passed }}</span>
+                  <span class="tooltip"
+                        data-tip="Patients: {{ kpi_value.patient_querysets.passed|join_by_comma }}">{{ kpi_value.total_passed }}</span>
                 </td>
                 <td class="px-6 py-4 z-10">
-                  <span class="tooltip" data-tip="Patients: {{ kpi_value.patient_querysets.failed|join_by_comma }}">{{ kpi_value.total_failed }}</span>
+                  <span class="tooltip"
+                        data-tip="Patients: {{ kpi_value.patient_querysets.failed|join_by_comma }}">{{ kpi_value.total_failed }}</span>
                 </td>
               </tr>
             {% endif %}
