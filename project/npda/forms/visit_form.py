@@ -469,6 +469,8 @@ class VisitForm(forms.ModelForm):
 
     def clean_visit_date(self):
         data = self.cleaned_data["visit_date"]
+        print(f"!! clean_visit_date visit_date={data} patient.date_of_birth={self.patient.date_of_birth}")
+
         valid, error = validate_date(
             date_under_examination_field_name="visit_date",
             date_under_examination_label_name="Visit/Appointment Date",
@@ -778,7 +780,6 @@ class VisitForm(forms.ModelForm):
 
         # TODO MRB: ensure we have all parameters before calling the centile calculations
         #           (used to happen low in the function itself)
-        # TODO MRB: ensure we have a known sex parameter before calling the centile calculations
 
         if not getattr(self, "async_validation_results", None):
             self.async_validation_results = validate_visit_sync(
@@ -786,6 +787,7 @@ class VisitForm(forms.ModelForm):
                 observation_date=observation_date,
                 height=height,
                 weight=weight,
+                sex=sex
             )
         
         for measurement in ["height", "weight", "bmi"]:

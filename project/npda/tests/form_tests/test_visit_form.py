@@ -23,3 +23,4 @@ def test_height_and_weight_set_correctly():
 
     assert form.cleaned_data["height"] == 60
     assert form.cleaned_data["weight"] == 50
+

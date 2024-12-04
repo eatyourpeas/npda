@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 from datetime import date
+import logging
 
 import asyncio
 from asgiref.sync import async_to_sync
@@ -12,6 +13,9 @@ from ..general_functions.dgc_centile_calculations import (
     calculate_centiles_z_scores,
     calculate_bmi,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -27,7 +31,7 @@ class VisitExternalValidationResult:
 # TODO MRB: ensure we round to one decimal place
 
 async def _calculate_centiles_z_scores(
-    birth_date: date, observation_date: date, measurement_method: str, observation_value: Decimal, async_client: AsyncClient
+    birth_date: date, observation_date: date, sex: int, measurement_method: str, observation_value: Decimal, async_client: AsyncClient
 ) -> Decimal | ValidationError | None:
     try:
         centile, sds = await calculate_centiles_z_scores(
@@ -36,6 +40,7 @@ async def _calculate_centiles_z_scores(
             measurement_method=measurement_method,
             observation_value=observation_value,
             sex=sex,
+            async_client=async_client,
         )
 
         # TODO MRB: ensure ValidationError comes if values out of range
@@ -48,15 +53,25 @@ async def _calculate_centiles_z_scores(
 # TODO MRB: handle parameters being none
 
 async def validate_visit_async(
-    birth_date: date, observation_date: date, height: Decimal, weight: Decimal, async_client: AsyncClient
+    birth_date: date, observation_date: date, sex: int, height: Decimal, weight: Decimal, async_client: AsyncClient
 ) -> VisitExternalValidationResult:
-    ret = VisitExternalValidationResult(None, None, None, None)
+    ret = VisitExternalValidationResult(None, None, None, None, None, None)
+
+    if sex == 1:
+        sex = "male"
+    elif sex == 2:
+        sex = "female"
+    else:
+        logger.warning(
+            "Sex is not known or not specified. Cannot calculate centiles and z-scores."
+        )
+        return ret
 
     bmi = round(calculate_bmi(height, weight), 1)
 
-    validate_height_task = _calculate_centiles_z_scores(birth_date, observation_date, "height", height, async_client)
-    validate_weight_task = _calculate_centiles_z_scores(birth_date, observation_date, "weight", weight, async_client)
-    validate_bmi_task = _calculate_centiles_z_scores(birth_date, observation_date, "bmi", bmi, async_client)
+    validate_height_task = _calculate_centiles_z_scores(birth_date, observation_date, sex, "height", height, async_client)
+    validate_weight_task = _calculate_centiles_z_scores(birth_date, observation_date, sex, "weight", weight, async_client)
+    validate_bmi_task = _calculate_centiles_z_scores(birth_date, observation_date, sex, "bmi", bmi, async_client)
 
     # This is the Python equivalent of Promise.allSettled
     # Run all the lookups in parallel but retain exceptions per job rather than returning the first one
@@ -68,6 +83,8 @@ async def validate_visit_async(
             return_exceptions=True,
         )
     )
+
+    print(f"!! height={height_result} weight={weight_result} bmi={bmi_result}")
 
     if isinstance(height_result, Exception) and not type(height_result) is ValidationError:
         raise height_result
@@ -97,11 +114,11 @@ async def validate_visit_async(
 
 
 def validate_visit_sync(
-    birth_date: date, observation_date: date, height: Decimal, weight: Decimal
+    birth_date: date, observation_date: date, sex: int, height: Decimal, weight: Decimal
 ) -> VisitExternalValidationResult:
     async def wrapper():
         async with AsyncClient() as client:
-            ret = await validate_visit_async(birth_date, observation_date, height, weight, client)
+            ret = await validate_visit_async(birth_date, observation_date, sex, height, weight, client)
             return ret
 
     return async_to_sync(wrapper)()

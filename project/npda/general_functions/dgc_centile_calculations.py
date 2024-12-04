@@ -48,9 +48,9 @@ async def calculate_centiles_z_scores(
     if centile is not None:
         centile = round(centile, 1)
 
-    corrected_sds = data["measurement_calculated_values"]["corrected_sds"]
-    if corrected_sds is not None:
-        corrected_sds = round(corrected_sds, 1)
+    z_score = data["measurement_calculated_values"]["corrected_sds"]
+    if z_score is not None:
+        z_score = round(z_score, 1)
 
     if centile is not None and centile > 99.9:
         centile = 99.9
