@@ -1,11 +1,17 @@
 {% extends 'dashboard/base_card.html' %}
 {% block card_title %}
-  {{ title }}
-{% endblock card_title%}
+  {{ pz_code }}
+{% endblock card_title %}
 {% block card_body %}
-  <p class="mt-2">KING'S COLLEGE HOSPITAL (DENMARK HILL)</p>
-  <hr class="my-4">
-  <p><span class="font-bold">Trust:</span></p>
-  <p class="mt-1">KING'S COLLEGE HOSPITAL NHS FOUNDATION TRUST</p>
-  <p class="mt-1 text-sm text-gray-500">London & South East (PN05)</p>
+  <div class="text-center">
+    <!-- PZ Name -->
+    <p class="mt-2 text-lg">{PZ NAME}</p>
+
+    <!-- Divider with Text "Trust" -->
+    {% include 'dashboard/hr_with_text.html' with hr_rule_text="Trust" %}
+
+    <!-- Trust Details -->
+     <p class="mt-2 text-lg">{TRUST NAME}</p>
+     <p class="mt-2 text-lg">{PN NAME}</p>
+  </div>
 {% endblock %}

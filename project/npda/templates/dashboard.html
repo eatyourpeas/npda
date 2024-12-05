@@ -5,46 +5,17 @@
 {% url 'dashboard' as hx_get %}
 
 <div class="container mx-auto p-4 font-montserrat">
-  <h1 class="text-3xl font-bold text-center mb-6">PDU Dashboard</h1>
+  <h1 class="text-4xl text-center mb-6">PDU Dashboard</h1>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <!-- PDU Information Card -->
-       {% include 'dashboard/pdu_card.html' with title="PDU TITLE" %}
+       {% include 'dashboard/pdu_card.html' %}
 
 
       <!-- Audit Details Card -->
-      <div class="bg-white border border-gray-300 rounded-lg shadow p-4">
-          <h2 class="text-lg font-bold">Audit Details</h2>
-          <div class="mt-2">
-              <p>
-                  <span class="font-bold">Start Date:</span> 1-Apr-24
-              </p>
-              <p class="mt-1">
-                  <span class="font-bold">End Date:</span> 31-Mar-25
-              </p>
-          </div>
-          <hr class="my-4">
-          <div class="mt-2">
-              <p>
-                  <span class="font-bold">Current Quarter:</span> Q3
-              </p>
-              <p class="mt-1 text-sm text-gray-500">(1st Jan 2025)</p>
-          </div>
-          <hr class="my-4">
-          <div class="mt-2">
-              <p>
-                  <span class="font-bold">Days Remaining:</span> 100
-              </p>
-          </div>
-      </div>
+      {% include 'dashboard/audit_details_card.html' %}
 
       <!-- Total Eligible Patients Card -->
-      <div class="bg-white border border-gray-300 rounded-lg shadow p-4">
-          <h2 class="text-lg font-bold">Total Eligible Patients</h2>
-          <div class="mt-4 text-center text-gray-500">
-              <!-- Placeholder for Chart -->
-              Chart Placeholder
-          </div>
-      </div>
+      {% include 'dashboard/total_eligible_patients_card.html' %}
   </div>
 </div>
 
