@@ -751,9 +751,6 @@ class VisitForm(forms.ModelForm):
         if weight is not None:
             cleaned_data["weight"] = weight = round_to_one_decimal_place(weight)
 
-        # TODO MRB: ensure we have all parameters before calling the centile calculations
-        #           (used to happen low in the function itself)
-
         if not getattr(self, "async_validation_results", None):
             self.async_validation_results = validate_visit_sync(
                 birth_date=birth_date,
@@ -798,7 +795,7 @@ class VisitForm(forms.ModelForm):
     # in the list at the top (that we expect to receive from a POST). 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        
+
         instance.height_centile = self.async_validation_results.height_centile
         instance.height_sds = self.async_validation_results.height_sds
         instance.weight_centile = self.async_validation_results.weight_centile

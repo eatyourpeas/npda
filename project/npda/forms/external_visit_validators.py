@@ -29,11 +29,15 @@ class VisitExternalValidationResult:
     bmi_sds: Decimal | ValidationError | None
 
 
-# TODO MRB: ensure we round to one decimal place
-
 async def _calculate_centiles_z_scores(
-    birth_date: date, observation_date: date, sex: int, measurement_method: str, observation_value: Decimal, async_client: AsyncClient
+    birth_date: date, observation_date: date, sex: int, measurement_method: str, observation_value: Decimal | None, async_client: AsyncClient
 ) -> Decimal | ValidationError | None:
+    if observation_value is None:
+        logger.warning(
+            f"Cannot calculate centiles and z-scores for {measurement_method} as it is missing"
+        )
+        return None
+
     try:
         centile, sds = await calculate_centiles_z_scores(
             birth_date=birth_date,
@@ -44,20 +48,19 @@ async def _calculate_centiles_z_scores(
             async_client=async_client,
         )
 
-        # TODO MRB: ensure ValidationError comes if values out of range
-
         return centile, sds
     except HTTPError as err:
         logger.warning(f"Error calculating centiles and z-scores for {measurement_method} {err}")
 
 
-# TODO MRB: handle parameters being none
-
-
 async def validate_visit_async(
-    birth_date: date, observation_date: date, sex: int, height: Decimal, weight: Decimal, async_client: AsyncClient
+    birth_date: date, observation_date: date | None, sex: int | None, height: Decimal | None, weight: Decimal | None, async_client: AsyncClient
 ) -> VisitExternalValidationResult:
     ret = VisitExternalValidationResult(None, None, None, None, None, None, None)
+
+    if not observation_date:
+        logger.warning("Observation date is not specified. Cannot calculate centiles and z-scores.")
+        return ret
 
     if sex == 1:
         sex = "male"
@@ -69,8 +72,13 @@ async def validate_visit_async(
         )
         return ret
 
-    bmi = round(calculate_bmi(height, weight), 1)
-    ret.bmi = bmi
+    if height is not None and weight is not None:
+        bmi = round(calculate_bmi(height, weight), 1)
+        ret.bmi = bmi
+    else:
+        logger.warning(
+            "Missing height or weight. Cannot calculate centiles and z-scores."
+        )
 
     validate_height_task = _calculate_centiles_z_scores(birth_date, observation_date, sex, "height", height, async_client)
     validate_weight_task = _calculate_centiles_z_scores(birth_date, observation_date, sex, "weight", weight, async_client)
@@ -124,7 +132,7 @@ async def validate_visit_async(
 
 
 def validate_visit_sync(
-    birth_date: date, observation_date: date, sex: int, height: Decimal, weight: Decimal
+    birth_date: date, observation_date: date | None, sex: int | None, height: Decimal | None, weight: Decimal | None
 ) -> VisitExternalValidationResult:
     async def wrapper():
         async with AsyncClient() as client:
