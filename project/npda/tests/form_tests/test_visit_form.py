@@ -1,3 +1,6 @@
+import dataclasses
+from decimal import Decimal
+
 import pytest
 from unittest.mock import Mock, patch
 
@@ -14,7 +17,7 @@ def mock_external_validation_result(**kwargs):
 # We don't want to call remote services in unit tests
 @pytest.fixture(autouse=True)
 def mock_remote_calls():
-    with patch("project.npda.forms.patient_form.validate_patient_sync", Mock(return_value=MOCK_EXTERNAL_VALIDATION_RESULT)):
+    with patch("project.npda.forms.visit_form.validate_visit_sync", Mock(return_value=MOCK_EXTERNAL_VALIDATION_RESULT)):
         yield None
 
 
@@ -38,4 +41,109 @@ def test_height_and_weight_set_correctly():
 
     assert form.cleaned_data["height"] == 60
     assert form.cleaned_data["weight"] == 50
+
+
+@pytest.mark.django_db
+@patch("project.npda.forms.visit_form.validate_visit_sync", mock_external_validation_result(
+    height_centile=Decimal("0.1"),
+    height_sds=Decimal("0.2"),
+    weight_centile=Decimal("0.3"),
+    weight_sds=Decimal("0.4"),
+    bmi=Decimal("0.5"),
+    bmi_centile=Decimal("0.6"),
+    bmi_sds=Decimal("0.7"),
+))
+def test_dgc_results_saved():
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "height": "60",
+            "weight": "50",
+        },
+        initial = {
+            "patient": patient
+        }
+    )
+
+    # Trigger the cleaners
+    form.is_valid()
+
+    # TODO MRB: why do I have to do this in test but it happens automatically normally?
+    form.instance.patient_id = patient.id
+    visit = form.save()
+
+    assert visit.height_centile == Decimal("0.1")
+    assert visit.height_sds == Decimal("0.2")
+    assert visit.weight_centile == Decimal("0.3")
+    assert visit.weight_sds == Decimal("0.4")
+    assert visit.bmi == Decimal("0.5")
+    assert visit.bmi_centile == Decimal("0.6")
+    assert visit.bmi_sds == Decimal("0.7")
+
+@pytest.mark.django_db
+@patch("project.npda.forms.visit_form.validate_visit_sync", mock_external_validation_result(
+    height_centile=Decimal("0.1"),
+    height_sds=Decimal("0.2"),
+))
+def test_partial_dgc_results_saved():
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "height": "60",
+            "weight": "50",
+        },
+        initial = {
+            "patient": patient
+        }
+    )
+
+    # Trigger the cleaners
+    form.is_valid()
+
+    # TODO MRB: why do I have to do this in test but it happens automatically normally?
+    form.instance.patient_id = patient.id
+    visit = form.save()
+
+    assert visit.height_centile == Decimal("0.1")
+    assert visit.height_sds == Decimal("0.2")
+    assert visit.weight_centile is None
+    assert visit.weight_sds is None
+    assert visit.bmi is None
+    assert visit.bmi_centile is None
+    assert visit.bmi_sds is None
+
+# @pytest.mark.django_db
+# @patch("project.npda.forms.visit_form.validate_visit_sync", mock_external_validation_result(
+#     height_centile=Decimal("0.1"),
+#     height_sds=Decimal("0.2"),
+# ))
+# def test_dgc_height_validation_error():
+#     patient = PatientFactory()
+
+#     form = VisitForm(
+#         data={
+#             "height": "60",
+#             "weight": "50",
+#         },
+#         initial = {
+#             "patient": patient
+#         }
+#     )
+
+#     # Trigger the cleaners
+#     form.is_valid()
+
+#     # TODO MRB: why do I have to do this in test but it happens automatically normally?
+#     form.instance.patient_id = patient.id
+#     visit = form.save()
+
+#     assert visit.height_centile == Decimal("0.1")
+#     assert visit.height_sds == Decimal("0.2")
+#     assert visit.weight_centile is None
+#     assert visit.weight_sds is None
+#     assert visit.bmi is None
+#     assert visit.bmi_centile is None
+#     assert visit.bmi_sds is None
 
