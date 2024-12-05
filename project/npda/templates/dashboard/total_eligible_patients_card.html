@@ -3,10 +3,7 @@
   Total Eligible Patients
 {% endblock card_title%}
 {% block card_body %}
-  <div class="mt-4 text-center text-gray-500">
-    <!-- Placeholder for Chart -->
-    Chart Placeholder
-  </div>
+  {{ charts.total_eligible_patients_stratified_by_diabetes_type|safe }}
 {% endblock %}
 
 
