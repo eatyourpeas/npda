@@ -7,7 +7,12 @@ from httpx import HTTPError
 
 # django imports
 from django.contrib.gis.db import models
-from django.contrib.gis.db.models import CharField, DateField, PositiveSmallIntegerField
+from django.contrib.gis.db.models import (
+    CharField,
+    DateField,
+    PositiveSmallIntegerField,
+    PointField,
+)
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 
@@ -49,6 +54,27 @@ class Patient(models.Model):
         "Postcode of usual address",
         blank=True,
         null=True,
+    )
+
+    location_wgs = PointField(
+        help_text="longitude and latitude of the postcode as British National Grid (BNG)",
+        srid=27700,
+        null=True,
+        blank=True,
+    )
+
+    location_bng = PointField(
+        help_text="longitude and latitude of the postcode as British National Grid (BNG)",
+        srid=27700,
+        null=True,
+        blank=True,
+    )
+
+    location_wgs84 = PointField(
+        help_text="longitude and latitude of the postcode as WGS 84",
+        srid=4326,
+        null=True,
+        blank=True,
     )
 
     ethnicity = CharField(
