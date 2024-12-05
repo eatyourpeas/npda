@@ -7,6 +7,7 @@ from datetime import date
 # Django imports
 from django.apps import apps
 from django.contrib import messages
+from django.http import HttpResponseBadRequest, HttpResponse
 from django.shortcuts import render
 
 from project.npda.general_functions.model_utils import print_instance_field_attrs
@@ -28,6 +29,27 @@ from ..general_functions.rcpch_nhs_organisations import fetch_organisation_by_od
 # RCPCH imports
 from .decorators import login_and_otp_required
 
+# Define our data constants
+TEXT = {
+    "health_checks": {
+        "title": "Seven Key Care Processes",
+        "description": "These care processes show the completion rate per patient for all 7 key care processes for Type 1 patients. Three of these are mandatory for patients of all ages: HbA1c, BMI, and Thyroid. The other care processes are only mandatory for patients aged 12 and above.",
+    },
+    "additional_care_processes": {
+        "title": "Additional Care Proccesses",
+        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+    },
+    "care_at_diagnosis": {
+        "title": "Care at Diagnosis",
+        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+    },
+    "outcomes": {
+        "title": "Outcomes",
+        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+    },
+}
+
+
 @login_and_otp_required()
 def dashboard(request):
     """
@@ -35,9 +57,7 @@ def dashboard(request):
     """
     template = "dashboard.html"
     pz_code = request.session.get("pz_code")
-    refresh_session_object_synchronously(
-        request=request, user=request.user, pz_code=pz_code
-    )
+    refresh_session_object_synchronously(request=request, user=request.user, pz_code=pz_code)
 
     PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
     try:
@@ -49,29 +69,61 @@ def dashboard(request):
         )
         return render(request, "dashboard.html")
 
-    calculate_kpis = CalculateKPIS(
-        calculation_date=datetime.date.today(), return_pt_querysets=True
-    )
+    calculate_kpis = CalculateKPIS(calculation_date=datetime.date.today(), return_pt_querysets=True)
 
     kpi_calculations_object = calculate_kpis.calculate_kpis_for_pdus(pz_codes=[pz_code])
 
-    print(f'{kpi_calculations_object=}\n')
+    print(f"{kpi_calculations_object=}\n")
     print_instance_field_attrs(pdu)
-    
-    # Gather other context vars
+
+    # Gather other context vars
     current_date = date.today()
-    days_remaining_until_audit_end_date = (kpi_calculations_object['audit_end_date'] - current_date).days
+    days_remaining_until_audit_end_date = (
+        kpi_calculations_object["audit_end_date"] - current_date
+    ).days
     current_quarter = retrieve_quarter_for_date(current_date)
 
+    # Gather defaults for htmx partials
+    default_pt_level_menu_text = TEXT["health_checks"]
+    default_pt_level_menu_tab_selected = "health_checks"
+    highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
+    
     context = {
         "pdu_object": pdu,
         "kpi_calculations_object": kpi_calculations_object,
         "current_date": current_date,
         "current_quarter": current_quarter,
         "days_remaining_until_audit_end_date": days_remaining_until_audit_end_date,
+        # Default for htmx partials
+        "default_pt_level_menu_text": default_pt_level_menu_text,
+        "default_pt_level_menu_tab_selected": default_pt_level_menu_tab_selected,
+        "default_highlight": highlight,
         # TODO: this should be an enum but we're currently not doing benchmarking so can update
         # at that point
-        "aggregation_level": "pdu", 
+        "aggregation_level": "pdu",
     }
 
     return render(request, template_name=template, context=context)
+
+
+@login_and_otp_required()
+def get_patient_level_report_partial(request):
+
+    if not request.htmx:
+        return HttpResponseBadRequest("This view is only accessible via HTMX")
+
+    pt_level_menu_tab_selected = request.GET.get("selected")
+
+    # State vars
+    # Colour the selected menu tab
+    highlight = {f"{key}": key == pt_level_menu_tab_selected for key in TEXT.keys()}
+
+    return render(
+        request,
+        template_name="dashboard/pt_level_report_table_partial.html",
+        context={
+            "text": TEXT[pt_level_menu_tab_selected],
+            "pt_level_menu_tab_selected": pt_level_menu_tab_selected,
+            "highlight": highlight,
+        },
+    )
