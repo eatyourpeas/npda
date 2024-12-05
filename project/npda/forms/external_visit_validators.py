@@ -52,6 +52,7 @@ async def _calculate_centiles_z_scores(
     except HTTPError as err:
         logger.warning(f"Error calculating centiles and z-scores for {measurement_method} {err}")
 
+# TODO: test questionnaire missing height, weight and observation_date. Do we get blank values for them?
 
 async def validate_visit_async(
     birth_date: date, observation_date: date | None, sex: int | None, height: Decimal | None, weight: Decimal | None, async_client: AsyncClient

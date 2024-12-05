@@ -110,11 +110,11 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         form = VisitForm(data=fields, initial={"patient": patient_form.instance})
         form.async_validation_results = await validate_visit_async(
-            birth_date=patient_form.cleaned_data["date_of_birth"],
+            birth_date=patient_form.cleaned_data.get("date_of_birth"),
             observation_date=fields["height_weight_observation_date"],
             height=fields["height"],
             weight=fields["weight"],
-            sex=patient_form.cleaned_data["sex"],
+            sex=patient_form.cleaned_data.get("sex"),
             async_client=async_client
         )
 
