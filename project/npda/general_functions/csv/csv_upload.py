@@ -46,6 +46,10 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     Submission = apps.get_model("npda", "Submission")
     PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
 
+    # Gather all errors indexed by row number and the field that caused them (__all__ if we don't know which one)
+    # dict[number, dict[str, list[ValidationError]]]
+    errors_to_return = collections.defaultdict(lambda: collections.defaultdict(list))
+
     # Helper functions
     def csv_value_to_model_value(model_field, value):
         if pd.isnull(value):
@@ -158,12 +162,57 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return instance
 
-    async def validate_rows_in_parallel(rows_by_patient, async_client):
+    async def handle_rows_for_single_patient(rows, async_client):
+        (patient_form, transfer_fields, patient_row_index, parsed_visits) = await validate_rows(rows, async_client)
+
+        # Errors validating the Patient fields
+        for field, error in patient_form.errors.as_data().items():
+            errors_to_return[patient_row_index][field].append(error)
+
+        try:
+            patient = create_instance(Patient, patient_form)
+
+            # We don't call PatientForm.save as there's no async version so we have to set this manually
+            patient.index_of_multiple_deprivation_quintile = (
+                patient_form.async_validation_results.index_of_multiple_deprivation_quintile
+            )
+
+            await patient.asave()
+
+            # add the patient to a new Transfer instance
+            transfer_fields["paediatric_diabetes_unit"] = pdu
+            transfer_fields["patient"] = patient
+            await Transfer.objects.acreate(**transfer_fields)
+
+            await new_submission.patients.aadd(patient)
+        except Exception as error:
+            # We don't know what field caused the error so add to __all__
+            errors_to_return[patient_row_index]["__all__"].append(error)
+
+        for visit_form, visit_row_index in parsed_visits:
+            # Errors validating the Visit fields
+            for field, error in visit_form.errors.as_data().items():
+                errors_to_return[visit_row_index][field].append(error)
+
+            try:
+                visit = create_instance(Visit, visit_form)
+                visit.patient = patient
+                try:
+                    await visit.asave()
+                except Exception as error:
+                    print(
+                        f"Error saving visit: {error}"  # , height: {visit.height} (centile: {visit.height_centile, visit.height_sds}) {visit.weight} ({visit.weight_centile}, {visit.weight_sds}), {visit.bmi} ({visit.bmi_centile}, {visit.bmi_sds}), visit.patient: {visit.patient}"
+                    )
+            except Exception as error:
+                errors_to_return[visit_row_index]["__all__"].append(error)
+
+
+    async def handle_rows_in_parallel(rows_by_patient, async_client):
         tasks = []
 
         async with asyncio.TaskGroup() as tg:
             for _, rows in rows_by_patient:
-                task = tg.create_task(validate_rows(rows, async_client))
+                task = tg.create_task(handle_rows_for_single_patient(rows, async_client))
                 tasks.append(task)
 
         return [task.result() for task in tasks]
@@ -259,63 +308,8 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     # We only one to create one patient per NHS number and we can't create their visits if we fail to save the patient model
     visits_by_patient = dataframe.groupby("NHS Number", sort=False, dropna=False)
 
-    # Gather all errors indexed by row number and the field that caused them (__all__ if we don't know which one)
-    # dict[number, dict[str, list[ValidationError]]]
-    errors_to_return = collections.defaultdict(lambda: collections.defaultdict(list))
-
     async with httpx.AsyncClient() as async_client:
-        validation_results_by_patient = await validate_rows_in_parallel(
-            rows_by_patient=visits_by_patient, async_client=async_client
-        )
-
-        for (
-            patient_form,
-            transfer_fields,
-            patient_row_index,
-            # first_row_field_errors,
-            parsed_visits,
-        ) in validation_results_by_patient:
-            # Errors validating the Patient fields
-            for field, error in patient_form.errors.as_data().items():
-                errors_to_return[patient_row_index][field].append(error)
-
-            try:
-                patient = create_instance(Patient, patient_form)
-
-                # We don't call PatientForm.save as there's no async version so we have to set this manually
-                patient.index_of_multiple_deprivation_quintile = (
-                    patient_form.async_validation_results.index_of_multiple_deprivation_quintile
-                )
-
-                await patient.asave()
-
-                # add the patient to a new Transfer instance
-                transfer_fields["paediatric_diabetes_unit"] = pdu
-                transfer_fields["patient"] = patient
-                await Transfer.objects.acreate(**transfer_fields)
-
-                await new_submission.patients.aadd(patient)
-            except Exception as error:
-                # We don't know what field caused the error so add to __all__
-                errors_to_return[patient_row_index]["__all__"].append(error)
-
-            no_errors_preventing_centile_calcuation = True
-            for visit_form, visit_row_index in parsed_visits:
-                # Errors validating the Visit fields
-                for field, error in visit_form.errors.as_data().items():
-                    errors_to_return[visit_row_index][field].append(error)
-
-                try:
-                    visit = create_instance(Visit, visit_form)
-                    visit.patient = patient
-                    try:
-                        await visit.asave()
-                    except Exception as error:
-                        print(
-                            f"Error saving visit: {error}"  # , height: {visit.height} (centile: {visit.height_centile, visit.height_sds}) {visit.weight} ({visit.weight_centile}, {visit.weight_sds}), {visit.bmi} ({visit.bmi_centile}, {visit.bmi_sds}), visit.patient: {visit.patient}"
-                        )
-                except Exception as error:
-                    errors_to_return[visit_row_index]["__all__"].append(error)
+        await handle_rows_in_parallel(visits_by_patient, async_client)
 
     # Only create xlsx file if the csv file was created.
     if new_submission.csv_file:
