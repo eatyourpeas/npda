@@ -19,19 +19,22 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class CentileAndSDS:
+    centile: Decimal
+    sds: Decimal
+
+
+@dataclass
 class VisitExternalValidationResult:
-    height_centile: Decimal | ValidationError | None
-    height_sds: Decimal | ValidationError | None
-    weight_centile: Decimal | ValidationError | None
-    weight_sds: Decimal | ValidationError | None
+    height_result: CentileAndSDS | ValidationError | None
+    weight_result: CentileAndSDS | ValidationError | None
     bmi: Decimal | None
-    bmi_centile: Decimal | ValidationError | None
-    bmi_sds: Decimal | ValidationError | None
+    bmi_result: CentileAndSDS | ValidationError | None
 
 
 async def _calculate_centiles_z_scores(
     birth_date: date, observation_date: date, sex: int, measurement_method: str, observation_value: Decimal | None, async_client: AsyncClient
-) -> Decimal | ValidationError | None:
+) -> CentileAndSDS | None:
     if observation_value is None:
         logger.warning(
             f"Cannot calculate centiles and z-scores for {measurement_method} as it is missing"
@@ -48,16 +51,21 @@ async def _calculate_centiles_z_scores(
             async_client=async_client,
         )
 
-        return centile, sds
+        return CentileAndSDS(centile, sds)
     except HTTPError as err:
         logger.warning(f"Error calculating centiles and z-scores for {measurement_method} {err}")
 
 # TODO: test questionnaire missing height, weight and observation_date. Do we get blank values for them?
 
 async def validate_visit_async(
-    birth_date: date, observation_date: date | None, sex: int | None, height: Decimal | None, weight: Decimal | None, async_client: AsyncClient
+    birth_date: date,
+    observation_date: date | None,
+    sex: int | None,
+    height: Decimal | None,
+    weight: Decimal | None,
+    async_client: AsyncClient
 ) -> VisitExternalValidationResult:
-    ret = VisitExternalValidationResult(None, None, None, None, None, None, None)
+    ret = VisitExternalValidationResult(None, None, None, None)
 
     if not observation_date:
         logger.warning("Observation date is not specified. Cannot calculate centiles and z-scores.")
@@ -96,44 +104,25 @@ async def validate_visit_async(
         )
     )
 
-    if isinstance(height_result, Exception) and not type(height_result) is ValidationError:
-        raise height_result
-    elif type(height_result) is ValidationError:
-        ret.height_centile = height_result
-        ret.height_sds = height_result
-    else:
-        (height_centile, height_sds) = height_result
-
-        ret.height_centile = height_centile
-        ret.height_sds = height_sds
+    for [result, result_field] in [
+        [height_result, "height_result"],
+        [weight_result, "weight_result"],
+        [bmi_result, "bmi_result"]
+    ]:
+        if isinstance(result, Exception) and not type(result) is ValidationError:
+            raise result
     
-    if isinstance(weight_result, Exception) and not type(weight_result) is ValidationError:
-        raise weight_result
-    elif type(weight_result) is ValidationError:
-        ret.weight_centile = height_result
-        ret.weight_sds = height_result
-    else:
-        (weight_centile, weight_sds) = weight_result
-        
-        ret.weight_centile = weight_centile
-        ret.weight_sds = weight_sds
-    
-    if isinstance(bmi_result, Exception) and not type(bmi_result) is ValidationError:
-        raise bmi_result
-    elif type(bmi_result) is ValidationError:
-        ret.weight_centile = bmi_result
-        ret.weight_sds = bmi_result
-    else:
-        (bmi_centile, bmi_sds) = bmi_result
-        
-        ret.bmi_centile = bmi_centile
-        ret.bmi_sds = bmi_sds
+        setattr(ret, result_field, result)
 
     return ret
 
 
 def validate_visit_sync(
-    birth_date: date, observation_date: date | None, sex: int | None, height: Decimal | None, weight: Decimal | None
+    birth_date: date,
+    observation_date: date | None,
+    sex: int | None,
+    height: Decimal | None,
+    weight: Decimal | None
 ) -> VisitExternalValidationResult:
     async def wrapper():
         async with AsyncClient() as client:

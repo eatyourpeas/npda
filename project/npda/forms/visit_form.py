@@ -708,27 +708,21 @@ class VisitForm(forms.ModelForm):
 
         return self.cleaned_data["hospital_discharge_date"]
 
-    def handle_async_validation_result(self, field, fields_to_attach_errors):
-        value = getattr(self.async_validation_results, field)
-
-        if type(value) is ValidationError:
-            for field in fields_to_attach_errors: 
-                self.add_error(field, value)
-        elif value:
-            self.cleaned_data[field] = value
-
-    def handle_async_validation_results(self):
+    def handle_async_validation_errors(self):
         # These are calculated fields but we handle them in the form because we want to add validation errors.
-        # Conceptually we both "clean" weight and height and derive new fields from them.
-        self.handle_async_validation_result("height_centile", fields_to_attach_errors=["height"])
-        self.handle_async_validation_result("height_sds", fields_to_attach_errors=["height"])
+        # Conceptually we both "clean" weight and height and derive new fields from them. The actual data is
+        # saved in .save() below - this is just for the validation errors.
 
-        self.handle_async_validation_result("weight_centile", fields_to_attach_errors=[ "weight"])
-        self.handle_async_validation_result("weight_sds", fields_to_attach_errors=["weight"])
+        for [result_field, fields_to_attach_errors] in [
+            ["height_result", ["height"]],
+            ["weight_result", ["weight"]],
+            ["bmi_result", ["height", "weight"]]
+        ]:
+            result = getattr(self.async_validation_results, result_field)
 
-        self.handle_async_validation_result("bmi", fields_to_attach_errors=["bmi"])
-        self.handle_async_validation_result("bmi_centile", fields_to_attach_errors=["height", "weight"])
-        self.handle_async_validation_result("bmi_sds", fields_to_attach_errors=["height", "weight"])
+            if result and type(result) is ValidationError:
+                for field in fields_to_attach_errors: 
+                    self.add_error(field, result)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -741,7 +735,7 @@ class VisitForm(forms.ModelForm):
         birth_date = self.patient.date_of_birth
         sex = self.patient.sex
 
-        observation_date = cleaned_data["height_weight_observation_date"]
+        observation_date = cleaned_data.get("height_weight_observation_date")
 
         height = cleaned_data.get("height")
         if height is not None:
@@ -760,7 +754,7 @@ class VisitForm(forms.ModelForm):
                 sex=sex
             )
         
-        self.handle_async_validation_results()
+        self.handle_async_validation_errors()
 
         # Check that the hba1c value is within the correct range
         hba1c_value = cleaned_data["hba1c"]
@@ -796,13 +790,15 @@ class VisitForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        instance.height_centile = self.async_validation_results.height_centile
-        instance.height_sds = self.async_validation_results.height_sds
-        instance.weight_centile = self.async_validation_results.weight_centile
-        instance.weight_sds = self.async_validation_results.weight_sds
-        instance.bmi = self.async_validation_results.bmi
-        instance.bmi_centile = self.async_validation_results.bmi_centile
-        instance.bmi_sds = self.async_validation_results.bmi_sds
+        if getattr(self, "async_validation_results"):
+            instance.bmi = self.async_validation_results.bmi
+
+            for field_prefix in ["height", "weight", "bmi"]:
+                result = getattr(self.async_validation_results, f"{field_prefix}_result")
+
+                if result and not type(result) is ValidationError:
+                    setattr(instance, f"{field_prefix}_centile", result.centile)
+                    setattr(instance, f"{field_prefix}_sds", result.sds)
 
         if commit:
             instance.save()

@@ -71,12 +71,9 @@ def calculate_bmi(height, weight):
     :param weight: The weight of the patient in kg.
     :return: The BMI of the patient.
     """
-    if height < 2:
-        raise ValueError("Height must be in cm.")
-    if weight > 250:
-        raise ValueError("Weight must be in kg.")
     bmi = round(weight / (height / 100) ** 2, 1)
     
     if bmi > 99:
         return None
+    
     return bmi

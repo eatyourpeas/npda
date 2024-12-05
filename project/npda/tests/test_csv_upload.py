@@ -36,7 +36,7 @@ MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT = PatientExternalValidationResult(
     index_of_multiple_deprivation_quintile=INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
 )
 
-MOCK_VISIT_EXTERNAL_VALIDATION_RESULT = VisitExternalValidationResult(None, None, None, None, None, None, None)
+MOCK_VISIT_EXTERNAL_VALIDATION_RESULT = VisitExternalValidationResult(None, None, None, None)
 
 
 def mock_patient_external_validation_result(**kwargs):
