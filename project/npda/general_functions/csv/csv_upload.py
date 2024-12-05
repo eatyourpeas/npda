@@ -124,20 +124,25 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return form
 
-    async def validate_rows(rows, async_client):
+    async def validate_rows(ix, rows, async_client):
         first_row = rows.iloc[0]
         patient_row_index = first_row["row_index"]
 
         transfer_fields = validate_transfer(first_row)
         
+        print(f"!! [{ix}] BEFORE validate_patient_using_form")
         patient_form = await validate_patient_using_form(first_row, async_client)
+        print(f"!! [{ix}] AFTER validate_patient_using_form")
         
         # Pull through cleaned_data so we can use it in the async visit validators
         patient_form.is_valid()
 
         visit_forms = []
         for _, row in rows.iterrows():
+            print(f"!! [{ix}] BEFORE validate_visit_using_form")
             visit_form = await validate_visit_using_form(patient_form, row, async_client)
+            print(f"!! [{ix}] AFTER validate_visit_using_form")
+
             visit_forms.append((visit_form, row["row_index"]))
 
         return (
@@ -162,8 +167,10 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return instance
 
-    async def handle_rows_for_single_patient(rows, async_client):
-        (patient_form, transfer_fields, patient_row_index, parsed_visits) = await validate_rows(rows, async_client)
+    async def handle_rows_for_single_patient(ix, rows, async_client):
+        print(f"!! [{ix}] BEFORE validation_rows")
+        (patient_form, transfer_fields, patient_row_index, parsed_visits) = await validate_rows(ix, rows, async_client)
+        print(f"!! [{ix}] AFTER validation_rows")
 
         # Errors validating the Patient fields
         for field, error in patient_form.errors.as_data().items():
@@ -208,14 +215,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
 
     async def handle_rows_in_parallel(rows_by_patient, async_client):
-        tasks = []
-
         async with asyncio.TaskGroup() as tg:
-            for _, rows in rows_by_patient:
-                task = tg.create_task(handle_rows_for_single_patient(rows, async_client))
-                tasks.append(task)
-
-        return [task.result() for task in tasks]
+            for ix, rows in rows_by_patient:
+                tg.create_task(handle_rows_for_single_patient(ix, rows, async_client))
 
     """"
     Create the submission and save the csv file
@@ -309,7 +311,21 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     visits_by_patient = dataframe.groupby("NHS Number", sort=False, dropna=False)
 
     async with httpx.AsyncClient() as async_client:
-        await handle_rows_in_parallel(visits_by_patient, async_client)
+        # Batchin'
+        visits_by_patient_batch = []
+
+        for ix, rows in visits_by_patient:
+            if len(visits_by_patient_batch) == 100:
+                print(f"!! firing batch ")
+                await handle_rows_in_parallel(visits_by_patient_batch, async_client)
+                print(f"!! after batch ")
+                visits_by_patient_batch = []
+            else:
+                visits_by_patient_batch.append((ix, rows))
+
+        print(f"!! firing last batch ")
+        await handle_rows_in_parallel(visits_by_patient_batch, async_client)
+        print(f"!! after last batch ")
 
     # Only create xlsx file if the csv file was created.
     if new_submission.csv_file:

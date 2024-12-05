@@ -45,6 +45,9 @@ async def calculate_centiles_z_scores(
         msg = response.json()["detail"][0]["msg"]
         raise ValidationError(msg)
 
+    if response.status_code != 200:
+        print(f"!! dGC BARF {response.status_code} {response.text()}")
+
     response.raise_for_status()
 
     data = response.json()

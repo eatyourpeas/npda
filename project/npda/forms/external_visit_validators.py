@@ -53,6 +53,7 @@ async def _calculate_centiles_z_scores(
 
         return CentileAndSDS(centile, sds)
     except HTTPError as err:
+        print(f"!! BARF {err} {dir(err)}")
         logger.warning(f"Error calculating centiles and z-scores for {measurement_method} {err}")
 
 # TODO: test questionnaire missing height, weight and observation_date. Do we get blank values for them?
