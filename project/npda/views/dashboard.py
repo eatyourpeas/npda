@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.shortcuts import render
 
 from project.npda.general_functions.model_utils import print_instance_field_attrs
+from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
 
 
 # HTMX imports
@@ -54,12 +55,20 @@ def dashboard(request):
 
     kpi_calculations_object = calculate_kpis.calculate_kpis_for_pdus(pz_codes=[pz_code])
 
-    print(f'{kpi_calculations_object=}\n\n{print_instance_field_attrs(pdu)=}\n')
+    print(f'{kpi_calculations_object=}\n')
+    print_instance_field_attrs(pdu)
     
+    # Gather other context vars
+    current_date = date.today()
+    days_remaining_until_audit_end_date = (kpi_calculations_object['audit_end_date'] - current_date).days
+    current_quarter = retrieve_quarter_for_date(current_date)
 
     context = {
         "pdu_object": pdu,
         "kpi_calculations_object": kpi_calculations_object,
+        "current_date": current_date,
+        "current_quarter": current_quarter,
+        "days_remaining_until_audit_end_date": days_remaining_until_audit_end_date,
         # TODO: this should be an enum but we're currently not doing benchmarking so can update
         # at that point
         "aggregation_level": "pdu", 
