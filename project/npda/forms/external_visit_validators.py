@@ -24,6 +24,7 @@ class VisitExternalValidationResult:
     height_sds: Decimal | ValidationError | None
     weight_centile: Decimal | ValidationError | None
     weight_sds: Decimal | ValidationError | None
+    bmi: Decimal | None
     bmi_centile: Decimal | ValidationError | None
     bmi_sds: Decimal | ValidationError | None
 
@@ -52,10 +53,11 @@ async def _calculate_centiles_z_scores(
 
 # TODO MRB: handle parameters being none
 
+
 async def validate_visit_async(
     birth_date: date, observation_date: date, sex: int, height: Decimal, weight: Decimal, async_client: AsyncClient
 ) -> VisitExternalValidationResult:
-    ret = VisitExternalValidationResult(None, None, None, None, None, None)
+    ret = VisitExternalValidationResult(None, None, None, None, None, None, None)
 
     if sex == 1:
         sex = "male"
@@ -68,6 +70,7 @@ async def validate_visit_async(
         return ret
 
     bmi = round(calculate_bmi(height, weight), 1)
+    ret.bmi = bmi
 
     validate_height_task = _calculate_centiles_z_scores(birth_date, observation_date, sex, "height", height, async_client)
     validate_weight_task = _calculate_centiles_z_scores(birth_date, observation_date, sex, "weight", weight, async_client)
@@ -84,10 +87,11 @@ async def validate_visit_async(
         )
     )
 
-    print(f"!! height={height_result} weight={weight_result} bmi={bmi_result}")
-
     if isinstance(height_result, Exception) and not type(height_result) is ValidationError:
         raise height_result
+    elif type(height_result) is ValidationError:
+        ret.height_centile = height_result
+        ret.height_sds = height_result
     else:
         (height_centile, height_sds) = height_result
 
@@ -96,6 +100,9 @@ async def validate_visit_async(
     
     if isinstance(weight_result, Exception) and not type(weight_result) is ValidationError:
         raise weight_result
+    elif type(weight_result) is ValidationError:
+        ret.weight_centile = height_result
+        ret.weight_sds = height_result
     else:
         (weight_centile, weight_sds) = weight_result
         
@@ -104,6 +111,9 @@ async def validate_visit_async(
     
     if isinstance(bmi_result, Exception) and not type(bmi_result) is ValidationError:
         raise bmi_result
+    elif type(bmi_result) is ValidationError:
+        ret.weight_centile = bmi_result
+        ret.weight_sds = bmi_result
     else:
         (bmi_centile, bmi_sds) = bmi_result
         

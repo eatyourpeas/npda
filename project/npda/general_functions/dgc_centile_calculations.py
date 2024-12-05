@@ -4,6 +4,7 @@ import logging
 import httpx
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,10 @@ async def calculate_centiles_z_scores(
         headers={"Subscription-Key": f"{settings.RCPCH_DGC_API_KEY}"},
     )
 
+    if response.status_code == 422:
+        msg = response.json()["detail"][0]["msg"]
+        raise ValidationError(msg)
+
     response.raise_for_status()
 
     data = response.json()
@@ -71,6 +76,7 @@ def calculate_bmi(height, weight):
     if weight > 250:
         raise ValueError("Weight must be in kg.")
     bmi = round(weight / (height / 100) ** 2, 1)
+    
     if bmi > 99:
         return None
     return bmi

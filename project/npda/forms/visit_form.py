@@ -58,15 +58,7 @@ class VisitForm(forms.ModelForm):
             "hospital_discharge_date",
             "hospital_admission_reason",
             "dka_additional_therapies",
-            "hospital_admission_other",
-            # calculated fields
-            "height_centile",
-            "height_sds",
-            "weight_centile",
-            "weight_sds",
-            "bmi",
-            "bmi_centile",
-            "bmi_sds",
+            "hospital_admission_other"
         ]
 
         widgets = {
@@ -109,30 +101,8 @@ class VisitForm(forms.ModelForm):
             "hospital_discharge_date": DateInput(),
             "hospital_admission_reason": forms.Select(),
             "dka_additional_therapies": forms.Select(),
-            "hospital_admission_other": forms.TextInput(attrs={"class": TEXT_INPUT}),
-            # calculated fields as hidden inputs
-            "height_centile": forms.HiddenInput(),
-            "height_sds": forms.HiddenInput(),
-            "weight_centile": forms.HiddenInput(),
-            "weight_sds": forms.HiddenInput(),
-            "bmi": forms.HiddenInput(),
-            "bmi_centile": forms.HiddenInput(),
-            "bmi_sds": forms.HiddenInput(),
+            "hospital_admission_other": forms.TextInput(attrs={"class": TEXT_INPUT})
         }
-
-    height_centile = forms.DecimalField(widget=forms.HiddenInput(), required=False)
-    height_sds = forms.DecimalField(
-        widget=forms.HiddenInput(), required=False, decimal_places=1
-    )
-    weight_centile = forms.DecimalField(widget=forms.HiddenInput(), required=False)
-    weight_sds = forms.DecimalField(
-        widget=forms.HiddenInput(), required=False, decimal_places=1
-    )
-    bmi = forms.DecimalField(widget=forms.HiddenInput(), required=False)
-    bmi_centile = forms.DecimalField(
-        widget=forms.HiddenInput(), required=False, decimal_places=1
-    )
-    bmi_sds = forms.DecimalField(widget=forms.HiddenInput(), required=False)
 
     categories = [
         "Measurements",
@@ -469,7 +439,6 @@ class VisitForm(forms.ModelForm):
 
     def clean_visit_date(self):
         data = self.cleaned_data["visit_date"]
-        print(f"!! clean_visit_date visit_date={data} patient.date_of_birth={self.patient.date_of_birth}")
 
         valid, error = validate_date(
             date_under_examination_field_name="visit_date",
@@ -739,26 +708,30 @@ class VisitForm(forms.ModelForm):
 
         return self.cleaned_data["hospital_discharge_date"]
 
-    def handle_async_validation_result(self, key):
-        value = getattr(self.async_validation_results, key)
+    def handle_async_validation_result(self, field, fields_to_attach_errors):
+        value = getattr(self.async_validation_results, field)
 
         if type(value) is ValidationError:
-            self.add_error(key, value)
+            for field in fields_to_attach_errors: 
+                self.add_error(field, value)
         elif value:
-            self.cleaned_data[key] = value
+            self.cleaned_data[field] = value
+
+    def handle_async_validation_results(self):
+        # These are calculated fields but we handle them in the form because we want to add validation errors.
+        # Conceptually we both "clean" weight and height and derive new fields from them.
+        self.handle_async_validation_result("height_centile", fields_to_attach_errors=["height"])
+        self.handle_async_validation_result("height_sds", fields_to_attach_errors=["height"])
+
+        self.handle_async_validation_result("weight_centile", fields_to_attach_errors=[ "weight"])
+        self.handle_async_validation_result("weight_sds", fields_to_attach_errors=["weight"])
+
+        self.handle_async_validation_result("bmi", fields_to_attach_errors=["bmi"])
+        self.handle_async_validation_result("bmi_centile", fields_to_attach_errors=["height", "weight"])
+        self.handle_async_validation_result("bmi_sds", fields_to_attach_errors=["height", "weight"])
 
     def clean(self):
         cleaned_data = super().clean()
-
-        # Fields that come from the Digital Growth API will be the blank
-        # empty string on form submission. Prevent them being saved.
-        # TODO MRB: we probably don't need to do this if we don't set blank=True on the form?
-        for measurement in ["height", "weight", "bmi"]:
-            for calculation in ["centile", "sds"]:
-                field = f"{measurement}_{calculation}"
-
-                if cleaned_data[field] == "":
-                    cleaned_data[field] = None
 
         def round_to_one_decimal_place(value):
             return Decimal(value).quantize(
@@ -790,10 +763,7 @@ class VisitForm(forms.ModelForm):
                 sex=sex
             )
         
-        for measurement in ["height", "weight", "bmi"]:
-            for calculation in ["centile", "sds"]:
-                field = f"{measurement}_{calculation}"
-                self.handle_async_validation_result(field)
+        self.handle_async_validation_results()
 
         # Check that the hba1c value is within the correct range
         hba1c_value = cleaned_data["hba1c"]
@@ -822,3 +792,22 @@ class VisitForm(forms.ModelForm):
                     )
 
         return cleaned_data
+
+    # Called when submitting the questionnaire. For CSV upload, instances are created directly in csv_upload to preserve
+    # invalid data. Without overriding save here, the data from the dGC call would not be saved as the fields are not
+    # in the list at the top (that we expect to receive from a POST). 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        instance.height_centile = self.async_validation_results.height_centile
+        instance.height_sds = self.async_validation_results.height_sds
+        instance.weight_centile = self.async_validation_results.weight_centile
+        instance.weight_sds = self.async_validation_results.weight_sds
+        instance.bmi = self.async_validation_results.bmi
+        instance.bmi_centile = self.async_validation_results.bmi_centile
+        instance.bmi_sds = self.async_validation_results.bmi_sds
+
+        if commit:
+            instance.save()
+
+        return instance
