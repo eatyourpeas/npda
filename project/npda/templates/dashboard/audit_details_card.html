@@ -1,27 +1,28 @@
 {% extends 'dashboard/base_card.html' %}
 {% block card_title %}
-  Audit Details
+Audit Details
 {% endblock card_title%}
 {% block card_body %}
-  <div class="mt-2">
-    <p>
-        <span class="font-bold">Start Date:</span> 1-Apr-24
-    </p>
-    <p class="mt-1">
-        <span class="font-bold">End Date:</span> 31-Mar-25
-    </p>
+<div class="flex flex-row justify-evenly items-center text-center">
+
+  <div class="flex flex-col justify-center">
+    <p class="font-bold">Start Date</p>
+    <p>1-Apr-24</p>
   </div>
-  <hr class="my-4">
-  <div class="mt-2">
-    <p>
-        <span class="font-bold">Current Quarter:</span> Q3
-    </p>
-    <p class="mt-1 text-sm text-gray-500">(1st Jan 2025)</p>
+  <p>-</p>
+  <div class="flex flex-col justify-center">
+    <p class="font-bold">End Date</p>
+    <p>31-Mar-25</p>
   </div>
-  <hr class="my-4">
-  <div class="mt-2">
-    <p>
-        <span class="font-bold">Days Remaining:</span> 100
-    </p>
-  </div>
+</div>
+{% include 'dashboard/hr_with_text.html' with hr_rule_text='Current Quarter' %}
+<div class="flex flex-col justify-center items-center">
+  <p class="text-2xl">Q3</p>
+  <p>(1st Jan 2025)</p>
+</div>
+{% include 'dashboard/hr_with_text.html' with hr_rule_text='Days Remaining' %}
+<div class="flex flex-col justify-center items-center p-2">
+  <p class="text-2xl">100</p>
+</div>
+
 {% endblock %}
