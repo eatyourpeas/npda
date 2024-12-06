@@ -171,6 +171,7 @@ def dashboard(request):
 
     context = {
         "pdu_object": pdu,
+        "pdu_lead_organisation": pdu_lead_organisation,
         "kpi_calculations_object": kpi_calculations_object,
         "current_date": current_date,
         "current_quarter": current_quarter,
