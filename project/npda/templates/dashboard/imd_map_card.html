@@ -3,10 +3,22 @@
   IMD Map
 {% endblock card_title%}
 {% block card_body %}
-  <div class="mt-4 text-center text-gray-500">
-    <!-- Placeholder for Chart -->
-    Chart Placeholder
+  <div class="container-mx-auto my-20 mt-10 flex justify-center">
+  <div class="card bg-base-100 w-96 shadow-xl">
+    <figure>
+      <div id="organisation_cases_map" style="width: 100%; height: 700px"></div>
+    </figure>
+    <div class="card-body">
+      <h2 class="card-title">Patients</h2>
+        <p>Distribution of all patients at {{ session.pz_code }}</p>
+    </div>
   </div>
+</div>
+
+<script>
+  var organisation_plotly_map = {{ scatterplot_of_cases_for_selected_organisation|safe }}
+  Plotly.newPlot('organisation_cases_map', organisation_plotly_map.data, organisation_plotly_map.layout);
+</script>
 {% endblock %}
 
 
