@@ -6,6 +6,10 @@
   },
   "breadcrumbs.enabled": true, // Enable breadcrumbs for file navigation
   "explorer.autoReveal": true, // Automatically reveal the active file in the explorer
+  "emmet.includeLanguages": {
+    "django-html": "html" // Enable Emmet support for Django HTML
+  },
+  "emmet.triggerExpansionOnTab": true, // Allow Emmet abbreviations to expand on Tab
   "[django-html]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "monosans.djlint",
