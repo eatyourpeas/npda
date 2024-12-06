@@ -46,12 +46,12 @@ def get_children_by_pdu_audit_year(
     if patients:
         filtered_patients = patients.filter(
             ~Q(postcode__isnull=True) | ~Q(postcode__exact=""),  # Exclude patients with no postcode
-            patientsubmission__submission=submission,  # Filter by submission
+            submission=submission,  # Filter by submission
         )
 
         for patient in filtered_patients:
             if patient.postcode and not any(
-                (patient.location_wgs84 is None, patient.location_bng is None)
+                patient.location_wgs84 is None, patient.location_bng is None
             ):
                 # add the location data to the queryset - note these fields do not exist in the model
                 lon, lat, location_wgs84, location_bng = location_for_postcode(patient.postcode)
