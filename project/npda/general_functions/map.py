@@ -45,19 +45,16 @@ def get_children_by_pdu_audit_year(
 
     if patients:
         filtered_patients = patients.filter(
-            ~Q(postcode__isnull=True)
-            | ~Q(postcode__exact=""),  # Exclude patients with no postcode
-            submission=submission,  # Filter by submission
+            ~Q(postcode__isnull=True) | ~Q(postcode__exact=""),  # Exclude patients with no postcode
+            patientsubmission__submission=submission,  # Filter by submission
         )
 
         for patient in filtered_patients:
             if patient.postcode and not any(
-                patient.location_wgs84 is None, patient.location_bng is None
+                (patient.location_wgs84 is None, patient.location_bng is None)
             ):
                 # add the location data to the queryset - note these fields do not exist in the model
-                lon, lat, location_wgs84, location_bng = location_for_postcode(
-                    patient.postcode
-                )
+                lon, lat, location_wgs84, location_bng = location_for_postcode(patient.postcode)
                 patient.location_wgs84 = location_wgs84
                 patient.location_bng = location_bng
 
@@ -65,8 +62,8 @@ def get_children_by_pdu_audit_year(
             distance_from_lead_organisation=Distance(
                 "location_wgs84",
                 Point(
-                    paediatric_diabetes_unit_lead_organisation.longitude,
-                    paediatric_diabetes_unit_lead_organisation.latitude,
+                    paediatric_diabetes_unit_lead_organisation['longitude'],
+                    paediatric_diabetes_unit_lead_organisation['latitude'],
                     srid=4326,
                 ),
             )
@@ -159,9 +156,7 @@ def generate_distance_from_organisation_scatterplot_figure(
                 "below": "traces",
                 "sourcetype": "raster",
                 "sourceattribution": "Source: Office for National Statistics licensed under the Open Government Licence v.3.0",
-                "source": [
-                    "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-                ],
+                "source": ["https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"],
             }
         ],
     ),
@@ -182,12 +177,8 @@ def generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases):
         if "location_wgs84" in geo_df.columns:
             geo_df["longitude"] = geo_df["location_wgs84"].apply(lambda loc: loc.x)
             geo_df["latitude"] = geo_df["location_wgs84"].apply(lambda loc: loc.y)
-            geo_df["distance_km"] = geo_df["distance_from_lead_organisation"].apply(
-                lambda d: d.km
-            )
-            geo_df["distance_mi"] = geo_df["distance_from_lead_organisation"].apply(
-                lambda d: d.mi
-            )
+            geo_df["distance_km"] = geo_df["distance_from_lead_organisation"].apply(lambda d: d.km)
+            geo_df["distance_mi"] = geo_df["distance_from_lead_organisation"].apply(lambda d: d.mi)
 
             max_distance_travelled_km = geo_df["distance_km"].min()
             mean_distance_travelled_km = geo_df["distance_km"].mean()
