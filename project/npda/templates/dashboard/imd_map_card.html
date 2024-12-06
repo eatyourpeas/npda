@@ -10,9 +10,6 @@
       <h2 class="card-title">Patients</h2>
         <p>Distribution of all patients at {{ session.pz_code }}</p>
 
-  </div>
-</div>
-
 <script>
   var organisation_plotly_map = {{ scatterplot_of_cases_for_selected_organisation|safe }}
   Plotly.newPlot('organisation_cases_map', organisation_plotly_map.data, organisation_plotly_map.layout);
