@@ -24,19 +24,24 @@ from project.npda.tests.factories.patient_factory import (
 from project.npda.forms.external_patient_validators import (
     PatientExternalValidationResult,
 )
+from project.npda.forms.external_visit_validators import (
+    VisitExternalValidationResult,
+)
 
 
-MOCK_EXTERNAL_VALIDATION_RESULT = PatientExternalValidationResult(
+MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT = PatientExternalValidationResult(
     postcode=VALID_FIELDS["postcode"],
     gp_practice_ods_code=VALID_FIELDS["gp_practice_ods_code"],
     gp_practice_postcode=None,
     index_of_multiple_deprivation_quintile=INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
 )
 
+MOCK_VISIT_EXTERNAL_VALIDATION_RESULT = VisitExternalValidationResult(None, None, None, None)
 
-def mock_external_validation_result(**kwargs):
+
+def mock_patient_external_validation_result(**kwargs):
     return AsyncMock(
-        return_value=dataclasses.replace(MOCK_EXTERNAL_VALIDATION_RESULT, **kwargs)
+        return_value=dataclasses.replace(MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT, **kwargs)
     )
 
 
@@ -45,9 +50,13 @@ def mock_external_validation_result(**kwargs):
 def mock_remote_calls():
     with patch(
         "project.npda.general_functions.csv.csv_upload.validate_patient_async",
-        AsyncMock(return_value=MOCK_EXTERNAL_VALIDATION_RESULT),
+        AsyncMock(return_value=MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT),
     ):
-        yield None
+        with patch(
+            "project.npda.general_functions.csv.csv_upload.validate_visit_async",
+            AsyncMock(return_value=MOCK_VISIT_EXTERNAL_VALIDATION_RESULT),
+        ):
+            yield None
 
 
 ALDER_HEY_PZ_CODE = "PZ074"
@@ -512,7 +521,7 @@ def test_death_date_before_date_of_birth(test_user, single_row_valid_df):
 @pytest.mark.django_db
 @patch(
     "project.npda.general_functions.csv.csv_upload.validate_patient_async",
-    mock_external_validation_result(postcode=ValidationError("Invalid postcode")),
+    mock_patient_external_validation_result(postcode=ValidationError("Invalid postcode")),
 )
 def test_invalid_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "not a postcode"
@@ -529,7 +538,7 @@ def test_invalid_postcode(test_user, single_row_valid_df):
 @pytest.mark.django_db
 @patch(
     "project.npda.general_functions.csv.csv_upload.validate_patient_async",
-    mock_external_validation_result(postcode=None),
+    mock_patient_external_validation_result(postcode=None),
 )
 def test_error_validating_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "WC1X 8SH"
@@ -544,7 +553,7 @@ def test_error_validating_postcode(test_user, single_row_valid_df):
 @pytest.mark.django_db
 @patch(
     "project.npda.general_functions.csv.csv_upload.validate_patient_async",
-    mock_external_validation_result(
+    mock_patient_external_validation_result(
         gp_practice_ods_code=ValidationError("Invalid ODS code")
     ),
 )
@@ -563,7 +572,7 @@ def test_invalid_gp_ods_code(test_user, single_row_valid_df):
 @pytest.mark.django_db
 @patch(
     "project.npda.general_functions.csv.csv_upload.validate_patient_async",
-    mock_external_validation_result(postcode=None),
+    mock_patient_external_validation_result(postcode=None),
 )
 def test_error_validating_gp_ods_code(test_user, single_row_valid_df):
     single_row_valid_df["GP Practice Code"] = "G85023"
@@ -589,7 +598,7 @@ def test_lookup_index_of_multiple_deprivation(test_user, single_row_valid_df):
 @pytest.mark.django_db
 @patch(
     "project.npda.general_functions.csv.csv_upload.validate_patient_async",
-    mock_external_validation_result(index_of_multiple_deprivation_quintile=None),
+    mock_patient_external_validation_result(index_of_multiple_deprivation_quintile=None),
 )
 def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_valid_df):
     csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)

@@ -1,15 +1,16 @@
 import datetime
 import json
 import logging
-import requests
-from requests.exceptions import HTTPError
+import httpx
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_centiles_z_scores(
-    birth_date, observation_date, sex, observation_value, measurement_method
+async def calculate_centiles_z_scores(
+    birth_date, observation_date, sex, observation_value, measurement_method, async_client
 ):
     """
     Calculate the centiles and z-scores for height and weight for a given patient.
@@ -23,33 +24,6 @@ def calculate_centiles_z_scores(
 
     url = f"{settings.RCPCH_DGC_API_URL}/uk-who/calculation"
 
-    # test if any of the parameters are none
-    if not all(
-        item
-        for item in [
-            birth_date,
-            observation_date,
-            sex,
-            observation_value,
-            measurement_method,
-        ]
-        if item is None
-    ):
-        logger.warning(
-            f"Missing parameters in calculate_centiles_z_scores: {[item for item in [birth_date, observation_date, sex, observation_value, measurement_method] if item is None]}"
-        )
-        return None, None
-
-    if sex == 1:
-        sex = "male"
-    elif sex == 2:
-        sex = "female"
-    elif sex == 9 or sex == 0:
-        logger.warning(
-            "Sex is not known or not specified. Cannot calculate centiles and z-scores."
-        )
-        return None, None
-
     body = {
         "measurement_method": measurement_method,
         "birth_date": birth_date.strftime("%Y-%m-%d"),
@@ -60,33 +34,28 @@ def calculate_centiles_z_scores(
         "gestation_days": 0,
     }
 
-    ERROR_STRING = "An error occurred while fetching centile and z score details."
-    try:
-        response = requests.post(
-            url=url,
-            json=body,
-            timeout=10,
-            headers={"Subscription-Key": f"{settings.RCPCH_DGC_API_KEY}"},
-        )
-        response.raise_for_status()
-    except HTTPError as http_err:
-        logger.error(f"{ERROR_STRING} Error: http error {http_err.response.text}")
-        return None, None
-    except Exception as err:
-        logger.error(f"{ERROR_STRING} Error: {err}")
-        return None, None
+    response = await async_client.post(
+        url=url,
+        json=body,
+        timeout=10,
+        headers={"Subscription-Key": f"{settings.RCPCH_DGC_API_KEY}"},
+    )
 
-    if (
-        response.json()["measurement_calculated_values"]["corrected_centile"]
-        is not None
-    ):
-        centile = round(
-            response.json()["measurement_calculated_values"]["corrected_centile"], 1
-        )
-    if response.json()["measurement_calculated_values"]["corrected_sds"] is not None:
-        z_score = round(
-            response.json()["measurement_calculated_values"]["corrected_sds"], 1
-        )
+    if response.status_code == 422:
+        msg = response.json()["detail"][0]["msg"]
+        raise ValidationError(msg)
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    centile = data["measurement_calculated_values"]["corrected_centile"]
+    if centile is not None:
+        centile = round(centile, 1)
+
+    z_score = data["measurement_calculated_values"]["corrected_sds"]
+    if z_score is not None:
+        z_score = round(z_score, 1)
 
     if centile is not None and centile > 99.9:
         centile = 99.9
@@ -102,11 +71,9 @@ def calculate_bmi(height, weight):
     :param weight: The weight of the patient in kg.
     :return: The BMI of the patient.
     """
-    if height < 2:
-        raise ValueError("Height must be in cm.")
-    if weight > 250:
-        raise ValueError("Weight must be in kg.")
     bmi = round(weight / (height / 100) ** 2, 1)
+    
     if bmi > 99:
         return None
+    
     return bmi

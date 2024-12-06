@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 from project.npda.forms.patient_form import PatientForm
 from project.npda.forms.visit_form import VisitForm
 from project.npda.forms.external_patient_validators import validate_patient_async
+from project.npda.forms.external_visit_validators import validate_visit_async
 
 from project.npda.general_functions.dgc_centile_calculations import (
     calculate_bmi,
@@ -101,13 +102,22 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
         return form
 
-    def validate_visit_using_form(patient, row):
+    async def validate_visit_using_form(patient_form, row, async_client):
         fields = row_to_dict(
             row,
             Visit,
         )
 
-        form = VisitForm(data=fields, initial={"patient": patient})
+        form = VisitForm(data=fields, initial={"patient": patient_form.instance})
+        form.async_validation_results = await validate_visit_async(
+            birth_date=patient_form.cleaned_data.get("date_of_birth"),
+            observation_date=fields["height_weight_observation_date"],
+            height=fields["height"],
+            weight=fields["weight"],
+            sex=patient_form.cleaned_data.get("sex"),
+            async_client=async_client
+        )
+
         return form
 
     async def validate_rows(rows, async_client):
@@ -115,20 +125,22 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         patient_row_index = first_row["row_index"]
 
         transfer_fields = validate_transfer(first_row)
+        
         patient_form = await validate_patient_using_form(first_row, async_client)
-        visits = rows.apply(
-            lambda row: (
-                validate_visit_using_form(patient_form.instance, row),
-                row["row_index"],
-            ),
-            axis=1,
-        )
+        
+        # Pull through cleaned_data so we can use it in the async visit validators
+        patient_form.is_valid()
+
+        visit_forms = []
+        for _, row in rows.iterrows():
+            visit_form = await validate_visit_using_form(patient_form, row, async_client)
+            visit_forms.append((visit_form, row["row_index"]))
 
         return (
             patient_form,
             transfer_fields,
             patient_row_index,
-            visits,
+            visit_forms,
         )
 
     def create_instance(model, form):
