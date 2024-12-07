@@ -3,7 +3,7 @@
   Total Eligible Patients
 {% endblock card_title%}
 {% block card_body %}
-<div class="p-1 bg-white rounded shadow h-[400px] w-full">
+<div class="p-2 bg-white rounded shadow h-[400px] w-full">
   <div id="total_eligible_pts_waffle_container" class="w-full h-full"></div>
 </div>
 
@@ -12,7 +12,7 @@
 const data = {{ charts.total_eligible_patients_stratified_by_diabetes_type.data|safe }};
 
 // Define colours for the categories
-const colors = {
+const COLORS = {
   'T1DM': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.T1DM|safe }}',
   'T2DM': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.T2DM|safe }}',
   'Other rare forms': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.OTHER|safe }}',
@@ -40,24 +40,21 @@ const stage = new Konva.Stage({
   height: container.offsetHeight // Dynamically set height
 });
 
-// Fix rounding issues in proportions
+// When calculating pcts, floats converted to ints can lead to rounding errors
+// So check if the sum of the counts is 100 and adjust the first category if not
 function normalizeProportions(data, totalSquares) {
-  const total = Object.values(data).reduce((sum, value) => sum + value, 0);
-  const rawCounts = Object.keys(data).map(key => ({
-    key,
-    color: colors[key],
-    count: Math.round((data[key] / total) * totalSquares)
-  }));
+
+  const squares = Object.entries(data).map(([key, pct]) => ({ color: COLORS[key], count: pct }));
 
   // Adjust counts to ensure the total equals `totalSquares`
-  const totalCount = rawCounts.reduce((sum, item) => sum + item.count, 0);
+  const totalCount = squares.reduce((sum, item) => sum + item.count, 0);
   const difference = totalSquares - totalCount;
 
   if (difference !== 0) {
-    rawCounts[0].count += difference; // Adjust the first category to fix the total
+    squares[0].count += difference; // Adjust the first category to fix the total
   }
 
-  return rawCounts;
+  return squares;
 }
 
 // Draw the waffle chart
@@ -68,21 +65,27 @@ function drawWaffle(stage, data, width, height) {
   // Create a new layer
   const layer = new Konva.Layer();
 
-  // Normalize proportions to exactly 100 squares
   const gridSize = 10; // Fixed grid size (10x10)
   const totalSquares = gridSize * gridSize; // Total squares = 100
   const normalizedData = normalizeProportions(data, totalSquares);
 
-  // Flatten the proportions into a grid array
+  // Flatten the proportions into a grid array of colors, each repeated `count` times
   const gridArray = normalizedData.flatMap(({ color, count }) =>
     Array(count).fill(color)
   );
 
   // Define square dimensions
-  const squareGap = 10; // Fixed gap between squares
-  const squareSize = (width - (squareGap * (gridSize - 1))) / gridSize; // Ensure squares and gaps fit the width
-  const maxSquareHeight = (height - (squareGap * (gridSize - 1))) / gridSize;
-  const adjustedSquareSize = Math.min(squareSize, maxSquareHeight);
+  // Define square dimensions based on container aspect ratio
+  const squareGap = 5;
+  const squareWidth = (width - (gridSize - 1) * squareGap) / gridSize;
+  const squareHeight = (height - (gridSize - 1) * squareGap) / gridSize;
+
+  // Use the smaller of squareWidth and squareHeight for uniform squares
+  const squareSize = Math.min(squareWidth, squareHeight);
+
+  // Calculate offsets to centre the grid within the container
+  const xOffset = (width - (squareSize + squareGap) * gridSize + squareGap) / 2;
+  const yOffset = (height - (squareSize + squareGap) * gridSize + squareGap) / 2;
 
   // Draw squares
   gridArray.forEach((color, index) => {
@@ -90,10 +93,10 @@ function drawWaffle(stage, data, width, height) {
     const col = index % gridSize;
 
     const square = new Konva.Rect({
-      x: col * (adjustedSquareSize + squareGap),
-      y: row * (adjustedSquareSize + squareGap),
-      width: adjustedSquareSize,
-      height: adjustedSquareSize,
+      x: xOffset + col * (squareSize + squareGap),
+      y: yOffset + row * (squareSize + squareGap),
+      width: squareSize,
+      height: squareSize,
       fill: color,
       stroke: 'black',
       strokeWidth: 0.5

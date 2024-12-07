@@ -228,4 +228,10 @@ def convert_value_counts_dict_to_pct(value_counts_dict: dict):
     Convert a value counts dict to percentages
     """
     total = sum(value_counts_dict.values())
-    return {key: round((value / total), 0) * 100 for key, value in value_counts_dict.items()}
+    
+    value_counts_dict_pct = {}
+    
+    for key, value in value_counts_dict.items():
+        value_counts_dict_pct[key] = int(value / total * 100)
+    
+    return value_counts_dict_pct
