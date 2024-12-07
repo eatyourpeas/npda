@@ -107,6 +107,9 @@ def dashboard(request):
             # Count as 'Other rare forms'
             diabetes_type_str = "Other rare forms"
             eligible_pts_diabetes_type_value_counts[diabetes_type_str] += count
+    
+    # Convert to percentages
+    eligible_pts_diabetes_type_value_counts = convert_value_counts_dict_to_pct(eligible_pts_diabetes_type_value_counts)
 
     # TODO: @eatyourpeas pls help fix
     # # Map of cases by distance from the selected organisation
@@ -175,7 +178,7 @@ def dashboard(request):
         "charts": {
             # Converting this to a dict for easier access in the template
             "total_eligible_patients_stratified_by_diabetes_type": {
-                "data": dict(eligible_pts_diabetes_type_value_counts),
+                "data": eligible_pts_diabetes_type_value_counts,
                 "labels": list(eligible_pts_diabetes_type_value_counts.keys()),
                 "colors": {
                     "T1DM": RCPCH_DARK_BLUE,
@@ -219,3 +222,10 @@ def get_patient_level_report_partial(request):
             "highlight": highlight,
         },
     )
+
+def convert_value_counts_dict_to_pct(value_counts_dict: dict):
+    """
+    Convert a value counts dict to percentages
+    """
+    total = sum(value_counts_dict.values())
+    return {key: round((value / total), 0) * 100 for key, value in value_counts_dict.items()}
