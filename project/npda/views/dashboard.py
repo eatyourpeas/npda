@@ -1,6 +1,7 @@
 # Python imports
 from collections import defaultdict
 import datetime
+import json
 import logging
 from datetime import date
 
@@ -9,7 +10,7 @@ import plotly.graph_objects as go
 # Django imports
 from django.apps import apps
 from django.contrib import messages
-from django.http import HttpResponseBadRequest, HttpResponse
+from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.db.models import QuerySet, Count
 
@@ -62,9 +63,7 @@ def dashboard(request):
     """
     template = "dashboard.html"
     pz_code = request.session.get("pz_code")
-    refresh_session_object_synchronously(
-        request=request, user=request.user, pz_code=pz_code
-    )
+    refresh_session_object_synchronously(request=request, user=request.user, pz_code=pz_code)
 
     PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
     try:
@@ -76,18 +75,16 @@ def dashboard(request):
         )
         return render(request, "dashboard.html")
 
-    calculate_kpis = CalculateKPIS(
-        calculation_date=datetime.date.today(), return_pt_querysets=True
-    )
+    calculate_kpis = CalculateKPIS(calculation_date=datetime.date.today(), return_pt_querysets=True)
 
     kpi_calculations_object = calculate_kpis.calculate_kpis_for_pdus(pz_codes=[pz_code])
 
     # From this, gather specific chart data required
 
     # Total eligible patients stratified by diabetes type
-    total_eligible_patients_queryset: QuerySet = kpi_calculations_object[
-        "calculated_kpi_values"
-    ]["kpi_1_total_eligible"]["patient_querysets"]["eligible"]
+    total_eligible_patients_queryset: QuerySet = kpi_calculations_object["calculated_kpi_values"][
+        "kpi_1_total_eligible"
+    ]["patient_querysets"]["eligible"]
     eligible_pts_diabetes_type_counts = total_eligible_patients_queryset.values(
         "diabetes_type"
     ).annotate(count=Count("diabetes_type"))
@@ -107,9 +104,11 @@ def dashboard(request):
             # Count as 'Other rare forms'
             diabetes_type_str = "Other rare forms"
             eligible_pts_diabetes_type_value_counts[diabetes_type_str] += count
-    
+
     # Convert to percentages
-    eligible_pts_diabetes_type_value_counts = convert_value_counts_dict_to_pct(eligible_pts_diabetes_type_value_counts)
+    eligible_pts_diabetes_type_value_counts = convert_value_counts_dict_to_pct(
+        eligible_pts_diabetes_type_value_counts
+    )
 
     # TODO: @eatyourpeas pls help fix
     # # Map of cases by distance from the selected organisation
@@ -161,12 +160,10 @@ def dashboard(request):
     # Gather defaults for htmx partials
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
-    highlight = {
-        f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()
-    }
+    highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
 
     # DEBUGGING
-    print(eligible_pts_diabetes_type_value_counts)
+    print(f"{eligible_pts_diabetes_type_value_counts=}")
 
     context = {
         "pdu_object": pdu,
@@ -178,7 +175,7 @@ def dashboard(request):
         "charts": {
             # Converting this to a dict for easier access in the template
             "total_eligible_patients_stratified_by_diabetes_type": {
-                "data": eligible_pts_diabetes_type_value_counts,
+                "data": json.dumps(eligible_pts_diabetes_type_value_counts),
                 "labels": list(eligible_pts_diabetes_type_value_counts.keys()),
                 "colors": {
                     "T1DM": RCPCH_DARK_BLUE,
@@ -223,15 +220,97 @@ def get_patient_level_report_partial(request):
         },
     )
 
+
+@login_and_otp_required()
+def get_waffle_chart_partial(request):
+
+    if not request.htmx:
+        return HttpResponseBadRequest("This view is only accessible via HTMX")
+
+    print(f"{request.GET=}")
+
+    # Fetch data from query parameters (if provided)
+    data = {}
+    for key, value in request.GET.items():
+        data[key] = int(value)
+
+    # Ensure percentages sum to 100
+    total = sum(data.values())
+    if total != 100:
+
+        first_category = list(data.keys())[0]
+        data[first_category] += 100 - total
+
+    # Prepare waffle chart
+    labels = list(data.keys())
+    percentages = list(data.values())
+    total_squares = 100
+    squares = [round(percent * total_squares / 100) for percent in percentages]
+    colours = [RCPCH_DARK_BLUE, RCPCH_PINK, RCPCH_MID_GREY][: len(labels)]  # Adjust for categories
+
+    # Create Plotly waffle chart
+    chart_data = []
+    row, col = 0, 0
+    grid_size = int(total_squares**0.5)
+
+    for idx, (label, num_squares) in enumerate(zip(labels, squares)):
+        for _ in range(num_squares):
+            chart_data.append(dict(x=col, y=-row, colour=colours[idx], category=label))
+            col += 1
+            if col == grid_size:
+                col = 0
+                row += 1
+
+    fig = go.Figure()
+    for point in chart_data:
+        fig.add_trace(
+            go.Scatter(
+                x=[point["x"]],
+                y=[point["y"]],
+                mode="markers",
+                marker=dict(size=30, color=point["colour"], symbol="square"),
+                name=point["category"],
+                showlegend=False,
+            )
+        )
+
+    # Add legend
+    for idx, label in enumerate(labels):
+        fig.add_trace(
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="markers",
+                marker=dict(size=15, color=colours[idx], symbol="square"),
+                name=f"{percentages[idx]}% {label}",
+            )
+        )
+
+    fig.update_layout(
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        margin=dict(l=0, r=0, t=50, b=0),
+        height=300,
+        width=300,
+        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center"),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+
+    # Convert Plotly figure to HTML
+    chart_html = fig.to_html(full_html=False, include_plotlyjs=False)
+    return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
+
+
 def convert_value_counts_dict_to_pct(value_counts_dict: dict):
     """
     Convert a value counts dict to percentages
     """
     total = sum(value_counts_dict.values())
-    
+
     value_counts_dict_pct = {}
-    
+
     for key, value in value_counts_dict.items():
         value_counts_dict_pct[key] = int(value / total * 100)
-    
+
     return value_counts_dict_pct

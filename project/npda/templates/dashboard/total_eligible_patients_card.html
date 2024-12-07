@@ -3,42 +3,10 @@
   Total Eligible Patients
 {% endblock card_title%}
 {% block card_body %}
-<div class="p-2 h-full w-full">
-  <div id="total_eligible_pts_waffle_container" class="w-full h-full"></div>
-</div>
 
-{% load static %}
-<script type="module">
-
-  import { drawWaffle, resizeStage } from "{% static 'js/drawWaffle.js' %}";
-
-  // Get the data from the Django context and parse it for js
-  const data = {{ charts.total_eligible_patients_stratified_by_diabetes_type.data|safe }};
-
-  // Define colours for the categories
-  const COLORS = {
-    'T1DM': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.T1DM|safe }}',
-    'T2DM': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.T2DM|safe }}',
-    'Other rare forms': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.OTHER|safe }}',
-  };
-
-  // Create the Konva stage with initial dimensions
-  const containerId = 'total_eligible_pts_waffle_container';
-  const container = document.getElementById(containerId);
-
-  const stage = new Konva.Stage({
-    container: containerId, // Container ID
-    width: container.offsetWidth, // Dynamically set width
-    height: container.offsetHeight // Dynamically set height
-  });
-
-  // Initial draw
-  drawWaffle(stage, data, stage.width(), stage.height(), COLORS);
-
-  // Add listener for window resize to adjust the stage and waffle chart
-  window.addEventListener('resize', function () {
-    resizeStage(stage, containerId, drawWaffle);
-  });
-
-</script>
+<!-- Waffle Chart Container -->
+<div id="waffle-chart-container"
+hx-get="{% url 'get_waffle_chart_partial' %}"
+hx-vals='{{ charts.total_eligible_patients_stratified_by_diabetes_type.data }}'
+hx-trigger="load" hx-swap="innerHTML"></div>
 {% endblock %}
