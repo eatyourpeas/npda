@@ -8,7 +8,6 @@ from datetime import date
 # Django imports
 from django.apps import apps
 from django.contrib import messages
-from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.http import HttpResponse
@@ -75,7 +74,9 @@ async def home(request):
             ):
                 message = "Invalid CSV format."
                 if parsed_csv.missing_columns:
-                    message += f" Missing columns: [{", ".join(parsed_csv.missing_columns)}]"
+                    message += (
+                        f" Missing columns: [{", ".join(parsed_csv.missing_columns)}]"
+                    )
                 if parsed_csv.additional_columns:
                     message += f" Unexpected columns: [{", ".join(parsed_csv.additional_columns)}]"
                 if parsed_csv.duplicate_columns:
@@ -161,7 +162,9 @@ def view_preference(request):
     """
 
     view_preference_selection = request.POST.get("view_preference", None)
-    view_preference = get_or_update_view_preference(request.user, view_preference_selection)
+    view_preference = get_or_update_view_preference(
+        request.user, view_preference_selection
+    )
     pz_code = request.POST.get("pz_code_select_name", None)
 
     if pz_code is not None:
@@ -182,7 +185,9 @@ def view_preference(request):
         "pdu_choices": request.session["pdu_choices"],
     }
 
-    response = render(request, template_name="partials/view_preference.html", context=context)
+    response = render(
+        request, template_name="partials/view_preference.html", context=context
+    )
 
     patients_list_view_url = reverse("patients")
     submissions_list_view_url = reverse("submissions")
@@ -229,7 +234,9 @@ def audit_year(request):
         "selected_audit_year": request.session.get("selected_audit_year"),
     }
 
-    response = render(request, template_name="partials/audit_year_select.html", context=context)
+    response = render(
+        request, template_name="partials/audit_year_select.html", context=context
+    )
 
     patients_list_view_url = reverse("patients")
     submissions_list_view_url = reverse("submissions")

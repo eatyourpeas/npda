@@ -1,4 +1,7 @@
 # python imports
+import json
+import os
+import requests
 
 # django imports
 from django.conf import settings
@@ -14,13 +17,38 @@ import plotly.graph_objects as go
 
 # RCPCH imports
 from project.constants import RCPCH_LIGHT_BLUE, RCPCH_PINK, RCPCH_DARK_BLUE
-
 from project.npda.general_functions.validate_postcode import location_for_postcode
-
 
 """
 Functions to return scatter plot of children by postcode
 """
+
+
+def load_lsoa_geojson():
+    file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BSC_V4.geojson",
+    )
+    with open(file_path) as f:
+        gj = json.load(f)
+    features = gj["features"][0]
+    return features
+
+
+async def get_lsoa_geojson():
+    """
+    Returns the geojson data for the UK from the ONS
+    """
+    geo_json = "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BSC_V4/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
+    response = requests.get(url=geo_json, timeout=10)
+    if response.status_code == 404:
+        return None
+
+    response.raise_for_status()
+
+    return response.json()
 
 
 def get_children_by_pdu_audit_year(
@@ -40,8 +68,6 @@ def get_children_by_pdu_audit_year(
         return Patient.objects.none()
 
     patients = submission.patients.all()
-
-    print(patients)
 
     if patients:
         filtered_patients = patients.filter(
@@ -89,6 +115,14 @@ def generate_distance_from_organisation_scatterplot_figure(
     """
     Returns a plottable map with Cases overlayed as dots with tooltips on hover
     """
+
+    # get geojson data for the UK from the ONS
+
+    fig = go.Figure(
+        go.Choroplethmapbox(
+            geojson=load_lsoa_geojson(),
+            
+        )
 
     fig = go.Figure(
         go.Scattermapbox(
