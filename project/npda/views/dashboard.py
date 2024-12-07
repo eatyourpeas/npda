@@ -91,7 +91,6 @@ def dashboard(request):
     eligible_pts_diabetes_type_counts = total_eligible_patients_queryset.values(
         "diabetes_type"
     ).annotate(count=Count("diabetes_type"))
-    diabetes_type_map = dict(DIABETES_TYPES)
     eligible_pts_diabetes_type_value_counts = defaultdict(int)
     for item in eligible_pts_diabetes_type_counts:
         diabetes_type = item["diabetes_type"]
@@ -108,49 +107,43 @@ def dashboard(request):
             # Count as 'Other rare forms'
             diabetes_type_str = "Other rare forms"
             eligible_pts_diabetes_type_value_counts[diabetes_type_str] += count
-    # Prep for chart
-    total_eligible_patients_stratified_by_diabetes_type_html = (
-        generate_total_eligible_patients_stratified_by_diabetes_type_html(
-            data=eligible_pts_diabetes_type_value_counts
-        )
-    )
 
     # TODO: @eatyourpeas pls help fix
     # # Map of cases by distance from the selected organisation
 
-    # get submitting_cohort number - in future will be selectable
-    selected_audit_year = request.session.get("selected_audit_year")
+    # # get submitting_cohort number - in future will be selectable
+    # selected_audit_year = request.session.get("selected_audit_year")
 
-    # # get lead organisation for the selected PDU
-    try:
-        pdu_lead_organisation = fetch_organisation_by_ods_code(
-            ods_code=pdu.lead_organisation_ods_code
-        )
-    except:
-        pdu_lead_organisation = None
-        raise ValueError(f"Lead organisation for PDU {pdu.name} not found")
+    # # # get lead organisation for the selected PDU
+    # try:
+    #     pdu_lead_organisation = fetch_organisation_by_ods_code(
+    #         ods_code=pdu.lead_organisation_ods_code
+    #     )
+    # except:
+    #     pdu_lead_organisation = None
+    #     raise ValueError(f"Lead organisation for PDU {pdu.name} not found")
 
-    # # thes are all registered patients for the current cohort at the selected organisation to be plotted in the map
-    patients_to_plot = get_children_by_pdu_audit_year(
-        audit_year=selected_audit_year,
-        paediatric_diabetes_unit=pdu,
-        paediatric_diabetes_unit_lead_organisation=pdu_lead_organisation,
-    )
+    # # # thes are all registered patients for the current cohort at the selected organisation to be plotted in the map
+    # patients_to_plot = get_children_by_pdu_audit_year(
+    #     audit_year=selected_audit_year,
+    #     paediatric_diabetes_unit=pdu,
+    #     paediatric_diabetes_unit_lead_organisation=pdu_lead_organisation,
+    # )
 
-    # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
-    aggregated_distances, patient_distances_dataframe = (
-        generate_dataframe_and_aggregated_distance_data_from_cases(
-            filtered_cases=patients_to_plot
-        )
-    )
+    # # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
+    # aggregated_distances, patient_distances_dataframe = (
+    #     generate_dataframe_and_aggregated_distance_data_from_cases(
+    #         filtered_cases=patients_to_plot
+    #     )
+    # )
 
-    # generate scatterplot of patients by distance from the selected organisation
-    scatterplot_of_cases_for_selected_organisation = (
-        generate_distance_from_organisation_scatterplot_figure(
-            geo_df=patient_distances_dataframe,
-            pdu_lead_organisation=pdu_lead_organisation,
-        )
-    )
+    # # generate scatterplot of patients by distance from the selected organisation
+    # scatterplot_of_cases_for_selected_organisation = (
+    #     generate_distance_from_organisation_scatterplot_figure(
+    #         geo_df=patient_distances_dataframe,
+    #         pdu_lead_organisation=pdu_lead_organisation,
+    #     )
+    # )
 
     # print(f"{kpi_calculations_object=}\n")
     # print_instance_field_attrs(pdu)
@@ -171,15 +164,15 @@ def dashboard(request):
 
     context = {
         "pdu_object": pdu,
-        "pdu_lead_organisation": pdu_lead_organisation,
+        # "pdu_lead_organisation": pdu_lead_organisation,
         "kpi_calculations_object": kpi_calculations_object,
         "current_date": current_date,
         "current_quarter": current_quarter,
         "days_remaining_until_audit_end_date": days_remaining_until_audit_end_date,
         "charts": {
-            "total_eligible_patients_stratified_by_diabetes_type": total_eligible_patients_stratified_by_diabetes_type_html,
-            "scatterplot_of_cases_for_selected_organisation": scatterplot_of_cases_for_selected_organisation,
-            "aggregated_distances": aggregated_distances,
+            "total_eligible_patients_stratified_by_diabetes_type": eligible_pts_diabetes_type_value_counts,
+            # "scatterplot_of_cases_for_selected_organisation": scatterplot_of_cases_for_selected_organisation,
+            # "aggregated_distances": aggregated_distances,
         },
         # Defaults for htmx partials
         "default_pt_level_menu_text": default_pt_level_menu_text,
@@ -215,111 +208,3 @@ def get_patient_level_report_partial(request):
         },
     )
 
-
-def generate_total_eligible_patients_stratified_by_diabetes_type_html(
-    data: dict,
-) -> str:
-    """
-    Generates the HTML for the total eligible patients stratified by diabetes type.
-
-    Returns the HTML string.
-    """
-
-    # Define the colours for each category
-    colours = [RCPCH_DARK_BLUE, RCPCH_MID_GREY, RCPCH_PINK]
-
-    # Total patients
-    total = sum(data.values())
-
-    # Calculate the proportion for each category
-    proportions = [value / total for value in data.values()]
-
-    # Create a grid for the waffle chart (10x10)
-    grid_size = 10
-    total_squares = grid_size * grid_size
-
-    # Calculate the number of squares for each category
-    squares = [round(p * total_squares) for p in proportions]
-
-    # Create the waffle chart layout
-    waffle_grid = []
-    for category, count, colour in zip(data.keys(), squares, colours):
-        waffle_grid.extend([colour] * count)
-
-    # Fill the remaining squares if there's rounding discrepancy
-    waffle_grid.extend(["#FFFFFF"] * (total_squares - len(waffle_grid)))
-
-    # Convert the grid into a 10x10 matrix
-    grid_matrix = [
-        waffle_grid[i : i + grid_size] for i in range(0, total_squares, grid_size)
-    ]
-
-    # Create the figure
-    fig = go.Figure()
-
-    # Add rectangles for the grid with gaps
-    for row_index, row in enumerate(grid_matrix):
-        for col_index, colour in enumerate(row):
-            fig.add_trace(
-                go.Scatter(
-                    x=[col_index * 1.2],  # Add gaps by scaling positions
-                    y=[-row_index * 1.2],  # Negative index for reverse order
-                    mode="markers",
-                    marker=dict(
-                        size=18,  # Square size
-                        color=(
-                            colour if colour != "#FFFFFF" else "rgba(0,0,0,0)"
-                        ),  # Transparent for empty squares
-                        symbol="square",
-                        line=dict(
-                            width=1, color="rgba(0,0,0,0.2)"
-                        ),  # Add borders for clarity
-                    ),
-                    showlegend=False,
-                )
-            )
-
-    # Add legend with percentages
-    for category, colour, proportion in zip(data.keys(), colours, proportions):
-        fig.add_trace(
-            go.Scatter(
-                x=[None],  # Dummy data for legend
-                y=[None],
-                mode="markers+text",
-                marker=dict(
-                    size=15,  # Legend marker size
-                    color=colour,
-                    symbol="square",
-                ),
-                text=f"{round(proportion * 100)}% {category}",
-                textposition="middle right",
-                textfont=dict(size=12),
-                showlegend=True,
-            )
-        )
-
-    # Update layout for no background
-    fig.update_layout(
-        title_text="Total Eligible Patients",
-        title_font=dict(size=18, family="Arial", color=RCPCH_DARK_BLUE),
-        xaxis=dict(showgrid=False, zeroline=False, visible=False),
-        yaxis=dict(showgrid=False, zeroline=False, visible=False),
-        margin=dict(l=10, r=10, t=50, b=10),  # Compact margins
-        height=300,
-        width=300,
-        plot_bgcolor="rgba(0,0,0,0)",  # Transparent background
-        paper_bgcolor="rgba(0,0,0,0)",  # Transparent paper
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="center",
-            x=0.5,
-            font=dict(size=12),
-        ),
-    )
-
-    # Generate the Plotly HTML
-    chart_html = fig.to_html(full_html=False)
-
-    return chart_html
