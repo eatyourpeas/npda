@@ -1,0 +1,92 @@
+/**
+ * Draws a waffle chart on the given Konva stage.
+ *
+ * @param {Object} stage - The Konva stage where the chart will be drawn.
+ * @param {Object} data - The data object where keys are categories and values are percentages.
+ * @param {number} width - The width of the stage.
+ * @param {number} height - The height of the stage.
+ * @param {Object} COLORS - An object mapping categories to their respective colours.
+ */
+export function drawWaffle(stage, data, width, height, COLORS) {
+    // Clear the stage
+    stage.destroyChildren();
+
+    // Create a new layer
+    const layer = new Konva.Layer();
+
+    const gridSize = 10; // Fixed grid size (10x10)
+    const totalSquares = gridSize * gridSize; // Total squares = 100
+    const normalizedData = normalizeProportions(data, totalSquares, COLORS);
+
+    // Flatten the proportions into a grid array of colors, each repeated `count` times
+    const gridArray = normalizedData.flatMap(({ color, count }) =>
+        Array(count).fill(color)
+    );
+
+    // Define square dimensions
+    // Define square dimensions based on container aspect ratio
+    const squareGap = 5;
+    const squareWidth = (width - (gridSize - 1) * squareGap) / gridSize;
+    const squareHeight = (height - (gridSize - 1) * squareGap) / gridSize;
+
+    // Use the smaller of squareWidth and squareHeight for uniform squares
+    const squareSize = Math.min(squareWidth, squareHeight);
+
+    // Calculate offsets to centre the grid within the container
+    const xOffset = (width - (squareSize + squareGap) * gridSize + squareGap) / 2;
+    const yOffset = (height - (squareSize + squareGap) * gridSize + squareGap) / 2;
+
+    // Draw squares
+    gridArray.forEach((color, index) => {
+        const row = Math.floor(index / gridSize);
+        const col = index % gridSize;
+
+        const square = new Konva.Rect({
+            x: xOffset + col * (squareSize + squareGap),
+            y: yOffset + row * (squareSize + squareGap),
+            width: squareSize,
+            height: squareSize,
+            fill: color,
+            stroke: 'black',
+            strokeWidth: 0.5
+        });
+
+        layer.add(square);
+    });
+
+    // Add layer to the stage
+    stage.add(layer);
+}
+
+/** 
+When calculating pcts, floats converted to ints can lead to rounding errors
+So check if the sum of the counts is 100 and adjust the first category if not
+*/
+function normalizeProportions(data, totalSquares, COLORS) {
+
+    const squares = Object.entries(data).map(([key, pct]) => ({ color: COLORS[key], count: pct }));
+
+    // Adjust counts to ensure the total equals `totalSquares`
+    const totalCount = squares.reduce((sum, item) => sum + item.count, 0);
+    const difference = totalSquares - totalCount;
+
+    if (difference !== 0) {
+        squares[0].count += difference; // Adjust the first category to fix the total
+    }
+
+    return squares;
+}
+
+/** 
+Function to resize the stage dynamically
+*/
+export function resizeStage(stage, containerId, drawWaffle) {
+    const container = document.getElementById(containerId);
+    const width = container.offsetWidth;
+    const height = container.offsetHeight;
+  
+    stage.width(width);
+    stage.height(height);
+  
+    drawWaffle(stage, data, width, height); // Redraw the waffle chart with updated dimensions
+  }

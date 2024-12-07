@@ -7,115 +7,38 @@
   <div id="total_eligible_pts_waffle_container" class="w-full h-full"></div>
 </div>
 
-<script>
-// Get the data from the Django context and parse it for js
-const data = {{ charts.total_eligible_patients_stratified_by_diabetes_type.data|safe }};
+{% load static %}
+<script type="module">
 
-// Define colours for the categories
-const COLORS = {
-  'T1DM': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.T1DM|safe }}',
-  'T2DM': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.T2DM|safe }}',
-  'Other rare forms': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.OTHER|safe }}',
-};
+  import { drawWaffle, resizeStage } from "{% static 'js/drawWaffle.js' %}";
 
-// Function to resize the stage dynamically
-function resizeStage(stage, containerId, drawWaffle) {
+  // Get the data from the Django context and parse it for js
+  const data = {{ charts.total_eligible_patients_stratified_by_diabetes_type.data|safe }};
+
+  // Define colours for the categories
+  const COLORS = {
+    'T1DM': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.T1DM|safe }}',
+    'T2DM': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.T2DM|safe }}',
+    'Other rare forms': '{{ charts.total_eligible_patients_stratified_by_diabetes_type.colors.OTHER|safe }}',
+  };
+
+  // Create the Konva stage with initial dimensions
+  const containerId = 'total_eligible_pts_waffle_container';
   const container = document.getElementById(containerId);
-  const width = container.offsetWidth;
-  const height = container.offsetHeight;
 
-  stage.width(width);
-  stage.height(height);
-
-  drawWaffle(stage, data, width, height); // Redraw the waffle chart with updated dimensions
-}
-
-// Create the Konva stage with initial dimensions
-const containerId = 'total_eligible_pts_waffle_container';
-const container = document.getElementById(containerId);
-
-const stage = new Konva.Stage({
-  container: containerId, // Container ID
-  width: container.offsetWidth, // Dynamically set width
-  height: container.offsetHeight // Dynamically set height
-});
-
-// When calculating pcts, floats converted to ints can lead to rounding errors
-// So check if the sum of the counts is 100 and adjust the first category if not
-function normalizeProportions(data, totalSquares) {
-
-  const squares = Object.entries(data).map(([key, pct]) => ({ color: COLORS[key], count: pct }));
-
-  // Adjust counts to ensure the total equals `totalSquares`
-  const totalCount = squares.reduce((sum, item) => sum + item.count, 0);
-  const difference = totalSquares - totalCount;
-
-  if (difference !== 0) {
-    squares[0].count += difference; // Adjust the first category to fix the total
-  }
-
-  return squares;
-}
-
-// Draw the waffle chart
-function drawWaffle(stage, data, width, height) {
-  // Clear the stage
-  stage.destroyChildren();
-
-  // Create a new layer
-  const layer = new Konva.Layer();
-
-  const gridSize = 10; // Fixed grid size (10x10)
-  const totalSquares = gridSize * gridSize; // Total squares = 100
-  const normalizedData = normalizeProportions(data, totalSquares);
-
-  // Flatten the proportions into a grid array of colors, each repeated `count` times
-  const gridArray = normalizedData.flatMap(({ color, count }) =>
-    Array(count).fill(color)
-  );
-
-  // Define square dimensions
-  // Define square dimensions based on container aspect ratio
-  const squareGap = 5;
-  const squareWidth = (width - (gridSize - 1) * squareGap) / gridSize;
-  const squareHeight = (height - (gridSize - 1) * squareGap) / gridSize;
-
-  // Use the smaller of squareWidth and squareHeight for uniform squares
-  const squareSize = Math.min(squareWidth, squareHeight);
-
-  // Calculate offsets to centre the grid within the container
-  const xOffset = (width - (squareSize + squareGap) * gridSize + squareGap) / 2;
-  const yOffset = (height - (squareSize + squareGap) * gridSize + squareGap) / 2;
-
-  // Draw squares
-  gridArray.forEach((color, index) => {
-    const row = Math.floor(index / gridSize);
-    const col = index % gridSize;
-
-    const square = new Konva.Rect({
-      x: xOffset + col * (squareSize + squareGap),
-      y: yOffset + row * (squareSize + squareGap),
-      width: squareSize,
-      height: squareSize,
-      fill: color,
-      stroke: 'black',
-      strokeWidth: 0.5
-    });
-
-    layer.add(square);
+  const stage = new Konva.Stage({
+    container: containerId, // Container ID
+    width: container.offsetWidth, // Dynamically set width
+    height: container.offsetHeight // Dynamically set height
   });
 
-  // Add layer to the stage
-  stage.add(layer);
-}
+  // Initial draw
+  drawWaffle(stage, data, stage.width(), stage.height(), COLORS);
 
-// Initial draw
-drawWaffle(stage, data, stage.width(), stage.height());
-
-// Add listener for window resize to adjust the stage and waffle chart
-window.addEventListener('resize', function () {
-  resizeStage(stage, containerId, drawWaffle);
-});
+  // Add listener for window resize to adjust the stage and waffle chart
+  window.addEventListener('resize', function () {
+    resizeStage(stage, containerId, drawWaffle);
+  });
 
 </script>
 {% endblock %}
