@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.apps import apps
 
 # third-party imports
+import geopandas as gpd
 import pandas as pd
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -24,16 +25,41 @@ Functions to return scatter plot of children by postcode
 """
 
 
+def load_imd_shp():
+    file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "IMD_2019.shp",
+    )
+    gdf = gpd.read_file(file_path)
+    return gdf
+
+
 def load_lsoa_geojson():
     file_path = os.path.join(
         settings.BASE_DIR,
         "project",
         "constants",
-        "Lower_layer_Super_Output_Areas_December_2021_Boundaries_EW_BSC_V4.geojson",
+        "LSOA_2011_Boundaries_Super_Generalised_Clipped_BSC_EW_V4.geojson",
     )
     with open(file_path) as f:
         gj = json.load(f)
-    features = gj["features"][0]
+    features = gj
+    return features
+
+
+def load_imd_geojson():
+    file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "Index_of_Multiple_Deprivation_(Dec_2019)_Lookup_in_England.geojson",
+    )
+    with open(file_path) as f:
+        gj = json.load(f)
+    features = gj
     return features
 
 
@@ -116,25 +142,18 @@ def generate_distance_from_organisation_scatterplot_figure(
     Returns a plottable map with Cases overlayed as dots with tooltips on hover
     """
 
-    # get geojson data for the UK from the ONS
+    # Convert the GeoDataFrame to GeoJSON
+    gdf = gdf.to_crs(epsg=4326)
 
+    # Create a Plotly choropleth map
     fig = go.Figure(
         go.Choroplethmapbox(
-            geojson=load_lsoa_geojson(),
-            
-        )
-
-    fig = go.Figure(
-        go.Scattermapbox(
-            lat=geo_df["latitude"] if not geo_df.empty else [],
-            lon=geo_df["longitude"] if not geo_df.empty else [],
-            hovertext=geo_df["site__organisation__name"] if not geo_df.empty else None,
-            mode="markers",
-            marker=go.scattermapbox.Marker(
-                size=9,
-                color=RCPCH_PINK,
-            ),
-            customdata=geo_df[["pk", "distance_mi", "distance_km"]],
+            geojson=gdf.__geo_interface__,
+            locations=gdf.index,
+            z=gdf["IMD_Rank"],
+            colorscale="Viridis",
+            marker_line_width=0,
+            marker_opacity=0.5,
         )
     )
 
