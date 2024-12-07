@@ -62,9 +62,7 @@ def dashboard(request):
     """
     template = "dashboard.html"
     pz_code = request.session.get("pz_code")
-    refresh_session_object_synchronously(
-        request=request, user=request.user, pz_code=pz_code
-    )
+    refresh_session_object_synchronously(request=request, user=request.user, pz_code=pz_code)
 
     PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
     try:
@@ -76,18 +74,16 @@ def dashboard(request):
         )
         return render(request, "dashboard.html")
 
-    calculate_kpis = CalculateKPIS(
-        calculation_date=datetime.date.today(), return_pt_querysets=True
-    )
+    calculate_kpis = CalculateKPIS(calculation_date=datetime.date.today(), return_pt_querysets=True)
 
     kpi_calculations_object = calculate_kpis.calculate_kpis_for_pdus(pz_codes=[pz_code])
 
     # From this, gather specific chart data required
 
     # Total eligible patients stratified by diabetes type
-    total_eligible_patients_queryset: QuerySet = kpi_calculations_object[
-        "calculated_kpi_values"
-    ]["kpi_1_total_eligible"]["patient_querysets"]["eligible"]
+    total_eligible_patients_queryset: QuerySet = kpi_calculations_object["calculated_kpi_values"][
+        "kpi_1_total_eligible"
+    ]["patient_querysets"]["eligible"]
     eligible_pts_diabetes_type_counts = total_eligible_patients_queryset.values(
         "diabetes_type"
     ).annotate(count=Count("diabetes_type"))
@@ -158,9 +154,10 @@ def dashboard(request):
     # Gather defaults for htmx partials
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
-    highlight = {
-        f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()
-    }
+    highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
+
+    # DEBUGGING
+    print(eligible_pts_diabetes_type_value_counts)
 
     context = {
         "pdu_object": pdu,
@@ -170,7 +167,16 @@ def dashboard(request):
         "current_quarter": current_quarter,
         "days_remaining_until_audit_end_date": days_remaining_until_audit_end_date,
         "charts": {
-            "total_eligible_patients_stratified_by_diabetes_type": eligible_pts_diabetes_type_value_counts,
+            # Converting this to a dict for easier access in the template
+            "total_eligible_patients_stratified_by_diabetes_type": {
+                "data": dict(eligible_pts_diabetes_type_value_counts),
+                "labels": list(eligible_pts_diabetes_type_value_counts.keys()),
+                "colors": {
+                    "T1DM": RCPCH_DARK_BLUE,
+                    "T2DM": RCPCH_PINK,
+                    "OTHER": RCPCH_MID_GREY,
+                },
+            },
             # "scatterplot_of_cases_for_selected_organisation": scatterplot_of_cases_for_selected_organisation,
             # "aggregated_distances": aggregated_distances,
         },
@@ -207,4 +213,3 @@ def get_patient_level_report_partial(request):
             "highlight": highlight,
         },
     )
-
