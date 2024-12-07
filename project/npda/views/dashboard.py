@@ -162,6 +162,9 @@ def dashboard(request):
         f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()
     }
 
+    # DEBUGGING
+    print(eligible_pts_diabetes_type_value_counts)
+
     context = {
         "pdu_object": pdu,
         # "pdu_lead_organisation": pdu_lead_organisation,
@@ -170,7 +173,16 @@ def dashboard(request):
         "current_quarter": current_quarter,
         "days_remaining_until_audit_end_date": days_remaining_until_audit_end_date,
         "charts": {
-            "total_eligible_patients_stratified_by_diabetes_type": eligible_pts_diabetes_type_value_counts,
+            # Converting this to a dict for easier access in the template
+            "total_eligible_patients_stratified_by_diabetes_type": {
+                "data": dict(eligible_pts_diabetes_type_value_counts),
+                "labels": list(eligible_pts_diabetes_type_value_counts.keys()),
+                "colors": {
+                    "T1DM": RCPCH_DARK_BLUE,
+                    "T2DM": RCPCH_PINK,
+                    "OTHER": RCPCH_MID_GREY,
+                },
+            },
             "scatterplot_of_cases_for_selected_organisation": scatterplot_of_cases_for_selected_organisation,
             "aggregated_distances": aggregated_distances,
         },

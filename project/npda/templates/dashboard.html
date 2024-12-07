@@ -4,6 +4,9 @@
 {% block content %}
 {% url 'dashboard' as hx_get %}
 
+{% comment %} ADDS KONVA FOR WAFFLE PLOTS JUST WHEN THIS TEMPLATE IS RENDERED {% endcomment %}
+<script src="https://unpkg.com/konva@9/konva.min.js"></script>
+
 <div class="container mx-auto p-4 font-montserrat text-rcpch_dark_blue">
   <div class="my-6">
     <h1 class="text-5xl text-center">PDU Dashboard for {{pdu_lead_organisation.name}} ({{pdu_object.pz_code}})</h1>
@@ -70,6 +73,5 @@
   </div>
 
 </div>
-
 {% endblock content %}
 
