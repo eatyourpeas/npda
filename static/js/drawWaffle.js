@@ -23,7 +23,6 @@ export function drawWaffle(stage, data, width, height, COLORS) {
         Array(count).fill(color)
     );
 
-    // Define square dimensions
     // Define square dimensions based on container aspect ratio
     const squareGap = 5;
     const squareWidth = (width - (gridSize - 1) * squareGap) / gridSize;
@@ -36,11 +35,19 @@ export function drawWaffle(stage, data, width, height, COLORS) {
     const xOffset = (width - (squareSize + squareGap) * gridSize + squareGap) / 2;
     const yOffset = (height - (squareSize + squareGap) * gridSize + squareGap) / 2;
 
-    // Draw squares
+    // Draw squares and group them by category
     gridArray.forEach((color, index) => {
         const row = Math.floor(index / gridSize);
         const col = index % gridSize;
 
+        // Create a group for each category if it doesn't exist
+        let group = layer.findOne(node => node.getAttr('category') === color);
+        if (!group) {
+            group = new Konva.Group({ category: color });
+            layer.add(group);
+        }
+
+        // Create a square
         const square = new Konva.Rect({
             x: xOffset + col * (squareSize + squareGap),
             y: yOffset + row * (squareSize + squareGap),
@@ -51,12 +58,34 @@ export function drawWaffle(stage, data, width, height, COLORS) {
             strokeWidth: 0.5
         });
 
-        layer.add(square);
+        group.add(square);
+    });
+
+    // Apply mouseover and mouseout events to groups
+    layer.getChildren().forEach(group => {
+        group.on('mouseover', () => {
+            group.getChildren().forEach(square => {
+                // square.height(squareSize + 5);
+                // square.width(squareSize + 5);
+                square.x(square.x() - 2.5);
+                square.y(square.y() - 2.5);
+            });
+        });
+
+        group.on('mouseout', () => {
+            group.getChildren().forEach(square => {
+                // square.height(squareSize);
+                // square.width(squareSize);
+                square.x(square.x() + 2.5);
+                square.y(square.y() + 2.5);
+            });
+        });
     });
 
     // Add layer to the stage
     stage.add(layer);
 }
+
 
 /** 
 When calculating pcts, floats converted to ints can lead to rounding errors
@@ -84,9 +113,9 @@ export function resizeStage(stage, containerId, drawWaffle) {
     const container = document.getElementById(containerId);
     const width = container.offsetWidth;
     const height = container.offsetHeight;
-  
+
     stage.width(width);
     stage.height(height);
-  
+
     drawWaffle(stage, data, width, height); // Redraw the waffle chart with updated dimensions
-  }
+}
