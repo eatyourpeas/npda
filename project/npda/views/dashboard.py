@@ -80,7 +80,9 @@ def dashboard(request):
         )
         return render(request, "dashboard.html")
 
-    selected_audit_year = request.session.get("selected_audit_year")
+    selected_audit_year = int(request.session.get("selected_audit_year"))
+    # TODO: remove min clamp once available audit year from preference filter sorted
+    selected_audit_year = max(selected_audit_year, 2024)
     calculation_date = date(year=selected_audit_year, month=5, day=1)
 
     calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
