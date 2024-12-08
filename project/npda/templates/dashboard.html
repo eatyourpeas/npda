@@ -52,16 +52,18 @@
         {% include 'dashboard/admissions_card.html' %}
       </div>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <!-- SEX CARD -->
       {% include 'dashboard/sex_card.html' %}
       <!-- ETHNICITY CARD -->
       {% include 'dashboard/ethnicity_card.html' %}
       <!-- IMD CARD -->
       {% include 'dashboard/imd_card.html' %}
-      <!-- IMD MAP CARD -->
-      {% include 'dashboard/imd_map_card.html' with scatterplot_of_cases_for_selected_organisation=charts.scatterplot_of_cases_for_selected_organisation pdu_lead_organisation=pdu_lead_organisation pdu_object=pdu_object %}
+    </div>
 
+    <!-- IMD MAP CARD -->
+    <div class="grid grid-cols-1">
+    {% include 'dashboard/imd_map_card.html' with scatterplot_of_cases_for_selected_organisation=charts.scatterplot_of_cases_for_selected_organisation pdu_lead_organisation=pdu_lead_organisation pdu_object=pdu_object %}
     </div>
 
   <!-- PATIENT LEVEL REPORT -->
