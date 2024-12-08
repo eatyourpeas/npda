@@ -64,6 +64,8 @@ def location_for_postcode(postcode: str):
         location_bng = point_bng
 
     except Exception as error:
+        lon = None
+        lat = None
         location_wgs84 = None
         location_bng = None
         logger.exception(f"Cannot get longitude and latitude for {postcode}: {error}")
@@ -85,8 +87,8 @@ def coordinates_for_postcode(postcode: str) -> bool:
     )
 
     if response.status_code == 200:
-        location = response.json()["data"]["attributes"]["location"]
-        return location["lon"], location["lat"]
+        location = response.json()["result"]
+        return location["longitude"], location["latitude"]
 
     # Only other possibility should be 404, but handle any other status code
     logger.error(

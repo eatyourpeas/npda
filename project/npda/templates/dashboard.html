@@ -1,72 +1,79 @@
-{% extends 'base.html' %} 
-{% load static %} 
-{% load npda_tags %} 
-{% block content %} 
+{% extends 'base.html' %}
+{% load static %}
+{% load npda_tags %}
+{% block content %}
 {% url 'dashboard' as hx_get %}
 
-<section class="bg-rcpch_dark_blue font-montserrat">
-  <div class="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12">
-    <h1
-      class="mb-4 text-4xl font-extrabold font-arial tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl text-white"
-    >
-      National Paediatric Diabetes Audit
-    </h1>
-    <p class="mb-8 text-lg font-normal lg:text-xl sm:px-16 xl:px-48 text-white">
-      We are now accepting data for the 2023-24 audit year.
-      <b
-        >{% text_for_data_submission can_upload_csv can_complete_questionnaire
-        %}</b
-      >
-      For more information check out our user guide.
-    </p>
-    <div
-      class="flex flex-col mb-8 lg:mb-16 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4"
-    >
-      <a
-        href="http://0.0.0.0:8007/"
-        class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:ring-primary-900"
-      >
-        Learn more<svg
-          class="ml-2 -mr-1 w-5 h-5"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-            clip-rule="evenodd"
-          ></path>
-        </svg>
-      </a>
-    </div>
-  </div>
-</section>
-<div class="container-mx-auto my-20 mt-10 flex justify-center">
-  <div class="card bg-base-100 w-96 shadow-xl">
-    <figure>
-      <div id="organisation_cases_map" style="width: 100%; height: 700px"></div>
-    </figure>
-    <div class="card-body">
-      <h2 class="card-title">Patients</h2>
-        <p>Distribution of all patients at {{ session.pz_code }}</p>
-    </div>
-  </div>
-</div>
+{% comment %} ADDS KONVA FOR WAFFLE PLOTS JUST WHEN THIS TEMPLATE IS RENDERED {% endcomment %}
+<script src="https://unpkg.com/konva@9/konva.min.js"></script>
 
-<section
-  class="mb-5 container-mx-auto flex items-center justify-center"
-  hx-get="{{ hx_get }}"
-  hx-trigger="dashboard from:body"
-  hx-target="#dashboard"
->
-  <div id="dashboard" class="max-h-screen w-full mt-5 mx-2">
-    {% include 'partials/kpi_table.html' with kpi_results=kpi_results pdu=pdu aggregation_level=aggregation_level %}
+<div class="container mx-auto p-4 font-montserrat text-rcpch_dark_blue">
+  <div class="my-6">
+    <h1 class="text-5xl text-center">PDU Dashboard for {{pdu_lead_organisation.name}} ({{pdu_object.pz_code}})</h1>
+    <p class="text-center text-gray-500 mt-2">Calculated at {{ kpi_calculations_object.calculation_datetime }}</p>
+    <p class="text-center">This data has not been validated by the NPDA team.</p>
   </div>
-</section>
-<script>
-  var organisation_plotly_map = {{ scatterplot_of_cases_for_selected_organisation|safe }}
-  Plotly.newPlot('organisation_cases_map', organisation_plotly_map.data, organisation_plotly_map.layout);
-</script>
-{% endblock %}
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- PDU Information Card -->
+    {% include 'dashboard/pdu_card.html' %}
+
+
+    <!-- Audit Details Card -->
+    {% include 'dashboard/audit_details_card.html' %}
+
+    <!-- Total Eligible Patients Card -->
+    {% include 'dashboard/total_eligible_patients_card.html' %}
+  </div>
+
+  <!-- UNIT REPORT -->
+  <h1 class="text-5xl text-center my-6">Unit Report</h1>
+  <div class="grid grid-rows-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- PATIENT CHARACTERISTICS CARD -->
+      {% include 'dashboard/patient_characteristics_card.html' %}
+      <!-- TREATMENT REGIMEN CARD -->
+      {% include 'dashboard/treatment_regimen_card.html' %}
+      <div class="flex flex-col gap-3">
+        <!-- HCL CARD -->
+        {% include 'dashboard/hcl_use_card.html' %}
+        <!-- care at diagnosis CARD -->
+        {% include 'dashboard/care_at_diagnosis_card.html' %}
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- HEALTH CHECKS COMPLETION RATE CARD -->
+      {% include 'dashboard/health_checks_completion_rate_card.html' %}
+      <!-- ADDITIONAL CARE PROCESSES CARD -->
+      {% include 'dashboard/additional_care_processes_card.html' %}
+      <div class="flex flex-col gap-3">
+        <!-- HBa1c CARD -->
+        {% include 'dashboard/hba1c_card.html' %}
+        <!-- ADMISSIONS CARD -->
+        {% include 'dashboard/admissions_card.html' %}
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- SEX CARD -->
+      {% include 'dashboard/sex_card.html' %}
+      <!-- ETHNICITY CARD -->
+      {% include 'dashboard/ethnicity_card.html' %}
+      <!-- IMD CARD -->
+      {% include 'dashboard/imd_card.html' %}
+    </div>
+
+    <!-- IMD MAP CARD -->
+    <div class="grid grid-cols-1 min-h-80">
+    {% include 'dashboard/imd_map_card.html' with scatterplot_of_cases_for_selected_organisation=charts.scatterplot_of_cases_for_selected_organisation pdu_lead_organisation=pdu_lead_organisation pdu_object=pdu_object %}
+    </div>
+
+  <!-- PATIENT LEVEL REPORT -->
+  <h1 class="text-5xl text-center my-6">Patient-Level Report</h1>
+
+  <!-- SELECT TABS & TABLE -->
+  {% include 'dashboard/pt_level_report_table_partial.html' with text=default_pt_level_menu_text selected=default_pt_level_menu_tab_selected highlight=default_highlight%}
+
+  </div>
+
+</div>
+{% endblock content %}
 

@@ -1,0 +1,28 @@
+{% extends 'dashboard/base_card.html' %}
+{% block card_title %}
+Audit Details
+{% endblock card_title%}
+{% block card_body %}
+<div class="flex flex-row justify-evenly items-center text-center">
+
+  <div class="flex flex-col justify-center">
+    <p class="font-bold">Start Date</p>
+    <p>{{ kpi_calculations_object.audit_start_date }}</p>
+  </div>
+  <p>-</p>
+  <div class="flex flex-col justify-center">
+    <p class="font-bold">End Date</p>
+    <p>{{ kpi_calculations_object.audit_end_date }}</p>
+  </div>
+</div>
+{% include 'dashboard/hr_with_text.html' with hr_rule_text='Current Quarter' %}
+<div class="flex flex-col justify-center items-center">
+  <p class="text-2xl">Q{{ current_quarter }}</p>
+  <p>({{ current_date }})</p>
+</div>
+{% include 'dashboard/hr_with_text.html' with hr_rule_text='Days Remaining' %}
+<div class="flex flex-col justify-center items-center pb-4">
+  <p class="text-2xl">{{ days_remaining_until_audit_end_date }}</p>
+</div>
+
+{% endblock %}

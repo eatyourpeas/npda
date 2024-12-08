@@ -2,10 +2,14 @@
   "python.languageServer": "Pylance",
   "python.analysis.typeCheckingMode": "off",
   "files.associations": {
-    "**/templates/**/*.html": "django-html",
+    "**/templates/**/*.html": "django-html"
   },
   "breadcrumbs.enabled": true, // Enable breadcrumbs for file navigation
   "explorer.autoReveal": true, // Automatically reveal the active file in the explorer
+  "emmet.includeLanguages": {
+    "django-html": "html" // Enable Emmet support for Django HTML
+  },
+  "emmet.triggerExpansionOnTab": true, // Allow Emmet abbreviations to expand on Tab
   "[django-html]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "monosans.djlint",
@@ -42,7 +46,10 @@
       "source.fixAll": "always" // Fix simple issues automatically
     },
     "editor.linkedEditing": true,
-    "editor.guides.bracketPairs": true,
+    "editor.guides.bracketPairs": true
   },
   "djlint.configuration": ".djlintrc",
+  "python.testing.pytestArgs": ["project"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }

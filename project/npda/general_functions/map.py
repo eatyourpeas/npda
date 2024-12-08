@@ -1,4 +1,7 @@
 # python imports
+import json
+import os
+import requests
 
 # django imports
 from django.conf import settings
@@ -8,19 +11,38 @@ from django.db.models import Q
 from django.apps import apps
 
 # third-party imports
+import geopandas as gpd
 import pandas as pd
 import plotly.io as pio
 import plotly.graph_objects as go
 
 # RCPCH imports
-from project.constants import RCPCH_LIGHT_BLUE, RCPCH_PINK, RCPCH_DARK_BLUE
-
+from project.constants import (
+    RCPCH_LIGHT_BLUE,
+    RCPCH_PINK,
+    RCPCH_DARK_BLUE,
+    RCPCH_LIGHT_BLUE_TINT3,
+    RCPCH_LIGHT_BLUE_TINT2,
+    RCPCH_LIGHT_BLUE_TINT1,
+    RCPCH_LIGHT_BLUE_DARK_TINT,
+)
 from project.npda.general_functions.validate_postcode import location_for_postcode
-
 
 """
 Functions to return scatter plot of children by postcode
 """
+
+
+def load_imd_shp():
+    file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "IMD_2019.shp",
+    )
+    gdf = gpd.read_file(file_path)
+    return gdf
 
 
 def get_children_by_pdu_audit_year(
@@ -41,32 +63,28 @@ def get_children_by_pdu_audit_year(
 
     patients = submission.patients.all()
 
-    print(patients)
-
     if patients:
         filtered_patients = patients.filter(
             ~Q(postcode__isnull=True)
             | ~Q(postcode__exact=""),  # Exclude patients with no postcode
-            submission=submission,  # Filter by submission
         )
 
         for patient in filtered_patients:
-            if patient.postcode and not any(
-                patient.location_wgs84 is None, patient.location_bng is None
-            ):
+            if patient.postcode:
                 # add the location data to the queryset - note these fields do not exist in the model
                 lon, lat, location_wgs84, location_bng = location_for_postcode(
                     patient.postcode
                 )
                 patient.location_wgs84 = location_wgs84
                 patient.location_bng = location_bng
+                patient.save()
 
         filtered_patients = filtered_patients.annotate(
             distance_from_lead_organisation=Distance(
                 "location_wgs84",
                 Point(
-                    paediatric_diabetes_unit_lead_organisation.longitude,
-                    paediatric_diabetes_unit_lead_organisation.latitude,
+                    paediatric_diabetes_unit_lead_organisation["longitude"],
+                    paediatric_diabetes_unit_lead_organisation["latitude"],
                     srid=4326,
                 ),
             )
@@ -76,34 +94,53 @@ def get_children_by_pdu_audit_year(
             "location_wgs84",
             "distance_from_lead_organisation",
         )
+
+        return filtered_patients
+
     else:
         return Patient.objects.none()
 
 
-# RCPCH imports
-
-
 def generate_distance_from_organisation_scatterplot_figure(
     geo_df: pd.DataFrame, pdu_lead_organisation
-):
+)-> go.Figure:
     """
     Returns a plottable map with Cases overlayed as dots with tooltips on hover
+
+    2011 LSOAs mapped to 2019 IMD data is a service fortunately already provided by
+    [Consumer Data Research Centre](https://data.cdrc.ac.uk/dataset/index-multiple-deprivation-imd)
+    and stored here as a shapefile. This is then converted to a GeoJSON file for use in the map.
     """
 
+    custom_colorscale = [
+        [0, RCPCH_LIGHT_BLUE_TINT3],  # Very light blue
+        [0.25, RCPCH_LIGHT_BLUE_TINT2],  # Light blue
+        [0.5, RCPCH_LIGHT_BLUE_TINT1],  # Medium light blue
+        [0.75, RCPCH_LIGHT_BLUE],  # blue
+        [1, RCPCH_LIGHT_BLUE_DARK_TINT],  # Dark blue
+    ]
+
+    # Load the IMD data
+    gdf = load_imd_shp()
+
+    # Convert the GeoDataFrame to GeoJSON
+    gdf = gdf.to_crs(epsg=4326)
+
+    # Create a Plotly choropleth map coloured by IMD Rank
     fig = go.Figure(
-        go.Scattermapbox(
-            lat=geo_df["latitude"] if not geo_df.empty else [],
-            lon=geo_df["longitude"] if not geo_df.empty else [],
-            hovertext=geo_df["site__organisation__name"] if not geo_df.empty else None,
-            mode="markers",
-            marker=go.scattermapbox.Marker(
-                size=9,
-                color=RCPCH_PINK,
-            ),
-            customdata=geo_df[["pk", "distance_mi", "distance_km"]],
+        go.Choroplethmapbox(
+            geojson=gdf.__geo_interface__,
+            locations=gdf.index,
+            z=gdf["IMD_Rank"],
+            colorscale=custom_colorscale,
+            marker_line_width=0,
+            marker_opacity=0.5,
+            customdata=gdf[["lsoa11nm", "IMDDec0"]],  # Add custom data for hover
+            hovertemplate="<b>%{customdata[0]}</b><br>IMD Decile: %{customdata[1]}<extra></extra>",  # Custom hover template
         )
     )
 
+    # add the Organisation as a scatterplot in blue
     fig.update_layout(
         mapbox_style="carto-positron",
         mapbox_zoom=10,
@@ -114,11 +151,6 @@ def generate_distance_from_organisation_scatterplot_figure(
         height=590,
         mapbox_accesstoken=settings.MAPBOX_API_KEY,
         showlegend=False,
-    )
-
-    # Update the hover template
-    fig.update_traces(
-        hovertemplate="<b>%{hovertext}</b><br>Epilepsy12 ID: %{customdata[0]}<br>Distance to Lead Centre: %{customdata[1]:.2f} mi (%{customdata[2]:.2f} km)<extra></extra>"
     )
 
     # Add a scatterplot point for the organization
@@ -132,7 +164,26 @@ def generate_distance_from_organisation_scatterplot_figure(
                 color=RCPCH_DARK_BLUE,  # Set the color of the point
             ),
             text=[pdu_lead_organisation["name"]],  # Set the hover text for the point
-            hovertemplate="%{text}<extra></extra>",  # Custom hovertemplate just for the lead organisation
+            showlegend=False,
+        )
+    )
+
+    # add the Patients as a scatterplot in pink, with distance to the lead organisation as hover text
+    fig.add_trace(
+        go.Scattermapbox(
+            # Extract latitude and longitude from the point objects
+            lat=geo_df["location_wgs84"].apply(lambda point: point.y),
+            lon=geo_df["location_wgs84"].apply(lambda point: point.x),
+            mode="markers",
+            marker=go.scattermapbox.Marker(
+                size=8,
+                color=RCPCH_PINK,  # Set the color of the point
+            ),
+            text=geo_df["distance_km"],  # Set the hover text for the point
+            customdata=geo_df[
+                ["pk", "distance_mi", "distance_km"]
+            ],  # Add custom data for hover
+            hovertemplate="<b>Epilepsy12 ID: %{customdata[0]}</b><br>Distance to Lead Centre: %{customdata[1]:.2f} mi (%{customdata[2]:.2f} km)<extra></extra>",  # Custom hovertemplate just for the lead organisation
             showlegend=False,
         )
     )
@@ -166,8 +217,7 @@ def generate_distance_from_organisation_scatterplot_figure(
         ],
     ),
 
-    # Convert the Plotly figure to JSON
-    return pio.to_json(fig)
+    return fig
 
 
 def generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases):
@@ -175,8 +225,8 @@ def generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases):
     Returns a dataframe of all Cases, location data and distances with aggregated results
     Returns it as a tuple of two dataframes, one for the cases and the distances from the lead organisation, the other for the aggregated distances (max, mean, median, std)
     """
-    geo_df = pd.DataFrame(list(filtered_cases))
-    # Ensure location is a tuple of (easting, northing)
+
+    geo_df = pd.DataFrame(filtered_cases)
 
     if not geo_df.empty:
         if "location_wgs84" in geo_df.columns:

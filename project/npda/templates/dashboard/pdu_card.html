@@ -1,0 +1,20 @@
+{% extends 'dashboard/base_card.html' %}
+{% block card_title %}
+{{ pdu_object.pz_code }}
+{% endblock card_title %}
+{% block card_body %}
+
+<!-- PZ Name -->
+<p class="flex justify-center tooltip text-center mt-2 text-lg" data-tip="Lead Organisation Name">{{ pdu_object.lead_organisation_name }}</p>
+
+<!-- Divider with Text "Trust" -->
+{% include 'dashboard/hr_with_text.html' with hr_rule_text="Trust" %}
+
+<!-- Trust Details -->
+<div class="flex flex-col space-evenly text-center ">
+  <p class="flex justify-center tooltip mt-2 text-lg" data-tip="Trust Name">{{ pdu_object.parent_name }}</p>
+  <p class="flex justify-center tooltip mt-2 text-lg" data-tip="Paediatric Diabetes Network">{{ pdu_object.paediatric_diabetes_network_name }} ({{ pdu_object.paediatric_diabetes_network_code }})</p>
+</div>
+
+
+{% endblock %}

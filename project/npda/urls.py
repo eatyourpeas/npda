@@ -98,11 +98,28 @@ urlpatterns = [
         ),
         name="password_reset_confirm",
     ),
-    # KPI views
+    # Dashbaord views
     path(
         "dashboard",
         view=dashboard,
         name="dashboard",
     ),
+    path(
+        "get_patient_level_report_partial",
+        view=get_patient_level_report_partial,
+        name="get_patient_level_report_partial",
+    ),
+    path(
+        "get_waffle_chart_partial",
+        view=get_waffle_chart_partial,
+        name="get_waffle_chart_partial",
+    ),
+    path(
+        "get_map_chart_partial",
+        view=get_map_chart_partial,
+        name="get_map_chart_partial",
+    ),
+    
+    # End dashboard views
     path("csrf_fail/", csrf_fail, name="csrf_fail"),
 ]
