@@ -75,7 +75,10 @@ def dashboard(request):
         )
         return render(request, "dashboard.html")
 
-    calculate_kpis = CalculateKPIS(calculation_date=datetime.date.today(), return_pt_querysets=True)
+    selected_audit_year = request.session.get("selected_audit_year")
+    calculation_date = date(year=selected_audit_year, month=5, day=1)
+
+    calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
 
     kpi_calculations_object = calculate_kpis.calculate_kpis_for_pdus(pz_codes=[pz_code])
 
@@ -113,42 +116,34 @@ def dashboard(request):
     # TODO: @eatyourpeas pls help fix
     # # Map of cases by distance from the selected organisation
 
-    # # get submitting_cohort number - in future will be selectable
-    # selected_audit_year = request.session.get("selected_audit_year")
+    # # get lead organisation for the selected PDU
+    try:
+        pdu_lead_organisation = fetch_organisation_by_ods_code(
+            ods_code=pdu.lead_organisation_ods_code
+        )
+    except:
+        pdu_lead_organisation = None
+        raise ValueError(f"Lead organisation for PDU {pdu.name} not found")
 
-    # # # get lead organisation for the selected PDU
-    # try:
-    #     pdu_lead_organisation = fetch_organisation_by_ods_code(
-    #         ods_code=pdu.lead_organisation_ods_code
-    #     )
-    # except:
-    #     pdu_lead_organisation = None
-    #     raise ValueError(f"Lead organisation for PDU {pdu.name} not found")
+    # # thes are all registered patients for the current cohort at the selected organisation to be plotted in the map
+    patients_to_plot = get_children_by_pdu_audit_year(
+        paediatric_diabetes_unit=pdu,
+        paediatric_diabetes_unit_lead_organisation=pdu_lead_organisation,
+        audit_year=selected_audit_year,
+    )
 
-    # # # thes are all registered patients for the current cohort at the selected organisation to be plotted in the map
-    # patients_to_plot = get_children_by_pdu_audit_year(
-    #     audit_year=selected_audit_year,
-    #     paediatric_diabetes_unit=pdu,
-    #     paediatric_diabetes_unit_lead_organisation=pdu_lead_organisation,
-    # )
+    # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
+    aggregated_distances, patient_distances_dataframe = (
+        generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases=patients_to_plot)
+    )
 
-    # # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
-    # aggregated_distances, patient_distances_dataframe = (
-    #     generate_dataframe_and_aggregated_distance_data_from_cases(
-    #         filtered_cases=patients_to_plot
-    #     )
-    # )
-
-    # # generate scatterplot of patients by distance from the selected organisation
-    # scatterplot_of_cases_for_selected_organisation = (
-    #     generate_distance_from_organisation_scatterplot_figure(
-    #         geo_df=patient_distances_dataframe,
-    #         pdu_lead_organisation=pdu_lead_organisation,
-    #     )
-    # )
-
-    # print(f"{kpi_calculations_object=}\n")
-    # print_instance_field_attrs(pdu)
+    # generate scatterplot of patients by distance from the selected organisation
+    scatterplot_of_cases_for_selected_organisation = (
+        generate_distance_from_organisation_scatterplot_figure(
+            geo_df=patient_distances_dataframe,
+            pdu_lead_organisation=pdu_lead_organisation,
+        )
+    )
 
     # Gather other context vars
     current_date = date.today()
@@ -183,8 +178,8 @@ def dashboard(request):
                     "OTHER": RCPCH_MID_GREY,
                 },
             },
-            # "scatterplot_of_cases_for_selected_organisation": scatterplot_of_cases_for_selected_organisation,
-            # "aggregated_distances": aggregated_distances,
+            "scatterplot_of_cases_for_selected_organisation": scatterplot_of_cases_for_selected_organisation,
+            "aggregated_distances": aggregated_distances,
         },
         # Defaults for htmx partials
         "default_pt_level_menu_text": default_pt_level_menu_text,
@@ -240,7 +235,7 @@ def get_waffle_chart_partial(request):
 
         first_category = list(data.keys())[0]
         data[first_category] += 100 - total
-    
+
     # Sort data by pct ascending so we put the smallest category top left
     data = sorted(data.items(), key=lambda item: item[1], reverse=False)
 
@@ -249,8 +244,8 @@ def get_waffle_chart_partial(request):
     colours = [RCPCH_DARK_BLUE, RCPCH_PINK, RCPCH_MID_GREY][: len(data)]
 
     # Create Plotly waffle chart
-    GRID_SIZE = 10 # 10x10 grid
-    Y, X = GRID_SIZE-1, 0 # We start top left and move left to right, top to bottom
+    GRID_SIZE = 10  # 10x10 grid
+    Y, X = GRID_SIZE - 1, 0  # We start top left and move left to right, top to bottom
 
     chart_data = []
     # For each label, add the appropriate number of squares to the chart data
@@ -258,23 +253,22 @@ def get_waffle_chart_partial(request):
         # For each square, append its data as current r,c, and colour
         for _ in range(num_squares):
             square_data = {
-                'x': X,
-                'y': Y,
-                'colour': colours[idx],
-                'category': label,
+                "x": X,
+                "y": Y,
+                "colour": colours[idx],
+                "category": label,
             }
             chart_data.append(square_data)
-            
+
             # Move our position
-            
-            # Move X to the right
+
+            # Move X to the right
             X += 1
-            
+
             # If we've gone beyond the end of the row, set X to 0 and move Y down
             if X == GRID_SIZE:
                 X = 0
                 Y -= 1
-                
 
     fig = go.Figure()
     for square in chart_data:
