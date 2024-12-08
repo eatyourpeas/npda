@@ -252,6 +252,7 @@ def get_waffle_chart_partial(request):
                 marker=dict(size=20, color=square["colour"], symbol="square"),
                 name=square["category"],
                 showlegend=False,
+                hoverinfo="skip",
             )
         )
 
@@ -264,6 +265,7 @@ def get_waffle_chart_partial(request):
                 mode="markers",
                 marker=dict(size=15, color=colours[idx], symbol="square"),
                 name=f"{pct}% {label}",
+                hoverinfo="skip",
             )
         )
 
@@ -280,7 +282,10 @@ def get_waffle_chart_partial(request):
     chart_html = fig.to_html(
         full_html=False,
         include_plotlyjs=False,
-        config={"displayModeBar": False},
+        config={
+            "displayModeBar": False,
+            'staticPlot': True,
+        },
     )
     return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
 
