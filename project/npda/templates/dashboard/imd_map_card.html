@@ -1,15 +1,13 @@
-{% extends 'dashboard/base_card.html' %} {% block card_title %} IMD Map {% endblock card_title%} {% block card_body %}
+{% extends 'dashboard/base_card.html' %} {% block card_title %} Distribution of patients ({{ pdu_object.lead_organisation_name }} {{ pdu_object.pz_code }}) {% endblock card_title%} {% block card_body %}
 <figure>
   <div id="organisation_cases_map" style="width: 100%"></div>
 </figure>
 
-<h2 class="card-title">Patients</h2>
-<p>
-  Distribution of all patients at {{ pdu_lead_organisation.name }} {{ pdu_object.pz_code }}
-</p>
-
-<script>
-  var organisation_plotly_map = {{ scatterplot_of_cases_for_selected_organisation|safe }}
-  Plotly.newPlot('organisation_cases_map', organisation_plotly_map.data, organisation_plotly_map.layout);
-</script>
+{% comment %} <div
+hx-get="{% url 'get_map_chart_partial' %}"
+hx-vals='{{ charts.map }}'
+hx-trigger="load" hx-swap="innerHTML"
+hx-indicator="#loading-spinner">
+</div> {% endcomment %}
+<div id="loading-spinner" class="loading loading-spinner text-primary"></div>
 {% endblock %}

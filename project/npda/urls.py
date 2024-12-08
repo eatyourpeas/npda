@@ -114,6 +114,11 @@ urlpatterns = [
         view=get_waffle_chart_partial,
         name="get_waffle_chart_partial",
     ),
+    path(
+        "get_map_chart_partial",
+        view=get_map_chart_partial,
+        name="get_map_chart_partial",
+    ),
     
     # End dashboard views
     path("csrf_fail/", csrf_fail, name="csrf_fail"),

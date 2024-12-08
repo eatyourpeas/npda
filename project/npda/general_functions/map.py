@@ -103,7 +103,7 @@ def get_children_by_pdu_audit_year(
 
 def generate_distance_from_organisation_scatterplot_figure(
     geo_df: pd.DataFrame, pdu_lead_organisation
-):
+)-> go.Figure:
     """
     Returns a plottable map with Cases overlayed as dots with tooltips on hover
 
@@ -217,8 +217,7 @@ def generate_distance_from_organisation_scatterplot_figure(
         ],
     ),
 
-    # Convert the Plotly figure to JSON
-    return pio.to_json(fig)
+    return fig
 
 
 def generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases):

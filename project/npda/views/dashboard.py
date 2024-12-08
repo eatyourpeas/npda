@@ -18,6 +18,9 @@ from project.constants.colors import RCPCH_DARK_BLUE, RCPCH_MID_GREY, RCPCH_PINK
 from project.constants.diabetes_types import DIABETES_TYPES
 from project.npda.general_functions.model_utils import print_instance_field_attrs
 from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
+from project.npda.models.paediatric_diabetes_unit import (
+    PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
+)
 
 
 # HTMX imports
@@ -65,7 +68,9 @@ def dashboard(request):
     pz_code = request.session.get("pz_code")
     refresh_session_object_synchronously(request=request, user=request.user, pz_code=pz_code)
 
-    PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+    PaediatricDiabetesUnit: PaediatricDiabetesUnitClass = apps.get_model(
+        "npda", "PaediatricDiabetesUnit"
+    )
     try:
         pdu = PaediatricDiabetesUnit.objects.get(pz_code=pz_code)
     except PaediatricDiabetesUnit.DoesNotExist:
@@ -113,38 +118,6 @@ def dashboard(request):
         eligible_pts_diabetes_type_value_counts
     )
 
-    # TODO: @eatyourpeas pls help fix
-    # # Map of cases by distance from the selected organisation
-
-    # # get lead organisation for the selected PDU
-    try:
-        pdu_lead_organisation = fetch_organisation_by_ods_code(
-            ods_code=pdu.lead_organisation_ods_code
-        )
-    except:
-        pdu_lead_organisation = None
-        raise ValueError(f"Lead organisation for PDU {pdu.name} not found")
-
-    # # thes are all registered patients for the current cohort at the selected organisation to be plotted in the map
-    patients_to_plot = get_children_by_pdu_audit_year(
-        paediatric_diabetes_unit=pdu,
-        paediatric_diabetes_unit_lead_organisation=pdu_lead_organisation,
-        audit_year=selected_audit_year,
-    )
-
-    # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
-    aggregated_distances, patient_distances_dataframe = (
-        generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases=patients_to_plot)
-    )
-
-    # generate scatterplot of patients by distance from the selected organisation
-    scatterplot_of_cases_for_selected_organisation = (
-        generate_distance_from_organisation_scatterplot_figure(
-            geo_df=patient_distances_dataframe,
-            pdu_lead_organisation=pdu_lead_organisation,
-        )
-    )
-
     # Gather other context vars
     current_date = date.today()
     days_remaining_until_audit_end_date = (
@@ -156,9 +129,6 @@ def dashboard(request):
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
     highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
-
-    # DEBUGGING
-    print(f"{eligible_pts_diabetes_type_value_counts=}")
 
     context = {
         "pdu_object": pdu,
@@ -172,14 +142,13 @@ def dashboard(request):
             "total_eligible_patients_stratified_by_diabetes_type": {
                 "data": json.dumps(eligible_pts_diabetes_type_value_counts),
                 "labels": list(eligible_pts_diabetes_type_value_counts.keys()),
-                "colors": {
-                    "T1DM": RCPCH_DARK_BLUE,
-                    "T2DM": RCPCH_PINK,
-                    "OTHER": RCPCH_MID_GREY,
-                },
             },
-            "scatterplot_of_cases_for_selected_organisation": scatterplot_of_cases_for_selected_organisation,
-            "aggregated_distances": aggregated_distances,
+            "map": json.dumps(
+                dict(
+                    pdu_pk=pdu.pk,
+                    selected_audit_year=selected_audit_year,
+                )
+            ),
         },
         # Defaults for htmx partials
         "default_pt_level_menu_text": default_pt_level_menu_text,
@@ -312,6 +281,63 @@ def get_waffle_chart_partial(request):
         config={"displayModeBar": False},
     )
     return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
+
+
+@login_and_otp_required()
+def get_map_chart_partial(request):
+
+    if not request.htmx:
+        return HttpResponseBadRequest("This view is only accessible via HTMX")
+
+    # Fetch data from query parameters
+    pdu_pk: str = request.GET.get("pdu_pk")
+    selected_audit_year = int(request.GET.get("selected_audit_year"))
+
+    pdu = PaediatricDiabetesUnitClass.objects.get(pk=pdu_pk)
+
+    # # Map of cases by distance from the selected organisation
+
+    # # get lead organisation for the selected PDU
+    try:
+        pdu_lead_organisation = fetch_organisation_by_ods_code(
+            ods_code=pdu.lead_organisation_ods_code
+        )
+    except:
+        raise ValueError(f"Lead organisation for PDU {pdu.lead_organisation_ods_code=} not found")
+
+    # # thes are all registered patients for the current cohort at the selected organisation to be plotted in the map
+    patients_to_plot = get_children_by_pdu_audit_year(
+        paediatric_diabetes_unit=pdu,
+        paediatric_diabetes_unit_lead_organisation=pdu_lead_organisation,
+        audit_year=selected_audit_year,
+    )
+
+    # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
+    aggregated_distances, patient_distances_dataframe = (
+        generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases=patients_to_plot)
+    )
+
+    # generate scatterplot of patients by distance from the selected organisation
+    scatterplot_of_cases_for_selected_organisation_fig = (
+        generate_distance_from_organisation_scatterplot_figure(
+            geo_df=patient_distances_dataframe,
+            pdu_lead_organisation=pdu_lead_organisation,
+        )
+    )
+
+    chart_html = scatterplot_of_cases_for_selected_organisation_fig.to_html(
+        full_html=False,
+        include_plotlyjs=False,
+        config={"displayModeBar": False},
+    )
+
+    return render(
+        request,
+        template_name="dashboard/map_chart_partial.html",
+        context={
+            "chart_html": chart_html,
+        },
+    )
 
 
 def convert_value_counts_dict_to_pct(value_counts_dict: dict):
