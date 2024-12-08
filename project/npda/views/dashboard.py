@@ -66,7 +66,9 @@ def dashboard(request):
     """
     template = "dashboard.html"
     pz_code = request.session.get("pz_code")
-    refresh_session_object_synchronously(request=request, user=request.user, pz_code=pz_code)
+    refresh_session_object_synchronously(
+        request=request, user=request.user, pz_code=pz_code
+    )
 
     PaediatricDiabetesUnit: PaediatricDiabetesUnitClass = apps.get_model(
         "npda", "PaediatricDiabetesUnit"
@@ -85,16 +87,18 @@ def dashboard(request):
     selected_audit_year = max(selected_audit_year, 2024)
     calculation_date = date(year=selected_audit_year, month=5, day=1)
 
-    calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
+    calculate_kpis = CalculateKPIS(
+        calculation_date=calculation_date, return_pt_querysets=True
+    )
 
     kpi_calculations_object = calculate_kpis.calculate_kpis_for_pdus(pz_codes=[pz_code])
 
     # From this, gather specific chart data required
 
     # Total eligible patients stratified by diabetes type
-    total_eligible_patients_queryset: QuerySet = kpi_calculations_object["calculated_kpi_values"][
-        "kpi_1_total_eligible"
-    ]["patient_querysets"]["eligible"]
+    total_eligible_patients_queryset: QuerySet = kpi_calculations_object[
+        "calculated_kpi_values"
+    ]["kpi_1_total_eligible"]["patient_querysets"]["eligible"]
     eligible_pts_diabetes_type_counts = total_eligible_patients_queryset.values(
         "diabetes_type"
     ).annotate(count=Count("diabetes_type"))
@@ -130,7 +134,9 @@ def dashboard(request):
     # Gather defaults for htmx partials
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
-    highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
+    highlight = {
+        f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()
+    }
 
     context = {
         "pdu_object": pdu,
@@ -282,7 +288,9 @@ def get_waffle_chart_partial(request):
         include_plotlyjs=False,
         config={"displayModeBar": False},
     )
-    return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
+    return render(
+        request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html}
+    )
 
 
 @login_and_otp_required()
@@ -292,10 +300,10 @@ def get_map_chart_partial(request):
         return HttpResponseBadRequest("This view is only accessible via HTMX")
 
     # Fetch data from query parameters
-    pdu_pk: str = request.GET.get("pdu_pk")
-    selected_audit_year = int(request.GET.get("selected_audit_year"))
+    pz_code: str = request.session.get("pz_code")
+    selected_audit_year = request.session.get("selected_audit_year")
 
-    pdu = PaediatricDiabetesUnitClass.objects.get(pk=pdu_pk)
+    pdu = PaediatricDiabetesUnitClass.objects.get(pz_code=pz_code)
 
     # # Map of cases by distance from the selected organisation
 
@@ -305,7 +313,9 @@ def get_map_chart_partial(request):
             ods_code=pdu.lead_organisation_ods_code
         )
     except:
-        raise ValueError(f"Lead organisation for PDU {pdu.lead_organisation_ods_code=} not found")
+        raise ValueError(
+            f"Lead organisation for PDU {pdu.lead_organisation_ods_code=} not found"
+        )
 
     # # thes are all registered patients for the current cohort at the selected organisation to be plotted in the map
     patients_to_plot = get_children_by_pdu_audit_year(
@@ -316,7 +326,9 @@ def get_map_chart_partial(request):
 
     # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
     aggregated_distances, patient_distances_dataframe = (
-        generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases=patients_to_plot)
+        generate_dataframe_and_aggregated_distance_data_from_cases(
+            filtered_cases=patients_to_plot
+        )
     )
 
     # generate scatterplot of patients by distance from the selected organisation
@@ -327,11 +339,14 @@ def get_map_chart_partial(request):
         )
     )
 
-    chart_html = scatterplot_of_cases_for_selected_organisation_fig.to_html(
-        full_html=False,
-        include_plotlyjs=False,
-        config={"displayModeBar": False},
-    )
+    print("scatterplot_of_cases_for_selected_organisation_fig")
+
+    # chart_html = scatterplot_of_cases_for_selected_organisation_fig.to_html(
+    #     full_html=False,
+    #     include_plotlyjs=False,
+    #     config={"displayModeBar": False},
+    # )
+    chart_html = scatterplot_of_cases_for_selected_organisation_fig.to_html()
 
     return render(
         request,

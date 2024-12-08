@@ -71,7 +71,7 @@ def get_children_by_pdu_audit_year(
 
         for patient in filtered_patients:
             if patient.postcode:
-                # add the location data to the queryset - note these fields do not exist in the model
+                # this currently takes a long time to run because of the API call - once we save the location data in the database on save, we can remove this
                 lon, lat, location_wgs84, location_bng = location_for_postcode(
                     patient.postcode
                 )
@@ -103,7 +103,7 @@ def get_children_by_pdu_audit_year(
 
 def generate_distance_from_organisation_scatterplot_figure(
     geo_df: pd.DataFrame, pdu_lead_organisation
-)-> go.Figure:
+) -> go.Figure:
     """
     Returns a plottable map with Cases overlayed as dots with tooltips on hover
 
@@ -215,7 +215,7 @@ def generate_distance_from_organisation_scatterplot_figure(
                 ],
             }
         ],
-    ),
+    )
 
     return fig
 

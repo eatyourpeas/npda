@@ -1,13 +1,29 @@
-{% extends 'dashboard/base_card.html' %} {% block card_title %} Distribution of patients ({{ pdu_object.lead_organisation_name }} {{ pdu_object.pz_code }}) {% endblock card_title%} {% block card_body %}
-<figure>
-  <div id="organisation_cases_map" style="width: 100%"></div>
-</figure>
-
-{% comment %} <div
-hx-get="{% url 'get_map_chart_partial' %}"
-hx-vals='{{ charts.map }}'
-hx-trigger="load" hx-swap="innerHTML"
-hx-indicator="#loading-spinner">
-</div> {% endcomment %}
-<div id="loading-spinner" class="loading loading-spinner text-rcpch_dark_blue flex-grow-1 w-1/5 mx-auto"></div>
+{% extends 'dashboard/base_card.html' %}
+{% block card_title %}
+  Distribution of patients ({{ pdu_object.lead_organisation_name }} {{ pdu_object.pz_code }})
+{% endblock card_title %}
+{% block card_body %}
+  <figure>
+    <div id="organisation_cases_map" style="width: 100%">
+      {% include 'dashboard/map_chart_partial.html' %}
+    </div>
+  </figure>
+  <div hx-get="{% url 'get_map_chart_partial' %}"
+       hx-trigger="load"
+       hx-swap="innerHTML"
+       hx-target="#organisation_cases_map"
+       hx-indicator="#loading-spinner"></div>
+  <div id="loading-spinner"
+       class="loading loading-spinner text-rcpch_dark_blue flex-grow-1 w-1/5 mx-auto">
+  </div>
+  <script>
+    var organisation_plotly_map = {{ chart_html|safe }}
+    Plotly.newPlot('organisation_cases_map', organisation_plotly_map.data, organisation_plotly_map.layout);
+    document.addEventListener('htmx:afterOnLoad', function(event) {
+      var spinner = document.getElementById('loading-spinner');
+      if (spinner) {
+        spinner.style.display = 'none';
+      }
+    });
+  </script>
 {% endblock %}
