@@ -278,7 +278,7 @@ def get_waffle_chart_partial(request):
 
     fig = go.Figure()
     for square in chart_data:
-        print(f"{square=}")
+
         fig.add_trace(
             go.Scatter(
                 x=[square["x"]],
