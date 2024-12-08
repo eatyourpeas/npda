@@ -223,13 +223,13 @@ def get_patient_level_report_partial(request):
 
 @login_and_otp_required()
 def get_waffle_chart_partial(request):
+    """HTMX view that accepts a GET request with an object of waffle labels and percentages,
+    returning a waffle chart rendered"""
 
     if not request.htmx:
         return HttpResponseBadRequest("This view is only accessible via HTMX")
 
-    print(f"{request.GET=}")
-
-    # Fetch data from query parameters (if provided)
+    # Fetch data from query parameters
     data = {}
     for key, value in request.GET.items():
         data[key] = int(value)
@@ -240,49 +240,65 @@ def get_waffle_chart_partial(request):
 
         first_category = list(data.keys())[0]
         data[first_category] += 100 - total
+    
+    # Sort data by pct ascending so we put the smallest category top left
+    data = sorted(data.items(), key=lambda item: item[1], reverse=False)
 
     # Prepare waffle chart
-    labels = list(data.keys())
-    percentages = list(data.values())
-    total_squares = 100
-    squares = [round(percent * total_squares / 100) for percent in percentages]
-    colours = [RCPCH_DARK_BLUE, RCPCH_PINK, RCPCH_MID_GREY][: len(labels)]  # Adjust for categories
+    # TODO: ADD IN A BUNCH OF COLORS HERE. ?COULD SPECIFY COLORS IN GET REQUEST
+    colours = [RCPCH_DARK_BLUE, RCPCH_PINK, RCPCH_MID_GREY][: len(data)]
 
     # Create Plotly waffle chart
-    chart_data = []
-    row, col = 0, 0
-    grid_size = int(total_squares**0.5)
+    GRID_SIZE = 10 # 10x10 grid
+    Y, X = GRID_SIZE-1, 0 # We start top left and move left to right, top to bottom
 
-    for idx, (label, num_squares) in enumerate(zip(labels, squares)):
+    chart_data = []
+    # For each label, add the appropriate number of squares to the chart data
+    for idx, (label, num_squares) in enumerate(data):
+        # For each square, append its data as current r,c, and colour
         for _ in range(num_squares):
-            chart_data.append(dict(x=col, y=-row, colour=colours[idx], category=label))
-            col += 1
-            if col == grid_size:
-                col = 0
-                row += 1
+            square_data = {
+                'x': X,
+                'y': Y,
+                'colour': colours[idx],
+                'category': label,
+            }
+            chart_data.append(square_data)
+            
+            # Move our position
+            
+            # Move X to the right
+            X += 1
+            
+            # If we've gone beyond the end of the row, set X to 0 and move Y down
+            if X == GRID_SIZE:
+                X = 0
+                Y -= 1
+                
 
     fig = go.Figure()
-    for point in chart_data:
+    for square in chart_data:
+        print(f"{square=}")
         fig.add_trace(
             go.Scatter(
-                x=[point["x"]],
-                y=[point["y"]],
+                x=[square["x"]],
+                y=[square["y"]],
                 mode="markers",
-                marker=dict(size=30, color=point["colour"], symbol="square"),
-                name=point["category"],
+                marker=dict(size=20, color=square["colour"], symbol="square"),
+                name=square["category"],
                 showlegend=False,
             )
         )
 
     # Add legend
-    for idx, label in enumerate(labels):
+    for idx, (label, pct) in enumerate(data):
         fig.add_trace(
             go.Scatter(
                 x=[None],
                 y=[None],
                 mode="markers",
                 marker=dict(size=15, color=colours[idx], symbol="square"),
-                name=f"{percentages[idx]}% {label}",
+                name=f"{pct}% {label}",
             )
         )
 
@@ -290,15 +306,17 @@ def get_waffle_chart_partial(request):
         xaxis=dict(visible=False),
         yaxis=dict(visible=False),
         margin=dict(l=0, r=0, t=50, b=0),
-        height=300,
-        width=300,
-        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center"),
+        legend=dict(orientation="h", y=1.1, x=0.5, xanchor="center"),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
     )
 
     # Convert Plotly figure to HTML
-    chart_html = fig.to_html(full_html=False, include_plotlyjs=False)
+    chart_html = fig.to_html(
+        full_html=False,
+        include_plotlyjs=False,
+        config={"displayModeBar": False},
+    )
     return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
 
 

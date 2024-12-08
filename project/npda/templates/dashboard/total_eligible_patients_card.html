@@ -5,7 +5,7 @@
 {% block card_body %}
 
 <!-- Waffle Chart Container -->
-<div id="waffle-chart-container"
+<div
 hx-get="{% url 'get_waffle_chart_partial' %}"
 hx-vals='{{ charts.total_eligible_patients_stratified_by_diabetes_type.data }}'
 hx-trigger="load" hx-swap="innerHTML"></div>
