@@ -16,6 +16,7 @@ from django.db.models import QuerySet, Count
 
 from project.constants.colors import RCPCH_DARK_BLUE, RCPCH_MID_GREY, RCPCH_PINK
 from project.constants.diabetes_types import DIABETES_TYPES
+from project.constants.types.kpi_types import KPIRegistry
 from project.npda.general_functions.model_utils import print_instance_field_attrs
 from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
 from project.npda.models.paediatric_diabetes_unit import (
@@ -99,8 +100,10 @@ def dashboard(request):
             ]["patient_querysets"]["eligible"]
         )
     )
-    # Patient characteristics
-    
+    # Patient characteristics -> KPI 4
+    pt_characteristics_value_counts = get_pt_characteristics_value_counts(
+        calculate_kpis.kpi_name_registry, kpi_calculations_object["calculated_kpi_values"]
+    )
 
     # Gather other context vars
     current_date = date.today()
@@ -333,6 +336,7 @@ def get_map_chart_partial(request):
 
 
 def get_total_eligible_pts_diabetes_type_value_counts(eligible_pts_queryset: QuerySet) -> dict:
+    """Gets value counts dict for total eligible patients stratified by diabetes type"""
 
     eligible_pts_diabetes_type_counts = eligible_pts_queryset.values("diabetes_type").annotate(
         count=Count("diabetes_type")
@@ -358,10 +362,33 @@ def get_total_eligible_pts_diabetes_type_value_counts(eligible_pts_queryset: Que
     eligible_pts_diabetes_type_value_counts = convert_value_counts_dict_to_pct(
         eligible_pts_diabetes_type_value_counts
     )
-    
-    
 
     return eligible_pts_diabetes_type_value_counts
+
+
+def get_pt_characteristics_value_counts(
+    kpi_name_registry: KPIRegistry,
+    kpi_calculations_object: dict,
+) -> dict:
+    """Gets value counts dict for:
+
+    - age_gte_12yo (KPI4)
+    - complete_year_of_care (KPI5)
+    - age_gte_12yo_and_complete_year_of_care (KPI6)
+
+    - died (KPI8)
+    - transitioned (KPI9)
+
+    - coeliac (KPI10)
+    - thyroid (kpi11)
+    - ketone_testing (KPI12)
+    """
+    # Get attribute names and labels
+    relevant_kpis = [4,5,6,8,9,10,11,12]
+    kpi_attr_and_labels = [kpi_name_registry.get_kpi(kpi) for kpi in relevant_kpis]
+    
+    print(kpi_attr_and_labels)
+    
 
 
 def convert_value_counts_dict_to_pct(value_counts_dict: dict):
