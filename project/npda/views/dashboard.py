@@ -101,12 +101,16 @@ def dashboard(request):
             ]["patient_querysets"]["eligible"]
         )
     )
-    # Patient characteristics -> KPI 4
+    # Patient characteristics -> KPI [4, 5, 6, 8, 9, 10, 11, 12]
     pt_characteristics_value_counts = get_pt_characteristics_value_counts_pct(
         calculate_kpis.kpi_name_registry,
         kpi_calculations_object["calculated_kpi_values"],
     )
-    print(pt_characteristics_value_counts)
+    # A single chart has 5 figures -> based on pct, return the number of figures coloured
+    pt_characteristics_value_counts_with_figure_counts = add_number_of_figures_coloured_for_chart(
+        pt_characteristics_value_counts
+    )
+    print(f"{pt_characteristics_value_counts_with_figure_counts=}")
 
     # Gather other context vars
     current_date = date.today()
@@ -131,6 +135,9 @@ def dashboard(request):
             "total_eligible_patients_stratified_by_diabetes_type": {
                 "data": json.dumps(total_eligible_pts_diabetes_type_value_counts),
                 "labels": list(total_eligible_pts_diabetes_type_value_counts.keys()),
+            },
+            "pt_characteristics_value_counts": {
+                "data": pt_characteristics_value_counts_with_figure_counts,
             },
             "map": json.dumps(
                 dict(
@@ -338,6 +345,29 @@ def get_map_chart_partial(request):
     )
 
 
+@login_and_otp_required()
+def get_colored_figures_chart_partial(
+    request,
+    colored: int,
+    total_figures: int,
+):
+
+    if not request.htmx:
+        return HttpResponseBadRequest("This view is only accessible via HTMX")
+
+    # Get a list of booleans to determine which figures are colored (to iterate easily in the
+    # template)
+    is_colored = [True if i < colored else False for i in range(total_figures)]
+    
+    return render(
+        request,
+        "dashboard/colored_figures_chart_partial.html",
+        context={
+            "is_colored": is_colored,
+        },
+    )
+
+
 def get_total_eligible_pts_diabetes_type_value_counts(eligible_pts_queryset: QuerySet) -> dict:
     """Gets value counts dict for total eligible patients stratified by diabetes type"""
 
@@ -372,20 +402,26 @@ def get_total_eligible_pts_diabetes_type_value_counts(eligible_pts_queryset: Que
 def get_pt_characteristics_value_counts_pct(
     kpi_name_registry: KPIRegistry,
     kpi_calculations_object: dict,
-) -> dict[Literal["total_eligible", "total_ineligible", "pct"], int]:
+) -> dict[
+    Literal["care", "died_or_transitioned", "comorbidity_and_testing"],
+    dict[Literal["total_eligible", "total_ineligible", "pct"], int],
+]:
     """Gets value counts dict for:
 
+    care
     - age_gte_12yo (KPI4)
     - complete_year_of_care (KPI5)
     - age_gte_12yo_and_complete_year_of_care (KPI6)
 
+    died_or_transitioned
     - died (KPI8)
     - transitioned (KPI9)
 
+    comorbidity_and_testing
     - coeliac (KPI10)
     - thyroid (kpi11)
     - ketone_testing (KPI12)
-    
+
     NOTE: rounds DOWN (convert float to int) for percentage calculation
     """
     # Get attribute names and labels
@@ -406,10 +442,50 @@ def get_pt_characteristics_value_counts_pct(
         value_counts[kpi_label]["count"] = total_eligible
         value_counts[kpi_label]["total"] = total_eligible + total_ineligible
         value_counts[kpi_label]["pct"] = int(
-            total_eligible / (total_eligible + total_ineligible)
-        ) * 100
+            total_eligible / (total_eligible + total_ineligible) * 100
+        )
 
-    return value_counts
+    # Now put into the 3 categories
+    categories_vc = defaultdict(dict)
+    for kpi in [4, 5, 6]:
+        kpi_label = kpi_name_registry.get_kpi(kpi).rendered_label
+        categories_vc["care"][kpi_label] = value_counts[
+            kpi_name_registry.get_kpi(kpi).rendered_label
+        ]
+
+    for kpi in [8, 9]:
+        kpi_label = kpi_name_registry.get_kpi(kpi).rendered_label
+        categories_vc["died_or_transitioned"][kpi_label] = value_counts[
+            kpi_name_registry.get_kpi(kpi).rendered_label
+        ]
+
+    for kpi in [10, 11, 12]:
+        kpi_label = kpi_name_registry.get_kpi(kpi).rendered_label
+        categories_vc["comorbidity_and_testing"][kpi_label] = value_counts[
+            kpi_name_registry.get_kpi(kpi).rendered_label
+        ]
+
+    return dict(categories_vc)
+
+
+def add_number_of_figures_coloured_for_chart(
+    value_counts_dict: dict[
+        Literal["care", "died_or_transitioned", "comorbidity_and_testing"],
+        dict[Literal["total_eligible", "total_ineligible", "pct"], int],
+    ],
+    n_figures_total: int = 5,
+) -> dict[Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int]:
+    """
+    Add number of figures coloured to a value counts dict
+    """
+    # divisor is 100 / n_figures_total
+    divisor = 100 / n_figures_total
+
+    for category, vcs in value_counts_dict.items():
+        for key, value in vcs.items():
+            value_counts_dict[category][key]["figures_coloured"] = int(value["pct"] / divisor)
+
+    return dict(value_counts_dict)
 
 
 def convert_value_counts_dict_to_pct(value_counts_dict: dict):
