@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 from datetime import date
+from typing import Literal
 
 import plotly.graph_objects as go
 
@@ -101,9 +102,11 @@ def dashboard(request):
         )
     )
     # Patient characteristics -> KPI 4
-    pt_characteristics_value_counts = get_pt_characteristics_value_counts(
-        calculate_kpis.kpi_name_registry, kpi_calculations_object["calculated_kpi_values"]
+    pt_characteristics_value_counts = get_pt_characteristics_value_counts_pct(
+        calculate_kpis.kpi_name_registry,
+        kpi_calculations_object["calculated_kpi_values"],
     )
+    print(pt_characteristics_value_counts)
 
     # Gather other context vars
     current_date = date.today()
@@ -366,10 +369,10 @@ def get_total_eligible_pts_diabetes_type_value_counts(eligible_pts_queryset: Que
     return eligible_pts_diabetes_type_value_counts
 
 
-def get_pt_characteristics_value_counts(
+def get_pt_characteristics_value_counts_pct(
     kpi_name_registry: KPIRegistry,
     kpi_calculations_object: dict,
-) -> dict:
+) -> dict[Literal["total_eligible", "total_ineligible", "pct"], int]:
     """Gets value counts dict for:
 
     - age_gte_12yo (KPI4)
@@ -382,13 +385,31 @@ def get_pt_characteristics_value_counts(
     - coeliac (KPI10)
     - thyroid (kpi11)
     - ketone_testing (KPI12)
+    
+    NOTE: rounds DOWN (convert float to int) for percentage calculation
     """
     # Get attribute names and labels
-    relevant_kpis = [4,5,6,8,9,10,11,12]
+    relevant_kpis = [4, 5, 6, 8, 9, 10, 11, 12]
     kpi_attr_and_labels = [kpi_name_registry.get_kpi(kpi) for kpi in relevant_kpis]
-    
-    print(kpi_attr_and_labels)
-    
+
+    value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
+    # These are all just counts so only total_eligble and total_ineligible have values
+    for kpi_name_from_registry in kpi_attr_and_labels:
+        kpi_attr, kpi_label = (
+            kpi_name_from_registry.attribute_name,
+            kpi_name_from_registry.rendered_label,
+        )
+        total_eligible = kpi_calculations_object[kpi_attr]["total_eligible"]
+        total_ineligible = kpi_calculations_object[kpi_attr]["total_ineligible"]
+
+        # Need all 3 for front end chart
+        value_counts[kpi_label]["count"] = total_eligible
+        value_counts[kpi_label]["total"] = total_eligible + total_ineligible
+        value_counts[kpi_label]["pct"] = int(
+            total_eligible / (total_eligible + total_ineligible)
+        ) * 100
+
+    return value_counts
 
 
 def convert_value_counts_dict_to_pct(value_counts_dict: dict):
