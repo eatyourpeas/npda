@@ -92,33 +92,15 @@ def dashboard(request):
     # From this, gather specific chart data required
 
     # Total eligible patients stratified by diabetes type
-    total_eligible_patients_queryset: QuerySet = kpi_calculations_object["calculated_kpi_values"][
-        "kpi_1_total_eligible"
-    ]["patient_querysets"]["eligible"]
-    eligible_pts_diabetes_type_counts = total_eligible_patients_queryset.values(
-        "diabetes_type"
-    ).annotate(count=Count("diabetes_type"))
-    eligible_pts_diabetes_type_value_counts = defaultdict(int)
-    for item in eligible_pts_diabetes_type_counts:
-        diabetes_type = item["diabetes_type"]
-        count = item["count"]
-
-        # These are T1/T2DM types
-        if diabetes_type == 1:
-            diabetes_type_str = "T1DM"
-            eligible_pts_diabetes_type_value_counts[diabetes_type_str] += count
-        elif diabetes_type == 2:
-            diabetes_type_str = "T2DM"
-            eligible_pts_diabetes_type_value_counts[diabetes_type_str] += count
-        else:
-            # Count as 'Other rare forms'
-            diabetes_type_str = "Other rare forms"
-            eligible_pts_diabetes_type_value_counts[diabetes_type_str] += count
-
-    # Convert to percentages
-    eligible_pts_diabetes_type_value_counts = convert_value_counts_dict_to_pct(
-        eligible_pts_diabetes_type_value_counts
+    total_eligible_pts_diabetes_type_value_counts = (
+        get_total_eligible_pts_diabetes_type_value_counts(
+            eligible_pts_queryset=kpi_calculations_object["calculated_kpi_values"][
+                "kpi_1_total_eligible"
+            ]["patient_querysets"]["eligible"]
+        )
     )
+    # Patient characteristics
+    
 
     # Gather other context vars
     current_date = date.today()
@@ -140,10 +122,9 @@ def dashboard(request):
         "current_quarter": current_quarter,
         "days_remaining_until_audit_end_date": days_remaining_until_audit_end_date,
         "charts": {
-            # Converting this to a dict for easier access in the template
             "total_eligible_patients_stratified_by_diabetes_type": {
-                "data": json.dumps(eligible_pts_diabetes_type_value_counts),
-                "labels": list(eligible_pts_diabetes_type_value_counts.keys()),
+                "data": json.dumps(total_eligible_pts_diabetes_type_value_counts),
+                "labels": list(total_eligible_pts_diabetes_type_value_counts.keys()),
             },
             "map": json.dumps(
                 dict(
@@ -349,6 +330,38 @@ def get_map_chart_partial(request):
             "chart_html": chart_html,
         },
     )
+
+
+def get_total_eligible_pts_diabetes_type_value_counts(eligible_pts_queryset: QuerySet) -> dict:
+
+    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values("diabetes_type").annotate(
+        count=Count("diabetes_type")
+    )
+    eligible_pts_diabetes_type_value_counts = defaultdict(int)
+    for item in eligible_pts_diabetes_type_counts:
+        diabetes_type = item["diabetes_type"]
+        count = item["count"]
+
+        # These are T1/T2DM types
+        if diabetes_type == 1:
+            diabetes_type_str = "T1DM"
+            eligible_pts_diabetes_type_value_counts[diabetes_type_str] += count
+        elif diabetes_type == 2:
+            diabetes_type_str = "T2DM"
+            eligible_pts_diabetes_type_value_counts[diabetes_type_str] += count
+        else:
+            # Count as 'Other rare forms'
+            diabetes_type_str = "Other rare forms"
+            eligible_pts_diabetes_type_value_counts[diabetes_type_str] += count
+
+    # Convert to percentages
+    eligible_pts_diabetes_type_value_counts = convert_value_counts_dict_to_pct(
+        eligible_pts_diabetes_type_value_counts
+    )
+    
+    
+
+    return eligible_pts_diabetes_type_value_counts
 
 
 def convert_value_counts_dict_to_pct(value_counts_dict: dict):
