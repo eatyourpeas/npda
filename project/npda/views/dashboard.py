@@ -358,7 +358,7 @@ def get_colored_figures_chart_partial(
     # Get a list of booleans to determine which figures are colored (to iterate easily in the
     # template)
     is_colored = [True if i < colored else False for i in range(total_figures)]
-    
+
     return render(
         request,
         "dashboard/colored_figures_chart_partial.html",
@@ -426,44 +426,35 @@ def get_pt_characteristics_value_counts_pct(
     """
     # Get attribute names and labels
     relevant_kpis = [4, 5, 6, 8, 9, 10, 11, 12]
-    kpi_attr_and_labels = [kpi_name_registry.get_kpi(kpi) for kpi in relevant_kpis]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
 
     value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
     # These are all just counts so only total_eligble and total_ineligible have values
-    for kpi_name_from_registry in kpi_attr_and_labels:
-        kpi_attr, kpi_label = (
-            kpi_name_from_registry.attribute_name,
-            kpi_name_from_registry.rendered_label,
-        )
+    for kpi_attr in kpi_attr_names:
+
         total_eligible = kpi_calculations_object[kpi_attr]["total_eligible"]
         total_ineligible = kpi_calculations_object[kpi_attr]["total_ineligible"]
 
         # Need all 3 for front end chart
-        value_counts[kpi_label]["count"] = total_eligible
-        value_counts[kpi_label]["total"] = total_eligible + total_ineligible
-        value_counts[kpi_label]["pct"] = int(
+        value_counts[kpi_attr]["count"] = total_eligible
+        value_counts[kpi_attr]["total"] = total_eligible + total_ineligible
+        value_counts[kpi_attr]["pct"] = int(
             total_eligible / (total_eligible + total_ineligible) * 100
         )
 
     # Now put into the 3 categories
     categories_vc = defaultdict(dict)
     for kpi in [4, 5, 6]:
-        kpi_label = kpi_name_registry.get_kpi(kpi).rendered_label
-        categories_vc["care"][kpi_label] = value_counts[
-            kpi_name_registry.get_kpi(kpi).rendered_label
-        ]
+        kpi_attr = kpi_name_registry.get_attribute_name(kpi)
+        categories_vc["care"][kpi_attr] = value_counts[kpi_attr]
 
     for kpi in [8, 9]:
-        kpi_label = kpi_name_registry.get_kpi(kpi).rendered_label
-        categories_vc["died_or_transitioned"][kpi_label] = value_counts[
-            kpi_name_registry.get_kpi(kpi).rendered_label
-        ]
+        kpi_attr = kpi_name_registry.get_attribute_name(kpi)
+        categories_vc["died_or_transitioned"][kpi_attr] = value_counts[kpi_attr]
 
     for kpi in [10, 11, 12]:
-        kpi_label = kpi_name_registry.get_kpi(kpi).rendered_label
-        categories_vc["comorbidity_and_testing"][kpi_label] = value_counts[
-            kpi_name_registry.get_kpi(kpi).rendered_label
-        ]
+        kpi_attr = kpi_name_registry.get_attribute_name(kpi)
+        categories_vc["comorbidity_and_testing"][kpi_attr] = value_counts[kpi_attr]
 
     return dict(categories_vc)
 
