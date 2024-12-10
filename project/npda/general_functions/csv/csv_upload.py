@@ -51,23 +51,12 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         if pd.isnull(value):
             return None
 
-        # # Pandas is returning 0 for empty cells in integer columns
-        # if value == 0:
-        #     return None
-
-        # Pandas will convert an integer column to float if it contains missing values
-        # http://pandas.pydata.org/pandas-docs/stable/user_guide/gotchas.html#missing-value-representation-for-numpy-types
-        # if pd.api.types.is_float(value) and model_field.choices:
-        #     return int(value)
-
         if isinstance(value, pd.Timestamp):
             return value.to_pydatetime().date()
 
-        # if model_field.choices:
-        #     # If the model field has choices, we need to convert the value to the correct type otherwise 1, 2 will be saved as booleans
-        #     return model_field.to_python(value)
-
-        return value
+        # Pass Django forms native Python values not numpy ones
+        # https://github.com/rcpch/national-paediatric-diabetes-audit/issues/425
+        return value.item() if isinstance(value, np.generic) else value
 
     def row_to_dict(row, model):
         ret = {}
