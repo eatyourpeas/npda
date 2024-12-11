@@ -1,5 +1,5 @@
 # Python imports
-from collections import defaultdict
+from collections import Counter, defaultdict
 import datetime
 import json
 import logging
@@ -17,12 +17,15 @@ from django.db.models import QuerySet, Count
 
 from project.constants.colors import RCPCH_DARK_BLUE, RCPCH_MID_GREY, RCPCH_PINK
 from project.constants.diabetes_types import DIABETES_TYPES
+from project.constants.ethnicities import ETHNICITIES
+from project.constants.sex_types import SEX_TYPE
 from project.constants.types.kpi_types import KPIRegistry
 from project.npda.general_functions.model_utils import print_instance_field_attrs
 from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
 from project.npda.models.paediatric_diabetes_unit import (
     PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
 )
+from project.npda.models.patient import Patient
 
 
 # HTMX imports
@@ -101,6 +104,7 @@ def dashboard(request):
             ]["patient_querysets"]["eligible"]
         )
     )
+
     # Patient characteristics -> KPI [4, 5, 6, 8, 9, 10, 11, 12]
     pt_characteristics_value_counts = get_pt_characteristics_value_counts_pct(
         calculate_kpis.kpi_name_registry,
@@ -109,6 +113,15 @@ def dashboard(request):
     # A single chart has 5 figures -> based on pct, return the number of figures coloured
     pt_characteristics_value_counts_with_figure_counts = add_number_of_figures_coloured_for_chart(
         pt_characteristics_value_counts
+    )
+
+    # Sex
+    pt_sex_value_counts, pt_ethnicity_value_counts, pt_imd_value_counts = (
+        get_pt_demographic_value_counts(
+            all_eligible_pts_queryset=kpi_calculations_object["calculated_kpi_values"][
+                "kpi_1_total_eligible"
+            ]["patient_querysets"]["eligible"]
+        )
     )
 
     # Gather other context vars
@@ -458,6 +471,54 @@ def get_pt_characteristics_value_counts_pct(
         categories_vc["comorbidity_and_testing"][kpi_attr] = value_counts[kpi_attr]
 
     return dict(categories_vc)
+
+
+def get_pt_demographic_value_counts(
+    all_eligible_pts_queryset: QuerySet[Patient],
+) -> tuple[
+    dict[Literal["Female", "Male", "Unknown"], int],
+    dict[str, int],
+    dict[
+        Literal[
+            1,
+            2,
+            3,
+            4,
+            5,
+        ],
+        int,
+    ],
+]:
+    """Get value counts for pt demographics:
+
+    - sex
+    - ethnicity
+    - imd
+    """
+
+    all_values = all_eligible_pts_queryset.values(
+        "sex", "ethnicity", "index_of_multiple_deprivation_quintile"
+    )
+    sex_map = dict(SEX_TYPE)
+    sex_counts = Counter(sex_map[item["sex"]] for item in all_values)
+    ethnicity_map = dict(ETHNICITIES)
+    ethnicity_counts = Counter(ethnicity_map[item["ethnicity"]] for item in all_values)
+    imd_map = {
+        1: "1st Quintile",
+        2: "2nd Quintile",
+        3: "3rd Quintile",
+        4: "4th Quintile",
+        5: "5th Quintile",
+    }
+    imd_counts = Counter(
+        imd_map[item["index_of_multiple_deprivation_quintile"]] for item in all_values
+    )
+
+    return (
+        sex_counts,
+        ethnicity_counts,
+        imd_counts,
+    )
 
 
 def add_number_of_figures_coloured_for_chart(
