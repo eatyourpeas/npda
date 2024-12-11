@@ -127,12 +127,7 @@ def dashboard(request):
     pt_sex_value_counts_pct = convert_value_counts_dict_to_pct(pt_sex_value_counts)
     pt_ethnicity_value_counts_pct = convert_value_counts_dict_to_pct(pt_ethnicity_value_counts)
     pt_imd_value_counts_pct = convert_value_counts_dict_to_pct(pt_imd_value_counts)
-    print(pt_sex_value_counts_pct)
-    print()
-    print(pt_ethnicity_value_counts_pct)
-    print()
-    print(pt_imd_value_counts_pct)
-    print()
+
     # Gather other context vars
     current_date = date.today()
     days_remaining_until_audit_end_date = (
