@@ -3,10 +3,10 @@
   Sex
 {% endblock card_title%}
 {% block card_body %}
-  <div class="mt-4 text-center text-gray-500">
-    <!-- Placeholder for Chart -->
-    Chart Placeholder
-  </div>
+<div
+hx-get="{% url 'get_waffle_chart_partial' %}"
+hx-vals='{{ charts.pt_sex_value_counts_pct.data }}'
+hx-trigger="load" hx-swap="innerHTML"></div>
 {% endblock %}
 
 

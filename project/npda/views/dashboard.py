@@ -15,7 +15,7 @@ from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.db.models import QuerySet, Count
 
-from project.constants.colors import RCPCH_DARK_BLUE, RCPCH_MID_GREY, RCPCH_PINK
+from project.constants.colors import *
 from project.constants.diabetes_types import DIABETES_TYPES
 from project.constants.ethnicities import ETHNICITIES
 from project.constants.sex_types import SEX_TYPE
@@ -123,7 +123,16 @@ def dashboard(request):
             ]["patient_querysets"]["eligible"]
         )
     )
-
+    # Convert to pcts
+    pt_sex_value_counts_pct = convert_value_counts_dict_to_pct(pt_sex_value_counts)
+    pt_ethnicity_value_counts_pct = convert_value_counts_dict_to_pct(pt_ethnicity_value_counts)
+    pt_imd_value_counts_pct = convert_value_counts_dict_to_pct(pt_imd_value_counts)
+    print(pt_sex_value_counts_pct)
+    print()
+    print(pt_ethnicity_value_counts_pct)
+    print()
+    print(pt_imd_value_counts_pct)
+    print()
     # Gather other context vars
     current_date = date.today()
     days_remaining_until_audit_end_date = (
@@ -157,6 +166,15 @@ def dashboard(request):
                     selected_audit_year=selected_audit_year,
                 )
             ),
+            "pt_sex_value_counts_pct": {
+                "data": json.dumps(pt_sex_value_counts_pct),
+            },
+            "pt_ethnicity_value_counts_pct": {
+                "data": json.dumps(pt_ethnicity_value_counts_pct),
+            },
+            "pt_imd_value_counts_pct": {
+                "data": json.dumps(pt_imd_value_counts_pct),
+            },
         },
         # Defaults for htmx partials
         "default_pt_level_menu_text": default_pt_level_menu_text,
@@ -218,7 +236,26 @@ def get_waffle_chart_partial(request):
 
     # Prepare waffle chart
     # TODO: ADD IN A BUNCH OF COLORS HERE. ?COULD SPECIFY COLORS IN GET REQUEST
-    colours = [RCPCH_DARK_BLUE, RCPCH_PINK, RCPCH_MID_GREY][: len(data)]
+    colours = [
+        RCPCH_DARK_BLUE,
+        RCPCH_PINK,
+        RCPCH_MID_GREY,
+        RCPCH_CHARCOAL_DARK,
+        RCPCH_RED,
+        RCPCH_ORANGE,
+        RCPCH_YELLOW,
+        RCPCH_STRONG_GREEN,
+        RCPCH_AQUA_GREEN,
+        RCPCH_PURPLE,
+        RCPCH_PURPLE_LIGHT_TINT2,
+        RCPCH_PURPLE_DARK_TINT,
+        RCPCH_RED_LIGHT_TINT3,
+        RCPCH_ORANGE_LIGHT_TINT3,
+        RCPCH_STRONG_GREEN_LIGHT_TINT3,
+        RCPCH_AQUA_GREEN_LIGHT_TINT3,
+        RCPCH_ORANGE_LIGHT_TINT3,
+        RCPCH_DARK_GREY,
+    ][: len(data)]
 
     # Create Plotly waffle chart
     GRID_SIZE = 10  # 10x10 grid
