@@ -110,7 +110,6 @@ def dashboard(request):
     pt_characteristics_value_counts_with_figure_counts = add_number_of_figures_coloured_for_chart(
         pt_characteristics_value_counts
     )
-    print(f"{pt_characteristics_value_counts_with_figure_counts=}")
 
     # Gather other context vars
     current_date = date.today()
@@ -438,8 +437,10 @@ def get_pt_characteristics_value_counts_pct(
         # Need all 3 for front end chart
         value_counts[kpi_attr]["count"] = total_eligible
         value_counts[kpi_attr]["total"] = total_eligible + total_ineligible
-        value_counts[kpi_attr]["pct"] = int(
-            total_eligible / (total_eligible + total_ineligible) * 100
+        value_counts[kpi_attr]["pct"] = (
+            int(total_eligible / value_counts[kpi_attr]["total"] * 100)
+            if value_counts[kpi_attr]["total"] > 0
+            else 0
         )
 
     # Now put into the 3 categories
