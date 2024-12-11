@@ -1,0 +1,17 @@
+#!/bin/bash
+# Runs the tailwind watch command in the running django container
+# Annoyingly i've spent far too long trying to just get this to work in the docker-compose file
+# but running the watch cmd alongside run server doesn't seem to rebuild on change
+
+red_echo() {
+    echo -e "\033[31m$1\033[0m"
+}
+
+green_echo() {
+    echo -e "\033[32m$1\033[0m"
+}
+
+green_echo "👁️ 👃 👁️ 👄 Running tailwind watch command in the django container"
+
+# Run the command
+docker compose exec -it django bash -c "npm run watch:css"

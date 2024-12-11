@@ -635,8 +635,7 @@ class CalculateKPIS:
             * Diagnosis of Type 1 diabetes"
 
             NOTE: just a count so pass/fail doesn't make sense; these should be
-        discarded as they're set to the same value as eligible/ineligible in
-        the returned KPIResult object.
+        discarded as they're set to None
         """
 
         base_eligible_patients, _ = (

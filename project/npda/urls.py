@@ -119,7 +119,11 @@ urlpatterns = [
         view=get_map_chart_partial,
         name="get_map_chart_partial",
     ),
-    
+    path(
+        "get_colored_figures_chart_partial/<int:colored>/<int:total_figures>",
+        view=get_colored_figures_chart_partial,
+        name="get_colored_figures_chart_partial",
+    ),
     # End dashboard views
     path("csrf_fail/", csrf_fail, name="csrf_fail"),
 ]
