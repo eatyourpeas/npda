@@ -105,7 +105,11 @@ def get_children_by_pdu_audit_year(
 
 
 def generate_distance_from_organisation_scatterplot_figure(
-    geo_df: pd.DataFrame, pdu_lead_organisation, pdu
+    geo_df: pd.DataFrame,
+    pdu_lead_organisation,
+    pdu,
+    local_authority_district_code,
+    local_authority_district_boundaries,
 ) -> go.Figure:
     """
     Returns a plottable map with Cases overlayed as dots with tooltips on hover
@@ -129,7 +133,7 @@ def generate_distance_from_organisation_scatterplot_figure(
     ]
 
     # # Load the IMD data
-    if pdu.paediatric_diabetes_network_code == "PN07":
+    if pdu.paediatric_diabetes_network_code == "PN07":  # the PDU is in Wales
         file_path = os.path.join(
             settings.BASE_DIR,
             "project",
@@ -147,6 +151,11 @@ def generate_distance_from_organisation_scatterplot_figure(
         )
     gdf = gpd.GeoDataFrame.from_file(file_path)
 
+    # from gdf remove all records that are not in the local authority district
+    gdf = gdf[
+        gdf["Local Authority District code (2019)"] == local_authority_district_code
+    ]
+
     # Create a Plotly choropleth map coloured by IMD Rank
     fig = go.Figure(
         go.Choroplethmapbox(
@@ -162,19 +171,6 @@ def generate_distance_from_organisation_scatterplot_figure(
             ].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><br>IMD Decile: %{customdata[1]}<extra></extra>",  # Custom hover template
         )
-    )
-
-    # add the Organisation as a scatterplot in blue
-    fig.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_zoom=10,
-        mapbox_center=dict(
-            lat=pdu_lead_organisation["latitude"],
-            lon=pdu_lead_organisation["longitude"],
-        ),
-        height=590,
-        mapbox_accesstoken=settings.MAPBOX_API_KEY,
-        showlegend=False,
     )
 
     # Add a scatterplot point for the organization

@@ -339,6 +339,12 @@ def get_map_chart_partial(request):
             geo_df=patient_distances_dataframe,
             pdu_lead_organisation=pdu_lead_organisation,
             pdu=pdu,
+            local_authority_district_code=pdu_lead_organisation[
+                "local_authority_district"
+            ]["lad24cd"],
+            local_authority_district_boundaries=pdu_lead_organisation[
+                "local_authority_district"
+            ],
         )
     )
 
