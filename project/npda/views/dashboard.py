@@ -6,6 +6,7 @@ import logging
 from datetime import date
 
 import plotly.graph_objects as go
+import plotly.io as pio
 
 # Django imports
 from django.apps import apps
@@ -201,6 +202,9 @@ def get_waffle_chart_partial(request):
     if not request.htmx:
         return HttpResponseBadRequest("This view is only accessible via HTMX")
 
+    if not request.GET:
+        return HttpResponseBadRequest("No data provided")
+
     # Fetch data from query parameters
     data = {}
     for key, value in request.GET.items():
@@ -305,8 +309,6 @@ def get_map_chart_partial(request):
 
     pdu = PaediatricDiabetesUnitClass.objects.get(pz_code=pz_code)
 
-    # # Map of cases by distance from the selected organisation
-
     # # get lead organisation for the selected PDU
     try:
         pdu_lead_organisation = fetch_organisation_by_ods_code(
@@ -336,23 +338,21 @@ def get_map_chart_partial(request):
         generate_distance_from_organisation_scatterplot_figure(
             geo_df=patient_distances_dataframe,
             pdu_lead_organisation=pdu_lead_organisation,
+            pdu=pdu,
         )
     )
-
-    print("scatterplot_of_cases_for_selected_organisation_fig")
-
-    # chart_html = scatterplot_of_cases_for_selected_organisation_fig.to_html(
-    #     full_html=False,
-    #     include_plotlyjs=False,
-    #     config={"displayModeBar": False},
-    # )
-    chart_html = scatterplot_of_cases_for_selected_organisation_fig.to_html()
 
     return render(
         request,
         template_name="dashboard/map_chart_partial.html",
         context={
-            "chart_html": chart_html,
+            "chart_html": pio.to_html(
+                scatterplot_of_cases_for_selected_organisation_fig,
+                full_html=False,
+                include_plotlyjs=False,
+                config={"displayModeBar": True},
+            ),
+            "aggregated_distances": aggregated_distances,
         },
     )
 
