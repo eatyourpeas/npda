@@ -115,7 +115,7 @@ def dashboard(request):
         pt_characteristics_value_counts
     )
 
-    # Sex
+    # Sex, Ethnicity, IMD
     pt_sex_value_counts, pt_ethnicity_value_counts, pt_imd_value_counts = (
         get_pt_demographic_value_counts(
             all_eligible_pts_queryset=kpi_calculations_object["calculated_kpi_values"][
@@ -127,6 +127,21 @@ def dashboard(request):
     pt_sex_value_counts_pct = convert_value_counts_dict_to_pct(pt_sex_value_counts)
     pt_ethnicity_value_counts_pct = convert_value_counts_dict_to_pct(pt_ethnicity_value_counts)
     pt_imd_value_counts_pct = convert_value_counts_dict_to_pct(pt_imd_value_counts)
+
+    # Health checks
+    # Get attr names for KPIs 32.1, 32.2, 32.3
+    kpi_32_1_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(321)
+    kpi_32_2_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(322)
+    kpi_32_3_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(323)
+    hc_completion_rate_value_counts_pct = get_hc_completion_rate_vcs(
+        kpi_32_1_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_1_attr_name],
+        kpi_32_2_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_2_attr_name],
+        kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
+    )
+
+    import pprint
+
+    pprint.pprint(hc_completion_rate_value_counts_pct)
 
     # Gather other context vars
     current_date = date.today()
@@ -551,6 +566,35 @@ def get_pt_demographic_value_counts(
         ethnicity_counts,
         imd_counts,
     )
+
+
+def get_hc_completion_rate_vcs(
+    kpi_32_1_values: dict,
+    kpi_32_2_values: dict,
+    kpi_32_3_values: dict,
+):
+    """
+    Get value counts for health checks completion rates
+    """
+
+    # Just need pass and fail
+    vcs = {
+        "kpi_32_1_pct": {},
+        "kpi_32_2_pct": {},
+        "kpi_32_3_pct": {},
+    }
+    for ix, kpi_values in enumerate([kpi_32_1_values, kpi_32_2_values, kpi_32_3_values], start=1):
+        vcs[f"kpi_32_{ix}_pct"] = {
+            "total_passed": kpi_values["total_passed"],
+            "total_failed": kpi_values["total_failed"],
+            "pct": int(
+                kpi_values["total_passed"]
+                / (kpi_values["total_passed"] + kpi_values["total_failed"])
+                * 100
+            ),
+        }
+
+    return dict(vcs)
 
 
 def add_number_of_figures_coloured_for_chart(
