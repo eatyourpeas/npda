@@ -36,18 +36,6 @@ Functions to return scatter plot of children by postcode
 """
 
 
-def load_wales_lsoa_shp():
-    file_path = os.path.join(
-        settings.BASE_DIR,
-        "project",
-        "constants",
-        "English IMD 2019",
-        "wimd2019.json",
-    )
-    gdf = gpd.read_file(file_path)
-    return gdf
-
-
 def get_children_by_pdu_audit_year(
     audit_year, paediatric_diabetes_unit, paediatric_diabetes_unit_lead_organisation
 ):
@@ -380,14 +368,3 @@ def generate_geojson_of_imd_and_lsoa_boundaries_for_country(country="england"):
     # # convert the data to geojson
     with open(f"merged_lsoa_{country}.json", "w") as f:
         json.dump(england_wales_lsoas, f)
-
-
-def get_lsoas_in_lad(lad):
-    url = f"http://data.ons.gov.uk/ons/api/data/dataset/QS201EW.json?pdm/{lad}=LSOA&jsontype=json-stat&totals=false&context=Census&geog=2011STATH"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        print(data)
-        return data
-    else:
-        print(response.status_code)

@@ -64,3 +64,23 @@ def fetch_organisation_by_ods_code(ods_code: str) -> Dict[str, Any]:
     response.raise_for_status()
 
     return response.json()
+
+
+def fetch_local_authorities_within_radius(
+    longitude: float, latitude: float, radius: int
+) -> List[str]:
+    """
+    This function returns all local authorities within a given radius of a point, including boundary geometries.
+    """
+
+    request_url = (
+        f"{settings.RCPCH_NHS_ORGANISATIONS_API_URL}/local_authorities_within_radius/"
+        f"?longitude={longitude}&latitude={latitude}&radius={radius}"
+    )
+
+    headers = {"Ocp-Apim-Subscription-Key": settings.RCPCH_NHS_ORGANISATIONS_API_KEY}
+
+    response = requests.get(request_url, headers=headers, timeout=10)
+    response.raise_for_status()
+
+    return response.json()
