@@ -1,0 +1,16 @@
+{% extends 'dashboard/components/bases/base_card.html' %}
+{% block card_title %}
+  Index of Multiple Deprivation
+{% endblock card_title%}
+{% block card_body %}
+<div
+hx-get="{% url 'get_waffle_chart_partial' %}"
+hx-vals='{{ charts.pt_imd_value_counts_pct.data }}'
+hx-trigger="load" hx-swap="innerHTML"></div>
+{% endblock %}
+
+
+
+
+
+

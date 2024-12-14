@@ -15,56 +15,56 @@
   </div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <!-- PDU Information Card -->
-    {% include 'dashboard/pdu_card.html' %}
+    {% include 'dashboard/components/cards/pdu_card.html' %}
 
 
     <!-- Audit Details Card -->
-    {% include 'dashboard/audit_details_card.html' %}
+    {% include 'dashboard/components/cards/audit_details_card.html' %}
 
     <!-- Total Eligible Patients Card -->
-    {% include 'dashboard/total_eligible_patients_card.html' %}
+    {% include 'dashboard/components/cards/total_eligible_patients_card.html' %}
   </div>
 
   <!-- UNIT REPORT -->
   <h1 class="text-5xl text-center my-6">Unit Report</h1>
-  <div class="grid grid-rows-3 gap-4">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- PATIENT CHARACTERISTICS CARD -->
-      {% include 'dashboard/patient_characteristics_card.html' %}
-      <!-- TREATMENT REGIMEN CARD -->
-      {% include 'dashboard/treatment_regimen_card.html' %}
-      <div class="flex flex-col gap-3">
-        <!-- HCL CARD -->
-        {% include 'dashboard/hcl_use_card.html' %}
-        <!-- care at diagnosis CARD -->
-        {% include 'dashboard/care_at_diagnosis_card.html' %}
-      </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- HEALTH CHECKS COMPLETION RATE CARD -->
-      {% include 'dashboard/health_checks_completion_rate_card.html' %}
-      <!-- ADDITIONAL CARE PROCESSES CARD -->
-      {% include 'dashboard/additional_care_processes_card.html' %}
-      <div class="flex flex-col gap-3">
-        <!-- HBa1c CARD -->
-        {% include 'dashboard/hba1c_card.html' %}
-        <!-- ADMISSIONS CARD -->
-        {% include 'dashboard/admissions_card.html' %}
-      </div>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- SEX CARD -->
-      {% include 'dashboard/sex_card.html' %}
-      <!-- ETHNICITY CARD -->
-      {% include 'dashboard/ethnicity_card.html' %}
-      <!-- IMD CARD -->
-      {% include 'dashboard/imd_card.html' %}
-    </div>
 
-    <!-- IMD MAP CARD -->
-    <div class="grid grid-cols-1 min-h-80">
-    {% include 'dashboard/imd_map_card.html' with scatterplot_of_cases_for_selected_organisation=charts.scatterplot_of_cases_for_selected_organisation pdu_lead_organisation=pdu_lead_organisation pdu_object=pdu_object %}
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+    <!-- PATIENT CHARACTERISTICS CARD -->
+    {% include 'dashboard/components/cards/patient_characteristics_card.html' %}
+    <!-- TREATMENT REGIMEN CARD -->
+    {% include 'dashboard/components/cards/treatment_regimen_card.html' %}
+    <div class="flex flex-col gap-3">
+      <!-- HCL CARD -->
+      {% include 'dashboard/components/cards/hcl_use_card.html' %}
+      <!-- care at diagnosis CARD -->
+      {% include 'dashboard/components/cards/care_at_diagnosis_card.html' %}
     </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+    <!-- HEALTH CHECKS COMPLETION RATE CARD -->
+    {% include 'dashboard/components/cards/health_checks_completion_rate_card.html' %}
+    <!-- ADDITIONAL CARE PROCESSES CARD -->
+    {% include 'dashboard/components/cards/additional_care_processes_card.html' %}
+    <div class="flex flex-col gap-3">
+      <!-- HBa1c CARD -->
+      {% include 'dashboard/components/cards/hba1c_card.html' %}
+      <!-- ADMISSIONS CARD -->
+      {% include 'dashboard/components/cards/admissions_card.html' %}
+    </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+    <!-- SEX CARD -->
+    {% include 'dashboard/components/cards/sex_card.html' %}
+    <!-- ETHNICITY CARD -->
+    {% include 'dashboard/components/cards/ethnicity_card.html' %}
+    <!-- IMD CARD -->
+    {% include 'dashboard/components/cards/imd_card.html' %}
+  </div>
+
+  <!-- IMD MAP CARD -->
+  <div class="grid grid-cols-1 min-h-80">
+  {% include 'dashboard/components/cards/imd_map_card.html' with scatterplot_of_cases_for_selected_organisation=charts.scatterplot_of_cases_for_selected_organisation pdu_lead_organisation=pdu_lead_organisation pdu_object=pdu_object %}
+  </div>
 
   <!-- PATIENT LEVEL REPORT -->
   <h1 class="text-5xl text-center my-6">Patient-Level Report</h1>
@@ -72,7 +72,7 @@
   <!-- SELECT TABS & TABLE -->
   {% include 'dashboard/pt_level_report_table_partial.html' with text=default_pt_level_menu_text selected=default_pt_level_menu_tab_selected highlight=default_highlight%}
 
-  </div>
+
 
 </div>
 {% endblock content %}

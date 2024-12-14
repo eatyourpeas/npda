@@ -1,12 +1,16 @@
-{% extends 'dashboard/base_card.html' %}
+{% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
-  Total Eligible Patients
+  Ethnicity
 {% endblock card_title%}
 {% block card_body %}
-
-<!-- Waffle Chart Container -->
 <div
 hx-get="{% url 'get_waffle_chart_partial' %}"
-hx-vals='{{ charts.total_eligible_patients_stratified_by_diabetes_type.data }}'
+hx-vals='{{ charts.pt_ethnicity_value_counts_pct.data }}'
 hx-trigger="load" hx-swap="innerHTML"></div>
 {% endblock %}
+
+
+
+
+
+
