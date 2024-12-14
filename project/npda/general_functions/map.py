@@ -1,12 +1,12 @@
 # python imports
 import json
 import os
-import requests
 
 # django imports
 from django.conf import settings
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import GEOSGeometry
 from django.db.models import Q
 from django.apps import apps
 
@@ -28,8 +28,12 @@ from project.constants import (
     RCPCH_LIGHT_BLUE,
     RCPCH_LIGHT_BLUE_DARK_TINT,
     RCPCH_DARK_BLUE,
+    RCPCH_CHARCOAL,
 )
 from project.npda.general_functions.validate_postcode import location_for_postcode
+from project.npda.general_functions.rcpch_nhs_organisations import (
+    fetch_local_authorities_within_radius,
+)
 
 """
 Functions to return scatter plot of children by postcode
@@ -139,10 +143,34 @@ def generate_distance_from_organisation_scatterplot_figure(
         )
     gdf = gpd.GeoDataFrame.from_file(file_path)
 
+    # Get all the Local Authorities in a 10km radius of the PDU
+    local_authority_districts = fetch_local_authorities_within_radius(
+        longitude=pdu_lead_organisation["longitude"],
+        latitude=pdu_lead_organisation["latitude"],
+        radius=10000,  # 10km
+    )
+
+    print(local_authority_districts)
+
+    # Parse the JSON data
+    # Convert single quotes to double quotes
+
+    # Step 1: Create a DataFrame
+    lad_df = pd.DataFrame(local_authority_districts)
+    print(lad_df.head())
+
+    # Create a GeoDataFrame from the DataFrame
+    lad_gdf = gpd.GeoSeries.from_wkt(lad_df["geom"], crs=27700).set_geometry("geom")
+
+    # Set the CRS (Coordinate Reference System)
+    lad_gdf.set_crs(epsg=27700, inplace=True)
+    # Reproject to EPSG:4326 if needed (for latitude/longitude)
+    lad_gdf = gdf.to_crs(epsg=4326)
+
+    filtered_values = [lad["lad24cd"] for lad in local_authority_districts]
+
     # from gdf remove all records that are not in the local authority district
-    gdf = gdf[
-        gdf["Local Authority District code (2019)"] == local_authority_district_code
-    ]
+    gdf = gdf[gdf["Local Authority District code (2019)"].isin(filtered_values)]
 
     # Create a Plotly choropleth map coloured by IMD Rank
     fig = go.Figure(
@@ -158,6 +186,19 @@ def generate_distance_from_organisation_scatterplot_figure(
                 ["LSOA11NM", "Index of Multiple Deprivation (IMD) Decile"]
             ].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><br>IMD Decile: %{customdata[1]}<extra></extra>",  # Custom hover template
+        )
+    )
+
+    fig.add_trace(
+        go.Choroplethmapbox(
+            geojson=lad_gdf.__geo_interface__,
+            locations=lad_gdf["lad24cd"],
+            featureidkey="properties.lad24cd",
+            z=lad_gdf["lad24nm"],
+            marker_line_width=1,
+            marker_opacity=0.5,
+            customdata=lad_gdf[["lad24nm"]].to_numpy(),
+            hovertemplate="<b>%{customdata[0]}</b><extra></extra>",  # Custom hover template
         )
     )
 
@@ -186,7 +227,7 @@ def generate_distance_from_organisation_scatterplot_figure(
                 mode="markers",
                 marker=go.scattermapbox.Marker(
                     size=8,
-                    color=RCPCH_PINK,  # Set the color of the point
+                    color=RCPCH_CHARCOAL,  # Set the color of the point
                 ),
                 text=geo_df["distance_km"],  # Set the hover text for the point
                 customdata=geo_df[

@@ -74,9 +74,11 @@ def fetch_local_authorities_within_radius(
     """
 
     request_url = (
-        f"{settings.RCPCH_NHS_ORGANISATIONS_API_URL}/local_authorities_within_radius/"
-        f"?longitude={longitude}&latitude={latitude}&radius={radius}"
+        f"{settings.RCPCH_NHS_ORGANISATIONS_API_URL}/local_authority_districts/within_radius/"
+        f"?long={longitude}&lat={latitude}&radius={radius}"
     )
+
+    print(request_url)
 
     headers = {"Ocp-Apim-Subscription-Key": settings.RCPCH_NHS_ORGANISATIONS_API_KEY}
 
