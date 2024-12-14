@@ -70,8 +70,9 @@ def dashboard(request):
     """
     Dashboard view for the KPIs.
     """
-    print("dashboard view")
     template = "dashboard.html"
+    if request.htmx:
+        template = "dashboard/dashboard_base.html"
     pz_code = request.session.get("pz_code")
     refresh_session_object_synchronously(
         request=request, user=request.user, pz_code=pz_code
