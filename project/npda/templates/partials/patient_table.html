@@ -114,6 +114,31 @@
           <th scope="col" class="px-2 py-3 text-center">Sex</th>
           <th scope="col" class="px-2 py-3 text-center">Date of Birth</th>
           <th scope="col" class="px-2 py-3 text-center">Postcode</th>
+          <th scope="col" class="nhs-number-column px-2 py-3 text-center">
+            <span class="flex flex-row">
+              <div id="deprivation_sort_label"  hx-preserve  class="swap swap-rotate">
+                <button hx-preserve
+                        hx-get="{{ asc_url }}?sort_by=index_of_multiple_deprivation_quintile&page={{ current_page }}&sort=asc"
+                        hx-on:htmx:after-request="document.getElementById('deprivation_sort_label').classList.toggle('swap-active');"
+                        hx-trigger="click throttle:1s"
+                        hx-target="#patient_table"
+                        hx-swap="innerHTML swap:100ms"
+                        class="swap-on">
+                  <i class="fa-arrow-up-z-a fa-solid mr-2"> </i>
+                </button>
+                <button hx-preserve
+                        hx-get="{{ desc_url }}?sort_by=index_of_multiple_deprivation_quintile&page={{ current_page }}&sort=desc"
+                        hx-on:htmx:after-request="document.getElementById('deprivation_sort_label').classList.toggle('swap-active');"
+                        hx-trigger="click throttle:1s"
+                        hx-target="#patient_table"
+                        hx-swap="innerHTML swap:100ms"
+                        class="swap-off">
+                  <i class="fa-arrow-down-a-z fa-solid mr-2"></i>
+                </button>
+              </div>
+              Deprivation Decile
+            </span>
+          </th>
           <th scope="col" class="px-2 py-3 text-center">Ethnicity</th>
           <th scope="col" class="px-2 py-3 text-center">Diabetes Type</th>
           <th scope="col" class="px-2 py-3 text-center">Diagnosis Date</th>
@@ -132,7 +157,7 @@
           {% if patient.is_valid and patient.visit_error_count < 1 and forloop.counter0 == 0 %}
             <thead class="bg-rcpch_strong_blue text-xs text-white text-gray-700 uppercase bg-gray-50">
               <tr>
-                <th colspan="12" class="px-6 py-3">
+                <th colspan="13" class="px-6 py-3">
                   Patients where all records have been validated: {{ total_valid_patients }}
                 </th>
               </tr>
@@ -141,7 +166,7 @@
             {% if forloop.counter == index_of_first_invalid_patient %}
               <thead class="bg-rcpch_strong_blue text-xs text-white text-gray-700 uppercase bg-gray-50">
                 <tr>
-                  <th colspan="12" class="px-6 py-3">
+                  <th colspan="13" class="px-6 py-3">
                     Patients with records failing validation: {{ total_invalid_patients }}
                   </th>
                 </tr>
@@ -291,6 +316,32 @@
               {% endif %}
               {{ patient.postcode }}
             </td>
+            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'postcode' %}text-rcpch_red{% endif %}">
+              {% if patient.errors|error_for_field:"index_of_multiple_deprivation_quintile" %}
+                <div class="tooltip tooltip-top"
+                     data-tip="{{ patient.errors|error_for_field:'index_of_multiple_deprivation_quintile' }}">
+                  <svg height="16"
+                       style="overflow:visible;
+                              enable-background:new 0 0 32 32"
+                       viewBox="0 0 32 32"
+                       width="16"
+                       xml:space="preserve"
+                       xmlns="http://www.w3.org/2000/svg"
+                       xmlns:xlink="http://www.w3.org/1999/xlink">
+                    <g>
+                    <g id="Error_1_">
+                    <g id="Error">
+                    <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
+                    <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
+                    </g>
+                    </g>
+                    </g>
+                  </svg>
+                </div>
+                &nbsp;
+              {% endif %}
+              {{ patient.index_of_multiple_deprivation_quintile }}
+            </td>
             <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'ethnicity' %}text-rcpch_red{% endif %}">
               {% if patient.errors|error_for_field:"ethnicity" %}
                 <div class="tooltip tooltip-top"
@@ -374,7 +425,7 @@
             </td>
             <td class="px-6 py-4 text-center">{{ patient.audit_year }}</td>
             <td class="px-6 py-4 text-center">{{ patient.latest_quarter|default:'-' }}</td>
-            <td class="w-80 relative px-2 text-right group">
+            <td class="w-60 relative px-2 text-right group">
               <a href="{% url 'patient_visits' patient.pk %}"
                  {% if patient.is_valid and patient.visit_error_count < 1 %} class="align-center text-rcpch_pink flex justify-end px-2 hover:text-white" {% else %} class="text-rcpch_red flex justify-end hover:text-white" {% endif %}>
                 {% if patient.visit_error_count > 0 %}
@@ -425,7 +476,7 @@
       </tbody>
       <tfoot>
         <tr class="bg-rcpch_dark_blue py-5 text-xs text-white text-gray-700 uppercase bg-gray-50">
-          <th colspan="10" class="px-2">
+          <th colspan="11" class="px-2">
             <strong>Total: {{ patient_list.count }} patients</strong>
           </th>
           <th colspan="2">
