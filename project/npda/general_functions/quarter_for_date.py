@@ -3,7 +3,7 @@ from datetime import date
 
 def retrieve_quarter_for_date(date_instance: date) -> int:
     """
-    Returns the quarter number of the patient for a given submission date (today)
+    Returns which quarter the date instance lies in
 
     A quarter simply is defined as the quarter of the audit year the submission date lies in
 
@@ -13,6 +13,13 @@ def retrieve_quarter_for_date(date_instance: date) -> int:
     quarter 3: 1st October - 31st December
     quarter 4: 1st January - 31st March
     """
+    if date_instance is None:
+        return None
+    if not isinstance(date_instance, date):
+        raise ValueError("date_instance must be of type date")
+    if date_instance > date.today():
+        return None
+
     # Audit start date is on the 1st April every year
     audit_start_date = date(date_instance.year, 4, 1)
     if date_instance < audit_start_date:

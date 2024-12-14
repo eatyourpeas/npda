@@ -1,23 +1,21 @@
-
-
 * {
   border-radius: 0 !important; /* completely remove rounded corners */
 }
 
-  .dropdown:hover .dropdown-menu {
-    display: block;
-    background-color: white;
-    z-index: 1;
-    margin: 10 10 10 10;
-    padding: 10 10 10 10;
-    border-color: white;
-    border-width: 5px;
-  }
+.dropdown:hover .dropdown-menu {
+  display: block;
+  background-color: white;
+  z-index: 1;
+  margin: 10 10 10 10;
+  padding: 10 10 10 10;
+  border-color: white;
+  border-width: 5px;
+}
 
-  input[type="radio"]:checked {
-    background-color: #e00087 !important;
-    color: white !important;
-    border-color: #e00087 !important;
+input[type="radio"]:checked {
+  background-color: #e00087 !important;
+  color: white !important;
+  border-color: #e00087 !important;
 }
 
 /* htmx animation */
@@ -30,7 +28,6 @@
 .htmx-request .loading.loading-spinner.loading-lg.htmx-indicator {
   display: inline;
 }
-
 
 .fade-out.htmx-swapping {
   opacity: 0;
