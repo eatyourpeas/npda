@@ -1,48 +1,43 @@
 # python imports
 import json
 import os
-import requests
 
 # django imports
 from django.conf import settings
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import GEOSGeometry
 from django.db.models import Q
 from django.apps import apps
 
 # third-party imports
 import geopandas as gpd
 import pandas as pd
-import plotly.io as pio
 import plotly.graph_objects as go
 
 # RCPCH imports
 from project.constants import (
-    RCPCH_LIGHT_BLUE,
+    RCPCH_PINK_DARK_TINT,
     RCPCH_PINK,
-    RCPCH_DARK_BLUE,
+    RCPCH_PINK_LIGHT_TINT3,
+    RCPCH_PINK_LIGHT_TINT2,
+    RCPCH_PINK_LIGHT_TINT1,
     RCPCH_LIGHT_BLUE_TINT3,
     RCPCH_LIGHT_BLUE_TINT2,
     RCPCH_LIGHT_BLUE_TINT1,
+    RCPCH_LIGHT_BLUE,
     RCPCH_LIGHT_BLUE_DARK_TINT,
+    RCPCH_DARK_BLUE,
+    RCPCH_CHARCOAL,
 )
 from project.npda.general_functions.validate_postcode import location_for_postcode
+from project.npda.general_functions.rcpch_nhs_organisations import (
+    fetch_local_authorities_within_radius,
+)
 
 """
 Functions to return scatter plot of children by postcode
 """
-
-
-def load_imd_shp():
-    file_path = os.path.join(
-        settings.BASE_DIR,
-        "project",
-        "constants",
-        "English IMD 2019",
-        "IMD_2019.shp",
-    )
-    gdf = gpd.read_file(file_path)
-    return gdf
 
 
 def get_children_by_pdu_audit_year(
@@ -71,7 +66,7 @@ def get_children_by_pdu_audit_year(
 
         for patient in filtered_patients:
             if patient.postcode:
-                # add the location data to the queryset - note these fields do not exist in the model
+                # this currently takes a long time to run because of the API call - once we save the location data in the database on save, we can remove this
                 lon, lat, location_wgs84, location_bng = location_for_postcode(
                     patient.postcode
                 )
@@ -102,8 +97,8 @@ def get_children_by_pdu_audit_year(
 
 
 def generate_distance_from_organisation_scatterplot_figure(
-    geo_df: pd.DataFrame, pdu_lead_organisation
-)-> go.Figure:
+    geo_df: pd.DataFrame, pdu_lead_organisation, paediatric_diabetes_unit
+) -> go.Figure:
     """
     Returns a plottable map with Cases overlayed as dots with tooltips on hover
 
@@ -113,44 +108,99 @@ def generate_distance_from_organisation_scatterplot_figure(
     """
 
     custom_colorscale = [
-        [0, RCPCH_LIGHT_BLUE_TINT3],  # Very light blue
-        [0.25, RCPCH_LIGHT_BLUE_TINT2],  # Light blue
-        [0.5, RCPCH_LIGHT_BLUE_TINT1],  # Medium light blue
-        [0.75, RCPCH_LIGHT_BLUE],  # blue
+        [0, RCPCH_PINK_DARK_TINT],  # Very dark pink
+        [0.11, RCPCH_PINK],  # pink
+        [0.22, RCPCH_PINK_LIGHT_TINT1],  # Medium light pink
+        [0.33, RCPCH_PINK_LIGHT_TINT2],  # light pink
+        [0.44, RCPCH_PINK_LIGHT_TINT3],  # very light pink
+        [0.55, RCPCH_LIGHT_BLUE_TINT3],  # Very light blue
+        [0.66, RCPCH_LIGHT_BLUE_TINT2],  # Light blue
+        [0.77, RCPCH_LIGHT_BLUE_TINT1],  # Medium light blue
+        [0.88, RCPCH_LIGHT_BLUE],  # blue
         [1, RCPCH_LIGHT_BLUE_DARK_TINT],  # Dark blue
     ]
 
-    # Load the IMD data
-    gdf = load_imd_shp()
+    # # Load the IMD data
+    if (
+        paediatric_diabetes_unit.paediatric_diabetes_network_code == "PN07"
+    ):  # the paediatric_diabetes_unit is in Wales
+        file_path = os.path.join(
+            settings.BASE_DIR,
+            "project",
+            "constants",
+            "English IMD 2019",
+            "merged_lsoa_wales.json",
+        )
+    else:
+        file_path = os.path.join(
+            settings.BASE_DIR,
+            "project",
+            "constants",
+            "English IMD 2019",
+            "merged_lsoa_england.json",
+        )
+    gdf = gpd.GeoDataFrame.from_file(file_path)
 
-    # Convert the GeoDataFrame to GeoJSON
-    gdf = gdf.to_crs(epsg=4326)
+    # Get all the Local Authorities in a 10km radius of the paediatric_diabetes_unit
+    local_authority_districts = fetch_local_authorities_within_radius(
+        longitude=pdu_lead_organisation["longitude"],
+        latitude=pdu_lead_organisation["latitude"],
+        radius=10000,  # 10km
+    )
+    # store the Local Authority District identifiers in a list
+    filtered_values = [lad["lad24cd"] for lad in local_authority_districts]
 
-    # Create a Plotly choropleth map coloured by IMD Rank
+    # from gdf remove all records that are not in the local authority district list
+    gdf = gdf[gdf["Local Authority District code (2019)"].isin(filtered_values)]
+
+    # load the LAD shapes
+    file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "Local_Authority_Districts_May_2024_Boundaries_UK_BUC_-7874909473231998297.geojson",
+    )
+    lad_gdf = gpd.GeoDataFrame.from_file(file_path)
+    # filter out unwanted LADs
+    lad_gdf = lad_gdf[lad_gdf["LAD24CD"].isin(filtered_values)]
+
+    # # convert 27700 to 4326
+    lad_gdf = lad_gdf.to_crs(epsg=4326)
+
+    # Create a Plotly choropleth map with the filtered LSOAs coloured by IMD Rank
     fig = go.Figure(
         go.Choroplethmapbox(
             geojson=gdf.__geo_interface__,
-            locations=gdf.index,
-            z=gdf["IMD_Rank"],
+            locations=gdf["LSOA11CD"],
+            featureidkey="properties.LSOA11CD",
+            z=gdf["Index of Multiple Deprivation (IMD) Rank"],
             colorscale=custom_colorscale,
             marker_line_width=0,
             marker_opacity=0.5,
-            customdata=gdf[["lsoa11nm", "IMDDec0"]],  # Add custom data for hover
+            customdata=gdf[
+                ["LSOA11NM", "Index of Multiple Deprivation (IMD) Decile"]
+            ].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><br>IMD Decile: %{customdata[1]}<extra></extra>",  # Custom hover template
         )
     )
 
-    # add the Organisation as a scatterplot in blue
-    fig.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_zoom=10,
-        mapbox_center=dict(
-            lat=pdu_lead_organisation["latitude"],
-            lon=pdu_lead_organisation["longitude"],
-        ),
-        height=590,
-        mapbox_accesstoken=settings.MAPBOX_API_KEY,
-        showlegend=False,
+    # add a layer of local authority shapes
+    fig.add_trace(
+        go.Choroplethmapbox(
+            geojson=lad_gdf.__geo_interface__,
+            locations=lad_gdf["LAD24CD"],
+            featureidkey="properties.LAD24CD",
+            z=[0] * len(gdf),  # Use a constant value to make the shapes transparent
+            colorscale=[
+                [0, "rgba(0,0,0,0)"],
+                [1, "rgba(0,0,0,0)"],
+            ],  # Transparent color
+            marker_line_width=0.5,
+            marker_line_color="black",
+            customdata=lad_gdf[["LAD24NM"]].to_numpy(),
+            hovertemplate="<b>%{customdata[0]}</b><extra></extra>",  # Custom hover template
+        )
     )
 
     # Add a scatterplot point for the organization
@@ -168,25 +218,26 @@ def generate_distance_from_organisation_scatterplot_figure(
         )
     )
 
-    # add the Patients as a scatterplot in pink, with distance to the lead organisation as hover text
-    fig.add_trace(
-        go.Scattermapbox(
-            # Extract latitude and longitude from the point objects
-            lat=geo_df["location_wgs84"].apply(lambda point: point.y),
-            lon=geo_df["location_wgs84"].apply(lambda point: point.x),
-            mode="markers",
-            marker=go.scattermapbox.Marker(
-                size=8,
-                color=RCPCH_PINK,  # Set the color of the point
-            ),
-            text=geo_df["distance_km"],  # Set the hover text for the point
-            customdata=geo_df[
-                ["pk", "distance_mi", "distance_km"]
-            ],  # Add custom data for hover
-            hovertemplate="<b>Epilepsy12 ID: %{customdata[0]}</b><br>Distance to Lead Centre: %{customdata[1]:.2f} mi (%{customdata[2]:.2f} km)<extra></extra>",  # Custom hovertemplate just for the lead organisation
-            showlegend=False,
+    if not geo_df.empty:
+        # add the Patients as a scatterplot in pink, with distance to the lead organisation as hover text
+        fig.add_trace(
+            go.Scattermapbox(
+                # Extract latitude and longitude from the point objects
+                lat=geo_df["location_wgs84"].apply(lambda point: point.y),
+                lon=geo_df["location_wgs84"].apply(lambda point: point.x),
+                mode="markers",
+                marker=go.scattermapbox.Marker(
+                    size=8,
+                    color=RCPCH_CHARCOAL,  # Set the color of the point
+                ),
+                text=geo_df["distance_km"],  # Set the hover text for the point
+                customdata=geo_df[
+                    ["pk", "distance_mi", "distance_km"]
+                ].to_numpy(),  # Add custom data for hover
+                hovertemplate="<b>NPDA ID: %{customdata[0]}</b><br>Distance to Lead Centre: %{customdata[1]:.2f} mi (%{customdata[2]:.2f} km)<extra></extra>",  # Custom hovertemplate just for the lead organisation
+                showlegend=False,
+            )
         )
-    )
 
     fig.update_layout(
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
@@ -194,7 +245,7 @@ def generate_distance_from_organisation_scatterplot_figure(
         hoverlabel=dict(
             bgcolor=RCPCH_LIGHT_BLUE,
             font_size=12,
-            font=dict(color="white", family="Montserrat-Regular"),
+            font=dict(color="white", family="montserrat"),
             bordercolor=RCPCH_LIGHT_BLUE,
         ),
         mapbox=dict(
@@ -211,11 +262,11 @@ def generate_distance_from_organisation_scatterplot_figure(
                 "sourcetype": "raster",
                 "sourceattribution": "Source: Office for National Statistics licensed under the Open Government Licence v.3.0",
                 "source": [
-                    "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+                    "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 ],
             }
         ],
-    ),
+    )
 
     return fig
 
@@ -275,3 +326,87 @@ def generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases):
             "median_distance_travelled_mi": f"~",
             "std_distance_travelled_mi": f"~",
         }, geo_df
+
+
+def generate_geojson_of_imd_and_lsoa_boundaries_for_country(country="england"):
+    """
+    lsoa 2011 boundaries and identifiers - 34753 records (England & Wales): "LSOA_2011_Boundaries_Super_Generalised_Clipped_BSC_EW_V4_8608708935797446279.geojson
+    imd England 2019 data - 32844 records (England): "IMD2019.xlsx"
+    imd Wales 2019 data - 1909 records (Wales): "Index_of_Multiple_Deprivation_(Dec_2019)_Lookup_in_Wales.geojson
+
+    This generates two files (one for England and one for Wales) that contain the merged LSOA boundaries and IMD data as GeoJSON files
+    This is used to generate the choropleth map of IMD data
+
+    This function is only used to generate the files and should not be called in production
+    """
+
+    file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "LSOA_2011_Boundaries_Super_Generalised_Clipped_BSC_EW_V4_8608708935797446279.geojson",
+    )
+    england_wales_lsoas = gpd.read_file(file_path)  # 34753 LSOAs
+
+    path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "IMD2019.xlsx",
+    )
+    england_imd = pd.read_excel(
+        path, sheet_name="IMD2019"
+    )  # 32844 LSOAs: IMD data for England 2019 without geometry
+
+    file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "Index_of_Multiple_Deprivation_(Dec_2019)_Lookup_in_Wales.geojson",
+    )
+    wales_imd = gpd.read_file(
+        file_path
+    )  # 1909 LSOAs: IMD data for Wales 2019 without geometry
+
+    # Rename columns in wales_gdf to match england_imd
+    wales_imd = wales_imd.rename(
+        columns={
+            "lsoa11cd": "LSOA code (2011)",
+            "lsoa11nm": "LSOA name (2011)",
+            "lsoa11nmw": "LSOA name (2011) (Welsh)",
+            "wimd_2019": "Index of Multiple Deprivation (IMD) Rank",
+        }
+    )
+
+    # convert Index of Multiple Deprivation (IMD) Rank to to decile with name Index of Multiple Deprivation (IMD) Decile
+    wales_imd["Index of Multiple Deprivation (IMD) Decile"] = pd.qcut(
+        wales_imd["Index of Multiple Deprivation (IMD) Rank"], 10, labels=False
+    )
+
+    # remove the empty geometry column from Wales
+    # wales_imd.drop(columns=["geometry"])
+
+    if country == "England":
+        # merge the england&wales imd data with the england&wales geodataframe
+        england_wales_lsoas = england_wales_lsoas.merge(
+            england_imd, left_on="LSOA11CD", right_on="LSOA code (2011)", how="left"
+        )  # 34753 LSOAs
+    else:
+        england_wales_lsoas = england_wales_lsoas.merge(
+            wales_imd,
+            left_on="LSOA11CD",
+            right_on="LSOA code (2011)",
+            how="left",
+            suffixes=("", "_wales"),
+        )
+        england_wales_lsoas.drop(columns=["geometry_wales"], inplace=True)
+
+    england_wales_lsoas = england_wales_lsoas.to_crs(epsg=4326)
+    england_wales_lsoas = england_wales_lsoas.__geo_interface__
+
+    # # convert the data to geojson
+    with open(f"merged_lsoa_{country}.json", "w") as f:
+        json.dump(england_wales_lsoas, f)
