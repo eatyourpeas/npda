@@ -97,11 +97,7 @@ def get_children_by_pdu_audit_year(
 
 
 def generate_distance_from_organisation_scatterplot_figure(
-    geo_df: pd.DataFrame,
-    pdu_lead_organisation,
-    pdu,
-    local_authority_district_code,
-    local_authority_district_boundaries,
+    geo_df: pd.DataFrame, pdu_lead_organisation, paediatric_diabetes_unit
 ) -> go.Figure:
     """
     Returns a plottable map with Cases overlayed as dots with tooltips on hover
@@ -125,7 +121,9 @@ def generate_distance_from_organisation_scatterplot_figure(
     ]
 
     # # Load the IMD data
-    if pdu.paediatric_diabetes_network_code == "PN07":  # the PDU is in Wales
+    if (
+        paediatric_diabetes_unit.paediatric_diabetes_network_code == "PN07"
+    ):  # the paediatric_diabetes_unit is in Wales
         file_path = os.path.join(
             settings.BASE_DIR,
             "project",
@@ -143,36 +141,34 @@ def generate_distance_from_organisation_scatterplot_figure(
         )
     gdf = gpd.GeoDataFrame.from_file(file_path)
 
-    # Get all the Local Authorities in a 10km radius of the PDU
+    # Get all the Local Authorities in a 10km radius of the paediatric_diabetes_unit
     local_authority_districts = fetch_local_authorities_within_radius(
         longitude=pdu_lead_organisation["longitude"],
         latitude=pdu_lead_organisation["latitude"],
         radius=10000,  # 10km
     )
-
-    print(local_authority_districts)
-
-    # Parse the JSON data
-    # Convert single quotes to double quotes
-
-    # Step 1: Create a DataFrame
-    lad_df = pd.DataFrame(local_authority_districts)
-    print(lad_df.head())
-
-    # Create a GeoDataFrame from the DataFrame
-    lad_gdf = gpd.GeoSeries.from_wkt(lad_df["geom"], crs=27700).set_geometry("geom")
-
-    # Set the CRS (Coordinate Reference System)
-    lad_gdf.set_crs(epsg=27700, inplace=True)
-    # Reproject to EPSG:4326 if needed (for latitude/longitude)
-    lad_gdf = gdf.to_crs(epsg=4326)
-
+    # store the Local Authority District identifiers in a list
     filtered_values = [lad["lad24cd"] for lad in local_authority_districts]
 
-    # from gdf remove all records that are not in the local authority district
+    # from gdf remove all records that are not in the local authority district list
     gdf = gdf[gdf["Local Authority District code (2019)"].isin(filtered_values)]
 
-    # Create a Plotly choropleth map coloured by IMD Rank
+    # load the LAD shapes
+    file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "Local_Authority_Districts_May_2024_Boundaries_UK_BUC_-7874909473231998297.geojson",
+    )
+    lad_gdf = gpd.GeoDataFrame.from_file(file_path)
+    # filter out unwanted LADs
+    lad_gdf = lad_gdf[lad_gdf["LAD24CD"].isin(filtered_values)]
+
+    # # convert 27700 to 4326
+    lad_gdf = lad_gdf.to_crs(epsg=4326)
+
+    # Create a Plotly choropleth map with the filtered LSOAs coloured by IMD Rank
     fig = go.Figure(
         go.Choroplethmapbox(
             geojson=gdf.__geo_interface__,
@@ -189,15 +185,20 @@ def generate_distance_from_organisation_scatterplot_figure(
         )
     )
 
+    # add a layer of local authority shapes
     fig.add_trace(
         go.Choroplethmapbox(
             geojson=lad_gdf.__geo_interface__,
-            locations=lad_gdf["lad24cd"],
-            featureidkey="properties.lad24cd",
-            z=lad_gdf["lad24nm"],
-            marker_line_width=1,
-            marker_opacity=0.5,
-            customdata=lad_gdf[["lad24nm"]].to_numpy(),
+            locations=lad_gdf["LAD24CD"],
+            featureidkey="properties.LAD24CD",
+            z=[0] * len(gdf),  # Use a constant value to make the shapes transparent
+            colorscale=[
+                [0, "rgba(0,0,0,0)"],
+                [1, "rgba(0,0,0,0)"],
+            ],  # Transparent color
+            marker_line_width=0.5,
+            marker_line_color="black",
+            customdata=lad_gdf[["LAD24NM"]].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><extra></extra>",  # Custom hover template
         )
     )
