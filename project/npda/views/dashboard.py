@@ -7,6 +7,7 @@ from datetime import date
 from typing import Literal
 
 import plotly.graph_objects as go
+import plotly.io as pio
 
 # Django imports
 from django.apps import apps
