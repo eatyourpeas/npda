@@ -5,9 +5,11 @@ from datetime import date
 # project imports
 import nhs_number
 import httpx
+
 # third-party imports
 from dateutil.relativedelta import relativedelta
 from django import forms
+
 # django imports
 from django.apps import apps
 from django.core.exceptions import ValidationError
@@ -45,6 +47,7 @@ class PostcodeField(forms.CharField):
         if postcode:
             return postcode.upper().replace(" ", "").replace("-", "")
 
+
 class PatientForm(forms.ModelForm):
 
     class Meta:
@@ -64,7 +67,7 @@ class PatientForm(forms.ModelForm):
         field_classes = {
             "nhs_number": NHSNumberField,
             "postcode": PostcodeField,
-            "gp_practice_postcode": PostcodeField
+            "gp_practice_postcode": PostcodeField,
         }
         widgets = {
             "nhs_number": forms.TextInput(
@@ -93,7 +96,7 @@ class PatientForm(forms.ModelForm):
             if age >= 25:
                 raise ValidationError(
                     "NPDA patients cannot be 25+ years old. This patient is %(age)s",
-                    params={"age": age}
+                    params={"age": age},
                 )
 
         return date_of_birth
@@ -109,7 +112,7 @@ class PatientForm(forms.ModelForm):
         not_in_the_future_validator(death_date)
 
         return death_date
-    
+
     def handle_async_validation_result(self, key):
         value = getattr(self.async_validation_results, key)
 
@@ -153,22 +156,38 @@ class PatientForm(forms.ModelForm):
                 )
 
         if gp_practice_ods_code is None and gp_practice_postcode is None:
-            self.add_error("gp_practice_ods_code", ValidationError("'GP Practice ODS code' and 'GP Practice postcode' cannot both be empty"))
-        
+            self.add_error(
+                "gp_practice_ods_code",
+                ValidationError(
+                    "'GP Practice ODS code' and 'GP Practice postcode' cannot both be empty"
+                ),
+            )
+
         if not getattr(self, "async_validation_results", None):
             self.async_validation_results = validate_patient_sync(
                 postcode=self.cleaned_data["postcode"],
                 gp_practice_ods_code=self.cleaned_data.get("gp_practice_ods_code"),
-                gp_practice_postcode=self.cleaned_data.get("gp_practice_postcode")
+                gp_practice_postcode=self.cleaned_data.get("gp_practice_postcode"),
             )
-        
-        for key in ["postcode", "gp_practice_ods_code", "gp_practice_postcode"]:
+
+        for key in [
+            "postcode",
+            "location_bng",
+            "location_wgs84",
+            "gp_practice_ods_code",
+            "gp_practice_postcode",
+        ]:
             self.handle_async_validation_result(key)
-    
+
     def save(self, commit=True):
         instance = super().save(commit=False)
 
-        instance.index_of_multiple_deprivation_quintile = self.async_validation_results.index_of_multiple_deprivation_quintile
+        instance.index_of_multiple_deprivation_quintile = (
+            self.async_validation_results.index_of_multiple_deprivation_quintile
+        )
+
+        instance.location_bng = self.async_validation_results.location_bng
+        instance.location_wgs84 = self.async_validation_results.location_wgs84
 
         if commit:
             instance.save()

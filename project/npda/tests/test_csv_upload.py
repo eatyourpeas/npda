@@ -20,6 +20,7 @@ from project.npda.tests.factories.patient_factory import (
     INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
     TODAY,
     VALID_FIELDS,
+    LOCATION,
 )
 from project.npda.forms.external_patient_validators import (
     PatientExternalValidationResult,
@@ -34,14 +35,20 @@ MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT = PatientExternalValidationResult(
     gp_practice_ods_code=VALID_FIELDS["gp_practice_ods_code"],
     gp_practice_postcode=None,
     index_of_multiple_deprivation_quintile=INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
+    location_bng=None,
+    location_wgs84=None,
 )
 
-MOCK_VISIT_EXTERNAL_VALIDATION_RESULT = VisitExternalValidationResult(None, None, None, None)
+MOCK_VISIT_EXTERNAL_VALIDATION_RESULT = VisitExternalValidationResult(
+    None, None, None, None
+)
 
 
 def mock_patient_external_validation_result(**kwargs):
     return AsyncMock(
-        return_value=dataclasses.replace(MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT, **kwargs)
+        return_value=dataclasses.replace(
+            MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT, **kwargs
+        )
     )
 
 
@@ -521,7 +528,9 @@ def test_death_date_before_date_of_birth(test_user, single_row_valid_df):
 @pytest.mark.django_db
 @patch(
     "project.npda.general_functions.csv.csv_upload.validate_patient_async",
-    mock_patient_external_validation_result(postcode=ValidationError("Invalid postcode")),
+    mock_patient_external_validation_result(
+        postcode=ValidationError("Invalid postcode")
+    ),
 )
 def test_invalid_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "not a postcode"
@@ -598,7 +607,9 @@ def test_lookup_index_of_multiple_deprivation(test_user, single_row_valid_df):
 @pytest.mark.django_db
 @patch(
     "project.npda.general_functions.csv.csv_upload.validate_patient_async",
-    mock_patient_external_validation_result(index_of_multiple_deprivation_quintile=None),
+    mock_patient_external_validation_result(
+        index_of_multiple_deprivation_quintile=None
+    ),
 )
 def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_valid_df):
     csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)

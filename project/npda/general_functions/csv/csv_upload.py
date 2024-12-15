@@ -26,11 +26,6 @@ from project.npda.forms.visit_form import VisitForm
 from project.npda.forms.external_patient_validators import validate_patient_async
 from project.npda.forms.external_visit_validators import validate_visit_async
 
-from project.npda.general_functions.dgc_centile_calculations import (
-    calculate_bmi,
-    calculate_centiles_z_scores,
-)
-
 
 async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     """
@@ -104,7 +99,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             height=fields["height"],
             weight=fields["weight"],
             sex=patient_form.cleaned_data.get("sex"),
-            async_client=async_client
+            async_client=async_client,
         )
 
         return form
@@ -114,15 +109,17 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         patient_row_index = first_row["row_index"]
 
         transfer_fields = validate_transfer(first_row)
-        
+
         patient_form = await validate_patient_using_form(first_row, async_client)
-        
         # Pull through cleaned_data so we can use it in the async visit validators
+
         patient_form.is_valid()
 
         visit_forms = []
         for _, row in rows.iterrows():
-            visit_form = await validate_visit_using_form(patient_form, row, async_client)
+            visit_form = await validate_visit_using_form(
+                patient_form, row, async_client
+            )
             visit_forms.append((visit_form, row["row_index"]))
 
         return (
@@ -276,6 +273,13 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                     patient_form.async_validation_results.index_of_multiple_deprivation_quintile
                 )
 
+                patient.location_bng = (
+                    patient_form.async_validation_results.location_bng
+                )
+                patient.location_wgs84 = (
+                    patient_form.async_validation_results.location_wgs84
+                )
+
                 await patient.asave()
 
                 # add the patient to a new Transfer instance
@@ -288,7 +292,6 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
-            no_errors_preventing_centile_calcuation = True
             for visit_form, visit_row_index in parsed_visits:
                 # Errors validating the Visit fields
                 for field, error in visit_form.errors.as_data().items():
@@ -300,9 +303,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                     try:
                         await visit.asave()
                     except Exception as error:
-                        print(
-                            f"Error saving visit: {error}"  # , height: {visit.height} (centile: {visit.height_centile, visit.height_sds}) {visit.weight} ({visit.weight_centile}, {visit.weight_sds}), {visit.bmi} ({visit.bmi_centile}, {visit.bmi_sds}), visit.patient: {visit.patient}"
-                        )
+                        print(f"Error saving visit: {error}")
                 except Exception as error:
                     errors_to_return[visit_row_index]["__all__"].append(error)
 

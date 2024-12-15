@@ -35,7 +35,7 @@ async def validate_postcode(postcode: str, async_client: httpx.AsyncClient):
     return normalised_postcode
 
 
-def location_for_postcode(postcode: str):
+async def location_for_postcode(postcode: str, async_client: httpx.AsyncClient):
     # update the longitude and latitude
     """
     The SRID (Spatial Reference System Identifier) 27700 refers to the British National Grid (BNG), a common system used for mapping in the UK. It uses Eastings and Northings, rather than longitude & latitude.
@@ -48,9 +48,16 @@ def location_for_postcode(postcode: str):
         if postcode.lower().startswith("je"):
             location_wgs84 = None
             location_bng = None
+            lon = None
+            lat = None
+            return lon, lat, location_wgs84, location_bng
 
         # Fetch the coordinates (WGS 84)
-        lon, lat = coordinates_for_postcode(postcode=postcode)
+        lon, lat = await coordinates_for_postcode(
+            postcode=postcode, async_client=async_client
+        )
+        if not lon or not lat:
+            return None, None, None, None
 
         # Create a Point in WGS 84
         point_wgs84 = Point(lon, lat, srid=4326)
@@ -59,7 +66,6 @@ def location_for_postcode(postcode: str):
 
         # Transform to British National Grid (SRID 27700) - this has Eastings and Northings, rather than longitude and latitude.
         point_bng = point_wgs84.transform(27700, clone=True)
-
         # Assign the transformed point to location
         location_bng = point_bng
 
@@ -74,13 +80,13 @@ def location_for_postcode(postcode: str):
     return lon, lat, location_wgs84, location_bng
 
 
-def coordinates_for_postcode(postcode: str) -> bool:
+async def coordinates_for_postcode(postcode: str, async_client) -> bool:
     """
     Returns longitude and latitude for a valid postcode.
     """
 
     # check against API
-    response = requests.get(
+    response = await async_client.get(
         url=f"{settings.POSTCODES_IO_API_URL}/postcodes/{postcode}",
         headers={"Ocp-Apim-Subscription-Key": settings.POSTCODES_IO_API_KEY},
         timeout=10,  # times out after 10 seconds
@@ -92,6 +98,6 @@ def coordinates_for_postcode(postcode: str) -> bool:
 
     # Only other possibility should be 404, but handle any other status code
     logger.error(
-        f"Postcode validation failure. Could not validate postcode at {settings.POSTCODES_IO_API_URL}. {response.status_code=}"
+        f"Postcode validation failure. Could not get coordinates for postcode {postcode} at {settings.POSTCODES_IO_API_URL}. {response.status_code=}"
     )
-    return None
+    return None, None
