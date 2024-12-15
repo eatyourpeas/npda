@@ -6,7 +6,6 @@ import os
 from django.conf import settings
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
-from django.contrib.gis.geos import GEOSGeometry
 from django.db.models import Q
 from django.apps import apps
 
@@ -29,6 +28,16 @@ from project.constants import (
     RCPCH_LIGHT_BLUE_DARK_TINT,
     RCPCH_DARK_BLUE,
     RCPCH_CHARCOAL,
+    RCPCH_RED_DARK_TINT,
+    RCPCH_RED,
+    RCPCH_RED_LIGHT_TINT3,
+    RCPCH_RED_LIGHT_TINT2,
+    RCPCH_RED_LIGHT_TINT1,
+    RCPCH_STRONG_GREEN_LIGHT_TINT3,
+    RCPCH_STRONG_GREEN_LIGHT_TINT2,
+    RCPCH_STRONG_GREEN_LIGHT_TINT1,
+    RCPCH_STRONG_GREEN,
+    RCPCH_STRONG_GREEN_DARK_TINT,
 )
 from project.npda.general_functions.validate_postcode import location_for_postcode
 from project.npda.general_functions.rcpch_nhs_organisations import (
@@ -97,7 +106,7 @@ def generate_distance_from_organisation_scatterplot_figure(
     and stored here as a shapefile. This is then converted to a GeoJSON file for use in the map.
     """
 
-    custom_colorscale = [
+    english_colorscale = [
         [0, RCPCH_PINK_DARK_TINT],  # Very dark pink
         [0.11, RCPCH_PINK],  # pink
         [0.22, RCPCH_PINK_LIGHT_TINT1],  # Medium light pink
@@ -110,26 +119,41 @@ def generate_distance_from_organisation_scatterplot_figure(
         [1, RCPCH_LIGHT_BLUE_DARK_TINT],  # Dark blue
     ]
 
-    # # Load the IMD data
-    if (
-        paediatric_diabetes_unit.paediatric_diabetes_network_code == "PN07"
-    ):  # the paediatric_diabetes_unit is in Wales
-        file_path = os.path.join(
-            settings.BASE_DIR,
-            "project",
-            "constants",
-            "English IMD 2019",
-            "merged_lsoa_wales.json",
-        )
-    else:
-        file_path = os.path.join(
-            settings.BASE_DIR,
-            "project",
-            "constants",
-            "English IMD 2019",
-            "merged_lsoa_england.json",
-        )
-    gdf = gpd.GeoDataFrame.from_file(file_path)
+    welsh_colorscale = [
+        [0, RCPCH_RED_DARK_TINT],
+        [0.11, RCPCH_RED],
+        [0.22, RCPCH_RED_LIGHT_TINT3],
+        [0.33, RCPCH_RED_LIGHT_TINT2],
+        [0.44, RCPCH_RED_LIGHT_TINT1],
+        [0.55, RCPCH_STRONG_GREEN_LIGHT_TINT3],
+        [0.66, RCPCH_STRONG_GREEN_LIGHT_TINT2],
+        [0.77, RCPCH_STRONG_GREEN_LIGHT_TINT1],
+        [0.88, RCPCH_STRONG_GREEN],
+        [1, RCPCH_STRONG_GREEN_DARK_TINT],
+    ]
+
+    # # Load the IMD data (there are two files of merged data, one with IMD ranks merged with english LSOA shapes,
+    # the other with IMD ranks merged with welsh LSOA shapes)
+
+    welsh_file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "merged_lsoa_wales.json",
+    )
+
+    english_file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "merged_lsoa_england.json",
+    )
+
+    # store each of the files in a separate dataframe - this is needed because in some cases, both datasets are plotted together
+    welsh_gdf = gpd.GeoDataFrame.from_file(welsh_file_path)
+    english_gdf = gpd.GeoDataFrame.from_file(english_file_path)
 
     # Get all the Local Authorities in a 10km radius of the paediatric_diabetes_unit
     local_authority_districts = fetch_local_authorities_within_radius(
@@ -140,10 +164,15 @@ def generate_distance_from_organisation_scatterplot_figure(
     # store the Local Authority District identifiers in a list
     filtered_values = [lad["lad24cd"] for lad in local_authority_districts]
 
-    # from gdf remove all records that are not in the local authority district list
-    gdf = gdf[gdf["Local Authority District code (2019)"].isin(filtered_values)]
+    # from the english gdf remove all LSOAs that are not in the local authority district list
+    english_gdf = english_gdf[
+        english_gdf["Local Authority District code (2019)"].isin(filtered_values)
+    ]
 
-    # load the LAD shapes
+    # from the Welsh gdf remove all LSOAs that are not in the the local authority district (or principal areas as they are known in wales)
+    welsh_gdf = welsh_gdf[welsh_gdf["ladcd"].isin(filtered_values)]
+
+    # load the LAD shapes (these include all LAD/Principal areas in England and Wales)
     file_path = os.path.join(
         settings.BASE_DIR,
         "project",
@@ -158,30 +187,67 @@ def generate_distance_from_organisation_scatterplot_figure(
     # # convert 27700 to 4326
     lad_gdf = lad_gdf.to_crs(epsg=4326)
 
-    # Create a Plotly choropleth map with the filtered LSOAs coloured by IMD Rank
+    # Create a Plotly choropleth map with the filtered English LSOAs coloured by IMD Rank
     fig = go.Figure(
         go.Choroplethmapbox(
-            geojson=gdf.__geo_interface__,
-            locations=gdf["LSOA11CD"],
+            geojson=english_gdf.__geo_interface__,
+            locations=english_gdf["LSOA11CD"],
             featureidkey="properties.LSOA11CD",
-            z=gdf["Index of Multiple Deprivation (IMD) Rank"],
-            colorscale=custom_colorscale,
+            z=english_gdf["Index of Multiple Deprivation (IMD) Rank"],
+            colorscale=english_colorscale,
             marker_line_width=0,
             marker_opacity=0.5,
-            customdata=gdf[
+            customdata=english_gdf[
                 ["LSOA11NM", "Index of Multiple Deprivation (IMD) Decile"]
             ].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><br>IMD Decile: %{customdata[1]}<extra></extra>",  # Custom hover template
         )
     )
 
-    # add a layer of local authority shapes
+    # add the welsh filtered LSOAs coloured by welsh IMD Rank if present
+    fig.add_trace(
+        go.Choroplethmapbox(
+            geojson=welsh_gdf.__geo_interface__,
+            locations=welsh_gdf["LSOA11CD"],
+            featureidkey="properties.LSOA11CD",
+            z=welsh_gdf["Index of Multiple Deprivation (IMD) Rank"],
+            colorscale=welsh_colorscale,
+            marker_line_width=0,
+            marker_opacity=0.5,
+            customdata=welsh_gdf[
+                ["LSOA11NM", "Index of Multiple Deprivation (IMD) Decile"]
+            ].to_numpy(),
+            hovertemplate="<b>%{customdata[0]}</b><br>IMD Decile: %{customdata[1]}<extra></extra>",  # Custom hover template
+        )
+    )
+
+    # add a layer of English local authority shapes - these are black boundaries with no shading
     fig.add_trace(
         go.Choroplethmapbox(
             geojson=lad_gdf.__geo_interface__,
             locations=lad_gdf["LAD24CD"],
             featureidkey="properties.LAD24CD",
-            z=[0] * len(gdf),  # Use a constant value to make the shapes transparent
+            z=[0]
+            * len(english_gdf),  # Use a constant value to make the shapes transparent
+            colorscale=[
+                [0, "rgba(0,0,0,0)"],
+                [1, "rgba(0,0,0,0)"],
+            ],  # Transparent color
+            marker_line_width=0.5,
+            marker_line_color="black",
+            customdata=lad_gdf[["LAD24NM"]].to_numpy(),
+            hovertemplate="<b>%{customdata[0]}</b><extra></extra>",  # Custom hover template
+        )
+    )
+
+    # add a layer for  the Welsh principal areas  - these are black boundaries with no shading
+    fig.add_trace(
+        go.Choroplethmapbox(
+            geojson=lad_gdf.__geo_interface__,
+            locations=lad_gdf["LAD24CD"],
+            featureidkey="properties.LAD24CD",
+            z=[0]
+            * len(welsh_gdf),  # Use a constant value to make the shapes transparent
             colorscale=[
                 [0, "rgba(0,0,0,0)"],
                 [1, "rgba(0,0,0,0)"],
