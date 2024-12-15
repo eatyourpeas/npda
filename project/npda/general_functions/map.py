@@ -39,7 +39,6 @@ from project.constants import (
     RCPCH_STRONG_GREEN,
     RCPCH_STRONG_GREEN_DARK_TINT,
 )
-from project.npda.general_functions.validate_postcode import location_for_postcode
 from project.npda.general_functions.rcpch_nhs_organisations import (
     fetch_local_authorities_within_radius,
 )
@@ -122,9 +121,9 @@ def generate_distance_from_organisation_scatterplot_figure(
     welsh_colorscale = [
         [0, RCPCH_RED_DARK_TINT],
         [0.11, RCPCH_RED],
-        [0.22, RCPCH_RED_LIGHT_TINT3],
+        [0.22, RCPCH_RED_LIGHT_TINT1],
         [0.33, RCPCH_RED_LIGHT_TINT2],
-        [0.44, RCPCH_RED_LIGHT_TINT1],
+        [0.44, RCPCH_RED_LIGHT_TINT3],
         [0.55, RCPCH_STRONG_GREEN_LIGHT_TINT3],
         [0.66, RCPCH_STRONG_GREEN_LIGHT_TINT2],
         [0.77, RCPCH_STRONG_GREEN_LIGHT_TINT1],
@@ -201,6 +200,16 @@ def generate_distance_from_organisation_scatterplot_figure(
                 ["LSOA11NM", "Index of Multiple Deprivation (IMD) Decile"]
             ].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><br>IMD Decile: %{customdata[1]}<extra></extra>",  # Custom hover template
+            colorbar=dict(
+                title=dict(
+                    text="English IMD Rank",
+                    font=dict(size=12, color="black", family="montserrat"),
+                    side="right",  # Position the title above the colorbar
+                ),
+                tickfont=dict(size=10, color="black", family="montserrat"),
+                x=0.88,  # Position the English color scale on the right
+                len=1.0,  # Length of the color bar
+            ),
         )
     )
 
@@ -218,6 +227,16 @@ def generate_distance_from_organisation_scatterplot_figure(
                 ["LSOA11NM", "Index of Multiple Deprivation (IMD) Decile"]
             ].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><br>IMD Decile: %{customdata[1]}<extra></extra>",  # Custom hover template
+            colorbar=dict(
+                title=dict(
+                    text="Welsh IMD Rank",
+                    font=dict(size=12, color="black", family="montserrat"),
+                    side="right",  # Position the title above the colorbar
+                ),
+                tickfont=dict(size=10, color="black", family="montserrat"),
+                x=0.95,  # Position the Welsh color scale to the right of the English one
+                len=1.0,  # Length of the color bar
+            ),
         )
     )
 
@@ -237,6 +256,7 @@ def generate_distance_from_organisation_scatterplot_figure(
             marker_line_color="black",
             customdata=lad_gdf[["LAD24NM"]].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><extra></extra>",  # Custom hover template
+            showscale=False,
         )
     )
 
@@ -256,6 +276,7 @@ def generate_distance_from_organisation_scatterplot_figure(
             marker_line_color="black",
             customdata=lad_gdf[["LAD24NM"]].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><extra></extra>",  # Custom hover template
+            showscale=False,
         )
     )
 
@@ -269,7 +290,11 @@ def generate_distance_from_organisation_scatterplot_figure(
                 size=12,
                 color=RCPCH_DARK_BLUE,  # Set the color of the point
             ),
-            text=[pdu_lead_organisation["name"]],  # Set the hover text for the point
+            # text=[pdu_lead_organisation["name"]],  # Set the hover text for the point
+            customdata=[
+                [pdu_lead_organisation["name"], paediatric_diabetes_unit.pz_code],
+            ],
+            hovertemplate="<b>%{customdata[0]} (%{customdata[1]})</b><extra></extra>",  # Custom hover template
             showlegend=False,
         )
     )
