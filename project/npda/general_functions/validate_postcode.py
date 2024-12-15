@@ -48,11 +48,16 @@ async def location_for_postcode(postcode: str, async_client: httpx.AsyncClient):
         if postcode.lower().startswith("je"):
             location_wgs84 = None
             location_bng = None
+            lon = None
+            lat = None
+            return lon, lat, location_wgs84, location_bng
 
         # Fetch the coordinates (WGS 84)
         lon, lat = await coordinates_for_postcode(
             postcode=postcode, async_client=async_client
         )
+        if not lon or not lat:
+            return None, None, None, None
 
         # Create a Point in WGS 84
         point_wgs84 = Point(lon, lat, srid=4326)
@@ -61,7 +66,6 @@ async def location_for_postcode(postcode: str, async_client: httpx.AsyncClient):
 
         # Transform to British National Grid (SRID 27700) - this has Eastings and Northings, rather than longitude and latitude.
         point_bng = point_wgs84.transform(27700, clone=True)
-
         # Assign the transformed point to location
         location_bng = point_bng
 
@@ -94,6 +98,6 @@ async def coordinates_for_postcode(postcode: str, async_client) -> bool:
 
     # Only other possibility should be 404, but handle any other status code
     logger.error(
-        f"Postcode validation failure. Could not validate postcode at {settings.POSTCODES_IO_API_URL}. {response.status_code=}"
+        f"Postcode validation failure. Could not get coordinates for postcode {postcode} at {settings.POSTCODES_IO_API_URL}. {response.status_code=}"
     )
-    return None
+    return None, None

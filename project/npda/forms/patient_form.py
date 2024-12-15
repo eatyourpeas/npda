@@ -186,14 +186,8 @@ class PatientForm(forms.ModelForm):
             self.async_validation_results.index_of_multiple_deprivation_quintile
         )
 
-        if getattr(self, "async_validation_results"):
-
-            for field in ["location_bng", "location_wgs84"]:
-                result = getattr(self.async_validation_results, f"{field}")
-
-                if result and not type(result) is ValidationError:
-                    setattr(instance, "location_bng", result.location_bng)
-                    setattr(instance, "location_wgs84", result.location_wgs84)
+        instance.location_bng = self.async_validation_results.location[1]
+        instance.location_wgs84 = self.async_validation_results.location[0]
 
         if commit:
             instance.save()
