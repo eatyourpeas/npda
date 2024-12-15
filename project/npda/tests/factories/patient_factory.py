@@ -8,6 +8,7 @@ import logging
 import random
 
 # third-party imports
+from django.contrib.gis.geos import Point
 import factory
 import nhs_number
 from dateutil.relativedelta import relativedelta
@@ -34,6 +35,12 @@ DATE_OF_BIRTH = TODAY - relativedelta(years=10)
 GP_POSTCODE_NO_SPACES = "SE135PJ"
 GP_POSTCODE_WITH_SPACES = "SE13 5PJ"
 
+# Mocked values
+location_bng = Point(x=531000, y=180000)
+location_wgs84 = Point(x=51.5074, y=0.1278)
+
+LOCATION = location_wgs84, location_bng
+
 VALID_FIELDS = {
     "nhs_number": "6239431915",
     "sex": SEX_TYPE[0][0],
@@ -43,6 +50,8 @@ VALID_FIELDS = {
     "diabetes_type": DIABETES_TYPES[0][0],
     "diagnosis_date": DATE_OF_BIRTH + relativedelta(years=8),
     "gp_practice_ods_code": "G85023",
+    "location_bng": location_bng,
+    "location_wgs84": location_wgs84,
 }
 
 VALID_FIELDS_WITH_GP_POSTCODE = VALID_FIELDS | {
@@ -116,10 +125,7 @@ class PatientFactory(factory.django.DjangoModelFactory):
 
     @factory.lazy_attribute
     def date_of_birth(self):
-        """Set date_of_birth based on the selected age_range.
-
-
-        """
+        """Set date_of_birth based on the selected age_range."""
         min_age, max_age = self.age_range.value
 
         # Has to be at least 0 years old to be in the audit

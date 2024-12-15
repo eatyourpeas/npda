@@ -273,10 +273,12 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                     patient_form.async_validation_results.index_of_multiple_deprivation_quintile
                 )
 
-                patient.location_bng = patient_form.async_validation_results.location[1]
-                patient.location_wgs84 = patient_form.async_validation_results.location[
-                    0
-                ]
+                patient.location_bng = (
+                    patient_form.async_validation_results.location_bng
+                )
+                patient.location_wgs84 = (
+                    patient_form.async_validation_results.location_wgs84
+                )
 
                 await patient.asave()
 

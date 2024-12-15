@@ -150,7 +150,7 @@ async def validate_patient_async(
         raise postcode  # postcode has an error that is not to do with validation
     else:
         ret.postcode = postcode
-        if type(postcode) is ValidationError:
+        if type(postcode) is ValidationError or postcode is None:
             # the postcode is invalid. There is no point in running the IMD and location tasks
             # Await the tasks, even though their results won't be used
             await asyncio.gather(
@@ -181,7 +181,8 @@ async def validate_patient_async(
         if isinstance(location, Exception) and not type(location) is ValidationError:
             raise location
         else:
-            ret.location = location
+            ret.location_bng = location[0]
+            ret.location_wgs84 = location[1]
 
     # run the GP details task
     if type(gp_details) is ValidationError:

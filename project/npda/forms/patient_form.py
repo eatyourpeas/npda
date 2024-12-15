@@ -186,8 +186,8 @@ class PatientForm(forms.ModelForm):
             self.async_validation_results.index_of_multiple_deprivation_quintile
         )
 
-        instance.location_bng = self.async_validation_results.location[1]
-        instance.location_wgs84 = self.async_validation_results.location[0]
+        instance.location_bng = self.async_validation_results.location_bng
+        instance.location_wgs84 = self.async_validation_results.location_wgs84
 
         if commit:
             instance.save()
