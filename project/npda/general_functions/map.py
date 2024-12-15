@@ -64,16 +64,6 @@ def get_children_by_pdu_audit_year(
             | ~Q(postcode__exact=""),  # Exclude patients with no postcode
         )
 
-        for patient in filtered_patients:
-            if patient.postcode:
-                # this currently takes a long time to run because of the API call - once we save the location data in the database on save, we can remove this
-                lon, lat, location_wgs84, location_bng = location_for_postcode(
-                    patient.postcode
-                )
-                patient.location_wgs84 = location_wgs84
-                patient.location_bng = location_bng
-                patient.save()
-
         filtered_patients = filtered_patients.annotate(
             distance_from_lead_organisation=Distance(
                 "location_wgs84",
