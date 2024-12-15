@@ -364,6 +364,18 @@ def test_lookup_index_of_multiple_deprivation():
 
 
 @pytest.mark.django_db
+def test_lookup_location():
+    form = PatientForm(VALID_FIELDS)
+
+    form.is_valid()
+    assert len(form.errors.as_data()) == 0
+
+    patient = form.save()
+    assert patient.location_wgs84 == LOCATION[0]
+    assert patient.location_bng == LOCATION[1]
+
+
+@pytest.mark.django_db
 @patch(
     "project.npda.forms.patient_form.validate_patient_sync",
     mock_external_validation_result(index_of_multiple_deprivation_quintile=None),
