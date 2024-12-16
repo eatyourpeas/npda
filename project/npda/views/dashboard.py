@@ -155,7 +155,7 @@ def dashboard(request):
     default_pt_level_menu_tab_selected = "health_checks"
     highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
 
-    pprint(total_eligible_pts_diabetes_type_value_counts)
+    pprint(f"{total_eligible_pts_diabetes_type_value_counts=}")
 
     context = {
         "pdu_object": pdu,
@@ -235,6 +235,11 @@ def get_waffle_chart_partial(request):
     data = {}
     for key, value in request.GET.items():
         data[key] = int(value)
+    
+    # Handle empty data (eg. if no eligible pts)
+    if not data:
+        return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": None})
+        
 
     # Ensure percentages sum to 100
     total = sum(data.values())
