@@ -141,7 +141,7 @@ def dashboard(request):
         kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
     )
 
-    pprint(hc_completion_rate_value_counts_pct)
+    # pprint(hc_completion_rate_value_counts_pct)
 
     # Gather other context vars
     current_date = date.today()
@@ -154,6 +154,8 @@ def dashboard(request):
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
     highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
+
+    pprint(total_eligible_pts_diabetes_type_value_counts)
 
     context = {
         "pdu_object": pdu,
@@ -428,11 +430,17 @@ def get_colored_figures_chart_partial(
 
 
 def get_total_eligible_pts_diabetes_type_value_counts(eligible_pts_queryset: QuerySet) -> dict:
-    """Gets value counts dict for total eligible patients stratified by diabetes type"""
+    """Gets value counts dict for total eligible patients stratified by diabetes type
+    
+    Returns empty dict if no eligible pts."""
 
     eligible_pts_diabetes_type_counts = eligible_pts_queryset.values("diabetes_type").annotate(
         count=Count("diabetes_type")
     )
+
+    if not eligible_pts_diabetes_type_counts.exists():
+        return {}
+
     eligible_pts_diabetes_type_value_counts = defaultdict(int)
     for item in eligible_pts_diabetes_type_counts:
         diabetes_type = item["diabetes_type"]
