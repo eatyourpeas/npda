@@ -139,6 +139,7 @@ def dashboard(request):
         kpi_32_2_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_2_attr_name],
         kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
     )
+    
 
     # pprint(hc_completion_rate_value_counts_pct)
 
@@ -154,7 +155,7 @@ def dashboard(request):
     default_pt_level_menu_tab_selected = "health_checks"
     highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
 
-    pprint(f"{pt_characteristics_value_counts_with_figure_counts=}")
+    pprint(f"{hc_completion_rate_value_counts_pct=}")
 
     context = {
         "pdu_object": pdu,
