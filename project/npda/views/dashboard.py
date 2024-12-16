@@ -3,6 +3,7 @@ from collections import Counter, defaultdict
 import datetime
 import json
 import logging
+from pprint import pprint
 from datetime import date
 from typing import Literal
 
@@ -130,6 +131,7 @@ def dashboard(request):
 
     # Health checks
     # Get attr names for KPIs 32.1, 32.2, 32.3
+    pprint(kpi_calculations_object["calculated_kpi_values"])
     kpi_32_1_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(321)
     kpi_32_2_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(322)
     kpi_32_3_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(323)
@@ -139,9 +141,7 @@ def dashboard(request):
         kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
     )
 
-    import pprint
-
-    pprint.pprint(hc_completion_rate_value_counts_pct)
+    pprint(hc_completion_rate_value_counts_pct)
 
     # Gather other context vars
     current_date = date.today()
@@ -587,10 +587,14 @@ def get_hc_completion_rate_vcs(
         vcs[f"kpi_32_{ix}_pct"] = {
             "total_passed": kpi_values["total_passed"],
             "total_failed": kpi_values["total_failed"],
-            "pct": int(
-                kpi_values["total_passed"]
-                / (kpi_values["total_passed"] + kpi_values["total_failed"])
-                * 100
+            "pct": (
+                int(
+                    kpi_values["total_passed"]
+                    / (kpi_values["total_passed"] + kpi_values["total_failed"])
+                    * 100
+                )
+                if kpi_values["total_passed"]
+                else None
             ),
         }
 
