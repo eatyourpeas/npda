@@ -131,7 +131,6 @@ def dashboard(request):
 
     # Health checks
     # Get attr names for KPIs 32.1, 32.2, 32.3
-    pprint(kpi_calculations_object["calculated_kpi_values"])
     kpi_32_1_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(321)
     kpi_32_2_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(322)
     kpi_32_3_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(323)
@@ -155,7 +154,7 @@ def dashboard(request):
     default_pt_level_menu_tab_selected = "health_checks"
     highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
 
-    pprint(f"{total_eligible_pts_diabetes_type_value_counts=}")
+    pprint(f"{pt_characteristics_value_counts_with_figure_counts=}")
 
     context = {
         "pdu_object": pdu,
