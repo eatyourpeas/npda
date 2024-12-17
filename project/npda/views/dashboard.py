@@ -126,7 +126,6 @@ def dashboard(request):
         kpi_42_values=kpi_calculations_object["calculated_kpi_values"][kpi_42_attr_name],
         kpi_43_values=kpi_calculations_object["calculated_kpi_values"][kpi_43_attr_name],
     )
-    pprint(f"{care_at_diagnosis_value_counts_pct=}")
 
     # Health checks
     # Get attr names for KPIs 32.1, 32.2, 32.3
