@@ -154,6 +154,8 @@ def generate_distance_from_organisation_scatterplot_figure(
     welsh_gdf = gpd.GeoDataFrame.from_file(welsh_file_path)
     english_gdf = gpd.GeoDataFrame.from_file(english_file_path)
 
+    # print(pdu_lead_organisation)
+
     # Get all the Local Authorities in a 10km radius of the paediatric_diabetes_unit
     local_authority_districts = fetch_local_authorities_within_radius(
         longitude=pdu_lead_organisation["longitude"],
@@ -161,7 +163,9 @@ def generate_distance_from_organisation_scatterplot_figure(
         radius=10000,  # 10km
     )
     # store the Local Authority District identifiers in a list
-    filtered_values = [lad["lad24cd"] for lad in local_authority_districts]
+    filtered_values = [
+        lad["properties"]["lad24cd"] for lad in local_authority_districts
+    ]
 
     # from the english gdf remove all LSOAs that are not in the local authority district list
     english_gdf = english_gdf[
