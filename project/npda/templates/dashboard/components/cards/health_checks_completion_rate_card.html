@@ -8,10 +8,10 @@
     <i class="fa-solid fa-person-circle-exclamation"></i> No eligible patients.
   </div>
 {% else %}
-  <div class="mt-4 text-center text-gray-500">
-    <!-- Placeholder for Chart -->
-    Chart Placeholder
-  </div>
+  <div
+  hx-get="{% url 'get_health_checks_completion_rate_chart_partial' %}"
+  hx-vals='{{ charts.hc_completion_rate_value_counts_pct.data }}'
+  hx-trigger="load" hx-swap="innerHTML"></div>
   {% endif %}
 {% endblock %}
 

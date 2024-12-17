@@ -139,7 +139,6 @@ def dashboard(request):
         kpi_32_2_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_2_attr_name],
         kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
     )
-    
 
     # pprint(hc_completion_rate_value_counts_pct)
 
@@ -186,6 +185,9 @@ def dashboard(request):
             },
             "pt_imd_value_counts_pct": {
                 "data": json.dumps(pt_imd_value_counts_pct),
+            },
+            "hc_completion_rate_value_counts_pct": {
+                "data": json.dumps(hc_completion_rate_value_counts_pct),
             },
         },
         # Defaults for htmx partials
@@ -235,11 +237,10 @@ def get_waffle_chart_partial(request):
     data = {}
     for key, value in request.GET.items():
         data[key] = int(value)
-    
+
     # Handle empty data (eg. if no eligible pts)
     if not data:
         return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": None})
-        
 
     # Ensure percentages sum to 100
     total = sum(data.values())
@@ -434,9 +435,50 @@ def get_colored_figures_chart_partial(
     )
 
 
+@login_and_otp_required()
+def get_health_checks_completion_rate_chart_partial(request):
+    if not request.htmx:
+        return HttpResponseBadRequest("This view is only accessible via HTMX")
+
+    # Fetch data from query parameters
+    # NOTE: don't need to handle empty data as the template handles this
+    data = dict(request.GET)
+
+
+    print(f"{data=}")
+
+    # Create the bar chart
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Bar(
+            x=list(data.keys()),
+            y=list(data.values()),
+            text=list(data.values()),
+            textposition="outside",
+            marker=dict(color="skyblue"),
+        )
+    )
+
+    # Update layout for labels and formatting
+    fig.update_layout(
+        title="% CYP with T1DM",
+        xaxis_title="",
+        yaxis_title="% CYP with T1DM",
+        yaxis=dict(range=[0, 100]),  # Fix range from 0 to 100
+        template="simple_white",  # Clean grid style
+    )
+
+    return render(
+        request,
+        "dashboard/health_checks_completion_rate_chart_partial.html",
+        {"chart_html": fig.to_html()},
+    )
+
+
 def get_total_eligible_pts_diabetes_type_value_counts(eligible_pts_queryset: QuerySet) -> dict:
     """Gets value counts dict for total eligible patients stratified by diabetes type
-    
+
     Returns empty dict if no eligible pts."""
 
     eligible_pts_diabetes_type_counts = eligible_pts_queryset.values("diabetes_type").annotate(
@@ -607,7 +649,7 @@ def get_hc_completion_rate_vcs(
                     * 100
                 )
                 if kpi_values["total_passed"]
-                else None
+                else 0
             ),
         }
 
