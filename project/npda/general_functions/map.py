@@ -237,7 +237,6 @@ def generate_distance_from_organisation_scatterplot_figure(
     )
     lad_gdf = gpd.GeoDataFrame.from_file(file_path)
     # filter out unwanted LADs
-    print(lad_gdf.columns)
     lad_gdf = lad_gdf[lad_gdf["lad11cd"].isin(filtered_values)]
 
     # # convert 27700 to 4326
