@@ -442,10 +442,19 @@ def get_health_checks_completion_rate_chart_partial(request):
 
     # Fetch data from query parameters
     # NOTE: don't need to handle empty data as the template handles this
-    data = dict(request.GET)
-
-
-    print(f"{data=}")
+    data_raw = dict(request.GET)
+    # initially looks like
+    # {'kpi_32_1_pct': ['{"total_passed":507,"total_failed":84,"pct":85}'], 'kpi_32_2_pct': ['{"total_passed":43,"total_failed":0,"pct":100}'], 'kpi_32_3_pct': ['{"total_passed":0,"total_failed":77,"pct":0}']}
+    data = {}
+    for kpi_name, values in data_raw.items():
+        values = json.loads(values[0])
+        if kpi_name == "kpi_32_1_pct":
+            label = "< 12 years old"
+        elif kpi_name == "kpi_32_2_pct":
+            label = "≥ 12 years old"
+        else:
+            label = "Overall"
+        data[label] = values["pct"]
 
     # Create the bar chart
     fig = go.Figure()
@@ -456,13 +465,13 @@ def get_health_checks_completion_rate_chart_partial(request):
             y=list(data.values()),
             text=list(data.values()),
             textposition="outside",
-            marker=dict(color="skyblue"),
+            marker=dict(color=RCPCH_LIGHT_BLUE),
         )
     )
 
     # Update layout for labels and formatting
     fig.update_layout(
-        title="% CYP with T1DM",
+        title="",
         xaxis_title="",
         yaxis_title="% CYP with T1DM",
         yaxis=dict(range=[0, 100]),  # Fix range from 0 to 100
