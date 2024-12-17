@@ -116,6 +116,18 @@ def dashboard(request):
         pt_characteristics_value_counts
     )
 
+    # Care at diagnosis - kpis 41-43
+    # Get attr names for KPIs 41, 42, 43
+    kpi_41_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(41)
+    kpi_42_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(42)
+    kpi_43_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(43)
+    care_at_diagnosis_value_counts_pct = get_care_at_diagnosis_vcs_pct(
+        kpi_41_values=kpi_calculations_object["calculated_kpi_values"][kpi_41_attr_name],
+        kpi_42_values=kpi_calculations_object["calculated_kpi_values"][kpi_42_attr_name],
+        kpi_43_values=kpi_calculations_object["calculated_kpi_values"][kpi_43_attr_name],
+    )
+    pprint(f"{care_at_diagnosis_value_counts_pct=}")
+
     # Health checks
     # Get attr names for KPIs 32.1, 32.2, 32.3
     kpi_32_1_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(321)
@@ -126,8 +138,8 @@ def dashboard(request):
         kpi_32_2_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_2_attr_name],
         kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
     )
-    
-        # Sex, Ethnicity, IMD
+
+    # Sex, Ethnicity, IMD
     pt_sex_value_counts, pt_ethnicity_value_counts, pt_imd_value_counts = (
         get_pt_demographic_value_counts(
             all_eligible_pts_queryset=kpi_calculations_object["calculated_kpi_values"][
@@ -140,8 +152,6 @@ def dashboard(request):
     pt_ethnicity_value_counts_pct = convert_value_counts_dict_to_pct(pt_ethnicity_value_counts)
     pt_imd_value_counts_pct = convert_value_counts_dict_to_pct(pt_imd_value_counts)
 
-
-
     # Gather other context vars
     current_date = date.today()
     days_remaining_until_audit_end_date = (
@@ -153,8 +163,6 @@ def dashboard(request):
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
     highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
-
-    pprint(f"{hc_completion_rate_value_counts_pct=}")
 
     context = {
         "pdu_object": pdu,
@@ -171,12 +179,12 @@ def dashboard(request):
             "pt_characteristics_value_counts": {
                 "data": pt_characteristics_value_counts_with_figure_counts,
             },
-            "map": json.dumps(
-                dict(
-                    pdu_pk=pdu.pk,
-                    selected_audit_year=selected_audit_year,
-                )
-            ),
+            "care_at_diagnosis_value_count": {
+                "data": json.dumps(care_at_diagnosis_value_counts_pct),
+            },
+            "hc_completion_rate_value_counts_pct": {
+                "data": json.dumps(hc_completion_rate_value_counts_pct),
+            },
             "pt_sex_value_counts_pct": {
                 "data": json.dumps(pt_sex_value_counts_pct),
             },
@@ -186,9 +194,12 @@ def dashboard(request):
             "pt_imd_value_counts_pct": {
                 "data": json.dumps(pt_imd_value_counts_pct),
             },
-            "hc_completion_rate_value_counts_pct": {
-                "data": json.dumps(hc_completion_rate_value_counts_pct),
-            },
+            "map": json.dumps(
+                dict(
+                    pdu_pk=pdu.pk,
+                    selected_audit_year=selected_audit_year,
+                )
+            ),
         },
         # Defaults for htmx partials
         "default_pt_level_menu_text": default_pt_level_menu_text,
@@ -437,34 +448,43 @@ def get_colored_figures_chart_partial(
 
 @login_and_otp_required()
 def get_simple_bar_chart_pcts_partial(request):
-    """Returns a HTML simple bar chart with percentages for the given data"""
+    """Returns a HTML simple bar chart with percentages for the given data.
+
+    Expects:
+    {
+        'attr_1': {
+            pct: int,
+            total_passed: int,
+            total_eligible: int,
+            label: str,
+        },
+        'attr_2': {
+            ...
+        }
+        ...
+    }
+    """
     if not request.htmx:
         return HttpResponseBadRequest("This view is only accessible via HTMX")
 
     # Fetch data from query parameters
     # NOTE: don't need to handle empty data as the template handles this
-    data_raw = dict(request.GET)
-    # initially looks like
-    # {'kpi_32_1_pct': ['{"total_passed":507,"total_failed":84,"pct":85}'], 'kpi_32_2_pct': ['{"total_passed":43,"total_failed":0,"pct":100}'], 'kpi_32_3_pct': ['{"total_passed":0,"total_failed":77,"pct":0}']}
-    data = {}
-    for kpi_name, values in data_raw.items():
-        values = json.loads(values[0])
-        if kpi_name == "kpi_32_1_pct":
-            label = "< 12 years old"
-        elif kpi_name == "kpi_32_2_pct":
-            label = "≥ 12 years old"
-        else:
-            label = "Overall"
-        data[label] = values["pct"]
+    data_raw = json.loads(request.GET.get("data"))
+    print(f"{data_raw=}")
+
+    x, y = [], []
+    for _, values in data_raw.items():
+        x.append(values["label"])
+        y.append(values["pct"])
 
     # Create the bar chart
     fig = go.Figure()
 
     fig.add_trace(
         go.Bar(
-            x=list(data.keys()),
-            y=list(data.values()),
-            text=list(data.values()),
+            x=x,
+            y=y,
+            text=y,
             textposition="outside",
             marker=dict(color=RCPCH_LIGHT_BLUE),
         )
@@ -477,12 +497,28 @@ def get_simple_bar_chart_pcts_partial(request):
         yaxis_title="% CYP with T1DM",
         yaxis=dict(range=[0, 100]),  # Fix range from 0 to 100
         template="simple_white",  # Clean grid style
+        # Wrap text
+        xaxis=dict(
+            tickmode="array",
+            tickvals=list(range(len(x))),
+            ticktext=[label.replace(" ", "<br>") for label in x],  # Wrap text with <br>
+            tickangle=0,  # Ensure text is horizontal
+            automargin=True,  # Adjust margins for label space
+        ),
+    )
+
+    chart_html = fig.to_html(
+        full_html=False,
+        include_plotlyjs=False,
+        config={
+            "displayModeBar": False,
+        },
     )
 
     return render(
         request,
         "dashboard/simple_bar_chart_pcts_partial.html",
-        {"chart_html": fig.to_html()},
+        {"chart_html": chart_html},
     )
 
 
@@ -585,6 +621,57 @@ def get_pt_characteristics_value_counts_pct(
     return dict(categories_vc)
 
 
+def get_care_at_diagnosis_vcs_pct(
+    kpi_41_values: dict,
+    kpi_42_values: dict,
+    kpi_43_values: dict,
+) -> dict:
+    """Get value counts for care at diagnosis KPIs (41, 42, 43)
+
+    - coeliac (KPI41)
+    - thyroid (KPI42)
+    - carb counting ed (KPI43)
+
+    NOTE: rounds DOWN (convert float to int) for percentage calculation
+    """
+    data = {}
+
+    data["coeliac_disease_screening"] = {
+        "total_passed": kpi_41_values["total_passed"],
+        "total_eligible": kpi_41_values["total_eligible"],
+        "pct": (
+            int(kpi_41_values["total_passed"] / kpi_41_values["total_eligible"] * 100)
+            if kpi_41_values["total_eligible"]
+            else 0
+        ),
+        "label": "Coeliac Disease Screening",
+    }
+
+    data["thyroid_disease_screening"] = {
+        "total_passed": kpi_42_values["total_passed"],
+        "total_eligible": kpi_42_values["total_eligible"],
+        "pct": (
+            int(kpi_42_values["total_passed"] / kpi_42_values["total_eligible"] * 100)
+            if kpi_42_values["total_eligible"]
+            else 0
+        ),
+        "label": "Thyroid Disease Screening",
+    }
+
+    data["carbohydrate_counting_education"] = {
+        "total_passed": kpi_43_values["total_passed"],
+        "total_eligible": kpi_43_values["total_eligible"],
+        "pct": (
+            int(kpi_43_values["total_passed"] / kpi_43_values["total_eligible"] * 100)
+            if kpi_43_values["total_eligible"]
+            else 0
+        ),
+        "label": "Carbohydrate Counting Education",
+    }
+
+    return data
+
+
 def get_pt_demographic_value_counts(
     all_eligible_pts_queryset: QuerySet[Patient],
 ) -> tuple[
@@ -643,27 +730,27 @@ def get_hc_completion_rate_vcs(
     """
 
     # Just need pass and fail
-    vcs = {
-        "kpi_32_1_pct": {},
-        "kpi_32_2_pct": {},
-        "kpi_32_3_pct": {},
-    }
+    vcs = {}
     for ix, kpi_values in enumerate([kpi_32_1_values, kpi_32_2_values, kpi_32_3_values], start=1):
-        vcs[f"kpi_32_{ix}_pct"] = {
+        if ix == 1:
+            kpi_label = "< 12 years old"
+        elif ix == 2:
+            kpi_label = ">= 12 years old"
+        else:
+            kpi_label = "Overall"
+
+        vcs[f"kpi_32_{ix}_values"] = {
             "total_passed": kpi_values["total_passed"],
-            "total_failed": kpi_values["total_failed"],
+            "total_eligible": kpi_values["total_eligible"],
             "pct": (
-                int(
-                    kpi_values["total_passed"]
-                    / (kpi_values["total_passed"] + kpi_values["total_failed"])
-                    * 100
-                )
+                int(kpi_values["total_passed"] / kpi_values["total_eligible"] * 100)
                 if kpi_values["total_passed"]
                 else 0
             ),
+            "label": kpi_label,
         }
 
-    return dict(vcs)
+    return vcs
 
 
 def add_number_of_figures_coloured_for_chart(

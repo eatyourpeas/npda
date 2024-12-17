@@ -10,7 +10,7 @@
 {% else %}
   <div
   hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}"
-  hx-vals='{{ charts.hc_completion_rate_value_counts_pct.data }}'
+  hx-vals='{"data" : {{ charts.hc_completion_rate_value_counts_pct.data }}}'
   hx-trigger="load" hx-swap="innerHTML"></div>
   {% endif %}
 {% endblock %}
