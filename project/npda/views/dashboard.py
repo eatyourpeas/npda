@@ -116,7 +116,18 @@ def dashboard(request):
         pt_characteristics_value_counts
     )
 
-    # Sex, Ethnicity, IMD
+    # Health checks
+    # Get attr names for KPIs 32.1, 32.2, 32.3
+    kpi_32_1_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(321)
+    kpi_32_2_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(322)
+    kpi_32_3_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(323)
+    hc_completion_rate_value_counts_pct = get_hc_completion_rate_vcs(
+        kpi_32_1_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_1_attr_name],
+        kpi_32_2_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_2_attr_name],
+        kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
+    )
+    
+        # Sex, Ethnicity, IMD
     pt_sex_value_counts, pt_ethnicity_value_counts, pt_imd_value_counts = (
         get_pt_demographic_value_counts(
             all_eligible_pts_queryset=kpi_calculations_object["calculated_kpi_values"][
@@ -129,18 +140,7 @@ def dashboard(request):
     pt_ethnicity_value_counts_pct = convert_value_counts_dict_to_pct(pt_ethnicity_value_counts)
     pt_imd_value_counts_pct = convert_value_counts_dict_to_pct(pt_imd_value_counts)
 
-    # Health checks
-    # Get attr names for KPIs 32.1, 32.2, 32.3
-    kpi_32_1_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(321)
-    kpi_32_2_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(322)
-    kpi_32_3_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(323)
-    hc_completion_rate_value_counts_pct = get_hc_completion_rate_vcs(
-        kpi_32_1_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_1_attr_name],
-        kpi_32_2_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_2_attr_name],
-        kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
-    )
 
-    # pprint(hc_completion_rate_value_counts_pct)
 
     # Gather other context vars
     current_date = date.today()
