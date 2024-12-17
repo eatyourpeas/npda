@@ -5,14 +5,11 @@ This module contains functions that are used to extract NHS organisations from t
 # python imports
 import requests
 import logging
-from typing import Union, Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple
 
 # django imports
 from django.apps import apps
 from django.conf import settings
-from django.db import DatabaseError
-from django.forms.models import model_to_dict
-from requests.exceptions import HTTPError
 
 # RCPCH imports
 
@@ -78,13 +75,9 @@ def fetch_local_authorities_within_radius(
         f"?long={longitude}&lat={latitude}&radius={radius}"
     )
 
-    print(request_url)
-
     headers = {"Ocp-Apim-Subscription-Key": settings.RCPCH_NHS_ORGANISATIONS_API_KEY}
 
     response = requests.get(request_url, headers=headers, timeout=10)
     response.raise_for_status()
-
-    print(response.json())
 
     return response.json()["features"]

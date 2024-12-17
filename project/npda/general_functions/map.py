@@ -154,8 +154,6 @@ def generate_distance_from_organisation_scatterplot_figure(
     welsh_gdf = gpd.GeoDataFrame.from_file(welsh_file_path)
     english_gdf = gpd.GeoDataFrame.from_file(english_file_path)
 
-    # print(pdu_lead_organisation)
-
     # Get all the Local Authorities in a 10km radius of the paediatric_diabetes_unit
     local_authority_districts = fetch_local_authorities_within_radius(
         longitude=pdu_lead_organisation["longitude"],
@@ -174,21 +172,6 @@ def generate_distance_from_organisation_scatterplot_figure(
 
     # from the Welsh gdf remove all LSOAs that are not in the the local authority district (or principal areas as they are known in wales)
     welsh_gdf = welsh_gdf[welsh_gdf["ladcd"].isin(filtered_values)]
-
-    # load the LAD shapes (these include all LAD/Principal areas in England and Wales)
-    file_path = os.path.join(
-        settings.BASE_DIR,
-        "project",
-        "constants",
-        "English IMD 2019",
-        "Local_Authority_Districts_May_2024_Boundaries_UK_BUC_-7874909473231998297.geojson",
-    )
-    lad_gdf = gpd.GeoDataFrame.from_file(file_path)
-    # filter out unwanted LADs
-    lad_gdf = lad_gdf[lad_gdf["LAD24CD"].isin(filtered_values)]
-
-    # # convert 27700 to 4326
-    lad_gdf = lad_gdf.to_crs(epsg=4326)
 
     # Create a Plotly choropleth map with the filtered English LSOAs coloured by IMD Rank
     fig = go.Figure(
@@ -244,12 +227,28 @@ def generate_distance_from_organisation_scatterplot_figure(
         )
     )
 
+    # load the LAD shapes (these include all LAD/Principal areas in England and Wales)
+    file_path = os.path.join(
+        settings.BASE_DIR,
+        "project",
+        "constants",
+        "English IMD 2019",
+        "Local_Authority_Districts_December_2011_GCB_EW_2022_7332946967509599510.geojson",
+    )
+    lad_gdf = gpd.GeoDataFrame.from_file(file_path)
+    # filter out unwanted LADs
+    print(lad_gdf.columns)
+    lad_gdf = lad_gdf[lad_gdf["lad11cd"].isin(filtered_values)]
+
+    # # convert 27700 to 4326
+    lad_gdf = lad_gdf.to_crs(epsg=4326)
+
     # add a layer of English local authority shapes - these are black boundaries with no shading
     fig.add_trace(
         go.Choroplethmapbox(
             geojson=lad_gdf.__geo_interface__,
-            locations=lad_gdf["LAD24CD"],
-            featureidkey="properties.LAD24CD",
+            locations=lad_gdf["lad11cd"],
+            featureidkey="properties.lad11cd",
             z=[0]
             * len(english_gdf),  # Use a constant value to make the shapes transparent
             colorscale=[
@@ -258,7 +257,7 @@ def generate_distance_from_organisation_scatterplot_figure(
             ],  # Transparent color
             marker_line_width=0.5,
             marker_line_color="black",
-            customdata=lad_gdf[["LAD24NM"]].to_numpy(),
+            customdata=lad_gdf[["lad11nm"]].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><extra></extra>",  # Custom hover template
             showscale=False,
         )
@@ -268,8 +267,8 @@ def generate_distance_from_organisation_scatterplot_figure(
     fig.add_trace(
         go.Choroplethmapbox(
             geojson=lad_gdf.__geo_interface__,
-            locations=lad_gdf["LAD24CD"],
-            featureidkey="properties.LAD24CD",
+            locations=lad_gdf["lad11cd"],
+            featureidkey="properties.lad11cd",
             z=[0]
             * len(welsh_gdf),  # Use a constant value to make the shapes transparent
             colorscale=[
@@ -278,7 +277,7 @@ def generate_distance_from_organisation_scatterplot_figure(
             ],  # Transparent color
             marker_line_width=0.5,
             marker_line_color="black",
-            customdata=lad_gdf[["LAD24NM"]].to_numpy(),
+            customdata=lad_gdf[["lad11nm"]].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><extra></extra>",  # Custom hover template
             showscale=False,
         )
