@@ -436,7 +436,8 @@ def get_colored_figures_chart_partial(
 
 
 @login_and_otp_required()
-def get_health_checks_completion_rate_chart_partial(request):
+def get_simple_bar_chart_pcts_partial(request):
+    """Returns a HTML simple bar chart with percentages for the given data"""
     if not request.htmx:
         return HttpResponseBadRequest("This view is only accessible via HTMX")
 
@@ -480,7 +481,7 @@ def get_health_checks_completion_rate_chart_partial(request):
 
     return render(
         request,
-        "dashboard/health_checks_completion_rate_chart_partial.html",
+        "dashboard/simple_bar_chart_pcts_partial.html",
         {"chart_html": fig.to_html()},
     )
 
