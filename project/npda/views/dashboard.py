@@ -361,7 +361,7 @@ def get_map_chart_partial(request):
     try:
         pdu_lead_organisation = fetch_organisation_by_ods_code(
             ods_code=paediatric_diabetes_unit.lead_organisation_ods_code
-        )
+        )["properties"]
     except:
         raise ValueError(
             f"Lead organisation for PDU {paediatric_diabetes_unit.lead_organisation_ods_code=} not found"
