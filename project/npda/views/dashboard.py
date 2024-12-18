@@ -138,6 +138,16 @@ def dashboard(request):
         kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
     )
 
+    # Outcomes
+    # HbA1c 44+45 (mean, median)
+    kpi_44_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(44)
+    kpi_45_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(45)
+    hba1c_value_counts_stratified_by_diabetes_type = (
+        get_hba1c_value_counts_stratified_by_diabetes_type(
+            calculate_kpis_instance=calculate_kpis
+        )
+    )
+
     # Sex, Ethnicity, IMD
     pt_sex_value_counts, pt_ethnicity_value_counts, pt_imd_value_counts = (
         get_pt_demographic_value_counts(
@@ -469,7 +479,6 @@ def get_simple_bar_chart_pcts_partial(request):
     # Fetch data from query parameters
     # NOTE: don't need to handle empty data as the template handles this
     data_raw = json.loads(request.GET.get("data"))
-    print(f"{data_raw=}")
 
     x, y = [], []
     for _, values in data_raw.items():
@@ -750,6 +759,21 @@ def get_hc_completion_rate_vcs(
         }
 
     return vcs
+
+
+def get_hba1c_value_counts_stratified_by_diabetes_type(
+    calculate_kpis_instance: CalculateKPIS,
+) -> dict:
+    """Gets the data for plotting on the chart.
+    
+    The KPI class does not stratify by diabetes type so we need to do this here."""
+    
+    # Get the query sets (the hba1c value)
+    calculate_kpis_instance.calculate_kpi_44_mean_hba1c(stratify_by_diabetes_type=True)
+    
+    
+    
+    
 
 
 def add_number_of_figures_coloured_for_chart(

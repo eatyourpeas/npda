@@ -3288,9 +3288,14 @@ class CalculateKPIS:
 
     def calculate_kpi_44_mean_hba1c(
         self,
+        stratify_by_diabetes_type: bool = False,
     ) -> KPIResult:
         """
         Calculates KPI 44: Mean HbA1c
+        
+        Args:
+            stratify_by_diabetes_type (bool, optional):
+            used by dashboard view for HbA1C values.
 
         SINGLE NUMBER: Mean of HbA1c measurements (item 17) within the audit
         period, excluding measurements taken within 90 days of diagnosis
@@ -3308,23 +3313,28 @@ class CalculateKPIS:
         total_ineligible = self.total_patients_count - total_eligible
 
         # Calculate median HBa1c for each patient
-
+        visit_value_cols = ["patient__pk", "hba1c"]
+        if stratify_by_diabetes_type:
+            visit_value_cols.append("patient__diabetes_type")
         # Retrieve all visits with valid HbA1c values
         valid_visits = Visit.objects.filter(
             visit_date__range=self.AUDIT_DATE_RANGE,
             hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90),
             patient__in=eligible_patients,
-        ).values("patient__pk", "hba1c")
+        ).values(*visit_value_cols)
 
         # Group HbA1c values by patient ID into a list so can use
         # calculate_median method
         # We're doing this in Python instead of Django ORM because median
         # aggregation gets complicated
+        if stratify_by_diabetes_type: 
+            breakpoint()
         hba1c_values_by_patient = defaultdict(list)
         for visit in valid_visits:
             hba1c_values_by_patient[visit["patient__pk"]].append(
                 visit["hba1c"]
             )
+        
 
         # For each patient, calculate the median of their HbA1c values
         median_hba1cs = []
