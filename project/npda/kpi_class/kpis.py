@@ -3313,6 +3313,7 @@ class CalculateKPIS:
         valid_visits = Visit.objects.filter(
             visit_date__range=self.AUDIT_DATE_RANGE,
             hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90),
+            patient__in=eligible_patients,
         ).values("patient__pk", "hba1c")
 
         # Group HbA1c values by patient ID into a list so can use
@@ -3379,6 +3380,7 @@ class CalculateKPIS:
         valid_visits = Visit.objects.filter(
             visit_date__range=self.AUDIT_DATE_RANGE,
             hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90),
+            patient__in=eligible_patients,
         ).values("patient__pk", "hba1c")
 
         # Group HbA1c values by patient ID into a list so can use
