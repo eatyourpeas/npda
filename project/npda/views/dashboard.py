@@ -140,8 +140,6 @@ def dashboard(request):
 
     # Outcomes
     # HbA1c 44+45 (mean, median)
-    kpi_44_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(44)
-    kpi_45_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(45)
     hba1c_value_counts_stratified_by_diabetes_type = (
         get_hba1c_value_counts_stratified_by_diabetes_type(
             calculate_kpis_instance=calculate_kpis
