@@ -14,6 +14,7 @@ from ..general_functions import (
     validate_postcode,
     imd_for_postcode,
     calculate_centiles_z_scores,
+    location_for_postcode,
 )
 
 
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PatientExternalValidationResult:
     postcode: str | ValidationError | None
+    location_bng: str | ValidationError | None
+    location_wgs84: str | ValidationError | None
     gp_practice_ods_code: str | ValidationError | None
     gp_practice_postcode: str | ValidationError | None
     index_of_multiple_deprivation_quintile: str | None
@@ -54,6 +57,20 @@ async def _imd_for_postcode(
             return imd
         except HTTPError as err:
             logger.warning(f"Cannot calculate deprivation score for {postcode} {err}")
+
+
+async def _location_for_postcode(
+    postcode: str | None, async_client: AsyncClient
+) -> tuple[float, float] | None:
+    if postcode:
+        try:
+            lon, lat, location_wgs84, location_bng = await location_for_postcode(
+                postcode, async_client
+            )
+
+            return location_wgs84, location_bng
+        except HTTPError as err:
+            logger.warning(f"Cannot calculate location for {postcode} {err}")
 
 
 async def _gp_details_from_ods_code(
@@ -101,11 +118,14 @@ async def validate_patient_async(
     gp_practice_postcode: str | None,
     async_client: AsyncClient,
 ) -> PatientExternalValidationResult:
-    ret = PatientExternalValidationResult(None, None, None, None)
+    ret = PatientExternalValidationResult(None, None, None, None, None, None)
 
+    # Set up all the promises
     validate_postcode_task = _validate_postcode(postcode, async_client)
     imd_for_postcode_task = _imd_for_postcode(postcode, async_client)
+    location_for_postcode_task = _location_for_postcode(postcode, async_client)
 
+    # If we already have the GP practice ODS code, we can skip the postcode lookup
     if gp_practice_ods_code:
         gp_details_task = _gp_details_from_ods_code(gp_practice_ods_code, async_client)
     elif gp_practice_postcode:
@@ -115,31 +135,56 @@ async def validate_patient_async(
         gp_details_task.set_result(None)
 
     # This is the Python equivalent of Promise.allSettled
-    # Run all the lookups in parallel but retain exceptions per job rather than returning the first one
-    [postcode, index_of_multiple_deprivation_quintile, gp_details] = (
-        await asyncio.gather(
-            validate_postcode_task,
-            imd_for_postcode_task,
-            gp_details_task,
-            return_exceptions=True,
-        )
+    # Run all the postcode validation task first, then check for errors
+    # If there are no errors, run the the rest of the postcode validation tasks
+    [
+        postcode,
+        gp_details,
+    ] = await asyncio.gather(
+        validate_postcode_task,
+        gp_details_task,
+        return_exceptions=True,
     )
 
     if isinstance(postcode, Exception) and not type(postcode) is ValidationError:
-        raise postcode
+        raise postcode  # postcode has an error that is not to do with validation
     else:
         ret.postcode = postcode
+        if type(postcode) is ValidationError or postcode is None:
+            # the postcode is invalid. There is no point in running the IMD and location tasks
+            # Await the tasks, even though their results won't be used
+            await asyncio.gather(
+                imd_for_postcode_task,
+                location_for_postcode_task,
+                return_exceptions=True,
+            )
+            index_of_multiple_deprivation_quintile = None
+            location = None, None
+        else:
+            # the postcode is valid, so we can run the rest of the postcode validation tasks
+            [index_of_multiple_deprivation_quintile, location] = await asyncio.gather(
+                imd_for_postcode_task,
+                location_for_postcode_task,
+                return_exceptions=True,
+            )
 
-    if (
-        isinstance(index_of_multiple_deprivation_quintile, Exception)
-        and not type(index_of_multiple_deprivation_quintile) is ValidationError
-    ):
-        raise index_of_multiple_deprivation_quintile
-    else:
-        ret.index_of_multiple_deprivation_quintile = (
-            index_of_multiple_deprivation_quintile
-        )
+        if (
+            isinstance(index_of_multiple_deprivation_quintile, Exception)
+            and not type(index_of_multiple_deprivation_quintile) is ValidationError
+        ):
+            raise index_of_multiple_deprivation_quintile
+        else:
+            ret.index_of_multiple_deprivation_quintile = (
+                index_of_multiple_deprivation_quintile
+            )
 
+        if isinstance(location, Exception) and not type(location) is ValidationError:
+            raise location
+        else:
+            ret.location_bng = location[0]
+            ret.location_wgs84 = location[1]
+
+    # run the GP details task
     if type(gp_details) is ValidationError:
         if gp_practice_ods_code:
             # Assign error to original field
