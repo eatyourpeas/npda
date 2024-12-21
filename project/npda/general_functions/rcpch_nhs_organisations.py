@@ -80,4 +80,4 @@ def fetch_local_authorities_within_radius(
     response = requests.get(request_url, headers=headers, timeout=10)
     response.raise_for_status()
 
-    return response.json()["features"]
+    return response.json()
