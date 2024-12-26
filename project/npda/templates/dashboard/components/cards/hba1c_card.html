@@ -3,10 +3,7 @@
   HbA1c
 {% endblock card_title%}
 {% block card_body %}
-  <div class="mt-4 text-center text-gray-500">
-    <!-- Placeholder for Chart -->
-    Chart Placeholder
-  </div>
+  {{ charts.hba1c_value_counts.data|safe }}
 {% endblock %}
 
 

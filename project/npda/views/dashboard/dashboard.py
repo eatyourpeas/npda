@@ -155,9 +155,11 @@ def dashboard(request):
 
     # Outcomes
     # HbA1c 44+45 (mean, median)
+    # Annoyingly have to do this sync inside view as need the calculate_kpis instance
     hba1c_value_counts_stratified_by_diabetes_type = (
         get_hba1c_value_counts_stratified_by_diabetes_type(calculate_kpis_instance=calculate_kpis)
     )
+    logger.warning(f"{hba1c_value_counts_stratified_by_diabetes_type=}")
 
     # Sex, Ethnicity, IMD
     pt_sex_value_counts, pt_ethnicity_value_counts, pt_imd_value_counts = (
@@ -204,6 +206,9 @@ def dashboard(request):
             },
             "hc_completion_rate_value_counts_pct": {
                 "data": json.dumps(hc_completion_rate_value_counts_pct),
+            },
+            "hba1c_value_counts": {
+                "data": json.dumps(hba1c_value_counts_stratified_by_diabetes_type),
             },
             "pt_sex_value_counts_pct": {
                 "data": json.dumps(pt_sex_value_counts_pct),
@@ -472,7 +477,9 @@ def get_hba1c_value_counts_stratified_by_diabetes_type(
     The KPI class does not stratify by diabetes type so we need to do this here."""
 
     # Get the query sets (the hba1c value)
-    calculate_kpis_instance.calculate_kpi_44_mean_hba1c(stratify_by_diabetes_type=True)
+    hba1c_vals = calculate_kpis_instance.calculate_kpi_hba1c_vals_stratified_by_diabetes_type()
+
+    return hba1c_vals
 
 
 def add_number_of_figures_coloured_for_chart(
