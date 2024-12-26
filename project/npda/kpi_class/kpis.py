@@ -1149,7 +1149,10 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_13_one_to_three_injections_per_day(self) -> KPIResult:
+    def calculate_kpi_13_one_to_three_injections_per_day(
+        self,
+        eligible_patients: QuerySet[Patient],
+    ) -> KPIResult:
         """
         Calculates KPI 13: One - three injections/day
 
@@ -1160,6 +1163,8 @@ class CalculateKPIS:
         """
         eligible_patients, total_eligible = (
             self._get_total_kpi_1_eligible_pts_base_query_set_and_total_count()
+            if eligible_patients is None
+            else (eligible_patients, eligible_patients.count())
         )
 
         total_ineligible = self.total_patients_count - total_eligible
@@ -1191,7 +1196,10 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_14_four_or_more_injections_per_day(self) -> KPIResult:
+    def calculate_kpi_14_four_or_more_injections_per_day(
+        self,
+        eligible_patients: QuerySet[Patient],
+    ) -> KPIResult:
         """
         Calculates KPI 14: Four or more injections/day
 
@@ -1202,6 +1210,8 @@ class CalculateKPIS:
         """
         eligible_patients, total_eligible = (
             self._get_total_kpi_1_eligible_pts_base_query_set_and_total_count()
+            if eligible_patients is None
+            else (eligible_patients, eligible_patients.count())
         )
 
         total_ineligible = self.total_patients_count - total_eligible
@@ -1233,7 +1243,10 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
-    def calculate_kpi_15_insulin_pump(self) -> KPIResult:
+    def calculate_kpi_15_insulin_pump(
+        self,
+        eligible_patients: QuerySet[Patient],
+    ) -> KPIResult:
         """
         Calculates KPI 15: Insulin pump (including those using a pump as part of a hybrid closed loop)
 
@@ -1244,6 +1257,8 @@ class CalculateKPIS:
         """
         eligible_patients, total_eligible = (
             self._get_total_kpi_1_eligible_pts_base_query_set_and_total_count()
+            if eligible_patients is None
+            else (eligible_patients, eligible_patients.count())
         )
 
         total_ineligible = self.total_patients_count - total_eligible
