@@ -22,27 +22,7 @@ from project.npda.general_functions.rcpch_nhs_organisations import fetch_organis
 
 # RCPCH imports
 from project.npda.views.decorators import login_and_otp_required
-
-
-# Define our data constants
-TEXT = {
-    "health_checks": {
-        "title": "Seven Key Care Processes",
-        "description": "These care processes show the completion rate per patient for all 7 key care processes for Type 1 patients. Three of these are mandatory for patients of all ages: HbA1c, BMI, and Thyroid. The other care processes are only mandatory for patients aged 12 and above.",
-    },
-    "additional_care_processes": {
-        "title": "Additional Care Proccesses",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
-    },
-    "care_at_diagnosis": {
-        "title": "Care at Diagnosis",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
-    },
-    "outcomes": {
-        "title": "Outcomes",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
-    },
-}
+from project.npda.views.dashboard.dashboard import TEXT
 
 
 @login_and_otp_required()
