@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 from pprint import pprint
+from dateutil.relativedelta import relativedelta
 from datetime import date
 from typing import Literal
 
@@ -22,12 +23,16 @@ from project.constants.diabetes_types import DIABETES_TYPES
 from project.constants.ethnicities import ETHNICITIES
 from project.constants.sex_types import SEX_TYPE
 from project.constants.types.kpi_types import KPIRegistry
-from project.npda.general_functions.model_utils import print_instance_field_attrs
+from project.npda.general_functions.model_utils import (
+    get_model_field_attrs_and_vals,
+    print_instance_field_attrs,
+)
 from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
 from project.npda.models.paediatric_diabetes_unit import (
     PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
 )
 from project.npda.models.patient import Patient
+from project.npda.models.submission import Submission
 
 
 # HTMX imports
@@ -44,6 +49,9 @@ from ..general_functions.rcpch_nhs_organisations import fetch_organisation_by_od
 
 # RCPCH imports
 from .decorators import login_and_otp_required
+
+# LOGGING
+logger = logging.getLogger(__name__)
 
 # Define our data constants
 TEXT = {
@@ -75,9 +83,7 @@ def dashboard(request):
     if request.htmx:
         template = "dashboard/dashboard_base.html"
     pz_code = request.session.get("pz_code")
-    refresh_session_object_synchronously(
-        request=request, user=request.user, pz_code=pz_code
-    )
+    refresh_session_object_synchronously(request=request, user=request.user, pz_code=pz_code)
 
     PaediatricDiabetesUnit: PaediatricDiabetesUnitClass = apps.get_model(
         "npda", "PaediatricDiabetesUnit"
@@ -96,11 +102,30 @@ def dashboard(request):
     selected_audit_year = max(selected_audit_year, 2024)
     calculation_date = date(year=selected_audit_year, month=5, day=1)
 
-    calculate_kpis = CalculateKPIS(
-        calculation_date=calculation_date, return_pt_querysets=True
-    )
+    calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
 
     kpi_calculations_object = calculate_kpis.calculate_kpis_for_pdus(pz_codes=[pz_code])
+
+    # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+    # 🚨 TODO SHOULD BE REMOVED, JUST DURING DEV  🚨
+    # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+    """Temporary util to set some seeded patients to be eligible for kpi 7 (T1DM diagnosed
+    during the audit period) which is denominator for kpis 41-43.
+
+    This is because the default behaviour of the `PatientFactory` .build method (used in the
+    csv seeder) is to choose a random diabetes_diagnosis between the pt's DoB and audit_start_date.
+    """
+    _ = 10
+    logger.error(f"🔥 Setting first {_} patients to be eligible for KPI 7")
+    to_set_kpi_7_eligible = calculate_kpis.patients[:_]
+    for pt in to_set_kpi_7_eligible:
+        pt.diagnosis_date = calculate_kpis.audit_start_date + relativedelta(months=1)
+        pt.diabetes_type = DIABETES_TYPES[0][0]
+        pt.save()
+        logger.warning(f"Succesfully set {pt} to be eligible for KPI 7")
+    # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+    # 🚨 TODO SHOULD BE REMOVED, JUST DURING DEV  🚨
+    # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
 
     # From this, gather specific chart data required
 
@@ -119,8 +144,8 @@ def dashboard(request):
         kpi_calculations_object["calculated_kpi_values"],
     )
     # A single chart has 5 figures -> based on pct, return the number of figures coloured
-    pt_characteristics_value_counts_with_figure_counts = (
-        add_number_of_figures_coloured_for_chart(pt_characteristics_value_counts)
+    pt_characteristics_value_counts_with_figure_counts = add_number_of_figures_coloured_for_chart(
+        pt_characteristics_value_counts
     )
 
     # Care at diagnosis - kpis 41-43
@@ -148,9 +173,7 @@ def dashboard(request):
     # Outcomes
     # HbA1c 44+45 (mean, median)
     hba1c_value_counts_stratified_by_diabetes_type = (
-        get_hba1c_value_counts_stratified_by_diabetes_type(
-            calculate_kpis_instance=calculate_kpis
-        )
+        get_hba1c_value_counts_stratified_by_diabetes_type(calculate_kpis_instance=calculate_kpis)
     )
 
     # Sex, Ethnicity, IMD
@@ -163,9 +186,7 @@ def dashboard(request):
     )
     # Convert to pcts
     pt_sex_value_counts_pct = convert_value_counts_dict_to_pct(pt_sex_value_counts)
-    pt_ethnicity_value_counts_pct = convert_value_counts_dict_to_pct(
-        pt_ethnicity_value_counts
-    )
+    pt_ethnicity_value_counts_pct = convert_value_counts_dict_to_pct(pt_ethnicity_value_counts)
     pt_imd_value_counts_pct = convert_value_counts_dict_to_pct(pt_imd_value_counts)
 
     # Gather other context vars
@@ -178,9 +199,7 @@ def dashboard(request):
     # Gather defaults for htmx partials
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
-    highlight = {
-        f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()
-    }
+    highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
 
     context = {
         "pdu_object": pdu,
@@ -381,9 +400,7 @@ def get_waffle_chart_partial(request):
             "staticPlot": True,
         },
     )
-    return render(
-        request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html}
-    )
+    return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
 
 
 @login_and_otp_required()
@@ -417,9 +434,7 @@ def get_map_chart_partial(request):
 
     # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
     aggregated_distances, patient_distances_dataframe = (
-        generate_dataframe_and_aggregated_distance_data_from_cases(
-            filtered_cases=patients_to_plot
-        )
+        generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases=patients_to_plot)
     )
 
     # generate scatterplot of patients by distance from the selected organisation
@@ -608,9 +623,7 @@ def get_pt_characteristics_value_counts_pct(
     """
     # Get attribute names and labels
     relevant_kpis = [4, 5, 6, 8, 9, 10, 11, 12]
-    kpi_attr_names = [
-        kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis
-    ]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
 
     value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
     # These are all just counts so only total_eligble and total_ineligible have values
@@ -781,15 +794,11 @@ def get_hba1c_value_counts_stratified_by_diabetes_type(
     calculate_kpis_instance: CalculateKPIS,
 ) -> dict:
     """Gets the data for plotting on the chart.
-    
+
     The KPI class does not stratify by diabetes type so we need to do this here."""
-    
+
     # Get the query sets (the hba1c value)
     calculate_kpis_instance.calculate_kpi_44_mean_hba1c(stratify_by_diabetes_type=True)
-    
-    
-    
-    
 
 
 def add_number_of_figures_coloured_for_chart(
@@ -798,9 +807,7 @@ def add_number_of_figures_coloured_for_chart(
         dict[Literal["total_eligible", "total_ineligible", "pct"], int],
     ],
     n_figures_total: int = 5,
-) -> dict[
-    Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int
-]:
+) -> dict[Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int]:
     """
     Add number of figures coloured to a value counts dict
     """
@@ -809,9 +816,7 @@ def add_number_of_figures_coloured_for_chart(
 
     for category, vcs in value_counts_dict.items():
         for key, value in vcs.items():
-            value_counts_dict[category][key]["figures_coloured"] = int(
-                value["pct"] / divisor
-            )
+            value_counts_dict[category][key]["figures_coloured"] = int(value["pct"] / divisor)
 
     return dict(value_counts_dict)
 
@@ -844,9 +849,9 @@ def get_total_eligible_pts_diabetes_type_value_counts(
 ) -> dict:
     """Gets value counts dict for total eligible patients stratified by diabetes type"""
 
-    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values(
-        "diabetes_type"
-    ).annotate(count=Count("diabetes_type"))
+    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values("diabetes_type").annotate(
+        count=Count("diabetes_type")
+    )
     eligible_pts_diabetes_type_value_counts = defaultdict(int)
     for item in eligible_pts_diabetes_type_counts:
         diabetes_type = item["diabetes_type"]
@@ -899,9 +904,7 @@ def get_pt_characteristics_value_counts_pct(
     """
     # Get attribute names and labels
     relevant_kpis = [4, 5, 6, 8, 9, 10, 11, 12]
-    kpi_attr_names = [
-        kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis
-    ]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
 
     value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
     # These are all just counts so only total_eligble and total_ineligible have values
@@ -990,9 +993,7 @@ def add_number_of_figures_coloured_for_chart(
         dict[Literal["total_eligible", "total_ineligible", "pct"], int],
     ],
     n_figures_total: int = 5,
-) -> dict[
-    Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int
-]:
+) -> dict[Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int]:
     """
     Add number of figures coloured to a value counts dict
     """
@@ -1001,9 +1002,7 @@ def add_number_of_figures_coloured_for_chart(
 
     for category, vcs in value_counts_dict.items():
         for key, value in vcs.items():
-            value_counts_dict[category][key]["figures_coloured"] = int(
-                value["pct"] / divisor
-            )
+            value_counts_dict[category][key]["figures_coloured"] = int(value["pct"] / divisor)
 
     return dict(value_counts_dict)
 
@@ -1036,9 +1035,9 @@ def get_total_eligible_pts_diabetes_type_value_counts(
 ) -> dict:
     """Gets value counts dict for total eligible patients stratified by diabetes type"""
 
-    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values(
-        "diabetes_type"
-    ).annotate(count=Count("diabetes_type"))
+    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values("diabetes_type").annotate(
+        count=Count("diabetes_type")
+    )
     eligible_pts_diabetes_type_value_counts = defaultdict(int)
     for item in eligible_pts_diabetes_type_counts:
         diabetes_type = item["diabetes_type"]
@@ -1091,9 +1090,7 @@ def get_pt_characteristics_value_counts_pct(
     """
     # Get attribute names and labels
     relevant_kpis = [4, 5, 6, 8, 9, 10, 11, 12]
-    kpi_attr_names = [
-        kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis
-    ]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
 
     value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
     # These are all just counts so only total_eligble and total_ineligible have values
@@ -1182,9 +1179,7 @@ def add_number_of_figures_coloured_for_chart(
         dict[Literal["total_eligible", "total_ineligible", "pct"], int],
     ],
     n_figures_total: int = 5,
-) -> dict[
-    Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int
-]:
+) -> dict[Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int]:
     """
     Add number of figures coloured to a value counts dict
     """
@@ -1193,9 +1188,7 @@ def add_number_of_figures_coloured_for_chart(
 
     for category, vcs in value_counts_dict.items():
         for key, value in vcs.items():
-            value_counts_dict[category][key]["figures_coloured"] = int(
-                value["pct"] / divisor
-            )
+            value_counts_dict[category][key]["figures_coloured"] = int(value["pct"] / divisor)
 
     return dict(value_counts_dict)
 
