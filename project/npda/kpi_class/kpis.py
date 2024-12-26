@@ -1151,7 +1151,7 @@ class CalculateKPIS:
 
     def calculate_kpi_13_one_to_three_injections_per_day(
         self,
-        eligible_patients: QuerySet[Patient],
+        eligible_patients: QuerySet[Patient]=None,
     ) -> KPIResult:
         """
         Calculates KPI 13: One - three injections/day
@@ -1198,7 +1198,7 @@ class CalculateKPIS:
 
     def calculate_kpi_14_four_or_more_injections_per_day(
         self,
-        eligible_patients: QuerySet[Patient],
+        eligible_patients: QuerySet[Patient]=None,
     ) -> KPIResult:
         """
         Calculates KPI 14: Four or more injections/day
@@ -1245,7 +1245,7 @@ class CalculateKPIS:
 
     def calculate_kpi_15_insulin_pump(
         self,
-        eligible_patients: QuerySet[Patient],
+        eligible_patients: QuerySet[Patient]=None,
     ) -> KPIResult:
         """
         Calculates KPI 15: Insulin pump (including those using a pump as part of a hybrid closed loop)
