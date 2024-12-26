@@ -208,7 +208,8 @@ def dashboard(request):
                 "data": json.dumps(hc_completion_rate_value_counts_pct),
             },
             "hba1c_value_counts": {
-                "data": json.dumps(hba1c_value_counts_stratified_by_diabetes_type),
+                # No need to json-ify as data ready to render in template
+                "data": hba1c_value_counts_stratified_by_diabetes_type,
             },
             "pt_sex_value_counts_pct": {
                 "data": json.dumps(pt_sex_value_counts_pct),

@@ -3,7 +3,19 @@
   HbA1c
 {% endblock card_title%}
 {% block card_body %}
-  {{ charts.hba1c_value_counts.data|safe }}
+
+  <div class="grid grid-cols-2 text-center flex-grow justify-center items-center">
+    <div class="d-flex justify-self-center items-center w-full border-r  border-r-rcpch_mid_grey">
+      <h1>T1DM</h1>
+      <p class="text-sm py-1">Mean: {{ charts.hba1c_value_counts.data.t1dm.mean }} mmol/mol</p>
+      <p class="text-sm py-1">Median: {{ charts.hba1c_value_counts.data.t1dm.median }} mmol/mol</p>
+    </div>
+    <div class="d-flex justify-self-center items-center w-full border-l  border-l-rcpch_mid_grey">
+      <h1>T2DM</h1>
+      <p class="text-sm py-1">Mean: {{ charts.hba1c_value_counts.data.t2dm.mean }} mmol/mol</p>
+      <p class="text-sm py-1">Median: {{ charts.hba1c_value_counts.data.t2dm.median }} mmol/mol</p>
+    </div>
+  </div>
 {% endblock %}
 
 
