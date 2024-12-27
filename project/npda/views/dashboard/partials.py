@@ -326,7 +326,7 @@ def get_simple_bar_chart_pcts_partial(request):
         title="",
         xaxis_title="",
         yaxis_title="% CYP with T1DM",
-        yaxis=dict(range=[0, 100]),  # Fix range from 0 to 100
+        yaxis=dict(range=[0, 110]),  # Breathing room for percentages around 100
         template="simple_white",  # Clean grid style
         # Wrap text
         xaxis=dict(
