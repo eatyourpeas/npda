@@ -351,6 +351,7 @@ def get_simple_bar_chart_pcts_partial(request):
             tickangle=45 if len(x) > 3 else 0,
             automargin=True,  # Adjust margins for label space
         ),
+        margin=dict(l=0, r=0, t=0, b=0),
     )
 
     chart_html = fig.to_html(
