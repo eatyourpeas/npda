@@ -154,6 +154,8 @@ def generate_distance_from_organisation_scatterplot_figure(
     welsh_gdf = gpd.GeoDataFrame.from_file(welsh_file_path)
     english_gdf = gpd.GeoDataFrame.from_file(english_file_path)
 
+    english_gdf.set_geometry("geometry")
+
     # Get all the Local Authorities in a 10km radius of the paediatric_diabetes_unit
     local_authority_districts = fetch_local_authorities_within_radius(
         longitude=pdu_lead_organisation["longitude"],
@@ -161,14 +163,15 @@ def generate_distance_from_organisation_scatterplot_figure(
         radius=10000,  # 10km
     )
     # store the Local Authority District identifiers in a list
-    filtered_values = [
-        lad["properties"]["lad24cd"] for lad in local_authority_districts
-    ]
+    filtered_values = [lad["lad24cd"] for lad in local_authority_districts]
 
     # from the english gdf remove all LSOAs that are not in the local authority district list
-    english_gdf = english_gdf[
-        english_gdf["Local Authority District code (2019)"].isin(filtered_values)
-    ]
+    if "Local Authority District code (2019)" in english_gdf:
+        english_gdf = english_gdf[
+            english_gdf["Local Authority District code (2019)"].isin(filtered_values)
+        ]
+    else:
+        english_gdf = english_gdf[english_gdf["ladcd"].isin(filtered_values)]
 
     # from the Welsh gdf remove all LSOAs that are not in the the local authority district (or principal areas as they are known in wales)
     welsh_gdf = welsh_gdf[welsh_gdf["ladcd"].isin(filtered_values)]
@@ -177,14 +180,14 @@ def generate_distance_from_organisation_scatterplot_figure(
     fig = go.Figure(
         go.Choroplethmapbox(
             geojson=english_gdf.__geo_interface__,
-            locations=english_gdf["LSOA11CD"],
+            locations=english_gdf["LSOA code (2011)"],
             featureidkey="properties.LSOA11CD",
             z=english_gdf["Index of Multiple Deprivation (IMD) Rank"],
             colorscale=english_colorscale,
             marker_line_width=0,
             marker_opacity=0.5,
             customdata=english_gdf[
-                ["LSOA11NM", "Index of Multiple Deprivation (IMD) Decile"]
+                ["LSOA name (2011)", "Index of Multiple Deprivation (IMD) Decile"]
             ].to_numpy(),
             hovertemplate="<b>%{customdata[0]}</b><br>IMD Decile: %{customdata[1]}<extra></extra>",  # Custom hover template
             colorbar=dict(
@@ -411,7 +414,9 @@ def generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases):
         }, geo_df
 
 
-def generate_geojson_of_imd_and_lsoa_boundaries_for_country(country="england"):
+def generate_geojson_of_imd_and_lsoa_boundaries_for_country(
+    country="england", super_generalised=True
+):
     """
     lsoa 2011 boundaries and identifiers - 34753 records (England & Wales): "LSOA_2011_Boundaries_Super_Generalised_Clipped_BSC_EW_V4_8608708935797446279.geojson
     imd England 2019 data - 32844 records (England): "IMD2019.xlsx"
@@ -423,13 +428,22 @@ def generate_geojson_of_imd_and_lsoa_boundaries_for_country(country="england"):
     This function is only used to generate the files and should not be called in production
     """
 
-    file_path = os.path.join(
-        settings.BASE_DIR,
-        "project",
-        "constants",
-        "English IMD 2019",
-        "LSOA_2011_Boundaries_Super_Generalised_Clipped_BSC_EW_V4_8608708935797446279.geojson",
-    )
+    if super_generalised:
+        file_path = os.path.join(
+            settings.BASE_DIR,
+            "project",
+            "constants",
+            "English IMD 2019",
+            "LSOA_2011_Boundaries_Super_Generalised_Clipped_BSC_EW_V4_8608708935797446279.geojson",
+        )
+    else:
+        file_path = os.path.join(
+            settings.BASE_DIR,
+            "project",
+            "constants",
+            "English IMD 2019",
+            "LSOA_Dec_2011_Boundaries_Generalised_Clipped_BGC_EW_V3_-335161623626682850.geojson",
+        )
     england_wales_lsoas = gpd.read_file(file_path)  # 34753 LSOAs
 
     path = os.path.join(
@@ -469,27 +483,44 @@ def generate_geojson_of_imd_and_lsoa_boundaries_for_country(country="england"):
         wales_imd["Index of Multiple Deprivation (IMD) Rank"], 10, labels=False
     )
 
+    england_imd["LSOA code (2011)"] = england_imd["LSOA code (2011)"].astype(str)
+    england_wales_lsoas["LSOA11CD"] = england_wales_lsoas["LSOA11CD"].astype(str)
+    england_imd["LSOA code (2011)"] = england_imd["LSOA code (2011)"].str.strip()
+    england_wales_lsoas["LSOA11CD"] = england_wales_lsoas["LSOA11CD"].str.strip()
+
     # remove the empty geometry column from Wales
     # wales_imd.drop(columns=["geometry"])
 
-    if country == "England":
+    if country == "england":
         # merge the england&wales imd data with the england&wales geodataframe
-        england_wales_lsoas = england_wales_lsoas.merge(
-            england_imd, left_on="LSOA11CD", right_on="LSOA code (2011)", how="left"
-        )  # 34753 LSOAs
-    else:
-        england_wales_lsoas = england_wales_lsoas.merge(
-            wales_imd,
-            left_on="LSOA11CD",
-            right_on="LSOA code (2011)",
-            how="left",
-            suffixes=("", "_wales"),
+        merged_gdf = england_imd.merge(
+            england_wales_lsoas[
+                ["LSOA11CD", "geometry"]
+            ],  # Include only the matching column and geometry
+            left_on="LSOA code (2011)",
+            right_on="LSOA11CD",
+            how="inner",  # Retain only matching rows
         )
-        england_wales_lsoas.drop(columns=["geometry_wales"], inplace=True)
 
-    england_wales_lsoas = england_wales_lsoas.to_crs(epsg=4326)
-    england_wales_lsoas = england_wales_lsoas.__geo_interface__
+        # Convert the result to a GeoDataFrame and set the geometry column
+        merged_gdf = gpd.GeoDataFrame(merged_gdf, geometry="geometry")
+    else:
+        merged_gdf = wales_imd.merge(
+            england_wales_lsoas,
+            left_on="LSOA code (2011)",
+            right_on="LSOA11CD",
+            how="inner",  # Use 'inner', 'outer', 'left', or 'right' as needed
+        )
+
+    merged_gdf.to_crs(epsg=4326)
+
+    merged_gdf = merged_gdf.__geo_interface__
+
+    generalised = ""
+    if super_generalised:
+        generalised = "_super_generalised"
+    file_name = f"merged_lsoa_{country}{generalised}"
 
     # # convert the data to geojson
-    with open(f"merged_lsoa_{country}.json", "w") as f:
-        json.dump(england_wales_lsoas, f)
+    with open(f"{file_name}.json", "w") as f:
+        json.dump(merged_gdf, f)
