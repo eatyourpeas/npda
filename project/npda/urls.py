@@ -98,7 +98,7 @@ urlpatterns = [
         ),
         name="password_reset_confirm",
     ),
-    # Dashbaord views
+    # Dashboard views
     path(
         "dashboard",
         view=dashboard,
@@ -123,6 +123,16 @@ urlpatterns = [
         "get_colored_figures_chart_partial/<int:colored>/<int:total_figures>",
         view=get_colored_figures_chart_partial,
         name="get_colored_figures_chart_partial",
+    ),
+    path(
+        "get_simple_bar_chart_pcts_partial",
+        view=get_simple_bar_chart_pcts_partial,
+        name="get_simple_bar_chart_pcts_partial",
+    ),
+    path(
+        "get_hcl_scatter_plot",
+        view=get_hcl_scatter_plot,
+        name="get_hcl_scatter_plot",
     ),
     # End dashboard views
     path("csrf_fail/", csrf_fail, name="csrf_fail"),
