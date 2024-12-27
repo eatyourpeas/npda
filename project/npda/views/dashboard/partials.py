@@ -273,9 +273,9 @@ def get_simple_bar_chart_pcts_partial(request):
     Expects:
     {
         'attr_1': {
-            pct: int,
-            total_passed: int,
-            total_eligible: int,
+            pct: float,
+            count: int,
+            total: int,
             label: str,
         },
         'attr_2': {
