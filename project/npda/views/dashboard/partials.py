@@ -142,7 +142,7 @@ def get_waffle_chart_partial(request):
                     ),
                     name=square["category"],
                     showlegend=False,
-                    hoverinfo="skip",
+                    hovertemplate=f"{square['category']}<extra></extra>",
                 )
             )
 
@@ -155,14 +155,14 @@ def get_waffle_chart_partial(request):
                     mode="markers",
                     marker=dict(size=15, color=colours[idx], symbol="square"),
                     name=f"{pct}% {label}",
-                    hoverinfo="skip",
+                    # hoverinfo="skip",
                 )
             )
 
         fig.update_layout(
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
-            margin=dict(l=0, r=0, t=50, b=0),
+            margin=dict(l=0, r=0, t=0, b=0),
             legend=dict(orientation="h", y=1.1, x=0.5, xanchor="center"),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
@@ -174,7 +174,6 @@ def get_waffle_chart_partial(request):
             include_plotlyjs=False,
             config={
                 "displayModeBar": False,
-                "staticPlot": True,
             },
         )
         return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
