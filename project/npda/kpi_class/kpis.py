@@ -52,6 +52,7 @@ from project.constants.types.kpi_types import (
 )
 from project.constants.yes_no_unknown import YES_NO_UNKNOWN
 from project.npda.general_functions import get_audit_period_for_date
+from project.npda.general_functions.audit_period import get_quarters_for_audit_period
 from project.npda.models import Patient, Visit
 from project.npda.models.paediatric_diabetes_unit import PaediatricDiabetesUnit
 from project.npda.models.transfer import Transfer
@@ -1151,7 +1152,7 @@ class CalculateKPIS:
 
     def calculate_kpi_13_one_to_three_injections_per_day(
         self,
-        eligible_patients: QuerySet[Patient]=None,
+        eligible_patients: QuerySet[Patient] = None,
     ) -> KPIResult:
         """
         Calculates KPI 13: One - three injections/day
@@ -1198,7 +1199,7 @@ class CalculateKPIS:
 
     def calculate_kpi_14_four_or_more_injections_per_day(
         self,
-        eligible_patients: QuerySet[Patient]=None,
+        eligible_patients: QuerySet[Patient] = None,
     ) -> KPIResult:
         """
         Calculates KPI 14: Four or more injections/day
@@ -1245,7 +1246,7 @@ class CalculateKPIS:
 
     def calculate_kpi_15_insulin_pump(
         self,
-        eligible_patients: QuerySet[Patient]=None,
+        eligible_patients: QuerySet[Patient] = None,
     ) -> KPIResult:
         """
         Calculates KPI 15: Insulin pump (including those using a pump as part of a hybrid closed loop)
@@ -1713,6 +1714,87 @@ class CalculateKPIS:
             total_failed=total_failed,
             patient_querysets=patient_querysets,
         )
+
+    def get_kpi_24_hcl_use_stratified_by_quarter(
+        self,
+    ) -> QuerySet[Patient]:
+        """KPI24's calculate_() method doesn't do this per quarter, so separate method"""
+
+        # Denominator - eligible pts
+        total_kpi_1_eligible_pts_base_query_set, total_eligible_kpi_1 = (
+            self._get_total_kpi_1_eligible_pts_base_query_set_and_total_count()
+        )
+
+        # Get quarter dates
+        quarter_dates = get_quarters_for_audit_period(
+            audit_start_date=self.audit_start_date,
+            audit_end_date=self.audit_end_date,
+        )
+        result = {}
+        for q, (q_start_date, q_end_date) in enumerate(quarter_dates, start=1):
+            # Eligible kpi24 patients are those who are either on an insulin pump or insulin pump
+            # therapy
+            eligible_kpi_24_latest_visit_subquery = (
+                Visit.objects.filter(patient=OuterRef("pk"))
+                .filter(
+                    # Either:
+                    # 3 = insulin pump
+                    # or 6 = Insulin pump therapy plus other blood glucose lowering medication
+                    Q(treatment__in=[3, 6]),
+                    # Additionally, the visit must be within the quarter
+                    Q(visit_date__range=(q_start_date, q_end_date)),
+                )
+                .order_by("-visit_date")
+                .values("pk")[:1]
+            )
+            eligible_patients_kpi_24 = total_kpi_1_eligible_pts_base_query_set.filter(
+                Q(
+                    id__in=Subquery(
+                        Patient.objects.filter(
+                            visit__in=eligible_kpi_24_latest_visit_subquery
+                        ).values("id")
+                    )
+                )
+            )
+            total_eligible_kpi_24 = eligible_patients_kpi_24.count()
+
+            # So ineligible patients are
+            #   patients already ineligible for KPI 1
+            #   PLUS
+            #   the subset of total_kpi_1_eligible_pts_base_query_set
+            #   who are ineligible for kpi24 (not on an insulin pump or insulin pump therapy)
+            total_ineligible = (self.total_patients_count - total_eligible_kpi_1) + (
+                total_eligible_kpi_1 - total_eligible_kpi_24
+            )
+
+            # Passing patients are the subset of kpi_24 eligible who are on closed loop system
+            passing_patients = eligible_patients_kpi_24.filter(
+                Q(
+                    id__in=Subquery(
+                        Patient.objects.filter(
+                            Q(visit__in=eligible_kpi_24_latest_visit_subquery)
+                            # AND whose most recent entry for item 21 (based on visit date) is either
+                            # * 2 = Closed loop system (licenced)
+                            # * or 3 = Closed loop system (DIY, unlicenced)
+                            # * or 4 = Closed loop system (licence status unknown)
+                            & Q(visit__closed_loop_system__in=[2, 3, 4])
+                        ).values("id")
+                    )
+                )
+            )
+            total_passed = passing_patients.count()
+
+            kpi_result = {
+                "total_passed": total_passed,
+                "total_eligible": total_eligible_kpi_24,
+                "pct": round(
+                    (total_passed / total_eligible_kpi_24) * 100 if total_eligible_kpi_24 else 0, 1
+                ),
+            }
+
+            result[q] = kpi_result
+
+        return result
 
     def calculate_kpi_25_hba1c(
         self,

@@ -144,6 +144,9 @@ def dashboard(request):
         calculate_kpis.kpi_name_registry,
         kpi_calculations_object["calculated_kpi_values"],
     )
+    
+    # HCL Use
+    hcl_use_per_quarter_value_counts_pct = calculate_kpis.get_kpi_24_hcl_use_stratified_by_quarter()
 
     # Care at diagnosis - kpis 41-43
     # Get attr names for KPIs 41, 42, 43
