@@ -1,4 +1,8 @@
-{% if chart_html %}
+{% if error %}
+<div class="alert alert-danger">
+  <i class="fa-solid fa-person-circle-exclamation"></i> {{ error }}
+</div>
+{% elif chart_html %}
 {{ chart_html|safe }}
 {% else %}
 <div class="alert alert-info">

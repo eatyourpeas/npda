@@ -176,7 +176,6 @@ def dashboard(request):
     hba1c_value_counts_stratified_by_diabetes_type = (
         get_hba1c_value_counts_stratified_by_diabetes_type(calculate_kpis_instance=calculate_kpis)
     )
-    logger.warning(f"{hba1c_value_counts_stratified_by_diabetes_type=}")
 
     # Sex, Ethnicity, IMD
     pt_sex_value_counts, pt_ethnicity_value_counts, pt_imd_value_counts = (
@@ -223,6 +222,9 @@ def dashboard(request):
             },
             "glucose_monitoring_value_counts_pct": {
                 "data": json.dumps(glucose_monitoring_value_counts_pct),
+            },
+            "hcl_use_per_quarter_value_counts_pct": {
+                "data": json.dumps(hcl_use_per_quarter_value_counts_pct),
             },
             "care_at_diagnosis_value_count": {
                 "data": json.dumps(care_at_diagnosis_value_counts_pct),

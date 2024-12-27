@@ -9,7 +9,7 @@ from datetime import date, datetime, timedelta
 # Python imports
 from decimal import Decimal
 from pprint import pformat
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Literal, Optional, Tuple, Union
 
 from dateutil.relativedelta import relativedelta
 
@@ -1717,7 +1717,10 @@ class CalculateKPIS:
 
     def get_kpi_24_hcl_use_stratified_by_quarter(
         self,
-    ) -> QuerySet[Patient]:
+    ) -> dict[
+        Literal[1, 2, 3, 4],
+        dict[Literal["total_passed", "total_eligible", "pct"], int | float],
+    ]:
         """KPI24's calculate_() method doesn't do this per quarter, so separate method"""
 
         # Denominator - eligible pts
@@ -1757,15 +1760,6 @@ class CalculateKPIS:
                 )
             )
             total_eligible_kpi_24 = eligible_patients_kpi_24.count()
-
-            # So ineligible patients are
-            #   patients already ineligible for KPI 1
-            #   PLUS
-            #   the subset of total_kpi_1_eligible_pts_base_query_set
-            #   who are ineligible for kpi24 (not on an insulin pump or insulin pump therapy)
-            total_ineligible = (self.total_patients_count - total_eligible_kpi_1) + (
-                total_eligible_kpi_1 - total_eligible_kpi_24
-            )
 
             # Passing patients are the subset of kpi_24 eligible who are on closed loop system
             passing_patients = eligible_patients_kpi_24.filter(
