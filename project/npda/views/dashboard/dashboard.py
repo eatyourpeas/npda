@@ -187,6 +187,17 @@ def dashboard(request):
         get_hba1c_value_counts_stratified_by_diabetes_type(calculate_kpis_instance=calculate_kpis)
     )
 
+    # Admissions
+    # Get attr names for KPIs 46-7
+    admissions_kpi_attr_names = [
+        calculate_kpis.kpi_name_registry.get_attribute_name(kpi) for kpi in range(46, 48)
+    ]
+    admissions_value_counts_absolute = get_admissions_value_counts_absolute(
+        admissions_kpi_attr_names=admissions_kpi_attr_names,
+        kpi_calculations_object=kpi_calculations_object["calculated_kpi_values"],
+    )
+    print(f"{admissions_value_counts_absolute=}")
+
     # Sex, Ethnicity, IMD
     pt_sex_value_counts, pt_ethnicity_value_counts, pt_imd_value_counts = (
         get_pt_demographic_value_counts(
@@ -880,8 +891,17 @@ def get_additional_care_processes_value_counts(
     """Denominator already is CYP with T1DM (with completed year of care)
 
     So can just use values from kpi calculator. Just need to restructure and calc pct"""
-    
-    labels = ["HbA1c 4+", "Psychological Assessment", "Smoking status screened", "Referral to smoking cessation service", "Additional dietetic appointment offered", "Patients attending additional dietetic appointment", "Influenza immunisation reccommended", "Sick day rules advice"]
+
+    labels = [
+        "HbA1c 4+",
+        "Psychological Assessment",
+        "Smoking status screened",
+        "Referral to smoking cessation service",
+        "Additional dietetic appointment offered",
+        "Patients attending additional dietetic appointment",
+        "Influenza immunisation reccommended",
+        "Sick day rules advice",
+    ]
 
     value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
 
@@ -900,6 +920,21 @@ def get_additional_care_processes_value_counts(
         value_counts[kpi_attr]["label"] = labels[ix]
 
     return dict(value_counts)
+
+
+def get_admissions_value_counts_absolute(
+    admissions_kpi_attr_names: list[str],
+    kpi_calculations_object=dict,
+):
+    """Can simply get the .total_passed value for the absolute counts"""
+    labels = ["Total", "With DKA"]
+
+    absolute_value_counts = defaultdict(int)
+    for ix, kpi_attr in enumerate(admissions_kpi_attr_names):
+        absolute_value_counts[labels[ix]] = kpi_calculations_object[kpi_attr]["total_passed"]
+    
+    return absolute_value_counts
+        
 
 
 def get_pt_demographic_value_counts(
