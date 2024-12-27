@@ -276,11 +276,18 @@ def get_simple_bar_chart_pcts_partial(request):
         }
         ...
     }
+    
+    Optionally accepts:
+        request.GET.get("color"): str, hex color code to use for the bars
     """
     if not request.htmx:
         return HttpResponseBadRequest("This view is only accessible via HTMX")
 
     # Fetch data from query parameters
+    
+    # Bar color
+    bar_color = request.GET.get("color", RCPCH_LIGHT_BLUE)
+    
     # NOTE: don't need to handle empty data as the template handles this
     data_raw = json.loads(request.GET.get("data"))
 
@@ -298,7 +305,7 @@ def get_simple_bar_chart_pcts_partial(request):
             y=y,
             text=y,
             textposition="outside",
-            marker=dict(color=RCPCH_LIGHT_BLUE),
+            marker=dict(color=f"#{bar_color}"),
         )
     )
 

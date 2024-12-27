@@ -9,11 +9,11 @@
   </div>
 {% else %}
   <div
-  hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}"
+  hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}?color=E00087"
   hx-vals='{ "data" : {{ charts.tx_regimen_value_counts_pct.data }} }'
   hx-trigger="load" hx-swap="innerHTML"></div>
   <div
-  hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}"
+  hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}?color=E00087"
   hx-vals='{ "data" : {{ charts.glucose_monitoring_value_counts_pct.data }} }'
   hx-trigger="load" hx-swap="innerHTML"></div>
 {% endif %}
