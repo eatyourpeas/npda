@@ -286,7 +286,12 @@ def get_simple_bar_chart_pcts_partial(request):
     # Fetch data from query parameters
     
     # Bar color
-    bar_color = request.GET.get("color", RCPCH_LIGHT_BLUE)
+    if bar_color := request.GET.get("color", None):
+        # Easier just to send the hex code as a string in request url
+        # so add the '#' if it's not there
+        bar_color = f"#{bar_color}" if bar_color[0] != "#" else bar_color
+    else:
+        bar_color = RCPCH_DARK_BLUE
     
     # NOTE: don't need to handle empty data as the template handles this
     data_raw = json.loads(request.GET.get("data"))
@@ -305,7 +310,7 @@ def get_simple_bar_chart_pcts_partial(request):
             y=y,
             text=y,
             textposition="outside",
-            marker=dict(color=f"#{bar_color}"),
+            marker=dict(color=bar_color),
         )
     )
 
