@@ -320,7 +320,20 @@ def get_simple_bar_chart_pcts_partial(request):
             marker=dict(color=bar_color),
         )
     )
-    
+
+    # Adjust x-axis labels to avoid overlap
+    if len(x) > 3:
+        ticktext = []
+        CUT_OFF_CHAR_LEN = 10
+        for label in x:
+            if len(label) > CUT_OFF_CHAR_LEN:
+                # Label too long, cut off at CUT_OFF_CHAR_LEN characters
+                ticktext.append(label[:CUT_OFF_CHAR_LEN] + "...")
+            else:
+                ticktext.append(label)
+    else:
+        # # Wrap text with <br>
+        ticktext = [label.replace(" ", "<br>") for label in x]
 
     # Update layout for labels and formatting
     fig.update_layout(
@@ -333,8 +346,9 @@ def get_simple_bar_chart_pcts_partial(request):
         xaxis=dict(
             tickmode="array",
             tickvals=list(range(len(x))),
-            ticktext=[label.replace(" ", "<br>") for label in x],  # Wrap text with <br>
-            tickangle=0,  # Ensure text is horizontal
+            ticktext=ticktext,
+            # Rotate labels if they are too long
+            tickangle=45 if len(x) > 3 else 0,
             automargin=True,  # Adjust margins for label space
         ),
     )
