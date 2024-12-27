@@ -3402,6 +3402,9 @@ class CalculateKPIS:
         duplicate entries
 
         Denominator: Total number of eligible patients (measure 1)
+        
+        NOTE: possible refactor could just be applying additional filter checking DKA to the 
+        KPI 46 calculation, but for now keeping separate
         """
         eligible_patients, total_eligible = (
             self._get_total_kpi_1_eligible_pts_base_query_set_and_total_count()
