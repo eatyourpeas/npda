@@ -92,11 +92,15 @@ def dashboard(request):
     # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
     # 🚨 TODO SHOULD BE REMOVED, JUST DURING DEV  🚨
     # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
-    """Temporary util to set some seeded patients to be eligible for kpi 7 (T1DM diagnosed
-    during the audit period) which is denominator for kpis 41-43.
+    """Temporary util to set some seeded patients attrs manually
+    
+    KPI7
+        to be eligible for kpi 7 (T1DM diagnosed
+        during the audit period) which is denominator for kpis 41-43.
 
-    This is because the default behaviour of the `PatientFactory` .build method (used in the
-    csv seeder) is to choose a random diabetes_diagnosis between the pt's DoB and audit_start_date.
+        This is because the default behaviour of the `PatientFactory` .build method (used in the
+        csv seeder) is to choose a random diabetes_diagnosis between the pt's DoB and audit_start_date.
+    
     """
     _ = 10
     logger.error(f"🔥 Setting first {_} patients to be eligible for KPI 7")
@@ -740,8 +744,8 @@ def get_tx_regimen_value_counts_pcts(
         total_ineligible = kpi_calculations_object[kpi_attr]["total_ineligible"]
 
         # Need these keys for bar chart partial
-        value_counts[kpi_attr]["total_passed"] = total_eligible
-        value_counts[kpi_attr]["total_eligible"] = total_eligible + total_ineligible
+        value_counts[kpi_attr]["count"] = total_eligible
+        value_counts[kpi_attr]["total"] = total_eligible + total_ineligible
         value_counts[kpi_attr]["pct"] = (
             int(total_eligible / value_counts[kpi_attr]["total"] * 100)
             if value_counts[kpi_attr]["total"] > 0
