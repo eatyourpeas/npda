@@ -453,7 +453,7 @@ def get_hcl_scatter_plot(request):
                 symbol="square",
             ),
             line=dict(color=RCPCH_LIGHT_BLUE),
-            hovertemplate="<b>%{x}</b>:Eligible passed: %{customdata[0]} / %{customdata[1]} (%{y:.1f}%)",
+            hovertemplate="<b>%{x}</b>:Eligible passed: %{customdata[0]} / %{customdata[1]} (%{y:.1f}%)<extra></extra>",
             customdata=list(zip(passed, eligible)),
         )
     )
