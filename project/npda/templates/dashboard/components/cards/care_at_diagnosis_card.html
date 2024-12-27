@@ -12,7 +12,7 @@
   hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}"
   hx-vals='{ "data" : {{ charts.care_at_diagnosis_value_count.data }} }'
   hx-trigger="load" hx-swap="innerHTML"></div>
-  {% endif %}
+{% endif %}
 {% endblock %}
 
 

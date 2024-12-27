@@ -131,6 +131,16 @@ def dashboard(request):
         pt_characteristics_value_counts
     )
 
+    # Get TreatmentRegimen / Glucose Monitoring
+    tx_regimen_value_counts_pct = get_tx_regimen_value_counts_pcts(
+        calculate_kpis.kpi_name_registry,
+        kpi_calculations_object["calculated_kpi_values"],
+    )
+    glucose_monitoring_value_counts_pct = get_glucose_monitoring_value_counts_pcts(
+        calculate_kpis.kpi_name_registry,
+        kpi_calculations_object["calculated_kpi_values"],
+    )
+
     # Care at diagnosis - kpis 41-43
     # Get attr names for KPIs 41, 42, 43
     kpi_41_attr_name = calculate_kpis.kpi_name_registry.get_attribute_name(41)
@@ -155,7 +165,7 @@ def dashboard(request):
 
     # Outcomes
     # HbA1c 44+45 (mean, median)
-    # Annoyingly have to do this sync inside view as need the calculate_kpis instance
+    # Annoyingly have to do this sync inside view as need the calculate_kpis instance
     hba1c_value_counts_stratified_by_diabetes_type = (
         get_hba1c_value_counts_stratified_by_diabetes_type(calculate_kpis_instance=calculate_kpis)
     )
@@ -200,6 +210,12 @@ def dashboard(request):
             },
             "pt_characteristics_value_counts": {
                 "data": pt_characteristics_value_counts_with_figure_counts,
+            },
+            "tx_regimen_value_counts_pct": {
+                "data": json.dumps(tx_regimen_value_counts_pct),
+            },
+            "glucose_monitoring_value_counts_pct": {
+                "data": json.dumps(glucose_monitoring_value_counts_pct),
             },
             "care_at_diagnosis_value_count": {
                 "data": json.dumps(care_at_diagnosis_value_counts_pct),
@@ -697,6 +713,80 @@ def get_total_eligible_pts_diabetes_type_value_counts(
     )
 
     return eligible_pts_diabetes_type_value_counts
+
+
+def get_tx_regimen_value_counts_pcts(
+    kpi_name_registry: KPIRegistry,
+    kpi_calculations_object: dict,
+) -> dict:
+    """Get value counts with pcts for treatment regimen KPIs
+
+    - treatment_regimen (KPIs 13-15)
+    """
+    # Get attribute names and labels
+    relevant_kpis = [13, 14, 15]
+    # Labels used for bar chart htmx partial
+    labels = [
+        "1-3 insulin injections per day",
+        "Multiple injections per day",
+        "Insulin pump",
+    ]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
+
+    value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
+
+    for label, kpi_attr in zip(labels, kpi_attr_names):
+        total_eligible = kpi_calculations_object[kpi_attr]["total_eligible"]
+        total_ineligible = kpi_calculations_object[kpi_attr]["total_ineligible"]
+
+        # Need these keys for bar chart partial
+        value_counts[kpi_attr]["total_passed"] = total_eligible
+        value_counts[kpi_attr]["total_eligible"] = total_eligible + total_ineligible
+        value_counts[kpi_attr]["pct"] = (
+            int(total_eligible / value_counts[kpi_attr]["total"] * 100)
+            if value_counts[kpi_attr]["total"] > 0
+            else 0
+        )
+        value_counts[kpi_attr]["label"] = label
+
+    return dict(value_counts)
+
+
+def get_glucose_monitoring_value_counts_pcts(
+    kpi_name_registry: KPIRegistry,
+    kpi_calculations_object: dict,
+) -> dict:
+    """Get value counts with pcts for glucose monitoring KPIs:
+
+    - glucose_monitoring (KPIs 21-23)
+    """
+    # Get attribute names and labels
+    relevant_kpis = [21, 22, 23]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
+
+    # Labels used for bar chart htmx partial
+    labels = [
+        "Flash glucose monitor",
+        "Continuous glucose monitor with alarms",
+        "T1DM and Continuous glucose monitor with alarms",
+    ]
+
+    value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
+
+    for label, kpi_attr in zip(labels, kpi_attr_names):
+        total_eligible = kpi_calculations_object[kpi_attr]["total_eligible"]
+        total_ineligible = kpi_calculations_object[kpi_attr]["total_ineligible"]
+
+        value_counts[kpi_attr]["count"] = total_eligible
+        value_counts[kpi_attr]["total"] = total_eligible + total_ineligible
+        value_counts[kpi_attr]["pct"] = (
+            int(total_eligible / value_counts[kpi_attr]["total"] * 100)
+            if value_counts[kpi_attr]["total"] > 0
+            else 0
+        )
+        value_counts[kpi_attr]["label"] = label
+
+    return dict(value_counts)
 
 
 def get_pt_characteristics_value_counts_pct(
