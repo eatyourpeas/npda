@@ -9,7 +9,7 @@
   </div>
 {% else %}
   <div
-  hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}"
+  hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}?color=E00087"
   hx-vals='{"data" : {{ charts.additional_care_processes_value_counts_pct.data }}}'
   hx-trigger="load" hx-swap="innerHTML"></div>
   {% endif %}
