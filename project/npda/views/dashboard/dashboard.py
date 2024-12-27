@@ -260,6 +260,9 @@ def dashboard(request):
                 # No need to json-ify as data ready to render in template
                 "data": hba1c_value_counts_stratified_by_diabetes_type,
             },
+            "admissions_value_counts_absolute": {
+                "data": admissions_value_counts_absolute,
+            },
             "pt_sex_value_counts_pct": {
                 "data": json.dumps(pt_sex_value_counts_pct),
             },
@@ -927,14 +930,12 @@ def get_admissions_value_counts_absolute(
     kpi_calculations_object=dict,
 ):
     """Can simply get the .total_passed value for the absolute counts"""
-    labels = ["Total", "With DKA"]
 
-    absolute_value_counts = defaultdict(int)
-    for ix, kpi_attr in enumerate(admissions_kpi_attr_names):
-        absolute_value_counts[labels[ix]] = kpi_calculations_object[kpi_attr]["total_passed"]
-    
+    absolute_value_counts = {}
+    for kpi_attr in admissions_kpi_attr_names:
+        absolute_value_counts[kpi_attr] = kpi_calculations_object[kpi_attr]["total_passed"]
+
     return absolute_value_counts
-        
 
 
 def get_pt_demographic_value_counts(
