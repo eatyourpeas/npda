@@ -53,6 +53,7 @@ from project.constants.types.kpi_types import (
 from project.constants.yes_no_unknown import YES_NO_UNKNOWN
 from project.npda.general_functions import get_audit_period_for_date
 from project.npda.general_functions.audit_period import get_quarters_for_audit_period
+from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
 from project.npda.models import Patient, Visit
 from project.npda.models.paediatric_diabetes_unit import PaediatricDiabetesUnit
 from project.npda.models.transfer import Transfer
@@ -1733,6 +1734,9 @@ class CalculateKPIS:
             audit_start_date=self.audit_start_date,
             audit_end_date=self.audit_end_date,
         )
+        # Only up to current quarter
+        current_quarter = retrieve_quarter_for_date(date.today())
+        quarter_dates = quarter_dates[:current_quarter]
         result = {}
         for q, (q_start_date, q_end_date) in enumerate(quarter_dates, start=1):
             # Eligible kpi24 patients are those who are either on an insulin pump or insulin pump
