@@ -196,7 +196,6 @@ def dashboard(request):
         admissions_kpi_attr_names=admissions_kpi_attr_names,
         kpi_calculations_object=kpi_calculations_object["calculated_kpi_values"],
     )
-    print(f"{admissions_value_counts_absolute=}")
 
     # Sex, Ethnicity, IMD
     pt_sex_value_counts, pt_ethnicity_value_counts, pt_imd_value_counts = (

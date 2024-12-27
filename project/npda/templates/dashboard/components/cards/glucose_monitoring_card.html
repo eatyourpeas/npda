@@ -1,6 +1,6 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
-  Treatment Regimen
+Glucose Monitoring
 {% endblock card_title%}
 {% block card_body %}
 {% if charts.care_at_diagnosis_value_count.data.coeliac_disease_screening.total_eligible == 0 %}
@@ -11,7 +11,7 @@
 
     <div
     hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}?color=E00087"
-    hx-vals='{ "data" : {{ charts.tx_regimen_value_counts_pct.data }} }'
+    hx-vals='{ "data" : {{ charts.glucose_monitoring_value_counts_pct.data }} }'
     hx-trigger="load" hx-swap="innerHTML"></div>
 
 {% endif %}

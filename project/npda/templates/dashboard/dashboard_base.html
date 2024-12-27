@@ -33,16 +33,24 @@
   <!-- UNIT REPORT -->
   <h1 class="text-5xl text-center my-6">Unit Report</h1>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+
     <!-- PATIENT CHARACTERISTICS CARD -->
     {% include 'dashboard/components/cards/patient_characteristics_card.html' %}
-    <!-- TREATMENT REGIMEN CARD -->
-    {% include 'dashboard/components/cards/treatment_regimen_card.html' %}
+
+    <div class="flex flex-col gap-3">
+      <!-- TREATMENT REGIMEN CARD -->
+      {% include 'dashboard/components/cards/treatment_regimen_card.html' %}
+      <!-- GLUCOSE MONITORING CARD -->
+      {% include 'dashboard/components/cards/glucose_monitoring_card.html' %}
+    </div>
+
     <div class="flex flex-col gap-3">
       <!-- HCL CARD -->
       {% include 'dashboard/components/cards/hcl_use_card.html' %}
       <!-- care at diagnosis CARD -->
       {% include 'dashboard/components/cards/care_at_diagnosis_card.html' %}
     </div>
+
   </div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
     <!-- HEALTH CHECKS COMPLETION RATE CARD -->
