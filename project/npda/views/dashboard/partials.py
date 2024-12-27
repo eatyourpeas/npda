@@ -320,6 +320,7 @@ def get_simple_bar_chart_pcts_partial(request):
             marker=dict(color=bar_color),
         )
     )
+    
 
     # Update layout for labels and formatting
     fig.update_layout(

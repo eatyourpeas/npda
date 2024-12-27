@@ -144,7 +144,7 @@ def dashboard(request):
         calculate_kpis.kpi_name_registry,
         kpi_calculations_object["calculated_kpi_values"],
     )
-    
+
     # HCL Use
     hcl_use_per_quarter_value_counts_pct = calculate_kpis.get_kpi_24_hcl_use_stratified_by_quarter()
 
@@ -168,6 +168,16 @@ def dashboard(request):
         kpi_32_1_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_1_attr_name],
         kpi_32_2_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_2_attr_name],
         kpi_32_3_values=kpi_calculations_object["calculated_kpi_values"][kpi_32_3_attr_name],
+    )
+
+    # Additional care processes
+    # Get attr names for KPIs 33-40
+    additional_care_processes_kpi_attr_names = [
+        calculate_kpis.kpi_name_registry.get_attribute_name(kpi) for kpi in range(33, 41)
+    ]
+    additional_care_processes_value_counts_pct = get_additional_care_processes_value_counts(
+        additional_care_processes_kpi_attr_names=additional_care_processes_kpi_attr_names,
+        kpi_calculations_object=kpi_calculations_object["calculated_kpi_values"],
     )
 
     # Outcomes
@@ -228,6 +238,9 @@ def dashboard(request):
             },
             "care_at_diagnosis_value_count": {
                 "data": json.dumps(care_at_diagnosis_value_counts_pct),
+            },
+            "additional_care_processes_value_counts_pct": {
+                "data": json.dumps(additional_care_processes_value_counts_pct),
             },
             "hc_completion_rate_value_counts_pct": {
                 "data": json.dumps(hc_completion_rate_value_counts_pct),
@@ -858,6 +871,35 @@ def get_pt_characteristics_value_counts_pct(
         categories_vc["comorbidity_and_testing"][kpi_attr] = value_counts[kpi_attr]
 
     return dict(categories_vc)
+
+
+def get_additional_care_processes_value_counts(
+    additional_care_processes_kpi_attr_names: list[str],
+    kpi_calculations_object: dict,
+) -> dict:
+    """Denominator already is CYP with T1DM (with completed year of care)
+
+    So can just use values from kpi calculator. Just need to restructure and calc pct"""
+    
+    labels = ["HbA1c 4+", "Psychological Assessment", "Smoking status screened", "Referral to smoking cessation service", "Additional dietetic appointment offered", "Patients attending additional dietetic appointment", "Influenza immunisation reccommended", "Sick day rules advice"]
+
+    value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
+
+    for ix, kpi_attr in enumerate(additional_care_processes_kpi_attr_names):
+        total_eligible = kpi_calculations_object[kpi_attr]["total_eligible"]
+        total_ineligible = kpi_calculations_object[kpi_attr]["total_ineligible"]
+
+        # Need all 3 for front end chart
+        value_counts[kpi_attr]["count"] = total_eligible
+        value_counts[kpi_attr]["total"] = total_eligible + total_ineligible
+        value_counts[kpi_attr]["pct"] = (
+            round(total_eligible / value_counts[kpi_attr]["total"] * 100, 1)
+            if value_counts[kpi_attr]["total"] > 0
+            else 0
+        )
+        value_counts[kpi_attr]["label"] = labels[ix]
+
+    return dict(value_counts)
 
 
 def get_pt_demographic_value_counts(

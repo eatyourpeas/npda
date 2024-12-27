@@ -1,12 +1,18 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
-  Additional Care Procceses
+  Additional Care Proccesses
 {% endblock card_title%}
 {% block card_body %}
-  <div class="mt-4 text-center text-gray-500">
-    <!-- Placeholder for Chart -->
-    Chart Placeholder
+{% if charts.pt_characteristics_value_counts.data.care.kpi_4_total_t1dm_gte_12yo.total == 0 %}
+  <div class="alert alert-info">
+    <i class="fa-solid fa-person-circle-exclamation"></i> No eligible patients.
   </div>
+{% else %}
+  <div
+  hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}"
+  hx-vals='{"data" : {{ charts.additional_care_processes_value_counts_pct.data }}}'
+  hx-trigger="load" hx-swap="innerHTML"></div>
+  {% endif %}
 {% endblock %}
 
 
