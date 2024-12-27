@@ -453,7 +453,7 @@ def get_hcl_scatter_plot(request):
                 symbol="square",
             ),
             line=dict(color=RCPCH_LIGHT_BLUE),
-            hovertemplate="<b>%{x}</b><br>Passed: %{customdata[0]}<br>Eligible: %{customdata[1]}<br>Percentage: %{y:.1f}%",
+            hovertemplate="<b>%{x}</b>:Eligible passed: %{customdata[0]} / %{customdata[1]} (%{y:.1f}%)",
             customdata=list(zip(passed, eligible)),
         )
     )
@@ -466,7 +466,8 @@ def get_hcl_scatter_plot(request):
         # If the final point is < 10, don't offset below as goes off the chart
         yshift = -Y_SHIFT if last_pct > (Y_SHIFT) else Y_SHIFT
     else:
-        yshift = Y_SHIFT if last_pct < (100 - Y_SHIFT) else -Y_SHIFT
+        # Don't need to account for going off the chart at top as added space
+        yshift = Y_SHIFT
     fig.add_annotation(
         x=quarters[-1],
         y=percentages[-1],
@@ -482,6 +483,7 @@ def get_hcl_scatter_plot(request):
         yaxis=dict(title="% CYP with HCL Use", range=[0, 110]),
         showlegend=False,
         template="simple_white",  # Clean grid style
+        margin=dict(l=0, r=0, t=0, b=0),
     )
 
     chart_html = fig.to_html(
