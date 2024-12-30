@@ -135,6 +135,7 @@ nav:
     - 'legal/privacy.md'
     - 'legal/terms-of-service.md'
   - Developer:
+    - 'developer/useful-scripts.md'
     - 'developer/branding.md'
     - 'developer/code-style.md'
     - 'developer/database.md'

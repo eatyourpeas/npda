@@ -16,16 +16,3 @@ The RCPCH full brand guidance can be found [here](https://github.com/rcpch/rcpch
 ## Use of TailwindCSS
 
 Note that the NPDA audit uses [TailwindCSS](https://tailwindcss.com/) with custom variables to conform to RCPCH branding.
-
-!!! info "Tailwind CSS CLI - Using watch to speed up development"
-    Tailwind is a large package, so "tree-shakes" unused CSS classes on build. Because of this, it is necessary to rebuild the styles.css file (i.e., "rerun treeshaking") when adding Tailwind classes to templates that haven't been used elsewhere. By rebuilding, Tailwind will automatically find and add classes to styles.css. 
-    
-    For one-off rebuilds:
-    ```console
-    docker compose exec -it django npm run build:css
-    ```
-    
-    To avoid multiple rebuilds, you can leverage Tailwind's CLI `watch` command using: 
-    ```console
-    docker compose exec -it django npm run watch:css
-    ```
