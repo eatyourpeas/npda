@@ -1,8 +1,10 @@
 {% load npda_tags %}
 <header class="sticky top-0 z-[70]">
-  <div class="navbar bg-base-100 p-0 min-h-14">
-    <div class="navbar-start">
+  <div class="navbar bg-base-100 p-0">
+    <div class="">
       <div class="dropdown z-[70]">
+
+        {% comment %} MOBILE BURGER ICON {% endcomment %}
         <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
           <i class="fa-solid fa-bars"></i>
         </div>
@@ -10,68 +12,40 @@
           {% comment %} NAV LINKS {% endcomment %}
           {% include 'navbar/components/nav_links.html' %}
 
-          {% if user.is_superuser %}
-            <hr class="divider">
-            <ul class="p-3">
-              <div class="-mt-2 underline underline-offset-8 p-2 w-full text-center font-semibold">
-                <i class="fa-solid fa-solar-panel"></i> Control Panel
-              </div>
-              <div class="flex justify-center">
-                <li>
-                  <a href="{% url 'admin:index' %}"
-                     target="_blank"
-                     class="text-xs block font-montserrat font-semibold py-2 bg-rcpch_dark_blue hover:bg-rcpch_light_blue_tint1 active:bg-rcpch_pink focus:bg-rcpch_pink text-white"><i class="fa-solid fa-up-right-from-square"></i> Admin</a>
-                </li>
-              </div>
-            </ul>
-          {% endif %}
         </ul>
       </div>
-      <div class="flex md:flex-wrap justify-around">
+
+      <div class="flex justify-start text-xl">
         <a href="{% url 'home' %}"
-           class="btn btn-ghost text-xl  h-auto"
+           class="btn btn-ghost"
            >
-          <img src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg"
-               class="mr-3 h-12"
-               alt="RCPCH Logo" />
+           <div class="flex justify-center items-center">
+             <img
+               class="h-12"
+               src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg"
+                   alt="RCPCH Logo"
+              />
+
+              <span class="xl:hidden">NPDA</span>
+              <span class="hidden xl:flex">
+    National Paediatric <br>
+    Diabetes Audit
+            </span>
+           </div>
         </a>
-        <a href="{% url 'home' %}"
-           class="btn btn-ghost text-xl  h-auto"
-           >
-          <span class="xl:hidden">NPDA</span><span class="hidden xl:block">National Paediatric
-            <br>
-          Diabetes Audit</span></a>
         </div>
-      </div>
-      <div class="navbar-center hidden lg:flex">
-        <ul class="menu menu-horizontal px-1 flex gap-x-2 place-items-center">
+    </div>
 
-          {% comment %} NAV LINKS {% endcomment %}
-          {% include 'navbar/components/nav_links.html' %}
+    <div class="w-full justify-end">
+      <ul class="menu menu-horizontal px-1 flex gap-x-2 place-items-center">
 
-        </ul>
-      </div>
-      <div class="navbar-end">
-        <ul class="menu p-0 menu-horizontal hidden lg:flex px-1 flex gap-x-2 place-items-center">
-          {% if user.is_superuser %}
-            <ul class="p-3">
-              <div class="-mt-2 underline  underline-offset-8 p-2 w-full text-center font-semibold text-nowrap">
-                <i class="fa-solid fa-solar-panel"></i> Control Panel
-              </div>
-              <div class="flex justify-center">
-                <li>
-                  <a href="{% url 'admin:index' %}"
-                     target="_blank"
-                     class="text-xs block font-montserrat font-semibold py-2 bg-rcpch_dark_blue hover:bg-rcpch_light_blue_tint1 active:bg-rcpch_pink focus:bg-rcpch_pink text-white"><i class="fa-solid fa-up-right-from-square"></i> Admin</a>
-                </li>
-              </div>
-            </ul>
-          {% endif %}
-        </ul>
+        {% comment %} NAV LINKS {% endcomment %}
+        <div class="hidden lg:flex">{% include 'navbar/components/nav_links.html' %}</div>
+
         <div class="dropdown dropdown-end">
           <div tabindex="0"
-               role="button"
-               class="btn btn-ghost btn-circle avatar bg-rcpch_light_blue hover:bg-rcpch_dark_blue active:bg-rcpch_pink focus:bg-rcpch_pink">
+                role="button"
+                class="btn btn-ghost btn-circle avatar bg-rcpch_light_blue hover:bg-rcpch_dark_blue active:bg-rcpch_pink focus:bg-rcpch_pink">
             <div class="w-10 rounded-full my-auto p-1">
               <i class="fas fa-user-gear h-full w-full text-white"></i>
             </div>
@@ -81,10 +55,10 @@
             <label class="hidden flex cursor-pointer gap-2 mx-auto my-2 items-center">
               <i class="fa-solid fa-sun"></i>
               <input type="checkbox"
-                     value="dark"
-                     id="theme-selector"
-                     class="toggle theme-controller"
-                     hx-on:click="event.stopPropagation(); setTheme(event.target.checked ? 'dark' : 'light'); " />
+                      value="dark"
+                      id="theme-selector"
+                      class="toggle theme-controller"
+                      hx-on:click="event.stopPropagation(); setTheme(event.target.checked ? 'dark' : 'light'); " />
               <i class="fa-solid fa-moon"></i>
             </label>
             {% if user.is_authenticated %}
@@ -110,13 +84,16 @@
               <hr class="my-2" />
               <li>
                 <a href="{% url 'two_factor:login' %}"
-                   class="text-xs block font-montserrat font-semibold text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">Sign In</a>
+                    class="text-xs block font-montserrat font-semibold text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">Sign In</a>
               </li>
             {% endif %}
           </ul>
         </div>
-      </div>
+
+      </ul>
+
     </div>
+  </div>
     {% if user.is_authenticated %}
       <div class="w-full absolute flex justify-end mb-2 overflow-x-clip pointer-events-none">
         <div class="max-w-[80%] md:max-w-[75%] indicator transition-transform ease-in-out delay-150 translate-x-full min-h-24"

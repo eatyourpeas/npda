@@ -42,6 +42,12 @@
     {% include "navbar/components/nav_link.html" with url_name="npda_users" nav_text="User Management" %}
   </li>
 
+  {% if user.is_superuser %}
+    <li>
+      {% include "navbar/components/nav_link.html" with url_name="admin:index" nav_text="Admin" %}
+    </li>
+  {% endif %}
+
 {% endif %}
 
 <li>
