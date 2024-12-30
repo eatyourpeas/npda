@@ -3,7 +3,7 @@
 {% if user.is_authenticated %}
 
   {% comment %} SUBMIT DATA {% endcomment %}
-  <li class="flex items-center hover:inner-shadow">
+  <li class="flex items-baseline hover:inner-shadow">
     <details class="group">
       <summary
       class="text-xs font-montserrat font-semibold   text-gray-700  text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent group-open:text-rcpch_light_blue group-open:bg-transparent {% active_navbar_tab request 'home' %} {% active_navbar_tab request 'patients' %}"
@@ -28,17 +28,17 @@
   </li>
 
   {% comment %} DASHBOARD {% endcomment %}
-  <li class="hover:inner-shadow">
+  <li class="">
     {% include "navbar/components/nav_link.html" with url_name="dashboard" nav_text="Dashboard" %}
   </li>
 
   {% comment %} SUBMISSIONS {% endcomment %}
-  <li class="flex items-center hover:inner-shadow">
+  <li class="">
     {% include "navbar/components/nav_link.html" with url_name="submissions" nav_text="Submissions" %}
   </li>
 
   {% comment %} USER MANAGEMENT {% endcomment %}
-  <li class="flex items-center hover:inner-shadow">
+  <li class="">
     {% include "navbar/components/nav_link.html" with url_name="npda_users" nav_text="User Management" %}
   </li>
 
