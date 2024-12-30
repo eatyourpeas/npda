@@ -79,14 +79,14 @@
       </div>
       <div class="flex md:flex-wrap justify-around">
         <a href="{% url 'home' %}"
-           class="btn btn-ghost text-xl dark:text-rcpch_lightest_grey h-auto"
+           class="btn btn-ghost text-xl  h-auto"
            style="max-width:100%">
           <img src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg"
                class="mr-3 h-12"
                alt="RCPCH Logo" />
         </a>
         <a href="{% url 'home' %}"
-           class="btn btn-ghost text-xl dark:text-rcpch_lightest_grey h-auto"
+           class="btn btn-ghost text-xl  h-auto"
            style="max-width:100%">
           <span class="xl:hidden">NPDA</span><span class="hidden xl:block">National Paediatric
             <br>
@@ -99,37 +99,37 @@
             <li class="flex items-center hover:inner-shadow">
               <div class="tooltip tooltip-bottom" data-tip="Dashboard">
                 <a href="{% url 'dashboard' %}"
-                   class="text-xs block font-montserrat font-semibold  dark:text-rcpch_lightest_grey text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}"
+                   class="text-xs block font-montserrat font-semibold   text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}"
                    aria-current="page"><i class="fa-solid fa-house"></i></a>
               </div>
             </li>
             <li class="flex items-center hover:inner-shadow">
               <a href="{% url 'submissions' %}"
-                 class="text-xs block font-montserrat font-semibold dark:text-rcpch_lightest_grey text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'submissions' %}"
+                 class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'submissions' %}"
                  aria-current="page">Submissions</a>
             </li>
             {% if can_complete_questionnaire %}
               <li class="flex items-center hover:inner-shadow">
                 <a href="{% url 'patients' %}"
-                   class="text-xs block font-montserrat font-semibold dark:text-rcpch_lightest_grey text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'patients' %}"
+                   class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'patients' %}"
                    aria-current="page">Questionnaire</a>
               </li>
             {% endif %}
             {% if can_upload_csv %}
               <li class="flex items-center hover:inner-shadow">
                 <a href="{% url 'home' %}"
-                   class="text-xs block font-montserrat font-semibold dark:text-rcpch_lightest_grey text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'home' %}"
+                   class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'home' %}"
                    aria-current="page">Upload CSV</a>
               </li>
             {% endif %}
             <li class="flex items-center hover:inner-shadow">
               <a href="{% url 'npda_users' %}"
-                 class="text-xs block font-montserrat underline-offset-8 dark:text-rcpch_lightest_grey hover:underline font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">Users</a>
+                 class="text-xs block font-montserrat underline-offset-8  hover:underline font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">Users</a>
             </li>
           {% endif %}
           <li>
             <a href="http://0.0.0.0:8007/"
-               class="text-xs block font-montserrat underline-offset-8 hover:underline font-semibold text-gray-700 lg:border-0 dark:text-rcpch_lightest_grey lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">User Guide</a>
+               class="text-xs block font-montserrat underline-offset-8 hover:underline font-semibold text-gray-700 lg:border-0  lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">User Guide</a>
           </li>
         </ul>
       </div>
@@ -137,7 +137,7 @@
         <ul class="menu p-0 menu-horizontal hidden lg:flex px-1 flex gap-x-2 place-items-center">
           {% if user.is_superuser %}
             <ul class="p-3">
-              <div class="-mt-2 underline dark:text-rcpch_lightest_grey underline-offset-8 p-2 w-full text-center font-semibold text-nowrap">
+              <div class="-mt-2 underline  underline-offset-8 p-2 w-full text-center font-semibold text-nowrap">
                 <i class="fa-solid fa-solar-panel"></i> Control Panel
               </div>
               <div class="flex justify-center">
@@ -159,7 +159,7 @@
             </div>
           </div>
           <ul tabindex="0"
-              class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-60 p-2 shadow-xl dark:drop-shadow-[0_35px_35px_rgba(1,0,0,0.25)">
+              class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-60 p-2 shadow-xl ">
             <label class="hidden flex cursor-pointer gap-2 mx-auto my-2 items-center">
               <i class="fa-solid fa-sun"></i>
               <input type="checkbox"

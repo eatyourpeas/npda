@@ -213,19 +213,6 @@ s/seed
 
 See the [Seeding the Database](../manual-setup/#seeding-the-database) section for more details on the usage of this script, for example setting a non-default Cohort Number.
 
-### Running with VSCode Debugger
-
-If you are using VSCode, you can run the Django server with the VScode debugger attached through:
-
-```console
-s/up-debug
-```
-
-This sets up the save development environment as `s/up` but additionally uses some overrides to enable Debugpy.
-
-Once setup, add a breakpoint in your code (little red dot in the margin next to line numbers), and use the hotkey `F5` to start the debugger. The debugger will pause at the breakpoint and you can inspect variables and step through the code.
-
-Unforunately, this doesn't work with running `manage.py` commands, nor `pytest` yet, but runs for the Django Server. For debugging those environments, use the `pdb` debugger through `breakpoint()`s.
 
 ## Tips and Tricks, Gotchas and Caveats
 
