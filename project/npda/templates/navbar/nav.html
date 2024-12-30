@@ -1,16 +1,10 @@
 {% load npda_tags %}
 <header class="sticky top-0 z-[70]">
   <div class="navbar bg-base-100 p-0 min-h-14">
-    <div class="navbar-start w-full">
+    <div class="navbar-start">
       <div class="dropdown z-[70]">
         <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-          <svg xmlns="http://www.w3.org/2000/svg"
-               class="h-5 w-5"
-               fill="none"
-               viewBox="0 0 24 24"
-               stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
-          </svg>
+          <i class="fa-solid fa-bars"></i>
         </div>
         <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-52 p-2 shadow">
           {% comment %} NAV LINKS {% endcomment %}
@@ -31,29 +25,19 @@
               </div>
             </ul>
           {% endif %}
-          <li class="hidden">
-            <a href="{% url 'dashboard' %}"
-               class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}"
-               aria-current="page"><i class="fa-solid fa-house"></i> Dashboard</a>
-            <ul class="p-2">
-              <li>
-                <a>Submenu 1</a>
-              </li>
-            </ul>
-          </li>
         </ul>
       </div>
       <div class="flex md:flex-wrap justify-around">
         <a href="{% url 'home' %}"
            class="btn btn-ghost text-xl  h-auto"
-           style="max-width:100%">
+           >
           <img src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg"
                class="mr-3 h-12"
                alt="RCPCH Logo" />
         </a>
         <a href="{% url 'home' %}"
            class="btn btn-ghost text-xl  h-auto"
-           style="max-width:100%">
+           >
           <span class="xl:hidden">NPDA</span><span class="hidden xl:block">National Paediatric
             <br>
           Diabetes Audit</span></a>
