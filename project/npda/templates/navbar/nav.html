@@ -1,5 +1,5 @@
 {% load npda_tags %}
-<div class="navbar bg-base-100 sticky top-0 z-[70]">
+<div class="navbar bg-base-100 sticky top-0 z-[70] p-0">
   {% comment %} NPDA NAV LOGO {% endcomment %}
   <div class="navbar-start">
     <div class="dropdown">
@@ -54,11 +54,12 @@
 
 
     {% comment %}
-      unsure whether to keep this if we're not allowing audit years to change?
-      for now, placed behind superuser access
-     {% endcomment %}
+    unsure whether to keep this if we're not allowing audit years to change?
+    for now, placed behind superuser access
+    {% endcomment %}
     {% if user.is_superuser %}
-      {% include 'navbar/components/avatar_dropdown.html' %}
+      {% include 'navbar/components/filters.html' %}
     {% endif %}
+    {% include 'navbar/components/avatar_dropdown.html' %}
   </div>
 </div>
