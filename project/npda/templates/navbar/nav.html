@@ -1,5 +1,5 @@
 {% load npda_tags %}
-<div class="navbar bg-base-100 sticky top-0 z-[70] p-0 items-baseline">
+<div class="navbar bg-base-100 sticky top-0 z-[70] p-0 items-center h-10 shadow">
   {% comment %} NPDA NAV LOGO {% endcomment %}
   <div class="navbar-start">
     <div class="dropdown">
@@ -27,7 +27,7 @@
     </div>
     <a class="btn btn-ghost text-xl h-full" href="{% url 'home' %}">
       {% comment %} DESKTOP {% endcomment %}
-      <span class="hidden lg:flex lg:gap-2 lg:items-center">
+      <span class="hidden lg:flex lg:gap-6 lg:items-center">
         <img
           class="h-12"
           src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg"
@@ -50,7 +50,7 @@
   </div>
 
   {% comment %} RIGHT {% endcomment %}
-  <div class="navbar-end">
+  <div class="navbar-end h-full">
 
 
     {% comment %}
