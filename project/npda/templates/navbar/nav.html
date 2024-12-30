@@ -1,147 +1,64 @@
 {% load npda_tags %}
-<header class="sticky top-0 z-[70]">
-  <div class="navbar bg-base-100 p-0">
-    <div class="">
-      <div class="dropdown z-[70]">
+<div class="navbar bg-base-100 sticky top-0 z-[70]">
+  {% comment %} NPDA NAV LOGO {% endcomment %}
+  <div class="navbar-start">
+    <div class="dropdown">
 
-        {% comment %} MOBILE BURGER ICON {% endcomment %}
-        <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-          <i class="fa-solid fa-bars"></i>
-        </div>
-        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-52 p-2 shadow">
-          {% comment %} NAV LINKS {% endcomment %}
-          {% include 'navbar/components/nav_links.html' %}
-
-        </ul>
+      {% comment %} MOBILE HAMBURGER MENU ICON {% endcomment %}
+      <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h8m-8 6h16" />
+        </svg>
       </div>
-
-      <div class="flex justify-start text-xl">
-        <a href="{% url 'home' %}"
-           class="btn btn-ghost"
-           >
-           <div class="flex justify-center items-center">
-             <img
-               class="h-12"
-               src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg"
-                   alt="RCPCH Logo"
-              />
-
-              <span class="xl:hidden">NPDA</span>
-              <span class="hidden xl:flex">
-    National Paediatric <br>
-    Diabetes Audit
-            </span>
-           </div>
-        </a>
-        </div>
-    </div>
-
-    <div class="w-full justify-end">
-      <ul class="menu menu-horizontal px-1 flex gap-x-2 place-items-center">
-
-        {% comment %} NAV LINKS {% endcomment %}
-        <div class="hidden lg:flex">{% include 'navbar/components/nav_links.html' %}</div>
-
-        <div class="dropdown dropdown-end">
-          <div tabindex="0"
-                role="button"
-                class="btn btn-ghost btn-circle avatar bg-rcpch_light_blue hover:bg-rcpch_dark_blue active:bg-rcpch_pink focus:bg-rcpch_pink">
-            <div class="w-10 rounded-full my-auto p-1">
-              <i class="fas fa-user-gear h-full w-full text-white"></i>
-            </div>
-          </div>
-          <ul tabindex="0"
-              class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-60 p-2 shadow-xl ">
-            <label class="hidden flex cursor-pointer gap-2 mx-auto my-2 items-center">
-              <i class="fa-solid fa-sun"></i>
-              <input type="checkbox"
-                      value="dark"
-                      id="theme-selector"
-                      class="toggle theme-controller"
-                      hx-on:click="event.stopPropagation(); setTheme(event.target.checked ? 'dark' : 'light'); " />
-              <i class="fa-solid fa-moon"></i>
-            </label>
-            {% if user.is_authenticated %}
-              <p class="text-center">
-                Hello, <span class="font-mono">{{ user.get_full_name }}</span>!
-              </p>
-              <hr class="my-2" />
-              <li>
-                <a href="{% url 'two_factor:profile' %}"><i class="fa-solid fa-shield"></i>Two Factor Authentication</a>
-              </li>
-              <form method="post" action="{% url 'logout' %}">
-                <li>
-                  {% csrf_token %}
-                  <button type="submit">
-                    <i class="fa-solid fa-right-from-bracket"></i> Log Out
-                  </button>
-                </li>
-              </form>
-            {% else %}
-              <p class="text-center">
-                Hello, <span class="font-mono">Guest</span>!
-              </p>
-              <hr class="my-2" />
-              <li>
-                <a href="{% url 'two_factor:login' %}"
-                    class="text-xs block font-montserrat font-semibold text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">Sign In</a>
-              </li>
-            {% endif %}
-          </ul>
-        </div>
-
+      <ul
+        tabindex="0"
+        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+        {% include 'navbar/components/nav_links.html'%}
       </ul>
-
     </div>
+    <a class="btn btn-ghost text-xl h-full" href="{% url 'home' %}">
+      {% comment %} DESKTOP {% endcomment %}
+      <span class="hidden lg:flex lg:gap-2 lg:items-center">
+        <img
+          class="h-12"
+          src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg"
+          alt="RCPCH Logo"
+        />
+        <p>National Paediatric <br> Diabetes Audit</p>
+      </span>
+      {% comment %} MOBILE {% endcomment %}
+      <span class="lg:hidden">
+        <p>NPDA</p>
+      </span>
+    </a>
   </div>
-    {% if user.is_authenticated %}
-      <div class="w-full absolute flex justify-end mb-2 overflow-x-clip pointer-events-none">
-        <div class="max-w-[80%] md:max-w-[75%] indicator transition-transform ease-in-out delay-150 translate-x-full min-h-24"
-             id="global_view_preference_wrapper">
-          <span class="indicator-item indicator-middle indicator-start badge badge-ghost bg-rcpch_dark_blue border-1 border-rcpch_light_blue_tint3 text-white -left-4 h-full max-h-8 absolute top-12 opacity-80 hover:opacity-100 rotate-90 pointer-events-auto ">
-            <label class="swap">
-              <!-- this hidden checkbox controls the state -->
-              <input type="checkbox"
-                     class="peer"
-                     hx-on:click="event.stopPropagation(); document.getElementById('global_view_preference_wrapper').classList.toggle('translate-x-full'); " />
-              <span class="swap-off">
-                <i class="fa-solid fa-filter fa-rotate-270"></i>
-                <span class="font-semibold mb-1 hidden md:inline-flex">Filters</span> <i class="fa-solid fa-angles-left fa-rotate-270"></i>
-              </span>
-              <span class="swap-on">
-                <i class="fa-solid fa-filter fa-rotate-270"></i>
-                <span class="font-semibold mb-1 hidden md:inline-flex">Filters</span>
-                <i class="fa-solid fa-angles-left fa-rotate-90"></i></span>
-            </label>
-          </span>
-          <div class="navbar p-0 mx-0 pointer-events-auto items-stretch">
-            <div class="text-center text-nowrap pl-4 p-2 text-sm bg-rcpch_light_blue_tint3 text-slate-700 gap-2 flex-wrap items-stretch">
-              <div id="global_audit_year"
-                   class="join-item items-stretch flex-grow basis-1/5">
-                {% include 'partials/audit_year_select.html' with audit_years=request.session.audit_years selected_audit_year=request.session.selected_audit_year hx_target='#global_audit_year' %}
-              </div>
-              <div id="global_view_preference"
-                   class="join-item items-stretch flex-grow  basis-2/4">
-                {% include 'partials/view_preference.html' with view_preference=request.user.view_preference pdu_choices=request.session.pdu_choices chosen_pdu=request.session.pz_code hx_target='#global_view_preference' %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
+  {% comment %} NAV ITEMS {% endcomment %}
+  <div class="navbar-center hidden lg:flex">
+    <ul class="menu menu-horizontal px-1">
+      {% include 'navbar/components/nav_links.html'%}
+    </ul>
+  </div>
+
+  {% comment %} RIGHT {% endcomment %}
+  <div class="navbar-end">
+
+
+    {% comment %}
+      unsure whether to keep this if we're not allowing audit years to change?
+      for now, placed behind superuser access
+     {% endcomment %}
+    {% if user.is_superuser %}
+      {% include 'navbar/components/avatar_dropdown.html' %}
     {% endif %}
-  </header>
-  <script>
-  window.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('theme-selector').value = localStorage.getItem('theme') == 'dark' || false;
-  });
-  function setTheme(desiredTheme) {
-    // Set the data-theme attribute on the body
-    document.body.setAttribute('data-theme', desiredTheme);
-    localStorage.setItem('theme', desiredTheme);
-  }
-  </script>
-  <style>
-.tooltip::before {
-    z-index: 50;
-}
-  </style>
+  </div>
+</div>

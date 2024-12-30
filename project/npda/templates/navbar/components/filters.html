@@ -1,0 +1,19 @@
+<button class="btn" onclick="global_filters_modal.showModal()">Filters</button>
+<dialog id="global_filters_modal" class="modal">
+  <div class="modal-box">
+    <div id="global_audit_year"
+          class="join-item items-stretch flex-grow basis-1/5">
+      {% include 'partials/audit_year_select.html' with audit_years=request.session.audit_years selected_audit_year=request.session.selected_audit_year hx_target='#global_audit_year' %}
+    </div>
+    <div id="global_view_preference"
+          class="join-item items-stretch flex-grow  basis-2/4">
+      {% include 'partials/view_preference.html' with view_preference=request.user.view_preference pdu_choices=request.session.pdu_choices chosen_pdu=request.session.pz_code hx_target='#global_view_preference' %}
+    </div>
+    <div class="modal-action">
+      <form method="dialog">
+        <!-- if there is a button in form, it will close the modal -->
+        <button class="btn">Close</button>
+      </form>
+    </div>
+  </div>
+</dialog>

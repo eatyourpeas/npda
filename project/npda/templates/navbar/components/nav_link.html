@@ -1,7 +1,11 @@
 {% load npda_tags %}
 
 <a
-    href="{% url url_name %}"
+    {% if url_name|slice:4 == "http" %}
+        href="{{ url_name }}"
+    {% else %}
+        href="{% url url_name %}"
+    {% endif %}
     class="text-xs font-montserrat font-semibold   text-gray-700  text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent hover:underline underline-offset-8 {% active_navbar_tab request url_name  %}"
     >
     {{ nav_text }}
