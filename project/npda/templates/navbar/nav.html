@@ -12,44 +12,10 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
           </svg>
         </div>
-        <ul tabindex="0"
-            class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-52 p-2 shadow">
-          {% if user.is_authenticated %}
-            <li class="flex items-center hover:inner-shadow">
-              <div class="tooltip tooltip-bottom" data-tip="Dashboard">
-                <a href="{% url 'dashboard' %}"
-                   class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'dashboard' %}"
-                   aria-current="page"><i class="fa-solid fa-house"></i></a>
-              </div>
-            </li>
-            <li class="flex items-center hover:inner-shadow">
-              <a href="{% url 'submissions' %}"
-                 class="text-xs block font-montserrat font-semibold text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'submissions' %}"
-                 aria-current="page">Submissions</a>
-            </li>
-            {% if can_upload_csv %}
-              <li class="flex items-center hover:inner-shadow">
-                <a href="{% url 'home' %}"
-                   class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'home' %}"
-                   aria-current="page">Upload CSV</a>
-              </li>
-            {% endif %}
-            {% if can_complete_questionnaire %}
-              <li class="flex items-center hover:inner-shadow">
-                <a href="{% url 'patients' %}"
-                   class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'patients' %}"
-                   aria-current="page">Questionnaire</a>
-              </li>
-            {% endif %}
-            <li class="flex items-center hover:inner-shadow">
-              <a href="{% url 'npda_users' %}"
-                 class="text-xs block font-montserrat underline-offset-8 hover:underline font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">Users</a>
-            </li>
-          {% endif %}
-          <li class="flex items-center hover:inner-shadow">
-            <a href="http://0.0.0.0:8007/"
-               class="text-xs block font-montserrat underline-offset-8 hover:underline font-semibold text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">User Guide</a>
-          </li>
+        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-52 p-2 shadow">
+          {% comment %} NAV LINKS {% endcomment %}
+          {% include 'navbar/components/nav_links.html' %}
+
           {% if user.is_superuser %}
             <hr class="divider">
             <ul class="p-3">
@@ -95,42 +61,10 @@
       </div>
       <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1 flex gap-x-2 place-items-center">
-          {% if user.is_authenticated %}
-            <li class="flex items-center hover:inner-shadow">
-              <div class="tooltip tooltip-bottom" data-tip="Dashboard">
-                <a href="{% url 'dashboard' %}"
-                   class="text-xs block font-montserrat font-semibold   text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}"
-                   aria-current="page"><i class="fa-solid fa-house"></i></a>
-              </div>
-            </li>
-            <li class="flex items-center hover:inner-shadow">
-              <a href="{% url 'submissions' %}"
-                 class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'submissions' %}"
-                 aria-current="page">Submissions</a>
-            </li>
-            {% if can_complete_questionnaire %}
-              <li class="flex items-center hover:inner-shadow">
-                <a href="{% url 'patients' %}"
-                   class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'patients' %}"
-                   aria-current="page">Questionnaire</a>
-              </li>
-            {% endif %}
-            {% if can_upload_csv %}
-              <li class="flex items-center hover:inner-shadow">
-                <a href="{% url 'home' %}"
-                   class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'home' %}"
-                   aria-current="page">Upload CSV</a>
-              </li>
-            {% endif %}
-            <li class="flex items-center hover:inner-shadow">
-              <a href="{% url 'npda_users' %}"
-                 class="text-xs block font-montserrat underline-offset-8  hover:underline font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">Users</a>
-            </li>
-          {% endif %}
-          <li>
-            <a href="http://0.0.0.0:8007/"
-               class="text-xs block font-montserrat underline-offset-8 hover:underline font-semibold text-gray-700 lg:border-0  lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">User Guide</a>
-          </li>
+
+          {% comment %} NAV LINKS {% endcomment %}
+          {% include 'navbar/components/nav_links.html' %}
+
         </ul>
       </div>
       <div class="navbar-end">
