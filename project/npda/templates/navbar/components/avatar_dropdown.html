@@ -1,25 +1,27 @@
-<div class="dropdown dropdown-end">
-  <div tabindex="0"
-        role="button"
-        class="btn btn-ghost btn-circle avatar bg-rcpch_light_blue hover:bg-rcpch_dark_blue active:bg-rcpch_pink focus:bg-rcpch_pink">
-    <div class="w-10 rounded-full my-auto p-1">
-      <i class="fas fa-user-gear h-full w-full text-white"></i>
+{% if user.is_authenticated %}
+  <div class="dropdown dropdown-end">
+    <div tabindex="0"
+          role="button"
+          class="btn btn-ghost btn-circle avatar bg-rcpch_light_blue hover:bg-rcpch_dark_blue active:bg-rcpch_pink focus:bg-rcpch_pink">
+      <div class="avatar placeholder">
+        <div class="rounded-full w-12">
+          <span class="text-2xl text-white">{{ user.get_full_name|slice:1 }}</span>
+        </div>
+      </div>
     </div>
-  </div>
-  <ul tabindex="0"
-      class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-60 p-2 shadow-xl ">
-    <label class="hidden flex cursor-pointer gap-2 mx-auto my-2 items-center">
-      <i class="fa-solid fa-sun"></i>
-      <input type="checkbox"
-              value="dark"
-              id="theme-selector"
-              class="toggle theme-controller"
-              hx-on:click="event.stopPropagation(); setTheme(event.target.checked ? 'dark' : 'light'); " />
-      <i class="fa-solid fa-moon"></i>
-    </label>
-    {% if user.is_authenticated %}
+    <ul tabindex="0"
+        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[70] mt-3 w-60 p-2 shadow-xl ">
+      <label class="hidden flex cursor-pointer gap-2 mx-auto my-2 items-center">
+        <i class="fa-solid fa-sun"></i>
+        <input type="checkbox"
+                value="dark"
+                id="theme-selector"
+                class="toggle theme-controller"
+                hx-on:click="event.stopPropagation(); setTheme(event.target.checked ? 'dark' : 'light'); " />
+        <i class="fa-solid fa-moon"></i>
+      </label>
       <p class="text-center">
-        Hello, <span class="font-mono">{{ user.get_full_name }}</span>!
+        Hello, <span class="font-mono">{{ user.get_full_name }}!</span>
       </p>
       <hr class="my-2" />
       <li>
@@ -33,15 +35,9 @@
           </button>
         </li>
       </form>
-    {% else %}
-      <p class="text-center">
-        Hello, <span class="font-mono">Guest</span>!
-      </p>
-      <hr class="my-2" />
-      <li>
-        <a href="{% url 'two_factor:login' %}"
-            class="text-xs block font-montserrat font-semibold text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">Sign In</a>
-      </li>
-    {% endif %}
-  </ul>
-</div>
+      </ul>
+    </div>
+{% else %}
+    <a href="{% url 'two_factor:login' %}"
+  class="text-xs block font-montserrat font-semibold text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent">Sign In</a>
+  {% endif %}
