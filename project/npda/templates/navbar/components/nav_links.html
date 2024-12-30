@@ -11,8 +11,8 @@
       <ul class="bg-base-100 border p-2">
         {% if can_upload_csv %}
           <li class="flex items-center hover:inner-shadow">
-            <a href="{% url 'home' %}"
-                class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'home' %}"
+            <a href="{% url 'upload_csv' %}"
+                class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'upload_csv' %}"
                 aria-current="page">Upload CSV</a>
           </li>
         {% endif %}
