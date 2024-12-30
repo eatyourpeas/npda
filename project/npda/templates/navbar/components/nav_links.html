@@ -2,10 +2,11 @@
 
 {% if user.is_authenticated %}
 
+  {% comment %} SUBMIT DATA {% endcomment %}
   <li class="flex items-center hover:inner-shadow">
     <details class="group">
       <summary
-      class="text-xs font-montserrat font-semibold   text-gray-700  text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent group-open:text-rcpch_light_blue group-open:bg-transparent"
+      class="text-xs font-montserrat font-semibold   text-gray-700  text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent group-open:text-rcpch_light_blue group-open:bg-transparent {% active_navbar_tab request 'home' %} {% active_navbar_tab request 'patients' %}"
       >Submit Data</summary>
       <ul class="bg-base-100 border p-2">
         {% if can_upload_csv %}
@@ -26,23 +27,22 @@
     </details>
   </li>
 
-  {% comment %} SUBMIT DATA {% endcomment %}
-  <li class="flex items-center hover:inner-shadow">
-    <div class="tooltip tooltip-bottom" data-tip="Dashboard">
-      <a href="{% url 'dashboard' %}"
-          class="text-xs block font-montserrat font-semibold   text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent {% active_navbar_tab request 'submissions' %}"
-          aria-current="page"><i class="fa-solid fa-house"></i></a>
-    </div>
+  {% comment %} DASHBOARD {% endcomment %}
+  <li class="hover:inner-shadow">
+    {% include "navbar/components/nav_item.html" with url_name="dashboard" nav_text="Dashboard" %}
   </li>
+
+  {% comment %} SUBMISSIONS {% endcomment %}
   <li class="flex items-center hover:inner-shadow">
     <a href="{% url 'submissions' %}"
         class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'submissions' %}"
         aria-current="page">Submissions</a>
   </li>
 
+
   <li class="flex items-center hover:inner-shadow">
     <a href="{% url 'npda_users' %}"
-        class="text-xs block font-montserrat underline-offset-8  hover:underline font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">Users</a>
+        class="text-xs block font-montserrat underline-offset-8  hover:underline font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">User Management</a>
   </li>
 
 {% endif %}
