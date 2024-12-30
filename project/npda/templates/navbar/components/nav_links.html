@@ -29,20 +29,17 @@
 
   {% comment %} DASHBOARD {% endcomment %}
   <li class="hover:inner-shadow">
-    {% include "navbar/components/nav_item.html" with url_name="dashboard" nav_text="Dashboard" %}
+    {% include "navbar/components/nav_link.html" with url_name="dashboard" nav_text="Dashboard" %}
   </li>
 
   {% comment %} SUBMISSIONS {% endcomment %}
   <li class="flex items-center hover:inner-shadow">
-    <a href="{% url 'submissions' %}"
-        class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent active:bg-transparent underline-offset-8 hover:underline {% active_navbar_tab request 'submissions' %}"
-        aria-current="page">Submissions</a>
+    {% include "navbar/components/nav_link.html" with url_name="submissions" nav_text="Submissions" %}
   </li>
 
-
+  {% comment %} USER MANAGEMENT {% endcomment %}
   <li class="flex items-center hover:inner-shadow">
-    <a href="{% url 'npda_users' %}"
-        class="text-xs block font-montserrat underline-offset-8  hover:underline font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'npda_users' %}">User Management</a>
+    {% include "navbar/components/nav_link.html" with url_name="npda_users" nav_text="User Management" %}
   </li>
 
 {% endif %}
