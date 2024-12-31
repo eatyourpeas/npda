@@ -112,6 +112,28 @@ class CalculateKPIS:
         # Sets the KPI attribute names map
         self.kpi_name_registry = kpi_registry
 
+    def set_patients_for_calculation(
+        self,
+        patients: QuerySet[Patient] = None,
+        pz_codes: list[str] = None,
+    ):
+        """Set patients for KPI calculations.
+        
+        Can only set patients or pz_codes, not both."""
+        # Mutex
+        if not (patients ^ pz_codes):
+            raise ValueError("patients and pz_codes are mutually exclusive")
+
+        # Depending on kwarg, set patients
+        if patients:
+            self.patients = patients
+            self.total_patients_count = self.patients.count()
+        elif pz_codes:
+            self.patients = Patient.objects.filter(
+                paediatric_diabetes_units__paediatric_diabetes_unit__pz_code__in=pz_codes
+            )
+            self.total_patients_count = self.patients.count()
+        
     def calculate_kpis_for_patients(
         self,
         patients: QuerySet[Patient],
@@ -286,6 +308,7 @@ class CalculateKPIS:
 
     def _calculate_kpis(
         self,
+        kpi_idxs: Optional[range] = None,
     ) -> KPICalculationsObject:
         """Calculate KPIs 1 - 49 for set self.patients and cohort range
         (self.audit_start_date and self.audit_end_date).
@@ -295,12 +318,15 @@ class CalculateKPIS:
 
         Incrementally build the query, which will be executed in a single
         transaction once a value is evaluated.
+
+        NOTE: assumes self.patients and self.total_patients_count are set
         """
         # Init dict to store calc results
         calculated_kpis = {}
 
         # Standard KPIs plus 32 which has 3 sub KPIs
-        kpi_idxs = list(range(1, 32)) + [321, 322, 323] + (list(range(33, 50)))
+        if not kpi_idxs:
+            kpi_idxs = list(range(1, 32)) + [321, 322, 323] + (list(range(33, 50)))
 
         for i in kpi_idxs:
             # Dynamically get the method name from the kpis_names_map
@@ -3402,8 +3428,8 @@ class CalculateKPIS:
         duplicate entries
 
         Denominator: Total number of eligible patients (measure 1)
-        
-        NOTE: possible refactor could just be applying additional filter checking DKA to the 
+
+        NOTE: possible refactor could just be applying additional filter checking DKA to the
         KPI 46 calculation, but for now keeping separate
         """
         eligible_patients, total_eligible = (
