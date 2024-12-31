@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-  <section class="bg-rcpch_dark_blue font-montserrat">
-    <div class="hero min-h-screen bg-rcpch_dark_blue font-montserrat "
+  <section class="bg-rcpch_dark_blue font-montserrat h-100">
+    <div class="hero h-[80vh] bg-rcpch_dark_blue font-montserrat "
          style="background-image: url({% static 'images/procedural-generation-bg.gif' %})">
       <div class="hero-overlay bg-opacity-70 backdrop-hue-rotate-30	backdrop-blur-sm">
       </div>
@@ -23,9 +23,4 @@
       </div>
     </div>
   </section>
-  {% if can_upload_csv %}
-    <section class="container-mx-auto pt-4 px-4 flex items-center justify-center rounded-none">
-      {% include 'partials/file_upload.html' %}
-    </section>
-  {% endif %}
 {% endblock %}

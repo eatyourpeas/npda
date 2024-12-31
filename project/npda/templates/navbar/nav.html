@@ -1,0 +1,65 @@
+{% load npda_tags %}
+<div class="navbar bg-base-100 sticky top-0 z-[70] p-0 items-center h-10 shadow">
+  {% comment %} NPDA NAV LOGO {% endcomment %}
+  <div class="navbar-start">
+    <div class="dropdown">
+
+      {% comment %} MOBILE HAMBURGER MENU ICON {% endcomment %}
+      <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h8m-8 6h16" />
+        </svg>
+      </div>
+      <ul
+        tabindex="0"
+        class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+        {% include 'navbar/components/nav_links.html'%}
+      </ul>
+    </div>
+    <a class="btn btn-ghost text-xl h-full" href="{% url 'home' %}">
+      {% comment %} DESKTOP {% endcomment %}
+      <span class="hidden lg:flex lg:gap-6 lg:items-center">
+        <img
+          class="h-12"
+          src="https://www.rcpch.ac.uk/themes/rcpch/images/logo-desktop.svg"
+          alt="RCPCH Logo"
+        />
+        <p>National Paediatric <br> Diabetes Audit</p>
+      </span>
+      {% comment %} MOBILE {% endcomment %}
+      <span class="lg:hidden">
+        <p>NPDA</p>
+      </span>
+    </a>
+  </div>
+
+  {% comment %} NAV ITEMS {% endcomment %}
+  <div class="navbar-center hidden lg:flex">
+    <ul class="menu menu-horizontal px-1">
+      {% include 'navbar/components/nav_links.html'%}
+    </ul>
+  </div>
+
+  {% comment %} RIGHT {% endcomment %}
+  <div class="navbar-end h-full">
+
+
+    {% comment %}
+    unsure whether to keep this if we're not allowing audit years to change?
+    for now, placed behind superuser access
+    {% endcomment %}
+    {% if user.is_superuser %}
+      {% include 'navbar/components/filters.html' %}
+    {% endif %}
+    {% include 'navbar/components/avatar_dropdown.html' %}
+  </div>
+</div>

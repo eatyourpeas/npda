@@ -12,6 +12,8 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic import ListView
 
+from project.npda.views.decorators import login_and_otp_required
+
 # RCPCH imports
 from .mixins import CheckCurrentAuditYearMixin, LoginAndOTPRequiredMixin
 from ..models import Submission
@@ -189,3 +191,7 @@ class SubmissionsListView(
         :return: The response
         """
         return super().render_to_response(context)
+
+@login_and_otp_required()
+def upload_csv(request):
+    return render(request, "upload_csv/file_upload.html")

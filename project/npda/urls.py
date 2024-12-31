@@ -20,6 +20,8 @@ urlpatterns = [
     path("home/download_template", view=download_template, name="download_template"),
     path("view_preference", view=view_preference, name="view_preference"),
     path("audit-year", view=audit_year, name="audit-year"),
+    path("upload_csv", view=upload_csv, name="upload_csv"),
+    
     # Submission views
     path(
         "submissions",
