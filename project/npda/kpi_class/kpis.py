@@ -3659,7 +3659,7 @@ class CalculateKPIS:
             int: base query set count of total eligible patients for KPI 5
         """
 
-        if not hasattr(self, "total_kpi_1_eligible_pts_base_query_set"):
+        if not hasattr(self, "total_kpi_5_eligible_pts_base_query_set"):
             self.calculate_kpi_5_total_t1dm_complete_year()
 
         return (
@@ -3681,7 +3681,7 @@ class CalculateKPIS:
             int: base query set count of total eligible patients for KPI 6
         """
 
-        if not hasattr(self, "total_kpi_1_eligible_pts_base_query_set"):
+        if not hasattr(self, "total_kpi_6_eligible_pts_base_query_set"):
             self.calculate_kpi_6_total_t1dm_complete_year_gte_12yo()
 
         return (
@@ -3703,7 +3703,7 @@ class CalculateKPIS:
             int: base query set count of total eligible patients for KPI 7
         """
 
-        if not hasattr(self, "total_kpi_1_eligible_pts_base_query_set"):
+        if not hasattr(self, "total_kpi_7_eligible_pts_base_query_set"):
             self.calculate_kpi_7_total_new_diagnoses_t1dm()
 
         return (
