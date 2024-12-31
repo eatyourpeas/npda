@@ -121,7 +121,7 @@ class CalculateKPIS:
         
         Can only set patients or pz_codes, not both."""
         # Mutex
-        if not (patients ^ pz_codes):
+        if (patients is None) == (pz_codes is None):
             raise ValueError("patients and pz_codes are mutually exclusive")
 
         # Depending on kwarg, set patients
