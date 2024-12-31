@@ -37,22 +37,26 @@ from project.npda.views.decorators import login_and_otp_required
 logger = logging.getLogger(__name__)
 
 # Define our data constants
+# TODO: in hindsight, no need for this to be in the top-level view file
+# as just text for pt-level report table
 TEXT = {
     "health_checks": {
         "title": "Seven Key Care Processes",
-        "description": "These care processes show the completion rate per patient for all 7 key care processes for Type 1 patients. Three of these are mandatory for patients of all ages: HbA1c, BMI, and Thyroid. The other care processes are only mandatory for patients aged 12 and above.",
+        "description": "HbA1c, BMI, and thyroid screen must be completed annually for all children and young people with Type 1 diabetes. Urinary albumin, blood pressure, and foot exam are mandatory for young people aged 12 and above. Eye screening is mandatory every 2 years for young people aged 12 and above, unless retinopathy was observed at a previous screen.",
+        "headers": ["NHS NUMBER", ">= 12YO", "HBA1C", "BMI", "THYROID SCREEN", "BLOOD PRESSURE", "URINARY ALBUMIN", "EYE SCREEN", "FOOT EXAM", "TOTAL"],
     },
     "additional_care_processes": {
         "title": "Additional Care Proccesses",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "description": "These additional care processes are recommended by NICE for children and young people with Type 1 diabetes of all ages, with the exception of smoking status and referral to smoking cessation services, which apply to young people aged 12 and above.",
+        
     },
     "care_at_diagnosis": {
         "title": "Care at Diagnosis",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "description": "Children and young people with Type 1 diabetes should be screened for thyroid disease and coeliac disease within 90 days of diagnosis. Newly diagnosed children and young people should also receive level 3 carbohydrate counting education within 14 days of diagnosis.",
     },
     "outcomes": {
         "title": "Outcomes",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "description": "Outcomes are presented below for all children and young people with Type 1 diabetes. HbA1c excludes all measurements taken in the first 90 days after diagnosis.",
     },
     "treatment": {
         "title": "Treatment",

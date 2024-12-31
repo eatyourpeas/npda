@@ -21,16 +21,14 @@
     <table class="table-auto w-full text-sm text-left text-gray-500 mb-5 font-montserrat overflow-x-auto">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 bg-rcpch_dark_blue text-white">
         <tr>
-          <th class="px-6 py-3">NHS Number</th>
-          <th class="px-6 py-3">>= 12yo</th>
-          <th class="px-6 py-3">HbA1c</th>
-          <th class="px-6 py-3">BMI</th>
-          <th class="px-6 py-3">Thyroid Screen</th>
-          <th class="px-6 py-3">Blood Pressure</th>
-          <th class="px-6 py-3">Urinary Albumin</th>
-          <th class="px-6 py-3">Eye Screen</th>
-          <th class="px-6 py-3">Foot Exam</th>
-          <th class="px-6 py-3">Total</th>
+          {% comment %} TODO: ONCE ALL DATA ADDED, REMOVE THIS CHECK {% endcomment %}
+          {% if text.headers %}
+            {% for header in headers %}
+            <th class="px-6 py-4">{{ header }}</th>
+            {% endfor %}
+          {% else %}
+            Not implemented
+          {% endif %}
         </tr>
       </thead>
       <tbody>

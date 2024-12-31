@@ -24,7 +24,6 @@ from project.npda.general_functions.rcpch_nhs_organisations import fetch_organis
 from project.npda.views.decorators import login_and_otp_required
 from project.npda.views.dashboard.dashboard import TEXT
 
-
 @login_and_otp_required()
 def get_patient_level_report_partial(request):
 
@@ -36,12 +35,17 @@ def get_patient_level_report_partial(request):
     # State vars
     # Colour the selected menu tab
     highlight = {f"{key}": key == pt_level_menu_tab_selected for key in TEXT.keys()}
+    
+    selected_data = TEXT[pt_level_menu_tab_selected]
+    
+    # Data to be passed to table
+    # table_headers = 
 
     return render(
         request,
         template_name="dashboard/pt_level_report_table_partial.html",
         context={
-            "text": TEXT[pt_level_menu_tab_selected],
+            "text": selected_data,
             "pt_level_menu_tab_selected": pt_level_menu_tab_selected,
             "highlight": highlight,
         },
