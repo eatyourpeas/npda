@@ -51,6 +51,9 @@
 {% endif %}
 
 <li>
-  {% docs_url as docs_url %}
-  {% include "navbar/components/nav_link.html" with url_name=docs_url nav_text="User Guide" %}
+  <a href="{% docs_url %}"
+    class="text-xs font-montserrat font-semibold   text-gray-700  text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent hover:underline underline-offset-8"
+    >
+      User Guide
+    </a>
 </li>
