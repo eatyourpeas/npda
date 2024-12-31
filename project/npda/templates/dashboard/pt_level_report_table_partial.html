@@ -23,11 +23,11 @@
         <tr>
           {% comment %} TODO: ONCE ALL DATA ADDED, REMOVE THIS CHECK {% endcomment %}
           {% if text.headers %}
-            {% for header in headers %}
+            {% for header in text.headers %}
             <th class="px-6 py-4">{{ header }}</th>
             {% endfor %}
           {% else %}
-            Not implemented
+            <th>Not implemented</th>
           {% endif %}
         </tr>
       </thead>
