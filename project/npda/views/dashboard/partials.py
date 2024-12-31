@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 
 # Django imports
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 
 from project.constants.colors import *
@@ -12,7 +12,26 @@ from project.npda.models.paediatric_diabetes_unit import (
     PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
 )
 
-# HTMX imports
+import json
+from datetime import date
+
+
+# Django imports
+from django.apps import apps
+from django.contrib import messages
+from django.shortcuts import render
+
+from project.npda.models.paediatric_diabetes_unit import (
+    PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
+)
+
+
+from project.npda.general_functions.session import (
+    refresh_session_object_synchronously,
+)
+from project.npda.kpi_class.kpis import CalculateKPIS
+
+
 from project.npda.general_functions.map import (
     get_children_by_pdu_audit_year,
     generate_distance_from_organisation_scatterplot_figure,
@@ -20,9 +39,10 @@ from project.npda.general_functions.map import (
 )
 from project.npda.general_functions.rcpch_nhs_organisations import fetch_organisation_by_ods_code
 
-# RCPCH imports
+
 from project.npda.views.decorators import login_and_otp_required
 from project.npda.views.dashboard.dashboard import TEXT
+
 
 @login_and_otp_required()
 def get_patient_level_report_partial(request):
@@ -35,11 +55,25 @@ def get_patient_level_report_partial(request):
     # State vars
     # Colour the selected menu tab
     highlight = {f"{key}": key == pt_level_menu_tab_selected for key in TEXT.keys()}
-    
+
     selected_data = TEXT[pt_level_menu_tab_selected]
-    
-    # Data to be passed to table
-    # table_headers = 
+
+    # Data to be passed to table
+    try:
+        pz_code = request.session.get("pz_code")
+        refresh_session_object_synchronously(request=request, user=request.user, pz_code=pz_code)
+        PaediatricDiabetesUnit: PaediatricDiabetesUnitClass = apps.get_model(
+            "npda", "PaediatricDiabetesUnit"
+        )
+
+        pdu = PaediatricDiabetesUnit.objects.get(pz_code=pz_code)
+        row_data = get_row_data_for(
+            pt_level_menu_tab_selected,
+            pz_code=pdu.pz_code,
+        )
+    except Exception as e:
+        messages.error(request, f"Error getting data for {pt_level_menu_tab_selected}: {e}")
+        row_data = None
 
     return render(
         request,
@@ -50,6 +84,37 @@ def get_patient_level_report_partial(request):
             "highlight": highlight,
         },
     )
+
+
+KPI_CATEGORY_ATTR_MAP = {
+    "health_checks": range(25, 33),
+    "additional_care_processes": range(33, 41),
+    "care_at_diagnosis": range(41, 44),
+    "outcomes": range(44, 47),
+    "treatment": range(13, 21),
+}
+
+
+def get_row_data_for(
+    pt_level_menu_tab_selected: str,
+    pz_code: str,
+    selected_audit_year: int = 2024,
+):
+    """Gets the row data for the patient level report table for the selected menu tab"""
+
+    # Get the relevant kpi data for the selected menu tab
+    if pt_level_menu_tab_selected not in TEXT.keys():
+        raise ValueError(f"Invalid menu tab selected: {pt_level_menu_tab_selected}")
+    
+    calculation_date = date(year=selected_audit_year, month=5, day=1)
+
+    calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
+
+    calculate_kpis.set_patients_for_calculation(pz_codes=[pz_code])
+
+    kpi_calculations_object = calculate_kpis._calculate_kpis(kpi_idxs=KPI_CATEGORY_ATTR_MAP[pt_level_menu_tab_selected])
+    
+    print(f"KPI_ATTRS: {kpi_calculations_object}")
 
 
 @login_and_otp_required()
