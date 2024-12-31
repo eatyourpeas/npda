@@ -38,17 +38,27 @@ logger = logging.getLogger(__name__)
 
 # Define our data constants
 # TODO: in hindsight, no need for this to be in the top-level view file
-# as just text for pt-level report table
+# as just text for pt-level report table
 TEXT = {
     "health_checks": {
         "title": "Seven Key Care Processes",
         "description": "HbA1c, BMI, and thyroid screen must be completed annually for all children and young people with Type 1 diabetes. Urinary albumin, blood pressure, and foot exam are mandatory for young people aged 12 and above. Eye screening is mandatory every 2 years for young people aged 12 and above, unless retinopathy was observed at a previous screen.",
-        "headers": ["NHS NUMBER", ">= 12YO", "HBA1C", "BMI", "THYROID SCREEN", "BLOOD PRESSURE", "URINARY ALBUMIN", "EYE SCREEN", "FOOT EXAM", "TOTAL"],
+        "headers": [
+            "NHS NUMBER",
+            ">= 12YO",
+            "HBA1C",
+            "BMI",
+            "THYROID SCREEN",
+            "BLOOD PRESSURE",
+            "URINARY ALBUMIN",
+            "EYE SCREEN",
+            "FOOT EXAM",
+            "TOTAL",
+        ],
     },
     "additional_care_processes": {
         "title": "Additional Care Proccesses",
         "description": "These additional care processes are recommended by NICE for children and young people with Type 1 diabetes of all ages, with the exception of smoking status and referral to smoking cessation services, which apply to young people aged 12 and above.",
-        
     },
     "care_at_diagnosis": {
         "title": "Care at Diagnosis",
@@ -61,7 +71,14 @@ TEXT = {
     "treatment": {
         "title": "Treatment",
         "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
-    }
+    },
+}
+KPI_CATEGORY_ATTR_MAP = {
+    "health_checks": list(range(25, 32)),
+    "additional_care_processes": list(range(33, 41)),
+    "care_at_diagnosis": list(range(41, 44)),
+    "outcomes": list(range(44, 47)),
+    "treatment": list(range(13, 21)),
 }
 
 
@@ -225,10 +242,64 @@ def dashboard(request):
     ).days
     current_quarter = retrieve_quarter_for_date(current_date)
 
-    # Gather defaults for htmx partials
+    # Gather defaults for htmx partials pt level table
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
     highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
+    health_check_kpi_attr_names = [
+        calculate_kpis.kpi_name_registry.get_attribute_name(i)
+        for i in KPI_CATEGORY_ATTR_MAP["health_checks"]
+    ]
+    # First initialise the dict with all pts -> for health checks, this is KPI5 which is
+    # kpi_25's eligible pts
+    # Want result to look like (keys are pt pks):
+    # {
+    #         11: {
+    #   nhs_number: str,
+    #             kpi_25_hba1c: bool,
+    #             kpi_26_bmi: bool,
+    #             kpi_27_thyroid: bool,
+    #             kpi_28_blood_pressure: bool | None,
+    #             kpi_29_urinary_albumin: bool | None,
+    #             kpi_30_retinal_screening: bool | None,
+    #             kpi_31_foot_examination: bool | None,
+    #         },
+    #         12: {
+    #   nhs_number: str,
+    #             kpi_25_hba1c: bool,
+    #             kpi_26_bmi: bool,
+    #             kpi_27_thyroid: bool,
+    #             kpi_28_blood_pressure: bool | None,
+    #             kpi_29_urinary_albumin: bool | None,
+    #             kpi_30_retinal_screening: bool | None,
+    #             kpi_31_foot_examination: bool | None,
+    #         },
+    #         ...
+    #     }
+    health_check_pts = {}
+    for pt in kpi_calculations_object["calculated_kpi_values"]["kpi_25_hba1c"]["patient_querysets"][
+        "eligible"
+    ]:
+        # Set all to None initially as updating as [True | False] if pt in [passed | failed]
+        # querysets for each kpi -> if not in either, must mean they are ineligible (therefore None)
+        health_check_pts[pt.pk] = {
+            kpi_attr_name: None for kpi_attr_name in health_check_kpi_attr_names
+        }
+        health_check_pts[pt.pk]["nhs_number"] = pt.nhs_number
+        health_check_pts[pt.pk]["is_gte_12yo"] = pt.age_days() >= 12*365
+
+    # For each kpi, update the health_check_pts dict with the pts that have passed and failed
+    for kpi_attr_name in health_check_kpi_attr_names:
+
+        kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+            "patient_querysets"
+        ]
+
+        for pt in kpi_pt_querysets["passed"]:
+            health_check_pts[pt.pk][kpi_attr_name] = True
+
+        for pt in kpi_pt_querysets["failed"]:
+            health_check_pts[pt.pk][kpi_attr_name] = False
 
     context = {
         "pdu_object": pdu,
@@ -290,6 +361,10 @@ def dashboard(request):
         "default_pt_level_menu_text": default_pt_level_menu_text,
         "default_pt_level_menu_tab_selected": default_pt_level_menu_tab_selected,
         "default_highlight": highlight,
+        "default_table_data": {
+            "kpi_attr_names": ["nhs_number","is_gte_12yo"]+health_check_kpi_attr_names,
+            "pts_results": health_check_pts,
+        },
         # TODO: this should be an enum but we're currently not doing benchmarking so can update
         # at that point
         "aggregation_level": "pdu",

@@ -41,8 +41,10 @@ from project.npda.general_functions.rcpch_nhs_organisations import fetch_organis
 
 
 from project.npda.views.decorators import login_and_otp_required
-from project.npda.views.dashboard.dashboard import TEXT
+from project.npda.views.dashboard.dashboard import KPI_CATEGORY_ATTR_MAP, TEXT
 
+import logging
+logger = logging.getLogger(__name__)
 
 @login_and_otp_required()
 def get_patient_level_report_partial(request):
@@ -58,22 +60,7 @@ def get_patient_level_report_partial(request):
 
     selected_data = TEXT[pt_level_menu_tab_selected]
 
-    # Data to be passed to table
-    try:
-        pz_code = request.session.get("pz_code")
-        refresh_session_object_synchronously(request=request, user=request.user, pz_code=pz_code)
-        PaediatricDiabetesUnit: PaediatricDiabetesUnitClass = apps.get_model(
-            "npda", "PaediatricDiabetesUnit"
-        )
-
-        pdu = PaediatricDiabetesUnit.objects.get(pz_code=pz_code)
-        row_data = get_row_data_for(
-            pt_level_menu_tab_selected,
-            pz_code=pdu.pz_code,
-        )
-    except Exception as e:
-        messages.error(request, f"Error getting data for {pt_level_menu_tab_selected}: {e}")
-        row_data = None
+    row_data = []
 
     return render(
         request,
@@ -82,17 +69,12 @@ def get_patient_level_report_partial(request):
             "text": selected_data,
             "pt_level_menu_tab_selected": pt_level_menu_tab_selected,
             "highlight": highlight,
+            "row_data": row_data,
         },
     )
 
 
-KPI_CATEGORY_ATTR_MAP = {
-    "health_checks": range(25, 33),
-    "additional_care_processes": range(33, 41),
-    "care_at_diagnosis": range(41, 44),
-    "outcomes": range(44, 47),
-    "treatment": range(13, 21),
-}
+
 
 
 def get_row_data_for(
