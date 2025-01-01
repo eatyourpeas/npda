@@ -37,7 +37,9 @@ from project.npda.general_functions.map import (
     generate_distance_from_organisation_scatterplot_figure,
     generate_dataframe_and_aggregated_distance_data_from_cases,
 )
-from project.npda.general_functions.rcpch_nhs_organisations import fetch_organisation_by_ods_code
+from project.npda.general_functions.rcpch_nhs_organisations import (
+    fetch_organisation_by_ods_code,
+)
 
 
 from project.npda.views.decorators import login_and_otp_required
@@ -133,7 +135,9 @@ def get_waffle_chart_partial(request):
 
         # Handle empty data (eg. if no eligible pts)
         if not data:
-            return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": None})
+            return render(
+                request, "dashboard/waffle_chart_partial.html", {"chart_html": None}
+            )
 
         # Ensure percentages sum to 100
         total = sum(data.values())
@@ -170,7 +174,10 @@ def get_waffle_chart_partial(request):
 
         # Create Plotly waffle chart
         GRID_SIZE = 10  # 10x10 grid
-        Y, X = GRID_SIZE - 1, 0  # We start top left and move left to right, top to bottom
+        Y, X = (
+            GRID_SIZE - 1,
+            0,
+        )  # We start top left and move left to right, top to bottom
 
         chart_data = []
         # For each label, add the appropriate number of squares to the chart data
@@ -244,11 +251,15 @@ def get_waffle_chart_partial(request):
                 "displayModeBar": False,
             },
         )
-        return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
+        return render(
+            request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html}
+        )
 
     except Exception as e:
         return render(
-            request, "dashboard/waffle_chart_partial.html", {"error": "Something went wrong!"}
+            request,
+            "dashboard/waffle_chart_partial.html",
+            {"error": "Something went wrong!"},
         )
 
 
@@ -268,7 +279,7 @@ def get_map_chart_partial(request):
     try:
         pdu_lead_organisation = fetch_organisation_by_ods_code(
             ods_code=paediatric_diabetes_unit.lead_organisation_ods_code
-        )["properties"]
+        )
     except:
         raise ValueError(
             f"Lead organisation for PDU {paediatric_diabetes_unit.lead_organisation_ods_code=} not found"
@@ -283,7 +294,9 @@ def get_map_chart_partial(request):
 
     # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
     aggregated_distances, patient_distances_dataframe = (
-        generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases=patients_to_plot)
+        generate_dataframe_and_aggregated_distance_data_from_cases(
+            filtered_cases=patients_to_plot
+        )
     )
 
     # generate scatterplot of patients by distance from the selected organisation
@@ -562,4 +575,6 @@ def get_hcl_scatter_plot(request):
         },
     )
 
-    return render(request, "dashboard/hcl_scatter_plot_partial.html", {"chart_html": chart_html})
+    return render(
+        request, "dashboard/hcl_scatter_plot_partial.html", {"chart_html": chart_html}
+    )

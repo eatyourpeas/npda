@@ -95,11 +95,15 @@ class TestQuestionnaireView:
         """
         # Create a patient
         form = PatientForm(VALID_FIELDS)
-
+        print(audit_dates)
         # Modify the session
         session = self.client.session
-        session["selected_audit_year"] = audit_dates[0].year + 1
+        session["selected_audit_year"] = (
+            audit_dates[0].year + 2
+        )  # 2 years in the future will always be a different audit year
         session.save()
+
+        print(self.client.session["selected_audit_year"])
 
         # url
         url = reverse("patient-add")

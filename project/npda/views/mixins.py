@@ -9,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.mixins import AccessMixin
 from django.http import HttpResponseForbidden
 
+from project.npda.general_functions.audit_period import get_audit_period_for_date
 from project.npda.models.npda_user import NPDAUser
 from project.npda.models.patient import Patient
 
@@ -171,13 +172,26 @@ class CheckCurrentAuditYearMixin(AccessMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        # Check if the user is trying to access data for the current audit year
-        if request.session.get("selected_audit_year") != datetime.today().year:
+        # Check if the user is trying to access data for the current audit period
+        audit_start_date, audit_end_data = get_audit_period_for_date(
+            datetime.now().date()
+        )
+        if request.session.get("selected_audit_year") < audit_start_date.year:
             logger.warning(
                 f"User {request.user} tried to create/edit or delete data in a previous audit year."
             )
             if request.user.is_superuser or request.user.is_rcpch_audit_team_member:
                 # Allow superusers and RCPCH audit team members to create/edit or update  data for previous audit years
+                return super().dispatch(request, *args, **kwargs)
+
+            raise PermissionDenied()
+
+        if request.session.get("selected_audit_year") > audit_end_data.year:
+            logger.warning(
+                f"User {request.user} tried to create/edit or delete data in a future audit year."
+            )
+            if request.user.is_superuser or request.user.is_rcpch_audit_team_member:
+                # Allow superusers and RCPCH audit team members to create/edit or update  data for future audit years
                 return super().dispatch(request, *args, **kwargs)
 
             raise PermissionDenied()
