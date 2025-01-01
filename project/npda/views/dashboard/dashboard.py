@@ -367,8 +367,8 @@ def dashboard(request):
         "default_pt_level_menu_tab_selected": default_pt_level_menu_tab_selected,
         "default_highlight": highlight,
         "default_table_data": {
-            "kpi_attr_names": ["nhs_number", "is_gte_12yo"] + health_check_kpi_attr_names + ["total"],
-            "pts_results": health_check_pts,
+            "headers": ["nhs_number", "is_gte_12yo"] + health_check_kpi_attr_names + ["total"],
+            "row_data": health_check_pts,
         },
         # TODO: this should be an enum but we're currently not doing benchmarking so can update
         # at that point

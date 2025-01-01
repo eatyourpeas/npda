@@ -33,14 +33,14 @@
       </thead>
       <tbody>
 
-        {% if row_data %}
-          {% for pt_pk, results in row_data.pts_results.items %}
+        {% if table_data %}
+          {% for pt_pk, results in table_data.row_data.items %}
           <tr class="bg-white border-b hover:bg-gray-100">
-            <td colspan="{{ row_data.kpi_attr_names|length }}">
+            <td colspan="{{ table_data.headers|length }}">
               <a href="{% url 'patient-update' pt_pk %}" class="block w-full h-full">
                   <span class="tooltip tooltip-bottom block" data-tip="View patient details (opens new tab)">
                   <div class="flex justify-center items-center">
-                    {% for kpi_attr_name in row_data.kpi_attr_names %}
+                    {% for kpi_attr_name in table_data.headers %}
                       <div class="px-6 py-4 flex-1">
                         {% with result=results|get_item:kpi_attr_name %}
                           <p>
