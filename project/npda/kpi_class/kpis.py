@@ -753,43 +753,19 @@ class CalculateKPIS:
         * Date of leaving service within the audit period
         * Date of death within the audit period
 
-        NOTE: exclusion same as KPI5
+        NOTE: this is KPI 5 but with an additional filter for age 12 and above
 
         NOTE: just a count so pass/fail doesn't make sense; these should be
         discarded as they're set to the same value as eligible/ineligible in
         the returned KPIResult object.
         """
-
-        # We cannot simply use KPI1 base queryset as that includes a filter
-        # for age < 25. Additionally, this requires an observation within
-        # the audit period, which is not included in KPI1 base queryset.
-        # So need to make new query set
-
-        # Separate exclusions from the main query for clarity
-        eligible_patients_exclusions = self.patients.exclude(
-            # EXCLUDE Date of diagnosis within the audit period
-            Q(diagnosis_date__range=(self.AUDIT_DATE_RANGE))
-            # EXCLUDE Date of leaving service within the audit period
-            | (
-                Q(
-                    paediatric_diabetes_units__date_leaving_service__range=(
-                        self.audit_start_date,
-                        self.audit_end_date,
-                    )
-                )
-            )
-            # EXCLUDE Date of death within the audit period"
-            | Q(death_date__range=(self.AUDIT_DATE_RANGE))
-        )
-
-        base_eligible_patients = eligible_patients_exclusions.filter(
-            # Valid attributes
-            Q(nhs_number__isnull=False)
-            & Q(date_of_birth__isnull=False)
+        
+        base_eligible_patients, total_eligible = self._get_total_kpi_5_eligible_pts_base_query_set_and_total_count()
+        
+        # Gte 12yo
+        eligible_patients = base_eligible_patients.filter(
             # Age 12 and above at the start of the audit period
-            & Q(date_of_birth__lte=self.audit_start_date - relativedelta(years=12))
-            # Diagnosis of Type 1 diabetes
-            & Q(diabetes_type=DIABETES_TYPES[0][0])
+            Q(date_of_birth__lte=self.audit_start_date - relativedelta(years=12))
         )
 
         # Find patients with at least one observation within the audit period
@@ -813,7 +789,7 @@ class CalculateKPIS:
         )
 
         # Check any observation across all visits
-        eligible_pts_annotated_kpi_6_visits = base_eligible_patients.annotate(
+        eligible_pts_annotated_kpi_6_visits = eligible_patients.annotate(
             valid_kpi_6_visits=Exists(valid_visit_subquery)
         )
 
