@@ -250,8 +250,8 @@ def dashboard(request):
         calculate_kpis.kpi_name_registry.get_attribute_name(i)
         for i in KPI_CATEGORY_ATTR_MAP["health_checks"]
     ]
-    # First initialise the dict with all pts -> for health checks, this is KPI5 which is
-    # kpi_25's eligible pts
+    # First initialise the dict with all pts -> for health checks, this is KPI5 which can be found
+    # via kpi_25's eligible pts
     # Want result to look like (keys are pt pks):
     # {
     #         11: {
