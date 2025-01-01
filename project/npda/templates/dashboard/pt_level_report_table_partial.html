@@ -18,8 +18,8 @@
   </div>
 
   <div class="flex overflow-y-auto h-[60vh] w-full">
-    <table class="table-auto w-full text-xs text-left text-gray-500 mb-5 font-montserrat overflow-x-auto">
-      <thead class="text-xs text-gray-700 uppercase bg-rcpch_dark_blue text-white sticky top-0 z-10">
+    <table class="table-auto w-full text-xs  text-left text-gray-500 mb-5 font-montserrat overflow-x-auto">
+      <thead class=" text-gray-700 uppercase bg-rcpch_dark_blue text-white sticky top-0 z-10">
         <tr>
           {% comment %} TODO: ONCE ALL DATA ADDED, REMOVE THIS CHECK {% endcomment %}
           {% if text.headers %}
@@ -41,7 +41,7 @@
                   {% with result=results|get_item:kpi_attr_name %}
                     {% if kpi_attr_name == 'nhs_number'%}
                     <span class="tooltip tooltip-right" data-tip="View patient details (opens new tab)">
-                      <a class="btn hover:text-rcpch_pink" target="_blank" href="{% url 'patient-update' pt_pk %}">
+                      <a class=" hover:text-rcpch_pink" target="_blank" href="{% url 'patient-update' pt_pk %}">
                         {{ results|get_item:kpi_attr_name }}
                       </a>
                     </span>
