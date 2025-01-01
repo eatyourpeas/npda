@@ -246,65 +246,11 @@ def dashboard(request):
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
     highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
-    health_check_kpi_attr_names = [
-        calculate_kpis.kpi_name_registry.get_attribute_name(i)
-        for i in KPI_CATEGORY_ATTR_MAP["health_checks"]
-    ]
-    # First initialise the dict with all pts -> for health checks, this is KPI5 which can be found
-    # via kpi_25's eligible pts
-    # Want result to look like (keys are pt pks):
-    # {
-    #         11: {
-    #   nhs_number: str,
-    #             kpi_25_hba1c: bool,
-    #             kpi_26_bmi: bool,
-    #             kpi_27_thyroid: bool,
-    #             kpi_28_blood_pressure: bool | None,
-    #             kpi_29_urinary_albumin: bool | None,
-    #             kpi_30_retinal_screening: bool | None,
-    #             kpi_31_foot_examination: bool | None,
-    #         },
-    #         12: {
-    #   nhs_number: str,
-    #             kpi_25_hba1c: bool,
-    #             kpi_26_bmi: bool,
-    #             kpi_27_thyroid: bool,
-    #             kpi_28_blood_pressure: bool | None,
-    #             kpi_29_urinary_albumin: bool | None,
-    #             kpi_30_retinal_screening: bool | None,
-    #             kpi_31_foot_examination: bool | None,
-    #         },
-    #         ...
-    #     }
-    health_check_pts = {}
-    for pt in kpi_calculations_object["calculated_kpi_values"]["kpi_25_hba1c"]["patient_querysets"][
-        "eligible"
-    ]:
-        # Set all to None initially as updating as [True | False] if pt in [passed | failed]
-        # querysets for each kpi -> if not in either, must mean they are ineligible (therefore None)
-        health_check_pts[pt.pk] = {
-            kpi_attr_name: None for kpi_attr_name in health_check_kpi_attr_names
-        }
-        # Additional values we can calculate now
-        health_check_pts[pt.pk]["nhs_number"] = pt.nhs_number
-        pt_is_gte_12yo = pt.date_of_birth <= calculate_kpis.audit_start_date - relativedelta(years=12)
-        health_check_pts[pt.pk]["is_gte_12yo"] = pt_is_gte_12yo
-        # total = (passed / total)
-        health_check_pts[pt.pk]["total"] = [0, 7 if pt_is_gte_12yo else 3]
-
-    # For each kpi, update the health_check_pts dict with the pts that have passed and failed
-    for kpi_attr_name in health_check_kpi_attr_names:
-
-        kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
-            "patient_querysets"
-        ]
-
-        for pt in kpi_pt_querysets["passed"]:
-            health_check_pts[pt.pk]["total"][0] += 1
-            health_check_pts[pt.pk][kpi_attr_name] = True
-
-        for pt in kpi_pt_querysets["failed"]:
-            health_check_pts[pt.pk][kpi_attr_name] = False
+    default_pt_level_table_headers, default_pt_level_table_data = get_pt_level_table_data(
+        category="health_checks",
+        calculate_kpis_object=calculate_kpis,
+        kpi_calculations_object=kpi_calculations_object,
+    )
 
     context = {
         "pdu_object": pdu,
@@ -367,8 +313,8 @@ def dashboard(request):
         "default_pt_level_menu_tab_selected": default_pt_level_menu_tab_selected,
         "default_highlight": highlight,
         "default_table_data": {
-            "headers": ["nhs_number", "is_gte_12yo"] + health_check_kpi_attr_names + ["total"],
-            "row_data": health_check_pts,
+            "headers": default_pt_level_table_headers,
+            "row_data": default_pt_level_table_data,
         },
         # TODO: this should be an enum but we're currently not doing benchmarking so can update
         # at that point
@@ -1091,6 +1037,96 @@ def add_number_of_figures_coloured_for_chart(
             value_counts_dict[category][key]["figures_coloured"] = int(value["pct"] / divisor)
 
     return dict(value_counts_dict)
+
+
+def get_pt_level_table_data(
+    category: Literal[
+        "health_checks",
+        "additional_care_processes",
+        "care_at_diagnosis",
+        "outcomes",
+        "treatment",
+    ],
+    calculate_kpis_object: CalculateKPIS,
+    kpi_calculations_object: dict,
+) -> tuple[list[str], list[dict]]:
+    """Get data for pt level table
+
+    - headers
+    - row_data
+
+    where row_data is a list of dicts with the following example structure (keys are pt.pk):
+        {
+                11: {
+                    nhs_number: str,
+                    kpi_25_hba1c: bool,
+                    kpi_26_bmi: bool,
+                    kpi_27_thyroid: bool,
+                    kpi_28_blood_pressure: bool | None,
+                    kpi_29_urinary_albumin: bool | None,
+                    kpi_30_retinal_screening: bool | None,
+                    kpi_31_foot_examination: bool | None,
+                    total: list[int, int],
+                },
+                12: {
+                    nhs_number: str,
+                    kpi_25_hba1c: bool,
+                    kpi_26_bmi: bool,
+                    kpi_27_thyroid: bool,
+                    kpi_28_blood_pressure: bool | None,
+                    kpi_29_urinary_albumin: bool | None,
+                    kpi_30_retinal_screening: bool | None,
+                    kpi_31_foot_examination: bool | None,
+                    total: list[int, int],
+                },
+                ...
+            }
+    """
+
+    kpi_attr_names = [
+        calculate_kpis_object.kpi_name_registry.get_attribute_name(i)
+        for i in KPI_CATEGORY_ATTR_MAP[category]
+    ]
+
+    if category == "health_checks":
+
+        data = {}
+        # First initialise the dict with all pts -> for health checks, this is KPI5 which can be found
+        # via kpi_25's eligible pts
+        for pt in kpi_calculations_object["calculated_kpi_values"]["kpi_25_hba1c"][
+            "patient_querysets"
+        ]["eligible"]:
+            # Set all to None initially as updating as [True | False] if pt in [passed | failed]
+            # querysets for each kpi -> if not in either, must mean they are ineligible (therefore None)
+            data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
+            # Additional values we can calculate now
+            data[pt.pk]["nhs_number"] = pt.nhs_number
+            pt_is_gte_12yo = (
+                pt.date_of_birth <= calculate_kpis_object.audit_start_date - relativedelta(years=12)
+            )
+            data[pt.pk]["is_gte_12yo"] = pt_is_gte_12yo
+            # total = (passed / total)
+            data[pt.pk]["total"] = [0, 7 if pt_is_gte_12yo else 3]
+
+        # For each kpi, update the data dict with the pts that have passed and failed
+        for kpi_attr_name in kpi_attr_names:
+
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
+
+            for pt in kpi_pt_querysets["passed"]:
+                data[pt.pk]["total"][0] += 1
+                data[pt.pk][kpi_attr_name] = True
+
+            for pt in kpi_pt_querysets["failed"]:
+                data[pt.pk][kpi_attr_name] = False
+
+        # Finally add the headers. Need to add nhs_number, is_gte_12yo, and total to the headers
+        headers = ["nhs_number", "is_gte_12yo"] + kpi_attr_names + ["total"]
+        return headers, data 
+
+    raise NotImplementedError(f"Category {category} not yet implemented")
 
 
 def convert_value_counts_dict_to_pct(value_counts_dict: dict):
