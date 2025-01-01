@@ -59,6 +59,17 @@ TEXT = {
     "additional_care_processes": {
         "title": "Additional Care Proccesses",
         "description": "These additional care processes are recommended by NICE for children and young people with Type 1 diabetes of all ages, with the exception of smoking status and referral to smoking cessation services, which apply to young people aged 12 and above.",
+        "headers": [
+            "NHS NUMBER",
+            "HBA1C 4+",
+            "Psychological assessment",
+            "Smoking status screened",
+            "Referral to smoking cessation service",
+            "Additional dietetic appointment offered",
+            "Patients attending additional dietetic appointment",
+            "Influenza immunisation recommended",
+            "Sick day rules advice",
+        ],
     },
     "care_at_diagnosis": {
         "title": "Care at Diagnosis",
@@ -1124,6 +1135,38 @@ def get_pt_level_table_data(
 
         # Finally add the headers. Need to add nhs_number, is_gte_12yo, and total to the headers
         headers = ["nhs_number", "is_gte_12yo"] + kpi_attr_names + ["total"]
+        return headers, data 
+
+    elif category == "additional_care_processes":
+        
+        data = {}
+        # Initialise with all eligible pts' pks as the key. Use kpi40 eligible
+        # as this is KPI1 (all eligible pts)
+        kpi_40_attr_name = calculate_kpis_object.kpi_name_registry.get_attribute_name(40)
+        for pt in kpi_calculations_object["calculated_kpi_values"][kpi_40_attr_name][
+            "patient_querysets"
+        ]["eligible"]:
+            # Set all to None initially as updating as [True | False] if pt in [passed | failed]
+            # querysets for each kpi -> if not in either, must mean they are ineligible (therefore None)
+            data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
+            # Additional values we can calculate now
+            data[pt.pk]["nhs_number"] = pt.nhs_number
+
+        # For each kpi, update the data dict with the pts that have passed and failed
+        for kpi_attr_name in kpi_attr_names:
+
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
+
+            for pt in kpi_pt_querysets["passed"]:
+                data[pt.pk][kpi_attr_name] = True
+
+            for pt in kpi_pt_querysets["failed"]:
+                data[pt.pk][kpi_attr_name] = False
+
+        # Finally add the headers. Need to add nhs_number
+        headers = ["nhs_number"] + kpi_attr_names 
         return headers, data 
 
     raise NotImplementedError(f"Category {category} not yet implemented")

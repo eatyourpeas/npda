@@ -98,7 +98,7 @@ def get_patient_level_report_partial(request):
             f"Error getting pt_level_table_data for {pt_level_menu_tab_selected=} {e=}",
             exc_info=True,
         )
-        messages.error(request, f"Error getting data!")
+        # messages.error(request, f"Error getting data!")
 
         selected_table_headers = []
         selected_table_data = []
