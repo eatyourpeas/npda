@@ -41,10 +41,16 @@ from project.npda.general_functions.rcpch_nhs_organisations import fetch_organis
 
 
 from project.npda.views.decorators import login_and_otp_required
-from project.npda.views.dashboard.dashboard import KPI_CATEGORY_ATTR_MAP, TEXT
+from project.npda.views.dashboard.dashboard import (
+    KPI_CATEGORY_ATTR_MAP,
+    TEXT,
+    get_pt_level_table_data,
+)
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 @login_and_otp_required()
 def get_patient_level_report_partial(request):
@@ -60,7 +66,40 @@ def get_patient_level_report_partial(request):
 
     selected_data = TEXT[pt_level_menu_tab_selected]
 
-    row_data = []
+    # Gather the selected category's data
+
+    # First need to get the relevant calculations
+    pz_code = request.session.get("pz_code")
+
+    selected_audit_year = int(request.session.get("selected_audit_year"))
+    # TODO: remove min clamp once available audit year from preference filter sorted
+    selected_audit_year = max(selected_audit_year, 2024)
+    calculation_date = date(year=selected_audit_year, month=5, day=1)
+
+    calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
+
+    # Set relevant patients
+    calculate_kpis.set_patients_for_calculation(pz_codes=[pz_code])
+
+    # Run the relevant subset of calculations
+    selected_kpis = KPI_CATEGORY_ATTR_MAP[pt_level_menu_tab_selected]
+    kpi_calculations_object = calculate_kpis._calculate_kpis(selected_kpis)
+
+    try:
+        selected_table_headers, selected_table_data = get_pt_level_table_data(
+            category=pt_level_menu_tab_selected,
+            calculate_kpis_object=calculate_kpis,
+            kpi_calculations_object=kpi_calculations_object,
+        )
+    except Exception as e:
+        logger.error(
+            f"Error getting pt_level_table_data for {pt_level_menu_tab_selected=} {e=}",
+            exc_info=True,
+        )
+        messages.error(request, f"Error getting data!")
+
+        selected_table_headers = []
+        selected_table_data = []
 
     return render(
         request,
@@ -69,14 +108,12 @@ def get_patient_level_report_partial(request):
             "text": selected_data,
             "pt_level_menu_tab_selected": pt_level_menu_tab_selected,
             "highlight": highlight,
-            "row_data": row_data,
+            "table_data": {
+                "headers": selected_table_headers,
+                "row_data": selected_table_data,
+            },
         },
     )
-
-
-
-
-
 
 
 @login_and_otp_required()

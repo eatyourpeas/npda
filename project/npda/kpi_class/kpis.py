@@ -308,10 +308,13 @@ class CalculateKPIS:
 
     def _calculate_kpis(
         self,
-        kpi_idxs: Optional[range] = None,
+        kpi_idxs: list[int] = None,
     ) -> KPICalculationsObject:
-        """Calculate KPIs 1 - 49 for set self.patients and cohort range
+        """Calculate KPIs for set self.patients and cohort range
         (self.audit_start_date and self.audit_end_date).
+        
+        If kpi_idxs is not provided, will calculate all KPIs 1 - 49, otherwise
+        calculates the subset of KPIs in the kpi_idxs list.
 
         We dynamically set these attributes using names set in self.kpis, done
         in the self._get_kpi_attribute_names method during object init.
