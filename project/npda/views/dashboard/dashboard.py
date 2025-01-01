@@ -285,8 +285,12 @@ def dashboard(request):
         health_check_pts[pt.pk] = {
             kpi_attr_name: None for kpi_attr_name in health_check_kpi_attr_names
         }
+        # Additional values we can calculate now
         health_check_pts[pt.pk]["nhs_number"] = pt.nhs_number
-        health_check_pts[pt.pk]["is_gte_12yo"] = pt.age_days() >= 12*365
+        pt_is_gte_12yo = pt.date_of_birth <= calculate_kpis.audit_start_date - relativedelta(years=12)
+        health_check_pts[pt.pk]["is_gte_12yo"] = pt_is_gte_12yo
+        # total = (passed / total)
+        health_check_pts[pt.pk]["total"] = [0, 7 if pt_is_gte_12yo else 3]
 
     # For each kpi, update the health_check_pts dict with the pts that have passed and failed
     for kpi_attr_name in health_check_kpi_attr_names:
@@ -296,6 +300,7 @@ def dashboard(request):
         ]
 
         for pt in kpi_pt_querysets["passed"]:
+            health_check_pts[pt.pk]["total"][0] += 1
             health_check_pts[pt.pk][kpi_attr_name] = True
 
         for pt in kpi_pt_querysets["failed"]:
@@ -362,7 +367,7 @@ def dashboard(request):
         "default_pt_level_menu_tab_selected": default_pt_level_menu_tab_selected,
         "default_highlight": highlight,
         "default_table_data": {
-            "kpi_attr_names": ["nhs_number","is_gte_12yo"]+health_check_kpi_attr_names,
+            "kpi_attr_names": ["nhs_number", "is_gte_12yo"] + health_check_kpi_attr_names + ["total"],
             "pts_results": health_check_pts,
         },
         # TODO: this should be an enum but we're currently not doing benchmarking so can update
