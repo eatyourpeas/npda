@@ -77,26 +77,6 @@ def get_patient_level_report_partial(request):
 
 
 
-def get_row_data_for(
-    pt_level_menu_tab_selected: str,
-    pz_code: str,
-    selected_audit_year: int = 2024,
-):
-    """Gets the row data for the patient level report table for the selected menu tab"""
-
-    # Get the relevant kpi data for the selected menu tab
-    if pt_level_menu_tab_selected not in TEXT.keys():
-        raise ValueError(f"Invalid menu tab selected: {pt_level_menu_tab_selected}")
-    
-    calculation_date = date(year=selected_audit_year, month=5, day=1)
-
-    calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
-
-    calculate_kpis.set_patients_for_calculation(pz_codes=[pz_code])
-
-    kpi_calculations_object = calculate_kpis._calculate_kpis(kpi_idxs=KPI_CATEGORY_ATTR_MAP[pt_level_menu_tab_selected])
-    
-    print(f"KPI_ATTRS: {kpi_calculations_object}")
 
 
 @login_and_otp_required()
