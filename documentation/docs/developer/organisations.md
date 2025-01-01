@@ -9,7 +9,7 @@ The organisational structure of health care in England and Wales influences repo
 
 ### Organisations and Trusts
 
-This is the lowest level of abstraction and represents either an acute or a community hospital/organisation responsible for epilepsy care of children and young people. There are often several organisations in a Trust. Each organisation, like each Trust, has its own ODS code, and from year to year there is movement between trusts as organisations change their allegiances between trusts when mergers are carried out. The organisation model therefore has more than once instance for some organisations, as their parent status or other details such as name change.
+This is the lowest level of abstraction and represents either an acute or a community hospital/organisation responsible for the care of children and young people. There are often several organisations in a Trust. Each organisation, like each Trust, has its own ODS code, and from year to year there is movement between trusts as organisations change their allegiances between trusts when mergers are carried out. The organisation model therefore has more than once instance for some organisations, as their parent status or other details such as name change.
 
 Organisations are not actively tracked in NPDA as they are in Epilepsy12 and parent RCPCH NHS Organisations API, but the PaediatricDiabetesUnit model stores the lead organisation name and ODS code as well as the diabetes network name and code.
 
