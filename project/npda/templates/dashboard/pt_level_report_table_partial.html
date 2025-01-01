@@ -50,11 +50,11 @@
                             {% elif kpi_attr_name == "total" %}
                               {{ result.0 }} / {{ result.1 }}
                             {% elif result is True %}
-                              ✔️
+                            <i class="fa-solid fa-circle-check text-success"></i>
                             {% elif result is False %}
-                              ✖️
+                            <i class="fa-solid fa-circle-exclamation text-error"></i>
                             {% else %}
-                              N/A
+                            <i class="fa-solid fa-ban text-muted"></i>
                             {% endif %}
                             </p>
                         {% endwith %}
