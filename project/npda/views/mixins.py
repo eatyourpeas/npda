@@ -176,7 +176,7 @@ class CheckCurrentAuditYearMixin(AccessMixin):
         audit_start_date, audit_end_data = get_audit_period_for_date(
             datetime.now().date()
         )
-        if request.session.get("selected_audit_year") < audit_start_date.year:
+        if int(request.session.get("selected_audit_year")) < audit_start_date.year:
             logger.warning(
                 f"User {request.user} tried to create/edit or delete data in a previous audit year."
             )
