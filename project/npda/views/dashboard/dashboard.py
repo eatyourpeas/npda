@@ -74,6 +74,12 @@ TEXT = {
     "care_at_diagnosis": {
         "title": "Care at Diagnosis",
         "description": "Children and young people with Type 1 diabetes should be screened for thyroid disease and coeliac disease within 90 days of diagnosis. Newly diagnosed children and young people should also receive level 3 carbohydrate counting education within 14 days of diagnosis.",
+        "headers": [
+            "NHS NUMBER",
+            "COELIAC DISEASE SCREENING",
+            "THYROID DISEASE SCREENING",
+            "CARBOHYDRATE COUNTING EDUCATION",
+        ]
     },
     "outcomes": {
         "title": "Outcomes",
@@ -147,7 +153,7 @@ def dashboard(request):
     logger.error(f"🔥 Setting first {_} patients to be eligible for KPI 7")
     to_set_kpi_7_eligible = calculate_kpis.patients[:_]
     for pt in to_set_kpi_7_eligible:
-        pt.diagnosis_date = calculate_kpis.audit_start_date + relativedelta(months=1)
+        pt.diagnosis_date = calculate_kpis.audit_start_date + relativedelta(months=4)
         pt.diabetes_type = DIABETES_TYPES[0][0]
         pt.save()
         logger.warning(f"Succesfully set {pt} to be eligible for KPI 7")
@@ -1025,7 +1031,7 @@ def get_pt_demographic_value_counts(
         5: "5th Quintile",
     }
     imd_counts = Counter(
-        imd_map[item["index_of_multiple_deprivation_quintile"]] for item in all_values
+        imd_map.get(item['index_of_multiple_deprivation_quintile']) for item in all_values
     )
 
     return (
@@ -1173,6 +1179,37 @@ def get_pt_level_table_data(
         # Finally add the headers. Need to add nhs_number
         headers = ["nhs_number"] + kpi_attr_names 
         return headers, data 
+
+    elif category == "care_at_diagnosis":
+        data = {}
+        
+        for kpi_attr_name in kpi_attr_names:
+            
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
+            
+            # For each kpi_attribute's eligible pts, add to data dict
+            for pt in kpi_pt_querysets['eligible']:
+                # If pt not already in, initialise with None for all kpi_attr_names
+                if data.get(pt.pk) is None:
+                    data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
+                    data[pt.pk]["nhs_number"] = pt.nhs_number
+                    
+
+            for pt in kpi_pt_querysets["passed"]:
+                data[pt.pk] = {kpi_attr_name: True}
+                data[pt.pk]["nhs_number"] = pt.nhs_number
+
+            for pt in kpi_pt_querysets["failed"]:
+                data[pt.pk] = {kpi_attr_name: False}
+                data[pt.pk]["nhs_number"] = pt.nhs_number
+            
+        # Finally add the headers. Need to add nhs_number
+        headers = ["nhs_number"] + kpi_attr_names
+        return headers, data
+        
+        
 
     raise NotImplementedError(f"Category {category} not yet implemented")
 
