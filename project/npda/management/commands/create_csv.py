@@ -30,19 +30,19 @@ Example use:
     into a single csv file.
 
     python manage.py create_csv \
-        --pts=5 \
+        --pts=15 \
         --visits="CDCD DHPC ACDC CDCD" \
         --hb_target=T \
         --age_range=11_15 \
         --build \
     && python manage.py create_csv \
-        --pts=5 \
+        --pts=15 \
         --visits="CDCCD DDCC CACC" \
         --hb_target=A \
         --age_range=16_19 \
         --build \
     && python manage.py create_csv \
-        --pts=5 \
+        --pts=15 \
         --visits="CDC ACDC CDCD" \
         --hb_target=T \
         --age_range=0_4 \
