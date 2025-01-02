@@ -79,7 +79,7 @@ TEXT = {
             "COELIAC DISEASE SCREENING",
             "THYROID DISEASE SCREENING",
             "CARBOHYDRATE COUNTING EDUCATION",
-        ]
+        ],
     },
     "outcomes": {
         "title": "Outcomes",
@@ -88,6 +88,10 @@ TEXT = {
     "treatment": {
         "title": "Treatment",
         "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "headers": [
+            "NHS NUMBER",
+            "value",
+        ],
     },
 }
 KPI_CATEGORY_ATTR_MAP = {
@@ -1031,7 +1035,7 @@ def get_pt_demographic_value_counts(
         5: "5th Quintile",
     }
     imd_counts = Counter(
-        imd_map.get(item['index_of_multiple_deprivation_quintile']) for item in all_values
+        imd_map.get(item["index_of_multiple_deprivation_quintile"]) for item in all_values
     )
 
     return (
@@ -1146,10 +1150,10 @@ def get_pt_level_table_data(
 
         # Finally add the headers. Need to add nhs_number, is_gte_12yo, and total to the headers
         headers = ["nhs_number", "is_gte_12yo"] + kpi_attr_names + ["total"]
-        return headers, data 
+        return headers, data
 
     elif category == "additional_care_processes":
-        
+
         data = {}
         # Initialise with all eligible pts' pks as the key. Use kpi40 eligible
         # as this is KPI1 (all eligible pts)
@@ -1177,25 +1181,24 @@ def get_pt_level_table_data(
                 data[pt.pk][kpi_attr_name] = False
 
         # Finally add the headers. Need to add nhs_number
-        headers = ["nhs_number"] + kpi_attr_names 
-        return headers, data 
+        headers = ["nhs_number"] + kpi_attr_names
+        return headers, data
 
     elif category == "care_at_diagnosis":
         data = {}
-        
+
         for kpi_attr_name in kpi_attr_names:
-            
+
             kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
                 "patient_querysets"
             ]
-            
+
             # For each kpi_attribute's eligible pts, add to data dict
-            for pt in kpi_pt_querysets['eligible']:
-                # If pt not already in, initialise with None for all kpi_attr_names
+            for pt in kpi_pt_querysets["eligible"]:
+                # If pt not already in, initialise with None for all kpi_attr_names
                 if data.get(pt.pk) is None:
                     data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
                     data[pt.pk]["nhs_number"] = pt.nhs_number
-                    
 
             for pt in kpi_pt_querysets["passed"]:
                 data[pt.pk] = {kpi_attr_name: True}
@@ -1204,12 +1207,50 @@ def get_pt_level_table_data(
             for pt in kpi_pt_querysets["failed"]:
                 data[pt.pk] = {kpi_attr_name: False}
                 data[pt.pk]["nhs_number"] = pt.nhs_number
-            
+
         # Finally add the headers. Need to add nhs_number
         headers = ["nhs_number"] + kpi_attr_names
         return headers, data
-        
-        
+
+    elif category == "treatment":
+        data = {}
+
+        tx_vals = [
+            "1-3 injections/day",
+            "4+ injections/day",
+            "Insulin pump",
+            "1-3 injections + blood glucose lowering meds",
+            "4+ injections + blood glucose lowering meds",
+            "Insulin pump + blood glucose lowering meds",
+            "Dietary management alone",
+            "Dietary management + blood glucose lowering meds",
+        ]
+        tx_vals_attr_map = {attr_name: tx_val for attr_name, tx_val in zip(kpi_attr_names, tx_vals)}
+
+        # Just need to iterate through one for initialisation as all denominators are kpi 1
+        kpi_13_attr_name = calculate_kpis_object.kpi_name_registry.get_attribute_name(13)
+        for pt in kpi_calculations_object["calculated_kpi_values"][kpi_13_attr_name][
+            "patient_querysets"
+        ]["eligible"]:
+            # Only 1 column
+            data[pt.pk] = {"value": None}
+            # Additional values we can calculate now
+            data[pt.pk]["nhs_number"] = pt.nhs_number
+
+        for kpi_attr_name in kpi_attr_names:
+
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
+
+            # Only check pass as only 1 can be True
+            for pt in kpi_pt_querysets["passed"]:
+                data[pt.pk]["value"] = tx_vals_attr_map[kpi_attr_name]
+
+        # Finally add the headers. Need to add nhs_number
+        headers = ["nhs_number", "value"]
+
+        return headers, data
 
     raise NotImplementedError(f"Category {category} not yet implemented")
 
