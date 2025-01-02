@@ -176,7 +176,8 @@ class CheckCurrentAuditYearMixin(AccessMixin):
         audit_start_date, audit_end_data = get_audit_period_for_date(
             datetime.now().date()
         )
-        if int(request.session.get("selected_audit_year")) < audit_start_date.year:
+        selected_audit_year = int(request.session.get("selected_audit_year"))
+        if selected_audit_year < audit_start_date.year:
             logger.warning(
                 f"User {request.user} tried to create/edit or delete data in a previous audit year."
             )
@@ -186,7 +187,7 @@ class CheckCurrentAuditYearMixin(AccessMixin):
 
             raise PermissionDenied()
 
-        if request.session.get("selected_audit_year") > audit_end_data.year:
+        if selected_audit_year > audit_end_data.year:
             logger.warning(
                 f"User {request.user} tried to create/edit or delete data in a future audit year."
             )
