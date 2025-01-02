@@ -1176,15 +1176,15 @@ class CalculateKPIS:
 
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 1
+        # Define the subquery to find the latest visit
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=1)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 1
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=1).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1223,15 +1223,15 @@ class CalculateKPIS:
 
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 2
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=2)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 2
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=2).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1270,15 +1270,15 @@ class CalculateKPIS:
 
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 3
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=3)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 3
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=3).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1313,15 +1313,15 @@ class CalculateKPIS:
 
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 4
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=4)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 4
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=4).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1355,15 +1355,15 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 5
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=5)
+            Visit.objects.filter(patient=OuterRef("pk"))
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 5
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=5).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1397,15 +1397,15 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 6
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=6)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 6
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=6).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1439,15 +1439,15 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 7
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=7)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 7
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=7).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1481,15 +1481,15 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 8
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=8)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 8
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=8).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
