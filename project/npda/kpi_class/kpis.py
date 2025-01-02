@@ -112,6 +112,28 @@ class CalculateKPIS:
         # Sets the KPI attribute names map
         self.kpi_name_registry = kpi_registry
 
+    def set_patients_for_calculation(
+        self,
+        patients: QuerySet[Patient] = None,
+        pz_codes: list[str] = None,
+    ):
+        """Set patients for KPI calculations.
+        
+        Can only set patients or pz_codes, not both."""
+        # Mutex
+        if (patients is None) == (pz_codes is None):
+            raise ValueError("patients and pz_codes are mutually exclusive")
+
+        # Depending on kwarg, set patients
+        if patients:
+            self.patients = patients
+            self.total_patients_count = self.patients.count()
+        elif pz_codes:
+            self.patients = Patient.objects.filter(
+                paediatric_diabetes_units__paediatric_diabetes_unit__pz_code__in=pz_codes
+            )
+            self.total_patients_count = self.patients.count()
+        
     def calculate_kpis_for_patients(
         self,
         patients: QuerySet[Patient],
@@ -286,21 +308,28 @@ class CalculateKPIS:
 
     def _calculate_kpis(
         self,
+        kpi_idxs: list[int] = None,
     ) -> KPICalculationsObject:
-        """Calculate KPIs 1 - 49 for set self.patients and cohort range
+        """Calculate KPIs for set self.patients and cohort range
         (self.audit_start_date and self.audit_end_date).
+        
+        If kpi_idxs is not provided, will calculate all KPIs 1 - 49, otherwise
+        calculates the subset of KPIs in the kpi_idxs list.
 
         We dynamically set these attributes using names set in self.kpis, done
         in the self._get_kpi_attribute_names method during object init.
 
         Incrementally build the query, which will be executed in a single
         transaction once a value is evaluated.
+
+        NOTE: assumes self.patients and self.total_patients_count are set
         """
         # Init dict to store calc results
         calculated_kpis = {}
 
         # Standard KPIs plus 32 which has 3 sub KPIs
-        kpi_idxs = list(range(1, 32)) + [321, 322, 323] + (list(range(33, 50)))
+        if not kpi_idxs:
+            kpi_idxs = list(range(1, 32)) + [321, 322, 323] + (list(range(33, 50)))
 
         for i in kpi_idxs:
             # Dynamically get the method name from the kpis_names_map
@@ -727,43 +756,19 @@ class CalculateKPIS:
         * Date of leaving service within the audit period
         * Date of death within the audit period
 
-        NOTE: exclusion same as KPI5
+        NOTE: this is KPI 5 but with an additional filter for age 12 and above
 
         NOTE: just a count so pass/fail doesn't make sense; these should be
         discarded as they're set to the same value as eligible/ineligible in
         the returned KPIResult object.
         """
-
-        # We cannot simply use KPI1 base queryset as that includes a filter
-        # for age < 25. Additionally, this requires an observation within
-        # the audit period, which is not included in KPI1 base queryset.
-        # So need to make new query set
-
-        # Separate exclusions from the main query for clarity
-        eligible_patients_exclusions = self.patients.exclude(
-            # EXCLUDE Date of diagnosis within the audit period
-            Q(diagnosis_date__range=(self.AUDIT_DATE_RANGE))
-            # EXCLUDE Date of leaving service within the audit period
-            | (
-                Q(
-                    paediatric_diabetes_units__date_leaving_service__range=(
-                        self.audit_start_date,
-                        self.audit_end_date,
-                    )
-                )
-            )
-            # EXCLUDE Date of death within the audit period"
-            | Q(death_date__range=(self.AUDIT_DATE_RANGE))
-        )
-
-        base_eligible_patients = eligible_patients_exclusions.filter(
-            # Valid attributes
-            Q(nhs_number__isnull=False)
-            & Q(date_of_birth__isnull=False)
+        
+        base_eligible_patients, total_eligible = self._get_total_kpi_5_eligible_pts_base_query_set_and_total_count()
+        
+        # Gte 12yo
+        eligible_patients = base_eligible_patients.filter(
             # Age 12 and above at the start of the audit period
-            & Q(date_of_birth__lte=self.audit_start_date - relativedelta(years=12))
-            # Diagnosis of Type 1 diabetes
-            & Q(diabetes_type=DIABETES_TYPES[0][0])
+            Q(date_of_birth__lte=self.audit_start_date - relativedelta(years=12))
         )
 
         # Find patients with at least one observation within the audit period
@@ -787,7 +792,7 @@ class CalculateKPIS:
         )
 
         # Check any observation across all visits
-        eligible_pts_annotated_kpi_6_visits = base_eligible_patients.annotate(
+        eligible_pts_annotated_kpi_6_visits = eligible_patients.annotate(
             valid_kpi_6_visits=Exists(valid_visit_subquery)
         )
 
@@ -1171,15 +1176,15 @@ class CalculateKPIS:
 
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 1
+        # Define the subquery to find the latest visit
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=1)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 1
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=1).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1218,15 +1223,15 @@ class CalculateKPIS:
 
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 2
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=2)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 2
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=2).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1265,15 +1270,15 @@ class CalculateKPIS:
 
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 3
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=3)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 3
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=3).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1308,15 +1313,15 @@ class CalculateKPIS:
 
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 4
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=4)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 4
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=4).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1350,15 +1355,15 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 5
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=5)
+            Visit.objects.filter(patient=OuterRef("pk"))
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 5
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=5).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1392,15 +1397,15 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 6
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=6)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 6
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=6).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1434,15 +1439,15 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 7
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=7)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 7
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=7).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -1476,15 +1481,15 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Define the subquery to find the latest visit where treatment_regimen = 8
+        # Define the subquery to find the latest visit 
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"), treatment=8)
+            Visit.objects.filter(patient=OuterRef("pk"), )
             .order_by("-visit_date")
             .values("pk")[:1]
         )
-        # Filter the Patient queryset based on the subquery
+        # Filter the Patient queryset based on the subquery if treatment_regimen = 8
         passed_patients = eligible_patients.filter(
-            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery).values("id")))
+            Q(id__in=Subquery(Patient.objects.filter(visit__in=latest_visit_subquery, visit__treatment=8).values("id")))
         )
         total_passed = passed_patients.count()
         total_failed = total_eligible - total_passed
@@ -3402,8 +3407,8 @@ class CalculateKPIS:
         duplicate entries
 
         Denominator: Total number of eligible patients (measure 1)
-        
-        NOTE: possible refactor could just be applying additional filter checking DKA to the 
+
+        NOTE: possible refactor could just be applying additional filter checking DKA to the
         KPI 46 calculation, but for now keeping separate
         """
         eligible_patients, total_eligible = (
@@ -3633,7 +3638,7 @@ class CalculateKPIS:
             int: base query set count of total eligible patients for KPI 5
         """
 
-        if not hasattr(self, "total_kpi_1_eligible_pts_base_query_set"):
+        if not hasattr(self, "total_kpi_5_eligible_pts_base_query_set"):
             self.calculate_kpi_5_total_t1dm_complete_year()
 
         return (
@@ -3655,7 +3660,7 @@ class CalculateKPIS:
             int: base query set count of total eligible patients for KPI 6
         """
 
-        if not hasattr(self, "total_kpi_1_eligible_pts_base_query_set"):
+        if not hasattr(self, "total_kpi_6_eligible_pts_base_query_set"):
             self.calculate_kpi_6_total_t1dm_complete_year_gte_12yo()
 
         return (
@@ -3677,7 +3682,7 @@ class CalculateKPIS:
             int: base query set count of total eligible patients for KPI 7
         """
 
-        if not hasattr(self, "total_kpi_1_eligible_pts_base_query_set"):
+        if not hasattr(self, "total_kpi_7_eligible_pts_base_query_set"):
             self.calculate_kpi_7_total_new_diagnoses_t1dm()
 
         return (

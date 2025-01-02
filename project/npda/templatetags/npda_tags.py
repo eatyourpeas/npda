@@ -301,6 +301,10 @@ def extract_digits(value, underscore_index=0):
         return int(matches[underscore_index])
     return 0
 
+@register.filter
+def get_item(dictionary:dict, key:str):
+    """Get a value using a variable from a dictionary"""
+    return dictionary.get(key, '')
 
 @register.simple_tag
 def docs_url():

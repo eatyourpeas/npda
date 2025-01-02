@@ -37,23 +37,69 @@ from project.npda.views.decorators import login_and_otp_required
 logger = logging.getLogger(__name__)
 
 # Define our data constants
+# TODO: in hindsight, no need for this to be in the top-level view file
+# as just text for pt-level report table
 TEXT = {
     "health_checks": {
         "title": "Seven Key Care Processes",
-        "description": "These care processes show the completion rate per patient for all 7 key care processes for Type 1 patients. Three of these are mandatory for patients of all ages: HbA1c, BMI, and Thyroid. The other care processes are only mandatory for patients aged 12 and above.",
+        "description": "HbA1c, BMI, and thyroid screen must be completed annually for all children and young people with Type 1 diabetes. Urinary albumin, blood pressure, and foot exam are mandatory for young people aged 12 and above. Eye screening is mandatory every 2 years for young people aged 12 and above, unless retinopathy was observed at a previous screen.",
+        "headers": [
+            "NHS NUMBER",
+            ">= 12YO",
+            "HBA1C",
+            "BMI",
+            "THYROID SCREEN",
+            "BLOOD PRESSURE",
+            "URINARY ALBUMIN",
+            "EYE SCREEN",
+            "FOOT EXAM",
+            "TOTAL",
+        ],
     },
     "additional_care_processes": {
         "title": "Additional Care Proccesses",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "description": "These additional care processes are recommended by NICE for children and young people with Type 1 diabetes of all ages (and ineligible otherwise), with the exception of smoking status and referral to smoking cessation services, which apply to young people aged 12 and above.",
+        "headers": [
+            "NHS NUMBER",
+            "HBA1C 4+",
+            "Psychological assessment",
+            "Smoking status screened",
+            "Referral to smoking cessation service",
+            "Additional dietetic appointment offered",
+            "Patients attending additional dietetic appointment",
+            "Influenza immunisation recommended",
+            "Sick day rules advice",
+        ],
     },
     "care_at_diagnosis": {
         "title": "Care at Diagnosis",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "description": "Children and young people with Type 1 diabetes should be screened for thyroid disease and coeliac disease within 90 days of diagnosis. Newly diagnosed children and young people should also receive level 3 carbohydrate counting education within 14 days of diagnosis.",
+        "headers": [
+            "NHS NUMBER",
+            "COELIAC DISEASE SCREENING",
+            "THYROID DISEASE SCREENING",
+            "CARBOHYDRATE COUNTING EDUCATION",
+        ],
     },
     "outcomes": {
         "title": "Outcomes",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "description": "Outcomes are presented below for all children and young people with Type 1 diabetes. HbA1c excludes all measurements taken in the first 90 days after diagnosis.",
     },
+    "treatment": {
+        "title": "Treatment",
+        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "headers": [
+            "NHS NUMBER",
+            "value",
+        ],
+    },
+}
+KPI_CATEGORY_ATTR_MAP = {
+    "health_checks": list(range(25, 32)),
+    "additional_care_processes": list(range(33, 41)),
+    "care_at_diagnosis": list(range(41, 44)),
+    "outcomes": list(range(44, 47)),
+    "treatment": list(range(13, 21)),
 }
 
 
@@ -82,8 +128,13 @@ def dashboard(request):
 
     selected_audit_year = int(request.session.get("selected_audit_year"))
     # TODO: remove min clamp once available audit year from preference filter sorted
-    selected_audit_year = max(selected_audit_year, 2024)
-    calculation_date = date(year=selected_audit_year, month=5, day=1)
+    today = date.today()
+    if selected_audit_year <= 2024:
+        calculation_month = max(today.month, 4)
+        calculation_day = 1
+        calculation_date = date(2024, calculation_month, calculation_day)
+    else:
+        calculation_date = date(selected_audit_year, today.month, today.day)
 
     calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
 
@@ -106,7 +157,7 @@ def dashboard(request):
     logger.error(f"🔥 Setting first {_} patients to be eligible for KPI 7")
     to_set_kpi_7_eligible = calculate_kpis.patients[:_]
     for pt in to_set_kpi_7_eligible:
-        pt.diagnosis_date = calculate_kpis.audit_start_date + relativedelta(months=1)
+        pt.diagnosis_date = calculate_kpis.audit_start_date + relativedelta(months=4)
         pt.diabetes_type = DIABETES_TYPES[0][0]
         pt.save()
         logger.warning(f"Succesfully set {pt} to be eligible for KPI 7")
@@ -217,10 +268,15 @@ def dashboard(request):
     ).days
     current_quarter = retrieve_quarter_for_date(current_date)
 
-    # Gather defaults for htmx partials
+    # Gather defaults for htmx partials pt level table
     default_pt_level_menu_text = TEXT["health_checks"]
     default_pt_level_menu_tab_selected = "health_checks"
     highlight = {f"{key}": key == default_pt_level_menu_tab_selected for key in TEXT.keys()}
+    default_pt_level_table_headers, default_pt_level_table_data = get_pt_level_table_data(
+        category="health_checks",
+        calculate_kpis_object=calculate_kpis,
+        kpi_calculations_object=kpi_calculations_object,
+    )
 
     context = {
         "pdu_object": pdu,
@@ -282,6 +338,10 @@ def dashboard(request):
         "default_pt_level_menu_text": default_pt_level_menu_text,
         "default_pt_level_menu_tab_selected": default_pt_level_menu_tab_selected,
         "default_highlight": highlight,
+        "default_table_data": {
+            "headers": default_pt_level_table_headers,
+            "row_data": default_pt_level_table_data,
+        },
         # TODO: this should be an enum but we're currently not doing benchmarking so can update
         # at that point
         "aggregation_level": "pdu",
@@ -975,7 +1035,7 @@ def get_pt_demographic_value_counts(
         5: "5th Quintile",
     }
     imd_counts = Counter(
-        imd_map[item["index_of_multiple_deprivation_quintile"]] for item in all_values
+        imd_map.get(item["index_of_multiple_deprivation_quintile"]) for item in all_values
     )
 
     return (
@@ -1003,6 +1063,196 @@ def add_number_of_figures_coloured_for_chart(
             value_counts_dict[category][key]["figures_coloured"] = int(value["pct"] / divisor)
 
     return dict(value_counts_dict)
+
+
+def get_pt_level_table_data(
+    category: Literal[
+        "health_checks",
+        "additional_care_processes",
+        "care_at_diagnosis",
+        "outcomes",
+        "treatment",
+    ],
+    calculate_kpis_object: CalculateKPIS,
+    kpi_calculations_object: dict,
+) -> tuple[list[str], list[dict]]:
+    """Get data for pt level table
+
+    - headers
+    - row_data
+
+    where row_data is a list of dicts with the following example structure (keys are pt.pk):
+        {
+                11: {
+                    nhs_number: str,
+                    kpi_25_hba1c: bool,
+                    kpi_26_bmi: bool,
+                    kpi_27_thyroid: bool,
+                    kpi_28_blood_pressure: bool | None,
+                    kpi_29_urinary_albumin: bool | None,
+                    kpi_30_retinal_screening: bool | None,
+                    kpi_31_foot_examination: bool | None,
+                    total: list[int, int],
+                },
+                12: {
+                    nhs_number: str,
+                    kpi_25_hba1c: bool,
+                    kpi_26_bmi: bool,
+                    kpi_27_thyroid: bool,
+                    kpi_28_blood_pressure: bool | None,
+                    kpi_29_urinary_albumin: bool | None,
+                    kpi_30_retinal_screening: bool | None,
+                    kpi_31_foot_examination: bool | None,
+                    total: list[int, int],
+                },
+                ...
+            }
+    """
+
+    kpi_attr_names = [
+        calculate_kpis_object.kpi_name_registry.get_attribute_name(i)
+        for i in KPI_CATEGORY_ATTR_MAP[category]
+    ]
+
+    if category == "health_checks":
+
+        data = {}
+        # First initialise the dict with all pts -> for health checks, this is KPI5 which can be found
+        # via kpi_25's eligible pts
+        for pt in kpi_calculations_object["calculated_kpi_values"]["kpi_25_hba1c"][
+            "patient_querysets"
+        ]["eligible"]:
+            # Set all to None initially as updating as [True | False] if pt in [passed | failed]
+            # querysets for each kpi -> if not in either, must mean they are ineligible (therefore None)
+            data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
+            # Additional values we can calculate now
+            data[pt.pk]["nhs_number"] = pt.nhs_number
+            pt_is_gte_12yo = (
+                pt.date_of_birth <= calculate_kpis_object.audit_start_date - relativedelta(years=12)
+            )
+            data[pt.pk]["is_gte_12yo"] = pt_is_gte_12yo
+            # total = (passed / total)
+            data[pt.pk]["total"] = [0, 7 if pt_is_gte_12yo else 3]
+
+        # For each kpi, update the data dict with the pts that have passed and failed
+        for kpi_attr_name in kpi_attr_names:
+
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
+
+            for pt in kpi_pt_querysets["passed"]:
+                data[pt.pk]["total"][0] += 1
+                data[pt.pk][kpi_attr_name] = True
+
+            for pt in kpi_pt_querysets["failed"]:
+                data[pt.pk][kpi_attr_name] = False
+
+        # Finally add the headers. Need to add nhs_number, is_gte_12yo, and total to the headers
+        headers = ["nhs_number", "is_gte_12yo"] + kpi_attr_names + ["total"]
+        return headers, data
+
+    elif category == "additional_care_processes":
+
+        data = {}
+        # Initialise with all eligible pts' pks as the key. Use kpi40 eligible
+        # as this is KPI1 (all eligible pts)
+        kpi_40_attr_name = calculate_kpis_object.kpi_name_registry.get_attribute_name(40)
+        for pt in kpi_calculations_object["calculated_kpi_values"][kpi_40_attr_name][
+            "patient_querysets"
+        ]["eligible"]:
+            # Set all to None initially as updating as [True | False] if pt in [passed | failed]
+            # querysets for each kpi -> if not in either, must mean they are ineligible (therefore None)
+            data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
+            # Additional values we can calculate now
+            data[pt.pk]["nhs_number"] = pt.nhs_number
+
+        # For each kpi, update the data dict with the pts that have passed and failed
+        for kpi_attr_name in kpi_attr_names:
+
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
+
+            for pt in kpi_pt_querysets["passed"]:
+                data[pt.pk][kpi_attr_name] = True
+
+            for pt in kpi_pt_querysets["failed"]:
+                data[pt.pk][kpi_attr_name] = False
+
+        # Finally add the headers. Need to add nhs_number
+        headers = ["nhs_number"] + kpi_attr_names
+        return headers, data
+
+    elif category == "care_at_diagnosis":
+        data = {}
+
+        for kpi_attr_name in kpi_attr_names:
+
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
+
+            # For each kpi_attribute's eligible pts, add to data dict
+            for pt in kpi_pt_querysets["eligible"]:
+                # If pt not already in, initialise with None for all kpi_attr_names
+                if data.get(pt.pk) is None:
+                    data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
+                    data[pt.pk]["nhs_number"] = pt.nhs_number
+
+            for pt in kpi_pt_querysets["passed"]:
+                data[pt.pk] = {kpi_attr_name: True}
+                data[pt.pk]["nhs_number"] = pt.nhs_number
+
+            for pt in kpi_pt_querysets["failed"]:
+                data[pt.pk] = {kpi_attr_name: False}
+                data[pt.pk]["nhs_number"] = pt.nhs_number
+
+        # Finally add the headers. Need to add nhs_number
+        headers = ["nhs_number"] + kpi_attr_names
+        return headers, data
+
+    elif category == "treatment":
+        data = {}
+
+        tx_vals = [
+            "1-3 injections/day",
+            "4+ injections/day",
+            "Insulin pump",
+            "1-3 injections + blood glucose lowering meds",
+            "4+ injections + blood glucose lowering meds",
+            "Insulin pump + blood glucose lowering meds",
+            "Dietary management alone",
+            "Dietary management + blood glucose lowering meds",
+        ]
+        tx_vals_attr_map = {attr_name: tx_val for attr_name, tx_val in zip(kpi_attr_names, tx_vals)}
+
+        # Just need to iterate through one for initialisation as all denominators are kpi 1
+        kpi_13_attr_name = calculate_kpis_object.kpi_name_registry.get_attribute_name(13)
+        for pt in kpi_calculations_object["calculated_kpi_values"][kpi_13_attr_name][
+            "patient_querysets"
+        ]["eligible"]:
+            # Only 1 column
+            data[pt.pk] = {"value": None}
+            # Additional values we can calculate now
+            data[pt.pk]["nhs_number"] = pt.nhs_number
+
+        for kpi_attr_name in kpi_attr_names:
+
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
+
+            # Only check pass as only 1 can be True
+            for pt in kpi_pt_querysets["passed"]:
+                data[pt.pk]["value"] = tx_vals_attr_map[kpi_attr_name]
+
+        # Finally add the headers. Need to add nhs_number
+        headers = ["nhs_number", "value"]
+
+        return headers, data
+
+    raise NotImplementedError(f"Category {category} not yet implemented")
 
 
 def convert_value_counts_dict_to_pct(value_counts_dict: dict):

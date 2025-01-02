@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 
 # Django imports
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 
 from project.constants.colors import *
@@ -12,7 +12,26 @@ from project.npda.models.paediatric_diabetes_unit import (
     PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
 )
 
-# HTMX imports
+import json
+from datetime import date
+
+
+# Django imports
+from django.apps import apps
+from django.contrib import messages
+from django.shortcuts import render
+
+from project.npda.models.paediatric_diabetes_unit import (
+    PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
+)
+
+
+from project.npda.general_functions.session import (
+    refresh_session_object_synchronously,
+)
+from project.npda.kpi_class.kpis import CalculateKPIS
+
+
 from project.npda.general_functions.map import (
     get_children_by_pdu_audit_year,
     generate_distance_from_organisation_scatterplot_figure,
@@ -22,9 +41,17 @@ from project.npda.general_functions.rcpch_nhs_organisations import (
     fetch_organisation_by_ods_code,
 )
 
-# RCPCH imports
+
 from project.npda.views.decorators import login_and_otp_required
-from project.npda.views.dashboard.dashboard import TEXT
+from project.npda.views.dashboard.dashboard import (
+    KPI_CATEGORY_ATTR_MAP,
+    TEXT,
+    get_pt_level_table_data,
+)
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @login_and_otp_required()
@@ -39,13 +66,54 @@ def get_patient_level_report_partial(request):
     # Colour the selected menu tab
     highlight = {f"{key}": key == pt_level_menu_tab_selected for key in TEXT.keys()}
 
+    selected_data = TEXT[pt_level_menu_tab_selected]
+
+    # Gather the selected category's data
+
+    # First need to get the relevant calculations
+    pz_code = request.session.get("pz_code")
+
+    selected_audit_year = int(request.session.get("selected_audit_year"))
+    # TODO: remove min clamp once available audit year from preference filter sorted
+    selected_audit_year = max(selected_audit_year, 2024)
+    calculation_date = date(year=selected_audit_year, month=5, day=1)
+
+    calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
+
+    # Set relevant patients
+    calculate_kpis.set_patients_for_calculation(pz_codes=[pz_code])
+
+    # Run the relevant subset of calculations
+    selected_kpis = KPI_CATEGORY_ATTR_MAP[pt_level_menu_tab_selected]
+    kpi_calculations_object = calculate_kpis._calculate_kpis(selected_kpis)
+
+    try:
+        selected_table_headers, selected_table_data = get_pt_level_table_data(
+            category=pt_level_menu_tab_selected,
+            calculate_kpis_object=calculate_kpis,
+            kpi_calculations_object=kpi_calculations_object,
+        )
+    except Exception as e:
+        logger.error(
+            f"Error getting pt_level_table_data for {pt_level_menu_tab_selected=} {e=}",
+            exc_info=True,
+        )
+        # messages.error(request, f"Error getting data!")
+
+        selected_table_headers = []
+        selected_table_data = []
+
     return render(
         request,
         template_name="dashboard/pt_level_report_table_partial.html",
         context={
-            "text": TEXT[pt_level_menu_tab_selected],
+            "text": selected_data,
             "pt_level_menu_tab_selected": pt_level_menu_tab_selected,
             "highlight": highlight,
+            "table_data": {
+                "headers": selected_table_headers,
+                "row_data": selected_table_data,
+            },
         },
     )
 
