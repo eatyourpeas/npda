@@ -118,8 +118,13 @@ def dashboard(request):
 
     selected_audit_year = int(request.session.get("selected_audit_year"))
     # TODO: remove min clamp once available audit year from preference filter sorted
-    selected_audit_year = max(selected_audit_year, 2024)
-    calculation_date = date(year=selected_audit_year, month=5, day=1)
+    today = date.today()
+    if selected_audit_year <= 2024:
+        calculation_month = max(today.month, 4)
+        calculation_day = 1
+        calculation_date = date(2024, calculation_month, calculation_day)
+    else:
+        calculation_date = date(selected_audit_year, today.month, today.day)
 
     calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
 
