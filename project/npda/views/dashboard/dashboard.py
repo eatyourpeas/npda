@@ -294,15 +294,23 @@ def dashboard(request):
                 "data": pt_characteristics_value_counts_with_figure_counts,
             },
             "tx_regimen_value_counts_pct": {
+                "no_eligible_patients": kpi_calculations_object["calculated_kpi_values"]["kpi_1_total_eligible"]["total_eligible"] == 0,
                 "data": json.dumps(tx_regimen_value_counts_pct),
             },
             "glucose_monitoring_value_counts_pct": {
+                "no_eligible_patients": kpi_calculations_object["calculated_kpi_values"]["kpi_1_total_eligible"]["total_eligible"] == 0,
                 "data": json.dumps(glucose_monitoring_value_counts_pct),
             },
             "hcl_use_per_quarter_value_counts_pct": {
+                "no_eligible_patients": kpi_calculations_object["calculated_kpi_values"]["kpi_1_total_eligible"]["total_eligible"] == 0,
                 "data": json.dumps(hcl_use_per_quarter_value_counts_pct),
             },
             "care_at_diagnosis_value_count": {
+                "no_eligible_patients": all([
+                    care_at_diagnosis_value_counts_pct['coeliac_disease_screening']['total_eligible'] == 0,
+                    care_at_diagnosis_value_counts_pct['thyroid_disease_screening']['total_eligible'] == 0,
+                    care_at_diagnosis_value_counts_pct['carbohydrate_counting_education']['total_eligible'] == 0,
+                ]),
                 "data": json.dumps(care_at_diagnosis_value_counts_pct),
             },
             "additional_care_processes_value_counts_pct": {
@@ -312,10 +320,12 @@ def dashboard(request):
                 "data": json.dumps(hc_completion_rate_value_counts_pct),
             },
             "hba1c_value_counts": {
+                "no_eligible_patients": kpi_calculations_object["calculated_kpi_values"]["kpi_1_total_eligible"]["total_eligible"] == 0,
                 # No need to json-ify as data ready to render in template
                 "data": hba1c_value_counts_stratified_by_diabetes_type,
             },
             "admissions_value_counts_absolute": {
+                "no_eligible_patients": kpi_calculations_object["calculated_kpi_values"]["kpi_1_total_eligible"]["total_eligible"] == 0,
                 "data": admissions_value_counts_absolute,
             },
             "pt_sex_value_counts_pct": {

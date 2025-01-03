@@ -3,7 +3,11 @@
   HbA1c
 {% endblock card_title%}
 {% block card_body %}
-
+{% if charts.hba1c_value_counts.no_eligible_patients %}
+  <div class="alert alert-info">
+    <i class="fa-solid fa-person-circle-exclamation"></i> No eligible patients.
+  </div>
+{% else %}
   <div class="grid grid-cols-2 text-center flex-grow justify-center items-center ">
     <div class="d-flex justify-self-center items-center w-full border-r  border-r-rcpch_mid_grey">
       <h1>T1DM</h1>
@@ -16,6 +20,7 @@
       <p class="text-sm py-1">Median: {{ charts.hba1c_value_counts.data.t2dm.median }} mmol/mol</p>
     </div>
   </div>
+{% endif %}
 {% endblock %}
 
 

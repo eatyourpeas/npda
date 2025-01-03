@@ -17,12 +17,12 @@ Audit Details
 </div>
 {% include 'dashboard/hr_with_text.html' with hr_rule_text='Current Quarter' %}
 <div class="flex flex-col justify-center items-center">
-  <p class="text-7xl">Q{{ current_quarter }}</p>
+  <p class="text-4xl">Q{{ current_quarter }}</p>
   <p>({{ current_date }})</p>
 </div>
 {% include 'dashboard/hr_with_text.html' with hr_rule_text='Days Remaining' %}
 <div class="flex flex-col justify-center items-center pb-4">
-  <p class="text-7xl">{{ days_remaining_until_audit_end_date }}</p>
+  <p class="text-4xl">{{ days_remaining_until_audit_end_date }}</p>
 </div>
 
 {% endblock %}
