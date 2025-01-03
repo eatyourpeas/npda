@@ -7,15 +7,15 @@
        hx-trigger="load"
        hx-swap="innerHTML"
        hx-target="#organisation_cases_map"
-       hx-indicator="#loading-spinner"
-       _="on htmx:afterSwap remove #loading-spinner">
+       hx-indicator="#loading-spinner-imd-map"
+       _="on htmx:afterSwap remove #loading-spinner-imd-map">
     <figure>
       <div id="organisation_cases_map" style="width: 100%">
         {% include 'dashboard/map_chart_partial.html' with chart_html=chart_html %}
       </div>
     </figure>
   </div>
-  <div id="loading-spinner"
+  <div id="loading-spinner-imd-map"
        class="loading loading-spinner text-rcpch_dark_blue flex flex-grow-1 justify-center items-center w-1/5 mx-auto bg-center">
   </div>
 {% endblock %}

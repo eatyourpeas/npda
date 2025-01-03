@@ -13,8 +13,8 @@ from project.npda.models.paediatric_diabetes_unit import (
 )
 
 import json
-from datetime import date
-
+from datetime import date, time
+from time import sleep
 
 # Django imports
 from django.apps import apps

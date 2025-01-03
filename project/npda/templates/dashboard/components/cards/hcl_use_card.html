@@ -3,7 +3,7 @@
   Hybrid Closed Loop Use
 {% endblock card_title%}
 {% block card_body %}
-{% if charts.care_at_diagnosis_value_count.data.coeliac_disease_screening.total_eligible == 0 %}
+{% if charts.hcl_use_per_quarter_value_counts_pct.no_eligible_patients %}
   <div class="alert alert-info">
     <i class="fa-solid fa-person-circle-exclamation"></i> No eligible patients.
   </div>
