@@ -2,7 +2,7 @@
 
 <div class="flex flex-col gap-4" id="pt_level_report">
 
-    <div class="flex gap-4">
+    <div class="flex gap-4 flex-wrap">
       {% include 'dashboard/pt_level_menu_tab_button.html' with selected=highlight.health_checks key='health_checks' button_text='Health Checks' %}
       {% include 'dashboard/pt_level_menu_tab_button.html' with selected=highlight.additional_care_processes key='additional_care_processes' button_text='Additional Care Processes' %}
       {% include 'dashboard/pt_level_menu_tab_button.html' with selected=highlight.care_at_diagnosis key='care_at_diagnosis' button_text='Care at Diagnosis' %}
