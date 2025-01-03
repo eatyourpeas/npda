@@ -1,6 +1,9 @@
 <button class="{% if selected %} bg-rcpch_pink text-white {% else %} bg-rcpch_lightest_grey {% endif %}  p-5"
         hx-get="/get_patient_level_report_partial"
         hx-vals='{"selected": "{{ key }}"}'
-        hx-target="#pt_level_report">
+        hx-target="#pt_level_report"
+        hx-swap="outerHTML"
+        {% if selected %}disabled{% endif %}
+        _="on click toggle @disabled on #pt_level_report until htmx:afterOnLoad">
         {{ button_text }}
 </button>
