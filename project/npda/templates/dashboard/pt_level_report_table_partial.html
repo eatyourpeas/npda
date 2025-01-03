@@ -37,7 +37,7 @@
     </div>
   </div>
 
-  <div class="flex overflow-y-auto h-[60vh] w-full" id="pt_level_report_table">
+  <div class="flex overflow-y-auto {% if table_data.row_data %}h-[60vh]{% endif %} w-full" id="pt_level_report_table">
     <table class="table-auto w-full text-xs  text-center text-gray-500 mb-5 font-montserrat overflow-x-auto">
       <thead class="uppercase bg-rcpch_dark_blue text-white sticky top-0 z-10">
         <tr>
@@ -53,7 +53,7 @@
       </thead>
       <tbody>
 
-        {% if table_data %}
+        {% if table_data.row_data %}
           {% for pt_pk, results in table_data.row_data.items %}
           <tr class="bg-white border-b hover:bg-gray-100">
             {% for kpi_attr_name in table_data.headers %}
@@ -87,8 +87,8 @@
               </tr>
           {% endfor %}
         {% else %}
-          <tr class="bg-white border-b">
-            <td class="px-6 py-4">No data available</td>
+          <tr class="bg-white border-b" >
+            <td class="px-6 py-4" colspan="{{ text.headers|length }}">No data available</td>
           </tr>
         {% endif %}
 
