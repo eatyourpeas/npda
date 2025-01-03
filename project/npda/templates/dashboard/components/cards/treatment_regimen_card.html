@@ -13,7 +13,12 @@
     <div
     hx-get="{% url 'get_simple_bar_chart_pcts_partial' %}?color=E00087"
     hx-vals='{ "data" : {{ charts.tx_regimen_value_counts_pct.data }} }'
-    hx-trigger="load" hx-swap="innerHTML"></div>
+    hx-trigger="load" hx-swap="innerHTML"
+    _="on htmx:afterSwap remove #loading-spinner-treatment-regimen-card"></div>
+
+  <div id="loading-spinner-treatment-regimen-card"
+  class="loading loading-spinner text-rcpch_dark_blue flex flex-grow-1 justify-center items-center h-full w-1/5 mx-auto bg-center">
+  </div>
 
 {% endif %}
 {% endblock %}
