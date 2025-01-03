@@ -8,5 +8,12 @@
 <div
 hx-get="{% url 'get_waffle_chart_partial' %}"
 hx-vals='{{ charts.total_eligible_patients_stratified_by_diabetes_type.data }}'
-hx-trigger="load" hx-swap="innerHTML"></div>
+hx-trigger="load"
+hx-swap="innerHTML"
+_="on htmx:afterSwap remove #loading-spinner-total-eligible-patients-card">
+</div>
+
+<div id="loading-spinner-total-eligible-patients-card"
+class="loading loading-spinner text-rcpch_dark_blue flex flex-grow-1 justify-center items-center h-full w-1/5 mx-auto bg-center">
+</div>
 {% endblock %}

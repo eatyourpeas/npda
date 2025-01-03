@@ -13,7 +13,7 @@ from project.npda.models.paediatric_diabetes_unit import (
 )
 
 import json
-from datetime import date, time
+from datetime import date
 from time import sleep
 
 # Django imports
@@ -122,7 +122,7 @@ def get_patient_level_report_partial(request):
 def get_waffle_chart_partial(request):
     """HTMX view that accepts a GET request with an object of waffle labels and percentages,
     returning a waffle chart rendered"""
-
+    
     try:
 
         if not request.htmx:

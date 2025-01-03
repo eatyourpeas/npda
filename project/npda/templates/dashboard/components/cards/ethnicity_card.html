@@ -6,7 +6,12 @@
 <div
 hx-get="{% url 'get_waffle_chart_partial' %}"
 hx-vals='{{ charts.pt_ethnicity_value_counts_pct.data }}'
-hx-trigger="load" hx-swap="innerHTML"></div>
+hx-trigger="load" hx-swap="innerHTML"
+_="on htmx:afterSwap remove #loading-spinner-ethnicity-card"></div>
+
+<div id="loading-spinner-ethnicity-card"
+class="loading loading-spinner text-rcpch_dark_blue flex flex-grow-1 justify-center items-center h-full w-1/5 mx-auto bg-center">
+</div>
 {% endblock %}
 
 
