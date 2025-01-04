@@ -330,7 +330,7 @@ def get_colored_figures_chart_partial(
     total_figures: int,
 ):
     try:
-        
+
         if not request.htmx:
             return HttpResponseBadRequest("This view is only accessible via HTMX")
 
@@ -463,13 +463,14 @@ def get_simple_bar_chart_pcts_partial(request):
             {"error": "Something went wrong!"},
         )
 
+
 @login_and_otp_required()
 def get_hcl_scatter_plot(request):
     """HTMX view that accepts a GET request with an object of waffle labels and percentages,
     returning a waffle chart rendered.
 
     Must have request.GET data -> template responsible for handling empty data"""
-    
+
     try:
 
         if not request.htmx:
@@ -545,7 +546,9 @@ def get_hcl_scatter_plot(request):
             },
         )
 
-        return render(request, "dashboard/hcl_scatter_plot_partial.html", {"chart_html": chart_html})
+        return render(
+            request, "dashboard/hcl_scatter_plot_partial.html", {"chart_html": chart_html}
+        )
     except Exception as e:
         return render(
             request,
