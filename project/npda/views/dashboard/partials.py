@@ -14,11 +14,8 @@ from project.npda.models.paediatric_diabetes_unit import (
 
 import json
 from datetime import date
-from time import sleep
 
 # Django imports
-from django.apps import apps
-from django.contrib import messages
 from django.shortcuts import render
 
 from project.npda.models.paediatric_diabetes_unit import (
@@ -26,9 +23,6 @@ from project.npda.models.paediatric_diabetes_unit import (
 )
 
 
-from project.npda.general_functions.session import (
-    refresh_session_object_synchronously,
-)
 from project.npda.kpi_class.kpis import CalculateKPIS
 
 

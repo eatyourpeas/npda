@@ -2,37 +2,20 @@
 
 # Python imports
 from collections import Counter, defaultdict
-import json
 import logging
 from dateutil.relativedelta import relativedelta
-from datetime import date
 from typing import Literal
 
 
-# Django imports
-from django.apps import apps
-from django.contrib import messages
-from django.shortcuts import render
 from django.db.models import QuerySet, Count
 
-from project.constants.diabetes_types import DIABETES_TYPES
 from project.constants.ethnicities import ETHNICITIES
 from project.constants.sex_types import SEX_TYPE
 from project.constants.types.kpi_types import KPIRegistry
-from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
-from project.npda.models.paediatric_diabetes_unit import (
-    PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
-)
 from project.npda.models.patient import Patient
 
-# HTMX imports
-from project.npda.general_functions.session import (
-    refresh_session_object_synchronously,
-)
 from project.npda.kpi_class.kpis import CalculateKPIS
 from project.npda.views.dashboard.template_data import *
-# RCPCH imports
-from project.npda.views.decorators import login_and_otp_required
 
 # LOGGING
 logger = logging.getLogger(__name__)
