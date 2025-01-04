@@ -22,7 +22,7 @@ users = [
 
 NPDAUserFactory(
     first_name=test_user_audit_centre_reader_data.role_str,
-    email=f"test_user_audit_centre_reader@email.net",
+    email=f"a@a.com",
     role=test_user_audit_centre_reader_data.role,
     # Assign flags based on user role
     is_active=True,

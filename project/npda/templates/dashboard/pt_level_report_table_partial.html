@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <div class="flex overflow-y-auto {% if table_data.row_data %}h-[60vh]{% endif %} w-full" id="pt_level_report_table">
+    <div class="flex overflow-y-auto h-[60vh] w-full" id="pt_level_report_table">
       <table class="table-auto w-full text-xs  text-center text-gray-500 mb-5 font-montserrat overflow-x-auto">
         <thead class="uppercase bg-rcpch_dark_blue text-white sticky top-0 z-10">
           <tr>
@@ -53,45 +53,56 @@
           </tr>
         </thead>
         <tbody>
-
-            {% for pt_pk, results in table_data.row_data.items %}
-            <tr class="bg-white border-b hover:bg-gray-100">
-              {% for kpi_attr_name in table_data.headers %}
-                <td class="px-6 py-4">
-                    {% with result=results|get_item:kpi_attr_name %}
-                      <p>
-                        {% if kpi_attr_name == "nhs_number" %}
-                            <span class="tooltip tooltip-right block" data-tip="View patient details">
-                              <a href="{% url 'patient-update' pt_pk %}" class="block w-full h-full">
-                              {{ result }}
-                              <i class="fa-solid fa-arrow-up-right-from-square text-rcpch_strong_blue"></i>
-                              </a>
-                             </span>
-                          </div>
-                        {% elif kpi_attr_name == "total" %}
-                          {{ result.0 }} / {{ result.1 }}
-                        {% elif kpi_attr_name == "value" %}
-                          {{ result }}
-                        {% elif result is True %}
-                            <i class="fa-solid fa-circle-check text-success"></i>
-                        {% elif result is False %}
-                          <i class="fa-solid fa-circle-exclamation text-error"></i>
-                        {% else %}
-                          <i class="fa-solid fa-ban text-muted"></i>
-                        {% endif %}
-                      </p>
-                    {% endwith %}
-
-                </td>
-              {% endfor %}
+            {% if table_data.row_data %}
+              {% for pt_pk, results in table_data.row_data.items %}
+                <tr class="bg-white border-b hover:bg-gray-100">
+                  {% for kpi_attr_name in table_data.headers %}
+                    <td class="px-6 py-4">
+                      {% with result=results|get_item:kpi_attr_name %}
+                        <p>
+                          {% if kpi_attr_name == "nhs_number" %}
+                              <span class="tooltip tooltip-right block" data-tip="View patient details">
+                                <a href="{% url 'patient-update' pt_pk %}" class="block w-full h-full">
+                                {{ result }}
+                                <i class="fa-solid fa-arrow-up-right-from-square text-rcpch_strong_blue"></i>
+                                </a>
+                              </span>
+                            </div>
+                          {% elif kpi_attr_name == "total" %}
+                            {{ result.0 }} / {{ result.1 }}
+                          {% elif kpi_attr_name == "value" %}
+                            {{ result }}
+                          {% elif result is True %}
+                              <i class="fa-solid fa-circle-check text-success"></i>
+                          {% elif result is False %}
+                            <i class="fa-solid fa-circle-exclamation text-error"></i>
+                          {% else %}
+                            <i class="fa-solid fa-ban text-muted"></i>
+                          {% endif %}
+                        </p>
+                      {% endwith %}
+                  </td>
+                {% endfor %}
                 </tr>
-            {% endfor %}
+              {% endfor %}
+            {% else %}
+              {% for _ in "12345"|make_list %}
+                <tr class="bg-white border-b hover:bg-gray-100">
+                    {% for _ in text.headers %}
+                    <td class="px-6 py-4 text-muted">
+                      -
+                    </td>
+                    {% endfor %}
+                </tr>
+              {% endfor %}
+            {% endif %}
 
 
         </tbody>
       </table>
       </div>
 
+    {% comment %} custom styling for disabled loading state {% endcomment %}
     <style>
       {% comment %} Don't opacify the selected button {% endcomment %}
       button[disabled] {
@@ -117,7 +128,7 @@
             {% if n_pts > 0 %}
               Total: <span class="font-bold">{{ table_data.row_data|length }} Patient{% if table_data.row_data|length > 1 %}s{% endif %}</span>
             {% else %}
-              No patients
+              No eligible patients
             {% endif %}
           {% endwith %}
       </div>
