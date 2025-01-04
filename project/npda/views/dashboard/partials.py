@@ -374,87 +374,94 @@ def get_simple_bar_chart_pcts_partial(request):
     Optionally accepts:
         request.GET.get("color"): str, hex color code to use for the bars
     """
-    if not request.htmx:
-        return HttpResponseBadRequest("This view is only accessible via HTMX")
+    try:
+        raise Exception("This view is not currently in use")
+        if not request.htmx:
+            return HttpResponseBadRequest("This view is only accessible via HTMX")
 
-    # Fetch data from query parameters
+        # Fetch data from query parameters
 
-    # Bar color
-    if bar_color := request.GET.get("color", None):
-        # Easier just to send the hex code as a string in request url
-        # so add the '#' if it's not there
-        bar_color = f"#{bar_color}" if bar_color[0] != "#" else bar_color
-    else:
-        bar_color = RCPCH_DARK_BLUE
+        # Bar color
+        if bar_color := request.GET.get("color", None):
+            # Easier just to send the hex code as a string in request url
+            # so add the '#' if it's not there
+            bar_color = f"#{bar_color}" if bar_color[0] != "#" else bar_color
+        else:
+            bar_color = RCPCH_DARK_BLUE
 
-    # NOTE: don't need to handle empty data as the template handles this
-    data_raw = json.loads(request.GET.get("data"))
+        # NOTE: don't need to handle empty data as the template handles this
+        data_raw = json.loads(request.GET.get("data"))
 
-    x, y = [], []
-    for _, values in data_raw.items():
-        x.append(values["label"])
-        y.append(values["pct"])
+        x, y = [], []
+        for _, values in data_raw.items():
+            x.append(values["label"])
+            y.append(values["pct"])
 
-    # Create the bar chart
-    fig = go.Figure()
+        # Create the bar chart
+        fig = go.Figure()
 
-    fig.add_trace(
-        go.Bar(
-            x=x,
-            y=y,
-            text=y,
-            textposition="outside",
-            marker=dict(color=bar_color),
+        fig.add_trace(
+            go.Bar(
+                x=x,
+                y=y,
+                text=y,
+                textposition="outside",
+                marker=dict(color=bar_color),
+            )
         )
-    )
 
-    # Adjust x-axis labels to avoid overlap
-    if len(x) > 3:
-        ticktext = []
-        CUT_OFF_CHAR_LEN = 10
-        for label in x:
-            if len(label) > CUT_OFF_CHAR_LEN:
-                # Label too long, cut off at CUT_OFF_CHAR_LEN characters
-                ticktext.append(label[:CUT_OFF_CHAR_LEN] + "...")
-            else:
-                ticktext.append(label)
-    else:
-        # # Wrap text with <br>
-        ticktext = [label.replace(" ", "<br>") for label in x]
+        # Adjust x-axis labels to avoid overlap
+        if len(x) > 3:
+            ticktext = []
+            CUT_OFF_CHAR_LEN = 10
+            for label in x:
+                if len(label) > CUT_OFF_CHAR_LEN:
+                    # Label too long, cut off at CUT_OFF_CHAR_LEN characters
+                    ticktext.append(label[:CUT_OFF_CHAR_LEN] + "...")
+                else:
+                    ticktext.append(label)
+        else:
+            # # Wrap text with <br>
+            ticktext = [label.replace(" ", "<br>") for label in x]
 
-    # Update layout for labels and formatting
-    fig.update_layout(
-        title="",
-        xaxis_title="",
-        yaxis_title="% CYP with T1DM",
-        yaxis=dict(range=[0, 110]),  # Breathing room for percentages around 100
-        template="simple_white",  # Clean grid style
-        # Wrap text
-        xaxis=dict(
-            tickmode="array",
-            tickvals=list(range(len(x))),
-            ticktext=ticktext,
-            # Rotate labels if they are too long
-            tickangle=45 if len(x) > 3 else 0,
-            automargin=True,  # Adjust margins for label space
-        ),
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
+        # Update layout for labels and formatting
+        fig.update_layout(
+            title="",
+            xaxis_title="",
+            yaxis_title="% CYP with T1DM",
+            yaxis=dict(range=[0, 110]),  # Breathing room for percentages around 100
+            template="simple_white",  # Clean grid style
+            # Wrap text
+            xaxis=dict(
+                tickmode="array",
+                tickvals=list(range(len(x))),
+                ticktext=ticktext,
+                # Rotate labels if they are too long
+                tickangle=45 if len(x) > 3 else 0,
+                automargin=True,  # Adjust margins for label space
+            ),
+            margin=dict(l=0, r=0, t=0, b=0),
+        )
 
-    chart_html = fig.to_html(
-        full_html=False,
-        include_plotlyjs=False,
-        config={
-            "displayModeBar": False,
-        },
-    )
+        chart_html = fig.to_html(
+            full_html=False,
+            include_plotlyjs=False,
+            config={
+                "displayModeBar": False,
+            },
+        )
 
-    return render(
-        request,
-        "dashboard/simple_bar_chart_pcts_partial.html",
-        {"chart_html": chart_html},
-    )
-
+        return render(
+            request,
+            "dashboard/simple_bar_chart_pcts_partial.html",
+            {"chart_html": chart_html},
+        )
+    except Exception as e:
+        return render(
+            request,
+            "dashboard/simple_bar_chart_pcts_partial.html",
+            {"error": "Something went wrong!"},
+        )
 
 @login_and_otp_required()
 def get_hcl_scatter_plot(request):
