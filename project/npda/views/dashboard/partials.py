@@ -329,21 +329,28 @@ def get_colored_figures_chart_partial(
     colored: int,
     total_figures: int,
 ):
+    try:
+        
+        if not request.htmx:
+            return HttpResponseBadRequest("This view is only accessible via HTMX")
 
-    if not request.htmx:
-        return HttpResponseBadRequest("This view is only accessible via HTMX")
+        # Get a list of booleans to determine which figures are colored (to iterate easily in the
+        # template)
+        is_colored = [True if i < colored else False for i in range(total_figures)]
 
-    # Get a list of booleans to determine which figures are colored (to iterate easily in the
-    # template)
-    is_colored = [True if i < colored else False for i in range(total_figures)]
-
-    return render(
-        request,
-        "dashboard/colored_figures_chart_partial.html",
-        context={
-            "is_colored": is_colored,
-        },
-    )
+        return render(
+            request,
+            "dashboard/colored_figures_chart_partial.html",
+            context={
+                "is_colored": is_colored,
+            },
+        )
+    except Exception as e:
+        return render(
+            request,
+            "dashboard/colored_figures_chart_partial.html",
+            {"error": "Something went wrong!"},
+        )
 
 
 @login_and_otp_required()
@@ -446,52 +453,6 @@ def get_simple_bar_chart_pcts_partial(request):
         request,
         "dashboard/simple_bar_chart_pcts_partial.html",
         {"chart_html": chart_html},
-    )
-
-
-@login_and_otp_required()
-def get_colored_figures_chart_partial(
-    request,
-    colored: int,
-    total_figures: int,
-):
-
-    if not request.htmx:
-        return HttpResponseBadRequest("This view is only accessible via HTMX")
-
-    # Get a list of booleans to determine which figures are colored (to iterate easily in the
-    # template)
-    is_colored = [True if i < colored else False for i in range(total_figures)]
-
-    return render(
-        request,
-        "dashboard/colored_figures_chart_partial.html",
-        context={
-            "is_colored": is_colored,
-        },
-    )
-
-
-@login_and_otp_required()
-def get_colored_figures_chart_partial(
-    request,
-    colored: int,
-    total_figures: int,
-):
-
-    if not request.htmx:
-        return HttpResponseBadRequest("This view is only accessible via HTMX")
-
-    # Get a list of booleans to determine which figures are colored (to iterate easily in the
-    # template)
-    is_colored = [True if i < colored else False for i in range(total_figures)]
-
-    return render(
-        request,
-        "dashboard/colored_figures_chart_partial.html",
-        context={
-            "is_colored": is_colored,
-        },
     )
 
 

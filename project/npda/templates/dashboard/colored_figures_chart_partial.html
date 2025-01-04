@@ -1,5 +1,11 @@
+{% if error %}
+<div class="alert alert-danger">
+  <i class="fa-solid fa-person-circle-exclamation"></i> {{ error }}
+</div>
+{% elif chart_html %}
 <div class="flex justify-between px-3">
   {% for should_color in is_colored %}
     <i class="fa-solid fa-child {% if should_color %} text-rcpch_light_blue {% else %} text-rcpch_dark_grey {% endif %} fa-2xl"></i>
   {% endfor %}
 </div>
+{% endif %}
