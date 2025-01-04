@@ -116,7 +116,7 @@ def get_patient_level_report_partial(request):
 def get_waffle_chart_partial(request):
     """HTMX view that accepts a GET request with an object of waffle labels and percentages,
     returning a waffle chart rendered"""
-    
+
     try:
 
         if not request.htmx:
@@ -129,9 +129,7 @@ def get_waffle_chart_partial(request):
 
         # Handle empty data (eg. if no eligible pts)
         if not data:
-            return render(
-                request, "dashboard/waffle_chart_partial.html", {"chart_html": None}
-            )
+            return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": None})
 
         # Ensure percentages sum to 100
         total = sum(data.values())
@@ -245,9 +243,7 @@ def get_waffle_chart_partial(request):
                 "displayModeBar": False,
             },
         )
-        return render(
-            request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html}
-        )
+        return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
 
     except Exception as e:
         return render(
@@ -267,10 +263,10 @@ def get_map_chart_partial(request):
     pz_code: str = request.session.get("pz_code")
     selected_audit_year = request.session.get("selected_audit_year")
 
-    paediatric_diabetes_unit = PaediatricDiabetesUnitClass.objects.get(pz_code=pz_code)
-
-    # # get lead organisation for the selected PDU
     try:
+        paediatric_diabetes_unit = PaediatricDiabetesUnitClass.objects.get(pz_code=pz_code)
+
+        # get lead organisation for the selected PDU
         pdu_lead_organisation = fetch_organisation_by_ods_code(
             ods_code=paediatric_diabetes_unit.lead_organisation_ods_code
         )
@@ -279,42 +275,52 @@ def get_map_chart_partial(request):
             f"Lead organisation for PDU {paediatric_diabetes_unit.lead_organisation_ods_code=} not found"
         )
 
-    # # thes are all registered patients for the current cohort at the selected organisation to be plotted in the map
-    patients_to_plot = get_children_by_pdu_audit_year(
-        paediatric_diabetes_unit=paediatric_diabetes_unit,
-        paediatric_diabetes_unit_lead_organisation=pdu_lead_organisation,
-        audit_year=selected_audit_year,
-    )
+    try:
 
-    # # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
-    aggregated_distances, patient_distances_dataframe = (
-        generate_dataframe_and_aggregated_distance_data_from_cases(
-            filtered_cases=patients_to_plot
-        )
-    )
-
-    # generate scatterplot of patients by distance from the selected organisation
-    scatterplot_of_cases_for_selected_organisation_fig = (
-        generate_distance_from_organisation_scatterplot_figure(
-            geo_df=patient_distances_dataframe,
-            pdu_lead_organisation=pdu_lead_organisation,
+        # thes are all registered patients for the current cohort at the selected organisation to be plotted in the map
+        patients_to_plot = get_children_by_pdu_audit_year(
             paediatric_diabetes_unit=paediatric_diabetes_unit,
+            paediatric_diabetes_unit_lead_organisation=pdu_lead_organisation,
+            audit_year=selected_audit_year,
         )
-    )
 
-    return render(
-        request,
-        template_name="dashboard/map_chart_partial.html",
-        context={
-            "chart_html": pio.to_html(
-                scatterplot_of_cases_for_selected_organisation_fig,
-                full_html=False,
-                include_plotlyjs=False,
-                config={"displayModeBar": True},
-            ),
-            "aggregated_distances": aggregated_distances,
-        },
-    )
+        # aggregated distances (mean, median, max, min) that patients have travelled to the selected organisation
+        aggregated_distances, patient_distances_dataframe = (
+            generate_dataframe_and_aggregated_distance_data_from_cases(
+                filtered_cases=patients_to_plot
+            )
+        )
+
+        # generate scatterplot of patients by distance from the selected organisation
+        scatterplot_of_cases_for_selected_organisation_fig = (
+            generate_distance_from_organisation_scatterplot_figure(
+                geo_df=patient_distances_dataframe,
+                pdu_lead_organisation=pdu_lead_organisation,
+                paediatric_diabetes_unit=paediatric_diabetes_unit,
+            )
+        )
+
+        return render(
+            request,
+            template_name="dashboard/map_chart_partial.html",
+            context={
+                "chart_html": pio.to_html(
+                    scatterplot_of_cases_for_selected_organisation_fig,
+                    full_html=False,
+                    include_plotlyjs=False,
+                    config={"displayModeBar": True},
+                ),
+                "aggregated_distances": aggregated_distances,
+            },
+        )
+
+    except Exception as e:
+        logger.error("Error generating map chart", exc_info=True)
+        return render(
+            request,
+            "dashboard/map_chart_partial.html",
+            {"error": "Something went wrong!"},
+        )
 
 
 @login_and_otp_required()
@@ -569,6 +575,4 @@ def get_hcl_scatter_plot(request):
         },
     )
 
-    return render(
-        request, "dashboard/hcl_scatter_plot_partial.html", {"chart_html": chart_html}
-    )
+    return render(request, "dashboard/hcl_scatter_plot_partial.html", {"chart_html": chart_html})
