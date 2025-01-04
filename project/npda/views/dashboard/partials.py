@@ -375,7 +375,7 @@ def get_simple_bar_chart_pcts_partial(request):
         request.GET.get("color"): str, hex color code to use for the bars
     """
     try:
-        raise Exception("This view is not currently in use")
+
         if not request.htmx:
             return HttpResponseBadRequest("This view is only accessible via HTMX")
 
@@ -469,78 +469,87 @@ def get_hcl_scatter_plot(request):
     returning a waffle chart rendered.
 
     Must have request.GET data -> template responsible for handling empty data"""
+    
+    try:
+        raise Exception("This view is not currently in use")
 
-    if not request.htmx:
-        return HttpResponseBadRequest("This view is only accessible via HTMX")
+        if not request.htmx:
+            return HttpResponseBadRequest("This view is only accessible via HTMX")
 
-    if not (request_data := request.GET.get("data", None)):
-        return HttpResponseBadRequest("No data provided")
+        if not (request_data := request.GET.get("data", None)):
+            return HttpResponseBadRequest("No data provided")
 
-    # Fetch data from query parameters
-    data = json.loads(request_data)
+        # Fetch data from query parameters
+        data = json.loads(request_data)
 
-    # Extracting data
-    quarters = [f"Q{q}" for q in data]
-    percentages = [data[q]["pct"] for q in data]
-    passed = [data[q]["total_passed"] for q in data]
-    eligible = [data[q]["total_eligible"] for q in data]
-    colors = [RCPCH_LIGHT_BLUE for _ in data]
-    # highlight the last quarter
-    colors[-1] = RCPCH_PINK
+        # Extracting data
+        quarters = [f"Q{q}" for q in data]
+        percentages = [data[q]["pct"] for q in data]
+        passed = [data[q]["total_passed"] for q in data]
+        eligible = [data[q]["total_eligible"] for q in data]
+        colors = [RCPCH_LIGHT_BLUE for _ in data]
+        # highlight the last quarter
+        colors[-1] = RCPCH_PINK
 
-    # Create scatter plot
-    fig = go.Figure()
+        # Create scatter plot
+        fig = go.Figure()
 
-    fig.add_trace(
-        go.Scatter(
-            x=quarters,
-            y=percentages,
-            mode="lines+markers",
-            marker=dict(
-                size=12,
-                color=colors,
-                symbol="square",
-            ),
-            line=dict(color=RCPCH_LIGHT_BLUE),
-            hovertemplate="<b>%{x}</b>:Eligible passed: %{customdata[0]} / %{customdata[1]} (%{y:.1f}%)<extra></extra>",
-            customdata=list(zip(passed, eligible)),
+        fig.add_trace(
+            go.Scatter(
+                x=quarters,
+                y=percentages,
+                mode="lines+markers",
+                marker=dict(
+                    size=12,
+                    color=colors,
+                    symbol="square",
+                ),
+                line=dict(color=RCPCH_LIGHT_BLUE),
+                hovertemplate="<b>%{x}</b>:Eligible passed: %{customdata[0]} / %{customdata[1]} (%{y:.1f}%)<extra></extra>",
+                customdata=list(zip(passed, eligible)),
+            )
         )
-    )
 
-    # Add annotation for last quarter
-    last_pct = percentages[-1]
-    # Offset below point if penultimate point higher than final point
-    Y_SHIFT = 20
-    if len(percentages) > 1 and percentages[-2] >= last_pct:
-        # If the final point is < 10, don't offset below as goes off the chart
-        yshift = -Y_SHIFT if last_pct > (Y_SHIFT) else Y_SHIFT
-    else:
-        # Don't need to account for going off the chart at top as added space
-        yshift = Y_SHIFT
-    fig.add_annotation(
-        x=quarters[-1],
-        y=percentages[-1],
-        text=f"{percentages[-1]}%",
-        showarrow=False,
-        font=dict(color=RCPCH_PINK, size=12),
-        yshift=yshift,
-    )
+        # Add annotation for last quarter
+        last_pct = percentages[-1]
+        # Offset below point if penultimate point higher than final point
+        Y_SHIFT = 20
+        if len(percentages) > 1 and percentages[-2] >= last_pct:
+            # If the final point is < 10, don't offset below as goes off the chart
+            yshift = -Y_SHIFT if last_pct > (Y_SHIFT) else Y_SHIFT
+        else:
+            # Don't need to account for going off the chart at top as added space
+            yshift = Y_SHIFT
+        fig.add_annotation(
+            x=quarters[-1],
+            y=percentages[-1],
+            text=f"{percentages[-1]}%",
+            showarrow=False,
+            font=dict(color=RCPCH_PINK, size=12),
+            yshift=yshift,
+        )
 
-    # Layout adjustments
-    fig.update_layout(
-        xaxis=dict(title="Quarter", range=[-0.5, len(quarters) - 0.5]),
-        yaxis=dict(title="% CYP with HCL Use", range=[0, 110]),
-        showlegend=False,
-        template="simple_white",  # Clean grid style
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
+        # Layout adjustments
+        fig.update_layout(
+            xaxis=dict(title="Quarter", range=[-0.5, len(quarters) - 0.5]),
+            yaxis=dict(title="% CYP with HCL Use", range=[0, 110]),
+            showlegend=False,
+            template="simple_white",  # Clean grid style
+            margin=dict(l=0, r=0, t=0, b=0),
+        )
 
-    chart_html = fig.to_html(
-        full_html=False,
-        include_plotlyjs=False,
-        config={
-            "displayModeBar": False,
-        },
-    )
+        chart_html = fig.to_html(
+            full_html=False,
+            include_plotlyjs=False,
+            config={
+                "displayModeBar": False,
+            },
+        )
 
-    return render(request, "dashboard/hcl_scatter_plot_partial.html", {"chart_html": chart_html})
+        return render(request, "dashboard/hcl_scatter_plot_partial.html", {"chart_html": chart_html})
+    except Exception as e:
+        return render(
+            request,
+            "dashboard/hcl_scatter_plot_partial.html",
+            {"error": "Something went wrong!"},
+        )
