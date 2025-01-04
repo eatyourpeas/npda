@@ -11,6 +11,7 @@ from project.npda.views import (
     VisitDeleteView,
     VisitUpdateView,
 )
+from project.npda.views.dashboard.dashboard import temp_set_eligible_kpi_7
 
 from .views import *
 
@@ -135,6 +136,11 @@ urlpatterns = [
         "get_hcl_scatter_plot",
         view=get_hcl_scatter_plot,
         name="get_hcl_scatter_plot",
+    ),
+    path(
+        "temp_set_eligible_kpi_7",
+        view=temp_set_eligible_kpi_7,
+        name="temp_set_eligible_kpi_7",
     ),
     # End dashboard views
     path("csrf_fail/", csrf_fail, name="csrf_fail"),

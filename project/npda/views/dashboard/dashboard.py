@@ -103,6 +103,40 @@ KPI_CATEGORY_ATTR_MAP = {
 }
 
 
+# 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+# 🚨 TODO SHOULD BE REMOVED, JUST DURING DEV  🚨
+# 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+@login_and_otp_required()
+def temp_set_eligible_kpi_7(request):
+    """Temporary util to set some seeded patients attrs manually
+
+    KPI7
+        to be eligible for kpi 7 (T1DM diagnosed
+        during the audit period) which is denominator for kpis 41-43.
+
+        This is because the default behaviour of the `PatientFactory` .build method (used in the
+        csv seeder) is to choose a random diabetes_diagnosis between the pt's DoB and audit_start_date.
+
+    """
+    if not request.user.is_superuser:
+        logger.error("User %s tried to run temp util to set KPI 7", request.user)
+        raise PermissionError("Only superusers can run this util")
+    
+    from django.http import HttpResponse
+    
+    _ = 10
+    logger.error(f"🔥 Setting {_} patients to be eligible for KPI 7")
+    to_set_kpi_7_eligible = Patient.objects.filter(diabetes_type=DIABETES_TYPES[0][0])[:_]
+    for pt in to_set_kpi_7_eligible:
+        pt.diagnosis_date = CalculateKPIS().audit_start_date + relativedelta(months=4)
+        pt.save()
+        logger.warning(f"Succesfully set {pt} to be eligible for KPI 7")
+    
+    return HttpResponse(f"Set {_} patients to be eligible for KPI 7: {''.join([f'<p>{pt.nhs_number}</p>' for pt in to_set_kpi_7_eligible])}", status=200)
+# 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+# 🚨 TODO SHOULD BE REMOVED, JUST DURING DEV  🚨
+# 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+
 @login_and_otp_required()
 def dashboard(request):
     """
@@ -139,31 +173,6 @@ def dashboard(request):
     calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
 
     kpi_calculations_object = calculate_kpis.calculate_kpis_for_pdus(pz_codes=[pz_code])
-
-    # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
-    # 🚨 TODO SHOULD BE REMOVED, JUST DURING DEV  🚨
-    # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
-    """Temporary util to set some seeded patients attrs manually
-    
-    KPI7
-        to be eligible for kpi 7 (T1DM diagnosed
-        during the audit period) which is denominator for kpis 41-43.
-
-        This is because the default behaviour of the `PatientFactory` .build method (used in the
-        csv seeder) is to choose a random diabetes_diagnosis between the pt's DoB and audit_start_date.
-    
-    """
-    _ = 10
-    logger.error(f"🔥 Setting first {_} patients to be eligible for KPI 7")
-    to_set_kpi_7_eligible = calculate_kpis.patients[:_]
-    for pt in to_set_kpi_7_eligible:
-        pt.diagnosis_date = calculate_kpis.audit_start_date + relativedelta(months=4)
-        pt.diabetes_type = DIABETES_TYPES[0][0]
-        pt.save()
-        logger.warning(f"Succesfully set {pt} to be eligible for KPI 7")
-    # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
-    # 🚨 TODO SHOULD BE REMOVED, JUST DURING DEV  🚨
-    # 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
 
     # From this, gather specific chart data required
 
