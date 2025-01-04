@@ -471,7 +471,6 @@ def get_hcl_scatter_plot(request):
     Must have request.GET data -> template responsible for handling empty data"""
     
     try:
-        raise Exception("This view is not currently in use")
 
         if not request.htmx:
             return HttpResponseBadRequest("This view is only accessible via HTMX")
