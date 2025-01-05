@@ -47,6 +47,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_CHART_HTML_HEIGHT = "18rem"
+
 
 @login_and_otp_required()
 def get_patient_level_report_partial(request):
@@ -203,7 +205,7 @@ def get_waffle_chart_partial(request):
                     y=[square["y"]],
                     mode="markers",
                     marker=dict(
-                        size=25,
+                        size=10,
                         color=square["colour"],
                         symbol="square",
                     ),
@@ -220,7 +222,7 @@ def get_waffle_chart_partial(request):
                     x=[None],
                     y=[None],
                     mode="markers",
-                    marker=dict(size=15, color=colours[idx], symbol="square"),
+                    marker=dict(size=10, color=colours[idx], symbol="square"),
                     name=f"{pct}% {label}",
                     # hoverinfo="skip",
                 )
@@ -230,7 +232,12 @@ def get_waffle_chart_partial(request):
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
             margin=dict(l=0, r=0, t=0, b=0),
-            legend=dict(orientation="h", y=1.1, x=0.5, xanchor="center"),
+            legend=dict(
+                orientation="h",
+                y=1.25,  # Move legend higher above the plot
+                x=0.5,
+                xanchor="center",
+            ),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
         )
@@ -242,6 +249,7 @@ def get_waffle_chart_partial(request):
             config={
                 "displayModeBar": False,
             },
+            default_height=DEFAULT_CHART_HTML_HEIGHT,
         )
         return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
 
@@ -429,7 +437,11 @@ def get_simple_bar_chart_pcts_partial(request):
             title="",
             xaxis_title="",
             yaxis_title="% CYP with T1DM",
-            yaxis=dict(range=[0, 110]),  # Breathing room for percentages around 100
+            yaxis=dict(
+                range=[0, 120], # Breathing room for percentages above 100
+                tickvals = [0, 25, 50, 75, 100],
+                ticktext = ["0", "25", "50", "75", "100"],
+            ),  
             template="simple_white",  # Clean grid style
             # Wrap text
             xaxis=dict(
@@ -449,6 +461,7 @@ def get_simple_bar_chart_pcts_partial(request):
             config={
                 "displayModeBar": False,
             },
+            default_height=DEFAULT_CHART_HTML_HEIGHT,
         )
 
         return render(
@@ -544,6 +557,7 @@ def get_hcl_scatter_plot(request):
             config={
                 "displayModeBar": False,
             },
+            default_height=DEFAULT_CHART_HTML_HEIGHT,
         )
 
         return render(
