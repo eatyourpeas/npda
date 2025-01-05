@@ -45,10 +45,11 @@
     </div>
 
     <div class="flex flex-col gap-3">
+      <!-- Total Eligible Patients Card -->
+      {% include 'dashboard/components/cards/total_eligible_patients_card.html' %}
       <!-- HCL CARD -->
       {% include 'dashboard/components/cards/hcl_use_card.html' %}
-      <!-- care at diagnosis CARD -->
-      {% include 'dashboard/components/cards/care_at_diagnosis_card.html' %}
+
     </div>
 
   </div>
@@ -57,8 +58,8 @@
     {% include 'dashboard/components/cards/health_checks_completion_rate_card.html' %}
     <!-- ADDITIONAL CARE PROCESSES CARD -->
     {% include 'dashboard/components/cards/additional_care_processes_card.html' %}
-    <!-- Total Eligible Patients Card -->
-    {% include 'dashboard/components/cards/total_eligible_patients_card.html' %}
+    <!-- care at diagnosis CARD -->
+    {% include 'dashboard/components/cards/care_at_diagnosis_card.html' %}
   </div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
     <!-- SEX CARD -->
