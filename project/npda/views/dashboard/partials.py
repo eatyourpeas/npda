@@ -237,6 +237,7 @@ def get_waffle_chart_partial(request):
                 y=1.25,  # Move legend higher above the plot
                 x=0.5,
                 xanchor="center",
+                font=dict(size=10),
             ),
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
