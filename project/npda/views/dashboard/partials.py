@@ -255,6 +255,7 @@ def get_waffle_chart_partial(request):
         return render(request, "dashboard/waffle_chart_partial.html", {"chart_html": chart_html})
 
     except Exception as e:
+        logger.error("Error generating waffle chart", exc_info=True)
         return render(
             request,
             "dashboard/waffle_chart_partial.html",
@@ -355,6 +356,7 @@ def get_colored_figures_chart_partial(
             },
         )
     except Exception as e:
+        logger.error("Error generating colored figures chart", exc_info=True)
         return render(
             request,
             "dashboard/colored_figures_chart_partial.html",
@@ -471,6 +473,7 @@ def get_simple_bar_chart_pcts_partial(request):
             {"chart_html": chart_html},
         )
     except Exception as e:
+        logger.error("Error generating simple bar chart pcts", exc_info=True)
         return render(
             request,
             "dashboard/simple_bar_chart_pcts_partial.html",
@@ -565,6 +568,7 @@ def get_hcl_scatter_plot(request):
             request, "dashboard/hcl_scatter_plot_partial.html", {"chart_html": chart_html}
         )
     except Exception as e:
+        logger.error("Error generating hcl scatter plot", exc_info=True)
         return render(
             request,
             "dashboard/hcl_scatter_plot_partial.html",
