@@ -175,7 +175,7 @@ def get_waffle_chart_partial(request):
 
         chart_data = []
         # For each label, add the appropriate number of squares to the chart data
-        for idx, (label, num_squares) in enumerate(data):
+        for idx, (label, num_squares) in enumerate(data.items()):
             # For each square, append its data as current r,c, and colour
             for _ in range(num_squares):
                 square_data = {
@@ -216,7 +216,7 @@ def get_waffle_chart_partial(request):
             )
 
         # Add legend
-        for idx, (label, pct) in enumerate(data):
+        for idx, (label, pct) in enumerate(data.items()):
             fig.add_trace(
                 go.Scatter(
                     x=[None],
