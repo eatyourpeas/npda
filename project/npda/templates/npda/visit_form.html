@@ -181,7 +181,7 @@
             {% for field_category in form.categories %}
               {% with field_category|colour_for_category as background_colour %}
                 {% if field_category == "Foot Care" or field_category == "DECS" or field_category == "ACR" or field_category == "Cholesterol" or field_category == "Thyroid" or field_category == "Coeliac" or field_category == "Psychology" or field_category == "Smoking" or field_category == "Dietician" or field_category == "Sick Day Rules" or field_category == "Immunisation (flu)" %}
-                  <div class="collapse collapse-arrow mb-2 rounded-none {% if field_category in categories_with_errors %} border-4 border-rcpch_red {% else %} border-4 border-{{ background_colour }} {% endif %} ">
+                  <div class="collapse collapse-open mb-2 rounded-none {% if field_category in categories_with_errors %} border-4 border-rcpch_red {% else %} border-4 border-{{ background_colour }} {% endif %} ">
                     <input type="checkbox" class="peer" name="my-accordion-3" />
                     <div class="collapse-title p-1 pt-0 pl-0 m-0 pr-12">
                       <a name="{{ field_category|cut:" " }}_anchor"></a>
@@ -194,15 +194,6 @@
                           {{ field_category }}
                         </div>
                       {% endif %}
-                      <div class="mx-2 mb-2 w-full">
-                        <div role="alert" class="alert">
-                          <p>
-                            <i class="fa-solid fa-info mr-2"></i>
-                            <span>Click to show/hide section content.</span>
-                          </p>
-                        </div>
-                        <div class="divider w-full mt-2"></div>
-                      </div>
                     </div>
                     <div class="collapse-content flex flex-col bg-white">
                       {% for field in form %}
