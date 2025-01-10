@@ -136,12 +136,11 @@ def get_waffle_chart_partial(request):
         # Ensure percentages sum to 100
         total = sum(data.values())
         if total != 100:
-            if data:
-                first_category = list(data.keys())[0]
-                data[first_category] += 100 - total
+            first_category = list(data.keys())[0]
+            data[first_category] += 100 - total
 
-                # Sort data by pct ascending so we put the smallest category top left
-                data = sorted(data.items(), key=lambda item: item[1], reverse=False)
+        # Sort data by pct ascending so we put the smallest category top left
+        data = sorted(data.items(), key=lambda item: item[1], reverse=False)
 
         # Prepare waffle chart
         # TODO: ADD IN A BUNCH OF COLORS HERE. ?COULD SPECIFY COLORS IN GET REQUEST
@@ -175,7 +174,7 @@ def get_waffle_chart_partial(request):
 
         chart_data = []
         # For each label, add the appropriate number of squares to the chart data
-        for idx, (label, num_squares) in enumerate(data.items()):
+        for idx, (label, num_squares) in enumerate(data):
             # For each square, append its data as current r,c, and colour
             for _ in range(num_squares):
                 square_data = {
@@ -216,7 +215,7 @@ def get_waffle_chart_partial(request):
             )
 
         # Add legend
-        for idx, (label, pct) in enumerate(data.items()):
+        for idx, (label, pct) in enumerate(data):
             fig.add_trace(
                 go.Scatter(
                     x=[None],
