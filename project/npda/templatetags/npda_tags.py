@@ -309,3 +309,10 @@ def get_item(dictionary:dict, key:str):
 @register.simple_tag
 def docs_url():
     return settings.DOCS_URL
+
+@register.filter
+def format_nhs_number(nhs_number):
+    if nhs_number and len(nhs_number) >= 10:
+        return f"{nhs_number[:3]} {nhs_number[3:6]} {nhs_number[6:]}"
+    
+    return nhs_number
