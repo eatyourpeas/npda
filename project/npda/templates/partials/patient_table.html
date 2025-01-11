@@ -163,7 +163,7 @@
                     {% endif %}
                   </span>
                   <strong class="font-mono text-xs">
-                    {{ patient.nhs_number }}
+                    {{ patient.nhs_number|format_nhs_number }}
                   </span>
                 </a>
               </td>
