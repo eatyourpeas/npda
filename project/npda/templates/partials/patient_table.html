@@ -142,8 +142,6 @@
           <th scope="col" class="px-2 py-3 text-center">Ethnicity</th>
           <th scope="col" class="px-2 py-3 text-center">Diabetes Type</th>
           <th scope="col" class="px-2 py-3 text-center">Diagnosis Date</th>
-          <th scope="col" class="px-2 py-3 text-center">Date Uploaded</th>
-          <th scope="col" class="px-2 py-3 text-center">Audit Year</th>
           <th scope="col"
               class="px-2 py-3 text-center tooltip tooltip-bottom"
               data-tip="The most recent quarter for which data has been uploaded.">
@@ -292,10 +290,6 @@
               {% endif %}
               {{ patient.diagnosis_date }}
             </td>
-            <td class="px-6 py-4 text-center">
-              {{ patient.last_upload_date|date:"d/m/Y H:m:s" }}
-            </td>
-            <td class="px-6 py-4 text-center">{{ patient.audit_year }}</td>
             <td class="px-6 py-4 text-center">{{ patient.latest_quarter|default:'-' }}</td>
             <td class="w-60 relative px-2 text-right group">
               <a href="{% url 'patient_visits' patient.pk %}"
