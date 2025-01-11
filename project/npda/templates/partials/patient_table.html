@@ -163,9 +163,7 @@
                         <i class="fa-hospital-user fas"></i>
                       {% endif %}
                     </span>
-                  <div class="badge">
-                    {{ patient.nhs_number }}
-                  </div>
+                  {{ patient.nhs_number }}
                 </a>
               </td>
             {% endwith %}
@@ -261,7 +259,7 @@
               {{ patient.diagnosis_date }}
             </td>
             <td class="px-6 py-4 text-center">{{ patient.latest_quarter|default:'-' }}</td>
-            <td class="relative text-right whitespace-nowrap">
+            <td class="text-right whitespace-nowrap">
               <a href="{% url 'patient_visits' patient.pk %}"
                  {% if patient.is_valid and patient.visit_error_count < 1 %} class="align-center text-rcpch_pink flex justify-end px-2 hover:text-white" {% else %} class="text-rcpch_red flex justify-end hover:text-white" {% endif %}>
                 {% if patient.visit_error_count > 0 %}
@@ -312,7 +310,7 @@
       </tbody>
       <tfoot>
         <tr class="bg-rcpch_dark_blue py-5 text-xs text-white text-gray-700 uppercase bg-gray-50">
-          <th colspan="11" class="px-2">
+          <th colspan="8" class="px-2">
             <strong>Total: {{ patient_list.count }} patients</strong>
           </th>
           <th colspan="2">
