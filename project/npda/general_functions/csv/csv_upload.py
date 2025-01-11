@@ -132,10 +132,15 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     def create_instance(model, form):
         # We want to retain fields even if they're invalid so that we can return them to the user
         # Use the field value from cleaned_data, falling back to data if it's not there
-        if form.is_valid():
-            data = form.cleaned_data
-        else:
-            data = form.data
+        data = {}
+
+        for key, value in form.cleaned_data.items():
+            data[key] = value
+        
+        for key, value in form.data.items():
+            if key not in data:
+                data[key] = value
+
         instance = model(**data)
         instance.is_valid = form.is_valid()
         instance.errors = (

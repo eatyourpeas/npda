@@ -832,3 +832,38 @@ def test_height_is_rounded_to_one_decimal(test_user, single_row_valid_df):
     assert visit.weight == round(
         Decimal("7.89"), 1
     )  # Values are stored as Decimals (4 digits with 1 decimal place)
+
+
+@pytest.mark.django_db
+@patch(
+    "project.npda.general_functions.csv.csv_upload.validate_patient_async",
+    mock_patient_external_validation_result(
+        postcode=ValidationError("Invalid postcode")
+    ),
+)
+def test_cleaned_fields_are_stored_when_other_fields_are_invalid(test_user, single_row_valid_df):
+    # PATIENT
+    # - Valid, cleaning should remove the spaces
+    single_row_valid_df["NHS Number"] = "719 573 0220"
+
+    # Postcode marked as invalid by the mock patched above
+    single_row_valid_df["Postcode of usual address"] = "not a real postcode"
+
+    # VISIT
+    # - Valid, cleaning should retain only one decimal place
+    single_row_valid_df["Patient Weight (kg)"] = 7.89
+
+    # - Invalid - cannot be less than 40
+    single_row_valid_df["Patient Height (cm)"] = 38
+
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+
+    patient = Patient.objects.first()
+    visit = Visit.objects.first()
+
+    assert(patient.nhs_number == "7195730220") # cleaned version saved
+    assert(patient.postcode == "not a real postcode") # saved but invalid
+
+    assert(visit.weight == round(Decimal("7.89"), 1)) # cleaned version saved
+    assert(visit.height == 38) # saved but invalid
+    
