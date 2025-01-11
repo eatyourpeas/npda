@@ -61,7 +61,7 @@
     <table class="font-montserrat table-md table mt-2 mb-5 text-sm text-left rtl:text-right">
       <thead class="bg-rcpch_dark_blue text-xs text-white uppercase">
         <tr class="snap-x">
-          <th scope="col" class="nhs-number-column px-2 py-3 text-center">
+          <th scope="col" class="px-2 py-3 text-center">
             <span class="flex flex-row">
               <div id="nhs_num_sort_label"  hx-preserve  class="swap swap-rotate">
                 <button hx-preserve
@@ -89,7 +89,7 @@
           <th scope="col" class="px-2 py-3 text-center">Sex</th>
           <th scope="col" class="px-2 py-3 text-center">Date of Birth</th>
           <th scope="col" class="px-2 py-3 text-center">Postcode</th>
-          <th scope="col" class="nhs-number-column px-2 py-3 text-center">
+          <th scope="col" class="px-2 py-3 text-center">
             <span class="flex flex-row">
               <div id="deprivation_sort_label"  hx-preserve  class="swap swap-rotate">
                 <button hx-preserve
@@ -148,25 +148,48 @@
           {% endif %}
           <tr class="{% if forloop.counter|divisibleby:2 %} bg-gray-100 {% endif %} hover:bg-gray-200">
             {% with nhs_number_error=patient.errors|error_for_field:"nhs_number" gp_error=patient.errors|error_for_field:"gp_practice_ods_code" %}
-              <td class="nhs-number-column">
-                <a class="btn hover:text-rcpch_pink {% if nhs_number_error or gp_error %} text-rcpch_red {% endif %}"
-                   target="_blank"
-                   href="{% url 'patient-update' patient.pk %}">
-                    <span class="tooltip tooltip-right"
-                          data-tip="{% if nhs_number_error or gp_error %} {{ nhs_number_error }} {{gp_error}} {% else %} View patient details (opens new tab) {% endif %}">
-                      {% if nhs_number_error or gp_error %}
-                        <span class="fa-stack">
-                          <i class="fa-circle fa-stack-1x fas"></i>
-                          <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                        </span>
-                      {% else %}
-                        <i class="fa-hospital-user fas"></i>
-                      {% endif %}
-                    </span>
-                  {{ patient.nhs_number }}
+              <td class="whitespace-nowrap">
+                <a
+                  class="btn flex p-1 h-full tooltip tooltip-right {% if nhs_number_error or gp_error %} text-rcpch_red {% else %} hover:text-rcpch_pink {% endif %}"
+                  target="_blank"
+                  href="{% url 'patient-update' patient.pk %}"
+                  data-tip="{% if nhs_number_error or gp_error %} {{ nhs_number_error }} {{gp_error}} {% else %} View patient details (opens new tab) {% endif %}">
+                  <span class="fa-stack">
+                    {% if nhs_number_error or gp_error %}
+                      <i class="fa-circle fa-stack-1x fas"></i>
+                      <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                    {% else %}
+                      <i class="fa-hospital-user fa-stack-1x fas"></i>
+                    {% endif %}
+                  </span>
+                  <strong class="font-mono text-xs">
+                    {{ patient.nhs_number }}
+                  </span>
                 </a>
               </td>
             {% endwith %}
+            <!-- {% with nhs_number_error=patient.errors|error_for_field:"nhs_number" gp_error=patient.errors|error_for_field:"gp_practice_ods_code" %}
+              <td class="whitespace-nowrap">
+                <a class="btn flex flex-col tooltip tooltip-right {% if nhs_number_error or gp_error %} text-rcpch_red {% else %} hover:text-rcpch_pink {% endif %}"
+                   target="_blank"
+                   href="{% url 'patient-update' patient.pk %}"
+                   data-tip="{% if nhs_number_error or gp_error %} {{ nhs_number_error }} {{gp_error}} {% else %} View patient details (opens new tab) {% endif %}">
+                  {% if nhs_number_error or gp_error %}
+                    <div class="fa-stack">
+                      <i class="fa-circle fa-stack-1x fas"></i>
+                      <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                    </div>
+                  {% else %}
+                    <div>
+                      <i class="fa-hospital-user fas"></i>
+                    </div>
+                  {% endif %}
+                  <div class="font-mono text-xs">
+                    {{ patient.nhs_number }}
+                  </div>
+                </a>
+              </td>
+            {% endwith %} -->
             <td class="px-6 py-4 text-center items-center {% if patient.errors|error_for_field:'sex' %}text-rcpch_red{% endif %}">
               {% if patient.errors|error_for_field:"sex" %}
                 <div class="tooltip tooltip-right"
