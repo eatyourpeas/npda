@@ -269,37 +269,20 @@
             <td class="px-6 py-4 text-center">{{ patient.latest_quarter|default:'-' }}</td>
             <td class="text-right whitespace-nowrap">
               <a href="{% url 'patient_visits' patient.pk %}"
-                 {% if patient.is_valid and patient.visit_error_count < 1 %} class="align-center text-rcpch_pink flex justify-end px-2 hover:text-white" {% else %} class="text-rcpch_red flex justify-end hover:text-white" {% endif %}>
+                class="align-center flex tooltip tooltip-left {% if patient.visit_error_count < 1 %} text-rcpch_pink {% else %} text-rcpch_red {% endif %}"
+                data-tip="{% if patient.visit_error_count > 0 %} {{ patient.visit_error_count }} visit{{ patient.visit_error_count|pluralize }} {{ patient.visit_error_count|pluralize:'has, have' }} errors that need addressing. Items have been saved but will not be included until rectified. {% else %} View patient visits {% endif %}"
+                >
                 {% if patient.visit_error_count > 0 %}
+                  <span class="fa-stack">
+                    <i class="fa-circle fa-stack-1x fas"></i>
+                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                  </span>
                   <strong class="text-rcpch_red self-center px-2">Visits ({{ patient.visit_set.all.count }})</strong>
-                  <svg class="text-rcpch_red self-center"
-                       height="16"
-                       style="overflow:visible;
-                              enable-background:new 0 0 32 32"
-                       viewBox="0 0 32 32"
-                       width="16"
-                       xml:space="preserve"
-                       xmlns="http://www.w3.org/2000/svg"
-                       xmlns:xlink="http://www.w3.org/1999/xlink">
-                    <g>
-                    <g id="Error_1_">
-                    <g id="Error">
-                    <circle cx="16" cy="16" id="BG" r="16" fill="currentColor" />
-                    <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
-                    </g>
-                    </g>
-                    </g>
-                  </svg>
-                  <div class="-mt-20 font-montserrat tooltip-content absolute hidden px-2 py-2 text-left text-white bg-gray-800 rounded shadow-lg group-hover:block">
-                    {{ patient.visit_error_count }} visit{{ patient.visit_error_count|pluralize }} {{ patient.visit_error_count|pluralize:'has, have' }} errors that need addressing.
-                    <br>
-                    Items have been saved but will not be included until rectified.
-                  </div>
                 {% else %}
                   <strong class="text-rcpch_pink self-center">Visits ({{ patient.visit_set.all.count }})</strong>
                 {% endif %}
                 <!-- caret -->
-                <svg class="{% if patient.is_valid and patient.visit_error_count < 1 %} text-rcpch_pink w-8 h-8 self-center" {% else %} text-rcpch_red w-8 h-8 self-center {% endif %}"
+                <svg class="w-8 h-8 self-center"
                   width="24"
                   height="24"
                   viewBox="0 0 24 24"
