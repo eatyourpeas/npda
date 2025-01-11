@@ -33,69 +33,31 @@
             <div id="search_spinner"
                  class="htmx-indicator flex items-center px-4 text-white absolute right-14 loading loading-bars loading-sm">
             </div>
+            <button class="btn btn-info h-auto w-full md:w-auto"
+                    hx-include="#search-input"
+                    hx-swap="innerHTML"
+                    hx-target="#patient_table"
+                    hx-trigger="click"
+                    hx-indicator="#search_spinner"
+                    hx-get="{% url 'patients' %}"
+                    hx-disabled-elt="this">
+              <span class="md:hidden text-white">Search patients</span>
+              <i class="fa-solid fa-magnifying-glass text-white"></i>
+            </button>
+            <div class="divider divider-horizontal after:bg-rcpch_strong_blue_light_tint1 before:bg-rcpch_strong_blue_light_tint3 hidden lg:flex">
+            </div>
+            {% if perms.npda.add_patient %}
+                <a href="{% url 'patient-add' %}"
+                  class="btn btn-info h-auto w-full md:w-auto {% if not can_alter_this_audit_year_submission %} btn-disabled {% endif %}">
+                  <i class="fa-solid fa-person-circle-plus"></i>
+                  Add patient
+                </a>
+            {% endif %}
           </label>
         </label>
-        <button class="btn btn-info h-auto w-full md:w-auto"
-                hx-include="#search-input"
-                hx-swap="innerHTML"
-                hx-target="#patient_table"
-                hx-trigger="click"
-                hx-indicator="#search_spinner"
-                hx-get="{% url 'patients' %}"
-                hx-disabled-elt="this">
-          <span class="md:hidden text-white">Search patients</span>
-          <i class="fa-solid fa-magnifying-glass text-white"></i>
-        </button>
       </div>
-      <div>
-        <div>
-          <div class="relative">
-            <div class="mt-1 menu bg-base-200 lg:menu-horizontal rounded-box w-full shadow-sm shadow-rcpch_strong_blue_dark_tint mb-2">
-              <div class="flex sm:hidden divider m-0 h-auto font-bold">Quick access</div>
-              <div class="hidden sm:flex divider divider-vertical m-0 h-auto font-bold">
-                Quick access
-              </div>
-              <div class="flex justify-items-stretch grow align-middle justify-between flex-wrap">
-                <ul class="flex items-center flex-wrap grow">
-                  <li>
-                    <a href="{% url 'patients' %}">
-                      <i class="fa-solid fa-hospital-user"></i>Patient Index
-                      <span class="badge badge-sm">ALL</span>
-                    </a>
-                  </li>
-                </ul>
-                <ul class="flex items-center flex-wrap">
-                  <li>
-                    <div class="tooltip tooltip-bottom" data-tip="No updates to display.">
-                      <button class="opacity-40" disabled>
-                        <i class="fa-solid fa-circle-exclamation"></i> Notifications
-                      </button>
-                    </div>
-                  </li>
-                  {% if perms.npda.add_patient %}
-                    <li>
-                      {% if can_alter_this_audit_year_submission %}
-                        <a href="{% url 'patient-add' %}"
-                           class="underline decoration-rcpch_strong_blue hover:decoration-rcpch_pink decoration-2 underline-offset-4">
-                          <i class="fa-solid fa-person-circle-plus"></i>
-                          Add child
-                        </a>
-                      {% else %}
-                        <span class="underline decoration-rcpch_strong_blue decoration-2 underline-offset-4 opacity-40 pointer-events-none">
-                          <i class="fa-solid fa-person-circle-plus"></i>
-                          Add child
-                        </span>
-                      {% endif %}
-                    </li>
-                  {% endif %}
-                </ul>
-              </div>
-            </div>
-            <div id="patient_table">
-              {% include 'partials/patient_table.html' with patient_list=patient_list index_of_first_invalid_patient=index_of_first_invalid_patient total_invalid_patients=total_invalid_patients %}
-            </div>
-          </div>
-        </div>
+      <div id="patient_table">
+        {% include 'partials/patient_table.html' with patient_list=patient_list index_of_first_invalid_patient=index_of_first_invalid_patient total_invalid_patients=total_invalid_patients %}
       </div>
     </div>
   </div>
