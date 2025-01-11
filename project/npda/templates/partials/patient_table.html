@@ -1,61 +1,7 @@
 {% load static %}
 {% load npda_tags %}
 {% url 'patients' as patients_url %}
-{% if request.user.view_preference == 1 %}
-  <!-- PDU view   -->
-  <div role="alert" class="alert mt-2 bg-slate-200">
-    <p>
-      <i class="fa-solid fa-users-viewfinder"></i> Showing patients filtered by:
-    </p>
-    <ul class="list-inside list-disc">
-      <li>
-        <b>Audit Year </b>[<span class="p-1 mx-1 font-mono bg-gray-300">{{ selected_audit_year }} only</span>].
-      </li>
-      <li>
-        <b>Patient Diabetic Unit </b>[<span class="p-1 mx-1 font-mono bg-gray-300">{{ pz_code }} only</span>].
-      </li>
-    </ul>
-    <button data-tip="You can change the audit year by using the filters below the navigation menu."
-            class="text-rcpch_pink tooltip p-2 hover:text-rcpch_pink_light_tint1 hover:bg-gray-50"
-            hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('audit_year_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); ">
-      <i class="fa-question-circle fas"></i> Change Audit Year
-    </button>
-    <button data-tip="You can change the PDU by using the dropdown below the navigation menu."
-            class="text-rcpch_pink tooltip p-2 hover:text-rcpch_pink_light_tint1 hover:bg-gray-50"
-            hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full');  window.scrollTo(0, 0); document.getElementById('pz_code_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); ">
-      <i class="fa-question-circle fas"></i> Change PDU
-    </button>
-    <button class="text-rcpch_pink p-2 hover:text-rcpch_pink_light_tint1 hover:bg-gray-50"
-            hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full');  document.getElementById('view_preference_2').click();">
-      <i class="fa-solid fa-square-xmark"></i> Remove filter
-    </button>
-  </div>
-{% elif request.user.view_preference == 2 %}
-  <!-- national view -->
-  <!-- PDU view   -->
-  <div role="alert" class="alert mt-2 bg-slate-200">
-    <p>
-      <i class="fa-solid fa-users-viewfinder"></i> Showing patients filtered by:
-    </p>
-    <ul class="list-inside list-disc">
-      <li>
-        <b>Audit Year </b>[<span class="p-1 mx-1 font-mono bg-gray-300">{{ selected_audit_year }} only</span>].
-      </li>
-      <li>
-        <b>National patients</b> [<span class="p-1 mx-1 font-mono bg-gray-300">no filters</span>].
-      </li>
-    </ul>
-    <button data-tip="You can change the audit year by using the filters below the navigation menu."
-            class="text-rcpch_pink tooltip p-2 hover:text-rcpch_pink_light_tint1 hover:bg-gray-50"
-            hx-on:click="event.stopPropagation(); window.scrollTo(0, 0); document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('audit_year_select_id').classList.toggle('animate-[bounce_1s_ease-in-out_1]'); ">
-      <i class="fa-question-circle fas"></i> Change Audit Year
-    </button>
-    <button class="text-rcpch_pink p-2 hover:text-rcpch_pink_light_tint1 hover:bg-gray-50"
-            hx-on:click="event.stopPropagation();  document.getElementById('global_view_preference_wrapper').classList.remove('translate-x-full'); document.getElementById('view_preference_1').click();">
-      <i class="fa-solid fa-square-plus"></i> Apply PDU Filter
-    </button>
-  </div>
-{% endif %}
+
 {% if patient_list %}
   <div class="w-full overflow-x-scroll">
     <table class="font-montserrat table-md table mt-2 mb-5 text-sm text-left rtl:text-right">
