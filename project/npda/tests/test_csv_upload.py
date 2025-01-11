@@ -832,3 +832,32 @@ def test_height_is_rounded_to_one_decimal(test_user, single_row_valid_df):
     assert visit.weight == round(
         Decimal("7.89"), 1
     )  # Values are stored as Decimals (4 digits with 1 decimal place)
+
+
+@pytest.mark.django_db
+def test_cleaned_fields_are_stored_when_other_fields_are_invalid(test_user, single_row_valid_df):
+    # PATIENT
+    # - Invalid
+    single_row_valid_df["NHS Number"] = "123"
+
+    # - Valid, cleaning should upper case the postcode
+    single_row_valid_df["Postcode of usual address"] = "wc1x 8sh"
+
+    # VISIT
+    # - Invalid - cannot be less than 40
+    single_row_valid_df["Patient Height (cm)"] = 38
+
+    # - Valid, cleaning should retain only one decimal place
+    single_row_valid_df["Patient Weight (kg)"] = 7.89
+
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+
+    patient = Patient.objects.first()
+    visit = Visit.objects.first()
+
+    assert(patient.nhs_number == "123") # saved but invalid
+    assert(patient.postcode == "WC1X8SH")
+
+    assert(visit.height == 38) # saved but invalid
+    assert(visit.weight == 7.9)
+    
