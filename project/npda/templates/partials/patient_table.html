@@ -187,57 +187,20 @@
                 </a>
               </span>
             </td>
-            <td class="nhs-number-column {% if patient.errors|error_for_field:'nhs_number' or patient.errors|error_for_field:'gp_practice_ods_code' %} text-rcpch_red {% endif %}">
-              {% if patient.errors|error_for_field:"nhs_number" or patient.errors|error_for_field:"gp_practice_ods_code" %}
-                {% if patient.errors|error_for_field:"gp_practice_ods_code" %}
+            {% with nhs_number_error=patient.errors|error_for_field:"nhs_number" gp_error=patient.errors|error_for_field:"gp_practice_ods_code" %}
+              <td class="nhs-number-column {% if nhs_number_error or gp_error %} text-rcpch_red {% endif %}">
+                {% if nhs_number_error or gp_error %}
                   <span class="tooltip tooltip-right"
-                        data-tip="{{ patient.errors|error_for_field:'gp_practice_ods_code' }}">
-                    <svg class="mr-2"
-                         height="16"
-                         style="overflow:visible;
-                                enable-background:new 0 0 32 32"
-                         viewBox="0 0 32 32"
-                         width="16"
-                         xml:space="preserve"
-                         xmlns="http://www.w3.org/2000/svg"
-                         xmlns:xlink="http://www.w3.org/1999/xlink">
-                      <g>
-                      <g id="Error_1_">
-                      <g id="Error">
-                      <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
-                      <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
-                      </g>
-                      </g>
-                      </g>
-                    </svg>
+                        data-tip="{{ nhs_number_error }} {{gp_error}}">
+                    <span class="fa-stack">
+                      <i class="fa-circle fa-stack-1x fas"></i>
+                      <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                    </span>
                   </span>
                 {% endif %}
-                {% if patient.errors|error_for_field:"nhs_number" %}
-                  <span class="tooltip tooltip-right"
-                        data-tip="{{ patient.errors|error_for_field:'nhs_number' }}">
-                    <svg class="mr-2"
-                         height="16"
-                         style="overflow:visible;
-                                enable-background:new 0 0 32 32"
-                         viewBox="0 0 32 32"
-                         width="16"
-                         xml:space="preserve"
-                         xmlns="http://www.w3.org/2000/svg"
-                         xmlns:xlink="http://www.w3.org/1999/xlink">
-                      <g>
-                      <g id="Error_1_">
-                      <g id="Error">
-                      <circle cx="16" cy="16" id="BG" r="16" style="fill:#D72828;" />
-                      <path d="M14.5,25h3v-3h-3V25z M14.5,6v13h3V6H14.5z" id="Exclamatory_x5F_Sign" style="fill:#E6E6E6;" />
-                      </g>
-                      </g>
-                      </g>
-                    </svg>
-                  </span>
-                {% endif %}
-              {% endif %}
-              {{ patient.nhs_number }}
-            </td>
+                {{ patient.nhs_number }}
+              </td>
+            {% endwith %}
             <td class="px-6 py-4 text-center items-center {% if patient.errors|error_for_field:'sex' %}text-rcpch_red{% endif %}">
               {% if patient.errors|error_for_field:"sex" %}
                 <div class="tooltip tooltip-right"
