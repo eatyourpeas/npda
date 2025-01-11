@@ -42,14 +42,3 @@ input[type="radio"]:checked {
   opacity: 1;
   transition: opacity 500ms ease-out;
 }
-
-.nhs-number-column {
-  white-space: nowrap;
-  width: auto;
-}
-
-.nhs-number-column .flex {
-  display: flex;
-  align-items: center;
-  justify-content: center; /* Optional: Center horizontally as well */
-}
