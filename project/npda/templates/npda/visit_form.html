@@ -4,8 +4,8 @@
 {% block content %}
   <div class="flex justify-center bg-white py-8">
     <div class="max-w-full lg:max-w-[75%] px-2 bg-white font-montserrat">
-      <strong>{{ title }} - NPDA Patient {{ patient_id }}
-        {% if visit_id %}- NPDA Visit No. {{ visit_id }}{% endif %}
+      <strong>
+        {{ title }} - NHS Number {{ nhs_number }}
       </strong>
       <form id="update-form"
             method="post"

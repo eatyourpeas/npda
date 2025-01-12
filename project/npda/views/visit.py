@@ -103,6 +103,8 @@ class VisitCreateView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["patient_id"] = self.kwargs["patient_id"]
+        patient = Patient.objects.get(pk=self.kwargs["patient_id"])
+        context["nhs_number"] = patient.nhs_number
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
         context["button_title"] = "Add New Visit"
@@ -143,12 +145,15 @@ class VisitUpdateView(
     form_class = VisitForm
 
     def get_context_data(self, **kwargs):
+        print(f"!! get_context_data")
+
         context = super().get_context_data(**kwargs)
         visit_instance = Visit.objects.get(pk=self.kwargs["pk"])
         visit_categories = get_visit_categories(visit_instance)
         context["visit_instance"] = visit_instance
         context["visit_errors"] = [visit_instance.errors]
         context["patient_id"] = self.kwargs["patient_id"]
+        context["nhs_number"] = visit_instance.patient.nhs_number
         context["visit_id"] = self.kwargs["pk"]
         context["title"] = "Edit Visit Details"
         context["button_title"] = "Edit Visit Details"
@@ -209,6 +214,8 @@ class VisitUpdateView(
         )
 
     def get_initial(self):
+        print(f"!! get_initial")
+
         initial = super().get_initial()
         patient = Patient.objects.get(pk=self.kwargs["patient_id"])
         initial["patient"] = patient
