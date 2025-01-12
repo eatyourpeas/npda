@@ -145,8 +145,6 @@ class VisitUpdateView(
     form_class = VisitForm
 
     def get_context_data(self, **kwargs):
-        print(f"!! get_context_data")
-
         context = super().get_context_data(**kwargs)
         visit_instance = Visit.objects.get(pk=self.kwargs["pk"])
         visit_categories = get_visit_categories(visit_instance)
@@ -214,8 +212,6 @@ class VisitUpdateView(
         )
 
     def get_initial(self):
-        print(f"!! get_initial")
-
         initial = super().get_initial()
         patient = Patient.objects.get(pk=self.kwargs["patient_id"])
         initial["patient"] = patient
