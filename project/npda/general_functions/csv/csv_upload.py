@@ -106,7 +106,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
     async def validate_rows(rows, async_client):
         first_row = rows.iloc[0]
-        patient_row_index = first_row["row_index"]
+        patient_row_index = int(first_row["row_index"])
 
         transfer_fields = validate_transfer(first_row)
 
@@ -120,7 +120,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             visit_form = await validate_visit_using_form(
                 patient_form, row, async_client
             )
-            visit_forms.append((visit_form, row["row_index"]))
+            visit_forms.append((visit_form, int(row["row_index"])))
 
         return (
             patient_form,
@@ -158,6 +158,11 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 tasks.append(task)
 
         return [task.result() for task in tasks]
+    
+    def record_errors_from_form(errors_to_return, row_index, form):
+        for field, errors in patient_form.errors.as_data().items():
+            for error in errors:
+                errors_to_return[patient_row_index][field].extend(error.messages)
 
     """"
     Create the submission and save the csv file
@@ -250,8 +255,8 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     # We only one to create one patient per NHS number and we can't create their visits if we fail to save the patient model
     visits_by_patient = dataframe.groupby("NHS Number", sort=False, dropna=False)
 
-    # Gather all errors indexed by row number and the field that caused them (__all__ if we don't know which one)
-    # dict[number, dict[str, list[ValidationError]]]
+    # Gather all error messages indexed by row number and the field that caused them (__all__ if we don't know which one)
+    # dict[number, dict[str, list[str]]]
     errors_to_return = collections.defaultdict(lambda: collections.defaultdict(list))
 
     async with httpx.AsyncClient() as async_client:
@@ -266,9 +271,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
             # first_row_field_errors,
             parsed_visits,
         ) in validation_results_by_patient:
-            # Errors validating the Patient fields
-            for field, error in patient_form.errors.as_data().items():
-                errors_to_return[patient_row_index][field].append(error)
+            record_errors_from_form(errors_to_return, patient_row_index, patient_form)
 
             try:
                 patient = create_instance(Patient, patient_form)
@@ -297,12 +300,10 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 logger.exception(f"Error saving patient for {pdu_pz_code} from {csv_file}: {error}")
 
                 # We don't know what field caused the error so add to __all__
-                errors_to_return[patient_row_index]["__all__"].append(error)
+                errors_to_return[patient_row_index]["__all__"].append(str(error))
 
             for visit_form, visit_row_index in parsed_visits:
-                # Errors validating the Visit fields
-                for field, error in visit_form.errors.as_data().items():
-                    errors_to_return[visit_row_index][field].append(error)
+                record_errors_from_form(errors_to_return, visit_row_index, visit_form)
 
                 try:
                     visit = create_instance(Visit, visit_form)
@@ -312,7 +313,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                     except Exception as error:
                         print(f"Error saving visit: {error}")
                 except Exception as error:
-                    errors_to_return[visit_row_index]["__all__"].append(error)
+                    errors_to_return[visit_row_index]["__all__"].append(str(error))
 
     # Only create xlsx file if the csv file was created.
     if new_submission.csv_file:

@@ -8,7 +8,6 @@ from openpyxl.worksheet.worksheet import Worksheet
 from ..models.submission import Submission
 
 # import functions
-from ..general_functions.serialize_validation_errors import serialize_errors
 from project.npda.general_functions.csv import csv_parse
 
 # import third-party libaries
@@ -39,8 +38,6 @@ def write_errors_to_xlsx(
     # Write an xlsx of the original data.
     df.to_excel(xlsx_file, sheet_name="Uploaded data (raw)", index=False)
 
-    # Serialize the errors to get text.
-    errors = json_loads(serialize_errors(errors))
     flattened_errors = flatten_errors(errors, df["NHS Number"])
 
     # Add sheet that lists the errors.
@@ -129,6 +126,8 @@ def flatten_errors(
     """
     flattened_data: "List[Dict[str, Union[int, str]]]" = []
 
+    print(f"!! errors={errors}")
+
     for row_num, errors in errors.items():
         # Add patient_row and NHS Number to the row dictionary.
         row_dict = {"metadata_patient_row": int(row_num) + 1}
@@ -136,14 +135,7 @@ def flatten_errors(
 
         for field, error_list in errors.items():
             # Flatten nested error messages into a single string
-            error_messages = "; ".join(
-                [
-                    msg
-                    for sublist1 in error_list
-                    for sublist2 in sublist1
-                    for msg in sublist2
-                ]
-            )
+            error_messages = "; ".join(error_list)
             # Map field name to human-readable string ("date_of_birth" -> "Date of Birth")
             field: dict[str, str] = next(
                 (item for item in CSV_HEADINGS if item["model_field"] == field),
