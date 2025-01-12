@@ -46,14 +46,12 @@
       <tbody>
         {% for row_number, errors in submission_errors.items %}
           {% for field, error_list in errors.items %}
-            {% for individual_errors in error_list %}
-              {% for individual_error in individual_errors %}
-                <tr>
-                  <td class="px-6 py-4">{{ row_number }}</td>
-                  <td class="px-6 py-4">{{ field|heading_for_field }}</td>
-                  <td class="px-6 py-4">{{ individual_error|join_with_comma }}</td>
-                </tr>
-              {% endfor %}
+            {% for individual_error in error_list %}
+              <tr>
+                <td class="px-6 py-4">{{ row_number }}</td>
+                <td class="px-6 py-4">{{ field|heading_for_field }}</td>
+                <td class="px-6 py-4">{{ individual_error|join_with_comma }}</td>
+              </tr>
             {% endfor %}
           {% endfor %}
         {% endfor %}

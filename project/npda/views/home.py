@@ -2,6 +2,8 @@
 from asgiref.sync import sync_to_async
 import datetime
 import logging
+import json
+
 from datetime import date
 
 
@@ -19,7 +21,6 @@ from django_htmx.http import trigger_client_event
 
 from project.npda.general_functions.csv import csv_upload, csv_parse, csv_header
 from ..forms.upload import UploadFileForm
-from ..general_functions.serialize_validation_errors import serialize_errors
 from ..general_functions.session import (
     get_new_session_fields,
     refresh_audit_years_in_session,
@@ -117,7 +118,7 @@ async def home(request):
                     submission_active=True,
                     audit_year=datetime.date.today().year,
                 )
-                submission.errors = serialize_errors(errors_by_row_index)
+                submission.errors = json.dumps(errors_by_row_index)
                 await sync_to_async(submission.save)()
                 messages.error(
                     request=request,
