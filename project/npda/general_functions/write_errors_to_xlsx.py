@@ -126,8 +126,6 @@ def flatten_errors(
     """
     flattened_data: "List[Dict[str, Union[int, str]]]" = []
 
-    print(f"!! errors={errors}")
-
     for row_num, errors in errors.items():
         # Add patient_row and NHS Number to the row dictionary.
         row_dict = {"metadata_patient_row": int(row_num) + 1}

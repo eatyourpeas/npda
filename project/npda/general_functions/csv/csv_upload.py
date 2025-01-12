@@ -160,9 +160,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
         return [task.result() for task in tasks]
     
     def record_errors_from_form(errors_to_return, row_index, form):
-        for field, errors in patient_form.errors.as_data().items():
+        for field, errors in form.errors.as_data().items():
             for error in errors:
-                errors_to_return[patient_row_index][field].extend(error.messages)
+                errors_to_return[row_index][field].extend(error.messages)
 
     """"
     Create the submission and save the csv file
@@ -297,7 +297,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
                 await new_submission.patients.aadd(patient)
             except Exception as error:
-                logger.exception(f"Error saving patient for {pdu_pz_code} from {csv_file}: {error}")
+                logger.exception(f"Error saving patient for {pdu_pz_code} from {csv_file}[{patient_row_index}]: {error}")
 
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(str(error))
@@ -308,11 +308,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
                 try:
                     visit = create_instance(Visit, visit_form)
                     visit.patient = patient
-                    try:
-                        await visit.asave()
-                    except Exception as error:
-                        print(f"Error saving visit: {error}")
+                    await visit.asave()
                 except Exception as error:
+                    logger.exception(f"Error saving visit for {pdu_pz_code} from {csv_file}[{visit_row_index}]: {error}")
                     errors_to_return[visit_row_index]["__all__"].append(str(error))
 
     # Only create xlsx file if the csv file was created.
