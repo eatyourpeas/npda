@@ -294,6 +294,8 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
 
                 await new_submission.patients.aadd(patient)
             except Exception as error:
+                logger.exception(f"Error saving patient for {pdu_pz_code} from {csv_file}: {error}")
+
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(error)
 
