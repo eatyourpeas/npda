@@ -58,7 +58,7 @@ async def _calculate_centiles_z_scores(
 # TODO: test questionnaire missing height, weight and observation_date. Do we get blank values for them?
 
 async def validate_visit_async(
-    birth_date: date,
+    birth_date: date | None,
     observation_date: date | None,
     sex: int | None,
     height: Decimal | None,
@@ -66,6 +66,10 @@ async def validate_visit_async(
     async_client: AsyncClient
 ) -> VisitExternalValidationResult:
     ret = VisitExternalValidationResult(None, None, None, None)
+
+    if not birth_date:
+        logger.warning("Birth date is not specified. Cannot calculate centiles and z-scores.")
+        return ret
 
     if not observation_date:
         logger.warning("Observation date is not specified. Cannot calculate centiles and z-scores.")
@@ -81,12 +85,14 @@ async def validate_visit_async(
         )
         return ret
 
+    bmi = None
+
     if height is not None and weight is not None:
         bmi = round(calculate_bmi(height, weight), 1)
         ret.bmi = bmi
     else:
         logger.warning(
-            "Missing height or weight. Cannot calculate centiles and z-scores."
+            "Missing height or weight. Cannot calculate BMI centiles and z-scores."
         )
 
     validate_height_task = _calculate_centiles_z_scores(birth_date, observation_date, sex, "height", height, async_client)
