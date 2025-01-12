@@ -214,9 +214,10 @@ def test_multiple_patients(
     "column,model_field",
     [
         pytest.param("NHS Number", "nhs_number"),
+        pytest.param("Date of Birth", "date_of_birth"),
         pytest.param("Diabetes Type", "diabetes_type"),
         pytest.param("Date of Diabetes Diagnosis", "diagnosis_date"),
-    ]
+    ],
 )
 @pytest.mark.django_db
 def test_missing_mandatory_field(test_user, valid_df, column, model_field):
@@ -226,19 +227,6 @@ def test_missing_mandatory_field(test_user, valid_df, column, model_field):
         errors = csv_upload_sync(test_user, valid_df, None, ALDER_HEY_PZ_CODE)
 
     assert model_field in errors[0]
-
-    # Catastrophic - we can't save this patient at all so we won't save any of the patients in the submission
-    assert Patient.objects.count() == 0
-
-
-@pytest.mark.django_db
-def test_missing_date_of_birth(test_user, single_row_valid_df):
-    single_row_valid_df.loc[0, "Date of Birth"] = None
-
-    with transaction.atomic():
-        errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
-    
-    assert "date_of_birth" in errors[0]
 
     # Catastrophic - we can't save this patient at all so we won't save any of the patients in the submission
     assert Patient.objects.count() == 0
@@ -878,3 +866,4 @@ def test_cleaned_fields_are_stored_when_other_fields_are_invalid(test_user, sing
 
     assert(visit.weight == round(Decimal("7.89"), 1)) # cleaned version saved
     assert(visit.height == 38) # saved but invalid
+    
