@@ -176,6 +176,29 @@ def generate_distance_from_organisation_scatterplot_figure(
     # from the Welsh gdf remove all LSOAs that are not in the the local authority district (or principal areas as they are known in wales)
     welsh_gdf = welsh_gdf[welsh_gdf["ladcd"].isin(filtered_values)]
 
+    # set the labels for the IMD deciles
+
+    annotations = [
+        dict(
+            x=0.95,
+            y=1,
+            xref="paper",
+            yref="paper",
+            text="Most Deprived",
+            showarrow=False,
+            font=dict(size=12, color="black", family="montserrat"),
+        ),
+        dict(
+            x=0.95,
+            y=0,
+            xref="paper",
+            yref="paper",
+            text="Least Deprived",
+            showarrow=False,
+            font=dict(size=12, color="black", family="montserrat"),
+        ),
+    ]
+
     # Create a Plotly choropleth map with the filtered English LSOAs coloured by IMD Rank
     fig = go.Figure(
         go.Choroplethmapbox(
@@ -198,7 +221,7 @@ def generate_distance_from_organisation_scatterplot_figure(
                 ),
                 tickfont=dict(size=10, color="black", family="montserrat"),
                 x=0.88,  # Position the English color scale on the right
-                len=1.0,  # Length of the color bar
+                len=0.9,  # Length of the color bar
             ),
         )
     )
@@ -225,7 +248,7 @@ def generate_distance_from_organisation_scatterplot_figure(
                 ),
                 tickfont=dict(size=10, color="black", family="montserrat"),
                 x=0.95,  # Position the Welsh color scale to the right of the English one
-                len=1.0,  # Length of the color bar
+                len=0.9,  # Length of the color bar
             ),
         )
     )
@@ -352,6 +375,7 @@ def generate_distance_from_organisation_scatterplot_figure(
                 ],
             }
         ],
+        annotations=annotations,
     )
 
     return fig
