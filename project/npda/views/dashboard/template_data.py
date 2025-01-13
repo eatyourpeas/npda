@@ -48,10 +48,12 @@ TEXT = {
     },
     "treatment": {
         "title": "Treatment",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "description": "Treatment regimens are presented below for all children and young people included within the audit.",
         "headers": [
             "NHS NUMBER",
-            "value",
+            "Treatment Regimen",
+            "Continuous Glucose Monitoring",
+            "Hybrid Closed Loop",
         ],
     },
 }
