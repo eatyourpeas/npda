@@ -15,6 +15,14 @@ logger = logging.getLogger(__name__)
     "input_date,expected_date_bounds",
     [
         (
+            date(2023, 4, 1),
+            (date(2023, 4, 1), date(2024, 3, 31)),
+        ),  # Start of the 2023 audit year
+        (
+            date(2024, 3, 31),
+            (date(2023, 4, 1), date(2024, 3, 31)),
+        ),  # End of the 2023 audit year
+        (
             date(2024, 4, 1),
             (date(2024, 4, 1), date(2025, 3, 31)),
         ),  # Start of the 2024 audit year
@@ -50,12 +58,12 @@ def test_ensure_error_raised_for_date_outside_audit_period():
     """
     Test that a ValueError is raised when a date outside the audit period is passed to the function:
 
-    - date(2024, 3, 31) is before
+    - date(2023, 3, 31) is before
     - date(2027, 4, 1) is after
     """
 
     with pytest.raises(ValueError):
-        get_audit_period_for_date(date(2024, 3, 31))
+        get_audit_period_for_date(date(2023, 3, 31))
 
     with pytest.raises(ValueError):
         get_audit_period_for_date(date(2028, 4, 1))

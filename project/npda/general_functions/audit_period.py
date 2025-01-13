@@ -2,6 +2,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 
 
+# TODO MRB: How will we add new audit years (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/481)
 def get_audit_period_for_date(input_date: date) -> tuple[date, date]:
     """Get the start and end date of the audit period for the given date.
 
@@ -18,7 +19,7 @@ def get_audit_period_for_date(input_date: date) -> tuple[date, date]:
           a ValueError as undefined.
     """
 
-    if input_date < date(2024, 4, 1) or input_date > date(2027, 3, 31):
+    if input_date < date(2023, 4, 1) or input_date > date(2027, 3, 31):
         raise ValueError(
             f"Audit period is only available for the years 2024 to 2027. Provided date: {input_date}"
         )

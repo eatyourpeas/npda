@@ -31,7 +31,14 @@ def create_session_object(user):
         )
     )
 
-    audit_years = [year for year in range(date.today().year - 5, date.today().year + 1)]
+    # TODO MRB: How will we add new audit years (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/481)
+    audit_years = [
+        # submitted on the old platform, re-uploaded to test this one
+        2023,
+        2024,
+        # first year submitted on this platform
+        2025
+    ]
 
     can_upload_csv = True
     can_complete_questionnaire = True
