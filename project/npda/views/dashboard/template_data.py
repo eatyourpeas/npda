@@ -63,5 +63,5 @@ KPI_CATEGORY_ATTR_MAP = {
     "additional_care_processes": list(range(33, 41)),
     "care_at_diagnosis": list(range(41, 44)),
     "outcomes": list(range(44, 47)),
-    "treatment": list(range(13, 21)),
+    "treatment": list(range(13, 25)),
 }
