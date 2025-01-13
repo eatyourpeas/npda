@@ -1,5 +1,4 @@
 from asgiref.sync import sync_to_async
-from datetime import datetime, date
 import logging
 
 from django.core.exceptions import PermissionDenied
@@ -8,6 +7,9 @@ from django.apps import apps
 # NPDA Imports
 from project.npda.general_functions import (
     organisations_adapter,
+    get_audit_period_for_date,
+    get_current_audit_year,
+    SUPPORTED_AUDIT_YEARS
 )
 
 logger = logging.getLogger(__name__)
@@ -31,28 +33,21 @@ def create_session_object(user):
         )
     )
 
-    # TODO MRB: How will we add new audit years (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/481)
-    audit_years = [
-        # submitted on the old platform, re-uploaded to test this one
-        2023,
-        2024,
-        # first year submitted on this platform
-        2025
-    ]
-
     can_upload_csv = True
     can_complete_questionnaire = True
+
+    audit_year = get_current_audit_year()
 
     if Submission.objects.filter(
         paediatric_diabetes_unit=primary_organisation.paediatric_diabetes_unit,
         submission_active=True,
-        audit_year=datetime.now().year,
+        audit_year=audit_year,
     ).exists():
         # a submission exists for this PDU for this year
         submission = Submission.objects.filter(
             paediatric_diabetes_unit=primary_organisation.paediatric_diabetes_unit,
             submission_active=True,
-            audit_year=datetime.now().year,
+            audit_year=audit_year,
         ).get()
         if submission.csv_file and submission.csv_file.name:
             can_upload_csv = True
@@ -69,8 +64,8 @@ def create_session_object(user):
         "pdu_choices": list(pdu_choices),
         "can_upload_csv": can_upload_csv,
         "can_complete_questionnaire": can_complete_questionnaire,
-        "selected_audit_year": datetime.now().year,
-        "audit_years": audit_years,
+        "selected_audit_year": audit_year,
+        "audit_years": SUPPORTED_AUDIT_YEARS,
     }
 
     return session
@@ -89,6 +84,8 @@ def get_new_session_fields(user, pz_code):
     can_upload_csv = True
     can_complete_questionnaire = True
 
+    audit_year = get_current_audit_year()
+
     if pz_code:
         can_see_organisations = (
             user.is_rcpch_audit_team_member
@@ -104,13 +101,13 @@ def get_new_session_fields(user, pz_code):
         if Submission.objects.filter(
             paediatric_diabetes_unit__pz_code=pz_code,
             submission_active=True,
-            audit_year=datetime.now().year,
+            audit_year=audit_year,
         ).exists():
             # a submission exists for this PDU for this year
             submission = Submission.objects.filter(
                 paediatric_diabetes_unit__pz_code=pz_code,
                 submission_active=True,
-                audit_year=datetime.now().year,
+                audit_year=audit_year,
             ).get()
 
             if submission.csv_file and submission.csv_file.name:
@@ -144,7 +141,7 @@ def refresh_audit_years_in_session(request, selected_audit_year):
     """
     Refresh the audit years in the session object.
     """
-    audit_years = [year for year in range(date.today().year - 5, date.today().year + 1)]
+    audit_years = SUPPORTED_AUDIT_YEARS
     request.session["audit_years"] = audit_years
     request.session["selected_audit_year"] = selected_audit_year
     request.session.modified = True
