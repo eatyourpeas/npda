@@ -204,7 +204,8 @@ def get_waffle_chart_partial(request):
                     y=[square["y"]],
                     mode="markers",
                     marker=dict(
-                        size=10,
+                        # Size of the square
+                        size=16,
                         color=square["colour"],
                         symbol="square",
                     ),
