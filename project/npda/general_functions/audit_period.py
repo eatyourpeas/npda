@@ -2,6 +2,16 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 
 
+# TODO MRB: How will we add new audit years (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/481)
+SUPPORTED_AUDIT_YEARS = [
+    # submitted on the old platform, re-uploaded to test this one
+    2023,
+    2024,
+    # first year submitted on this platform
+    2025,
+    2026
+]
+
 def get_audit_period_for_date(input_date: date) -> tuple[date, date]:
     """Get the start and end date of the audit period for the given date.
 
@@ -10,15 +20,15 @@ def get_audit_period_for_date(input_date: date) -> tuple[date, date]:
 
     Data:
         Audit Period	Audit period start	Audit period end
+        2023 - 2024	        1-Apr-23	        31-Mar-24
         2024 - 2025	        1-Apr-24	        31-Mar-25
         2025 - 2026	        1-Apr-25	        31-Mar-26
-        2026 - 2027	        1-Apr-26	        31-Mar-27
 
     NOTE: dates outside of the audit period will raise
           a ValueError as undefined.
     """
 
-    if input_date < date(2024, 4, 1) or input_date > date(2027, 3, 31):
+    if input_date < date(SUPPORTED_AUDIT_YEARS[0], 4, 1) or input_date > date(SUPPORTED_AUDIT_YEARS[-1], 3, 31):
         raise ValueError(
             f"Audit period is only available for the years 2024 to 2027. Provided date: {input_date}"
         )
@@ -35,6 +45,11 @@ def get_audit_period_for_date(input_date: date) -> tuple[date, date]:
     audit_end_date = date(audit_year + 1, 3, 31)
 
     return audit_start_date, audit_end_date
+
+
+def get_current_audit_year() -> int:
+    (start_date, _) = get_audit_period_for_date(date.today())
+    return start_date.year
 
 
 def get_quarters_for_audit_period(
