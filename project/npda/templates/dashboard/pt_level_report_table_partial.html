@@ -44,6 +44,7 @@
           <tr>
             {% comment %} TODO: ONCE ALL DATA ADDED, REMOVE THIS CHECK {% endcomment %}
             {% if text.headers %}
+
               {% for header in text.headers %}
               <th class="px-6 py-4">{{ header }}</th>
               {% endfor %}
@@ -53,6 +54,7 @@
           </tr>
         </thead>
         <tbody>
+
             {% if table_data.row_data %}
               {% for pt_pk, results in table_data.row_data.items %}
                 <tr class="bg-white border-b hover:bg-gray-100">
@@ -77,7 +79,9 @@
                           {% elif result is False %}
                             <i class="fa-solid fa-circle-exclamation text-error"></i>
                           {% else %}
-                            <i class="fa-solid fa-ban text-muted"></i>
+                            <span class="tooltip tooltip-right block" data-tip="{{ table_data.ineligible_hover_reason|get_item:kpi_attr_name }}">
+                              <i class="fa-solid fa-ban text-muted"></i>
+                            </span>
                           {% endif %}
                         </p>
                       {% endwith %}
@@ -100,7 +104,7 @@
 
         </tbody>
       </table>
-      </div>
+    </div>
 
     {% comment %} custom styling for disabled loading state {% endcomment %}
     <style>

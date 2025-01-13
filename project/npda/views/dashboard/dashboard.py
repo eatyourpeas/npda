@@ -319,6 +319,7 @@ def dashboard(request):
         "default_table_data": {
             "headers": default_pt_level_table_headers,
             "row_data": default_pt_level_table_data,
+            "ineligible_hover_reason": TEXT["health_checks"]["ineligible_hover_reason"],
         },
         # TODO: this should be an enum but we're currently not doing benchmarking so can update
         # at that point

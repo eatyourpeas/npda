@@ -62,7 +62,7 @@ def get_patient_level_report_partial(request):
     # Colour the selected menu tab
     highlight = {f"{key}": key == pt_level_menu_tab_selected for key in TEXT.keys()}
 
-    selected_data = TEXT[pt_level_menu_tab_selected]
+    selected_data: dict = TEXT[pt_level_menu_tab_selected]
 
     # Gather the selected category's data
 
@@ -109,6 +109,7 @@ def get_patient_level_report_partial(request):
             "table_data": {
                 "headers": selected_table_headers,
                 "row_data": selected_table_data,
+                "ineligible_hover_reason": selected_data.get("ineligible_hover_reason", {}),
             },
         },
     )
@@ -441,10 +442,10 @@ def get_simple_bar_chart_pcts_partial(request):
             xaxis_title="",
             yaxis_title="% CYP with T1DM",
             yaxis=dict(
-                range=[0, 120], # Breathing room for percentages above 100
-                tickvals = [0, 25, 50, 75, 100],
-                ticktext = ["0", "25", "50", "75", "100"],
-            ),  
+                range=[0, 120],  # Breathing room for percentages above 100
+                tickvals=[0, 25, 50, 75, 100],
+                ticktext=["0", "25", "50", "75", "100"],
+            ),
             template="simple_white",  # Clean grid style
             # Wrap text
             xaxis=dict(

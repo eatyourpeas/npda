@@ -16,6 +16,15 @@ TEXT = {
             "FOOT EXAM",
             "TOTAL",
         ],
+        "ineligible_hover_reason": {
+            "kpi_25_hba1c": " reason for  ineligible",
+            "kpi_26_bmi": " reason for    ineligible",
+            "kpi_27_thyroid_screen": " reason for ineligible",
+            "kpi_28_blood_pressure": " reason for ineligible",
+            "kpi_29_urinary_albumin": " reason for    ineligible",
+            "kpi_30_retinal_screening": " reason for  ineligible",
+            "kpi_31_foot_examination": " reason for   ineligible",
+        },
     },
     "additional_care_processes": {
         "title": "Additional Care Proccesses",
