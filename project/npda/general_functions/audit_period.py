@@ -20,9 +20,9 @@ def get_audit_period_for_date(input_date: date) -> tuple[date, date]:
 
     Data:
         Audit Period	Audit period start	Audit period end
+        2023 - 2024	        1-Apr-23	        31-Mar-24
         2024 - 2025	        1-Apr-24	        31-Mar-25
         2025 - 2026	        1-Apr-25	        31-Mar-26
-        2026 - 2027	        1-Apr-26	        31-Mar-27
 
     NOTE: dates outside of the audit period will raise
           a ValueError as undefined.
