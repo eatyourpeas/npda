@@ -137,8 +137,8 @@ def async_get_all(query_set_fn):
 # The database is not rolled back if we used the built in async support for pytest
 # https://github.com/pytest-dev/pytest-asyncio/issues/226
 @async_to_sync
-async def csv_upload_sync(user, dataframe, csv_file, pdu_pz_code):
-    return await csv_upload(user, dataframe, csv_file, pdu_pz_code)
+async def csv_upload_sync(user, dataframe, csv_file, pdu_pz_code, audit_year):
+    return await csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year)
 
 
 def read_csv_from_str(contents):
@@ -152,7 +152,7 @@ def read_csv_from_str(contents):
 @pytest.mark.django_db
 def test_create_patient(test_user, single_row_valid_df):
 
-    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     patient = Patient.objects.first()
 
     assert patient.nhs_number == nhs_number.standardise_format(
@@ -172,7 +172,7 @@ def test_create_patient_with_death_date(test_user, single_row_valid_df):
     death_date = VALID_FIELDS["diagnosis_date"] + relativedelta(years=1)
     single_row_valid_df.loc[0, "Death Date"] = pd.to_datetime(death_date)
 
-    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     patient = Patient.objects.first()
 
     assert patient.death_date == single_row_valid_df["Death Date"][0].date()
@@ -187,7 +187,7 @@ def test_multiple_patients(
     assert df["NHS Number"][0] == df["NHS Number"][1]
     assert df["NHS Number"][0] != df["NHS Number"][2]
 
-    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE, 2024)
 
     assert Patient.objects.count() == 2
     [first_patient, second_patient] = Patient.objects.all()
@@ -224,7 +224,7 @@ def test_missing_mandatory_field(test_user, valid_df, column, model_field):
     valid_df.loc[0, column] = None
 
     with transaction.atomic():
-        errors = csv_upload_sync(test_user, valid_df, None, ALDER_HEY_PZ_CODE)
+        errors = csv_upload_sync(test_user, valid_df, None, ALDER_HEY_PZ_CODE, 2024)
 
     assert model_field in errors[0]
 
@@ -236,7 +236,7 @@ def test_missing_mandatory_field(test_user, valid_df, column, model_field):
 def test_error_in_single_visit(test_user, single_row_valid_df):
     single_row_valid_df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "treatment" in errors[0]
 
     visit = Visit.objects.first()
@@ -250,7 +250,7 @@ def test_error_in_multiple_visits(test_user, one_patient_two_visits):
     df = one_patient_two_visits
     df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
 
-    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "treatment" in errors[0]
 
     assert Visit.objects.count() == 2
@@ -278,7 +278,7 @@ def test_multiple_patients_where_one_has_visit_errors_and_the_other_does_not(
 
     df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
 
-    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "treatment" in errors[0]
 
     [patient_one, patient_two] = Patient.objects.all()
@@ -316,7 +316,7 @@ def test_multiple_patients_with_visit_errors(
     df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
     df.loc[1, "Diabetes Treatment at time of Hba1c measurement"] = 45
 
-    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE, 2024)
 
     assert "treatment" in errors[0]
     assert "treatment" in errors[1]
@@ -340,7 +340,7 @@ def test_invalid_nhs_number(test_user, single_row_valid_df):
     invalid_nhs_number = "123456789"
     single_row_valid_df["NHS Number"] = invalid_nhs_number
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "nhs_number" in errors[0]
 
     # Not catastrophic - error saved in model and raised back to caller
@@ -357,7 +357,7 @@ def test_future_date_of_birth(test_user, single_row_valid_df):
     date_of_birth = TODAY + relativedelta(days=1)
     single_row_valid_df["Date of Birth"] = pd.to_datetime(date_of_birth)
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "date_of_birth" in errors[0]
 
     patient = Patient.objects.first()
@@ -374,7 +374,7 @@ def test_over_25(test_user, single_row_valid_df):
     date_of_birth = TODAY + -relativedelta(years=25, days=1)
     single_row_valid_df["Date of Birth"] = pd.to_datetime(date_of_birth)
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "date_of_birth" in errors[0]
 
     patient = Patient.objects.first()
@@ -390,7 +390,7 @@ def test_over_25(test_user, single_row_valid_df):
 def test_invalid_diabetes_type(test_user, single_row_valid_df):
     single_row_valid_df["Diabetes Type"] = 45
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "diabetes_type" in errors[0]
 
     patient = Patient.objects.first()
@@ -404,7 +404,7 @@ def test_future_diagnosis_date(test_user, single_row_valid_df):
     diagnosis_date = TODAY + relativedelta(days=1)
     single_row_valid_df["Date of Diabetes Diagnosis"] = pd.to_datetime(diagnosis_date)
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "diagnosis_date" in errors[0]
 
     patient = Patient.objects.first()
@@ -423,7 +423,7 @@ def test_diagnosis_date_before_date_of_birth(test_user, single_row_valid_df):
 
     single_row_valid_df["Date of Diabetes Diagnosis"] = pd.to_datetime(diagnosis_date)
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "diagnosis_date" in errors[0]
 
     patient = Patient.objects.first()
@@ -443,7 +443,7 @@ def test_diagnosis_date_before_date_of_birth(test_user, single_row_valid_df):
 def test_invalid_sex(test_user, single_row_valid_df):
     single_row_valid_df["Stated gender"] = 45
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "sex" in errors[0]
 
     patient = Patient.objects.first()
@@ -456,7 +456,7 @@ def test_invalid_sex(test_user, single_row_valid_df):
 def test_invalid_ethnicity(test_user, single_row_valid_df):
     single_row_valid_df["Ethnic Category"] = "45"
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "ethnicity" in errors[0]
 
     patient = Patient.objects.first()
@@ -469,7 +469,7 @@ def test_invalid_ethnicity(test_user, single_row_valid_df):
 def test_missing_gp_ods_code(test_user, single_row_valid_df):
     single_row_valid_df["GP Practice Code"] = None
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "gp_practice_ods_code" in errors[0]
 
     patient = Patient.objects.first()
@@ -490,7 +490,7 @@ def test_future_death_date(test_user, single_row_valid_df):
 
     single_row_valid_df["Death Date"] = pd.to_datetime(death_date)
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "death_date" in errors[0]
 
     patient = Patient.objects.first()
@@ -509,7 +509,7 @@ def test_death_date_before_date_of_birth(test_user, single_row_valid_df):
 
     single_row_valid_df["Death Date"] = pd.to_datetime(death_date)
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "death_date" in errors[0]
 
     patient = Patient.objects.first()
@@ -535,7 +535,7 @@ def test_death_date_before_date_of_birth(test_user, single_row_valid_df):
 def test_invalid_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "not a postcode"
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "postcode" in errors[0]
 
     patient = Patient.objects.first()
@@ -552,7 +552,7 @@ def test_invalid_postcode(test_user, single_row_valid_df):
 def test_error_validating_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "WC1X 8SH"
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert len(errors) == 0
 
     patient = Patient.objects.first()
@@ -569,7 +569,7 @@ def test_error_validating_postcode(test_user, single_row_valid_df):
 def test_invalid_gp_ods_code(test_user, single_row_valid_df):
     single_row_valid_df["GP Practice Code"] = "not a GP code"
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "gp_practice_ods_code" in errors[0]
 
     patient = Patient.objects.first()
@@ -586,7 +586,7 @@ def test_invalid_gp_ods_code(test_user, single_row_valid_df):
 def test_error_validating_gp_ods_code(test_user, single_row_valid_df):
     single_row_valid_df["GP Practice Code"] = "G85023"
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert len(errors) == 0
 
     patient = Patient.objects.first()
@@ -595,7 +595,7 @@ def test_error_validating_gp_ods_code(test_user, single_row_valid_df):
 
 @pytest.mark.django_db
 def test_lookup_index_of_multiple_deprivation(test_user, single_row_valid_df):
-    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
 
     patient = Patient.objects.first()
     assert (
@@ -612,7 +612,7 @@ def test_lookup_index_of_multiple_deprivation(test_user, single_row_valid_df):
     ),
 )
 def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_valid_df):
-    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
 
     patient = Patient.objects.first()
     assert patient.index_of_multiple_deprivation_quintile is None
@@ -625,7 +625,7 @@ def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
 
     assert df.columns[0] == "NHS Number"
 
-    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE, 2024)
     patient = Patient.objects.first()
 
     assert patient.nhs_number == nhs_number.standardise_format(df["NHS Number"][0])
@@ -638,7 +638,7 @@ def test_strip_last_spaces_in_column_name(test_user, dummy_sheet_csv):
 
     assert df.columns[0] == "NHS Number"
 
-    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE, 2024)
     patient = Patient.objects.first()
 
     assert patient.nhs_number == nhs_number.standardise_format(df["NHS Number"][0])
@@ -651,7 +651,7 @@ def test_spaces_in_date_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("Date of Birth", "  Date of Birth")
     df = read_csv_from_str(csv).df
 
-    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE, 2024)
     patient = Patient.objects.first()
 
     assert patient.date_of_birth == df["Date of Birth"][0].date()
@@ -665,7 +665,7 @@ def test_different_column_order(test_user, single_row_valid_df):
     columns = columns[1:] + columns[:1]
     df = single_row_valid_df[columns]
 
-    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE, 2024)
     assert Patient.objects.count() == 1
 
 
@@ -720,7 +720,7 @@ def test_case_insensitive_column_headers(test_user, dummy_sheet_csv):
 
     df = read_csv_from_str(csv).df
 
-    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, df, None, ALDER_HEY_PZ_CODE, 2024)
     assert len(errors) == 0
 
 
@@ -810,7 +810,7 @@ def test_upload_without_headers(test_user, one_patient_two_visits):
 def test_upload_csv_with_bool_values_instead_of_int(test_user, single_row_valid_df):
     single_row_valid_df["Has the patient been recommended a Gluten-free diet?"] = True
 
-    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
     assert "gluten_free_diet" in errors[0]
 
     visit = Visit.objects.first()
@@ -822,7 +822,7 @@ def test_height_is_rounded_to_one_decimal(test_user, single_row_valid_df):
     single_row_valid_df["Patient Height (cm)"] = 123.456
     single_row_valid_df["Patient Weight (kg)"] = 7.89
 
-    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
 
     visit = Visit.objects.first()
 
@@ -856,7 +856,7 @@ def test_cleaned_fields_are_stored_when_other_fields_are_invalid(test_user, sing
     # - Invalid - cannot be less than 40
     single_row_valid_df["Patient Height (cm)"] = 38
 
-    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE)
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
 
     patient = Patient.objects.first()
     visit = Visit.objects.first()
