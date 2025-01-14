@@ -58,7 +58,6 @@
             {% if table_data.row_data %}
               {% for pt_pk, results in table_data.row_data.items %}
                 <tr class="bg-white border-b hover:bg-gray-100">
-                  {{table_data.headers}}
                   {% for kpi_attr_name in table_data.headers %}
                     <td class="px-6 py-4">
                       {% with result=results|get_item:kpi_attr_name %}
