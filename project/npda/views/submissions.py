@@ -20,7 +20,6 @@ from ..models import Submission
 from ..general_functions.csv import (
     download_csv,
     download_xlsx,
-    csv_summarize,
     csv_parse,
 )
 
@@ -95,7 +94,6 @@ class SubmissionsListView(
             if self.request.session.get("can_upload_csv"):
                 # check if the user has permission to upload csv (not this function is not available in this brance but is in live)
                 parsed_csv = csv_parse(requested_active_submission.csv_file)
-                context["data"] = csv_summarize(parsed_csv.df)
                 if requested_active_submission.errors:
                     deserialized_errors = json.loads(requested_active_submission.errors)
                     context["submission_errors"] = deserialized_errors

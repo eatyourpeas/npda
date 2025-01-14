@@ -35,6 +35,7 @@ from ..general_functions.map import (
     generate_dataframe_and_aggregated_distance_data_from_cases,
 )
 from ..general_functions.rcpch_nhs_organisations import fetch_organisation_by_ods_code
+from ..general_functions.audit_period import get_current_audit_year
 
 # RCPCH imports
 from .decorators import login_and_otp_required
@@ -88,12 +89,15 @@ async def home(request):
                 )
                 return redirect("home")
 
+            audit_year = get_current_audit_year()
+
             # CSV is valid, parse any errors and store the data in the tables.
             errors_by_row_index = await csv_upload(
                 user=request.user,
                 dataframe=parsed_csv.df,
                 csv_file=user_csv,
                 pdu_pz_code=pz_code,
+                audit_year=audit_year
             )
             # log user activity
             VisitActivity = apps.get_model("npda", "VisitActivity")
@@ -111,15 +115,6 @@ async def home(request):
                 request=request, user=request.user, pz_code=pz_code
             )
             if errors_by_row_index:
-                # get submission and store the errors to report back to the user in the Data Quality Report
-                Submission = apps.get_model("npda", "Submission")
-                submission = await Submission.objects.aget(
-                    paediatric_diabetes_unit__pz_code=pz_code,
-                    submission_active=True,
-                    audit_year=datetime.date.today().year,
-                )
-                submission.errors = json.dumps(errors_by_row_index)
-                await sync_to_async(submission.save)()
                 messages.error(
                     request=request,
                     message=f"CSV has been uploaded, but errors were found in {len(errors_by_row_index.items())} rows. Please check the data quality report for details.",

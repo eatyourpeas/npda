@@ -24,10 +24,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-
-
-@pytest.fixture(scope="session")
-def seed_users_fixture(django_db_setup, django_db_blocker):
+def _seed_users_fixture(django_db_setup, django_db_blocker):
 
 
     # Define user data to seed
@@ -101,3 +98,12 @@ def seed_users_fixture(django_db_setup, django_db_blocker):
             logger.info(f"Seeded users: \n{new_user_gosh=} and \n{new_user_alder_hey=}")
 
         assert NPDAUser.objects.count() == len(users) * 2
+
+@pytest.fixture(scope="session")
+def seed_users_fixture(django_db_setup, django_db_blocker):
+    _seed_users_fixture(django_db_setup, django_db_blocker)
+
+# Required if multiple tests use transactional_db
+@pytest.fixture(scope="function")
+def seed_users_per_function_fixture(django_db_setup, django_db_blocker):
+    _seed_users_fixture(django_db_setup, django_db_blocker)
