@@ -75,11 +75,14 @@
                           {% elif kpi_attr_name == "value" %}
                             {{ result }}
                           {% elif result is True %}
+                            {% comment %} PASS {% endcomment %}
                               <i class="fa-solid fa-circle-check text-success"></i>
                           {% elif result is False %}
+                            {% comment %} FAIL {% endcomment %}
                             <i class="fa-solid fa-circle-exclamation text-error"></i>
                           {% else %}
-                            <span class="tooltip tooltip-right block" data-tip="{{ table_data.ineligible_hover_reason|get_item:kpi_attr_name }}">
+                          {% comment %} INELIGIBLE {% endcomment %}
+                            <span class="tooltip tooltip-top block" data-tip="{{ table_data.ineligible_hover_reason|get_item:kpi_attr_name }}">
                               <i class="fa-solid fa-ban text-muted"></i>
                             </span>
                           {% endif %}
