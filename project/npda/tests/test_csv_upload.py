@@ -3,7 +3,7 @@ import tempfile
 from decimal import Decimal
 from unittest.mock import AsyncMock, patch
 
-from asgiref.sync import sync_to_async, async_to_sync
+from asgiref.sync import async_to_sync
 
 import nhs_number
 import pandas as pd
@@ -128,11 +128,6 @@ def test_user(seed_groups_fixture, seed_users_fixture):
     ).first()
 
 
-@sync_to_async
-def async_get_all(query_set_fn):
-    return list(query_set_fn())
-
-
 # The database is not rolled back if we used the built in async support for pytest
 # https://github.com/pytest-dev/pytest-asyncio/issues/226
 @async_to_sync
@@ -219,7 +214,12 @@ def test_multiple_patients(
     ],
 )
 @pytest.mark.django_db(transaction=True)
-def test_missing_mandatory_field(test_user, single_row_valid_df, column, model_field):
+def test_missing_mandatory_field(seed_groups_per_function_fixture, seed_users_per_function_fixture, single_row_valid_df, column, model_field):
+    # As these tests need full transaction support we can't use our session fixtures
+    test_user = NPDAUser.objects.filter(
+        organisation_employers__pz_code=ALDER_HEY_PZ_CODE
+    ).first()
+
     single_row_valid_df.loc[0, column] = None
 
     errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)

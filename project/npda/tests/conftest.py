@@ -20,6 +20,8 @@ from project.npda.tests.factories import (NPDAUserFactory,
                                           VisitFactory, seed_groups_fixture,
                                           seed_patients_fixture,
                                           seed_users_fixture,
+                                          seed_groups_per_function_fixture,
+                                          seed_users_per_function_fixture,
                                           dummy_sheets_folder,
                                           dummy_sheet_csv)
 

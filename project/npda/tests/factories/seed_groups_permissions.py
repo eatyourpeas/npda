@@ -5,8 +5,7 @@ from django.contrib.auth.models import Group
 from project.npda.management.commands.create_groups import groups_seeder
 
 
-@pytest.fixture(scope="session")
-def seed_groups_fixture(django_db_setup, django_db_blocker):
+def _seed_groups_fixture(django_db_setup, django_db_blocker):
     """
     Fixture which runs once per session to seed groups
     verbose=False
@@ -20,3 +19,13 @@ def seed_groups_fixture(django_db_setup, django_db_blocker):
             )
         else:
             print("Groups already seeded. Skipping")
+
+@pytest.fixture(scope="session")
+def seed_groups_fixture(django_db_setup, django_db_blocker):
+    _seed_groups_fixture(django_db_setup, django_db_blocker)
+
+
+# Required if multiple tests use transactional_db
+@pytest.fixture(scope="function")
+def seed_groups_per_function_fixture(django_db_setup, django_db_blocker):
+    _seed_groups_fixture(django_db_setup, django_db_blocker)
