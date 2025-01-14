@@ -40,6 +40,16 @@ TEXT = {
             "Influenza immunisation recommended",
             "Sick day rules advice",
         ],
+        "ineligible_hover_reason": {
+            "kpi_33_hba1c_4plus": "Does not fulfil criteria for KPI 5",
+            "kpi_34_psychological_assessment": "Does not fulfil criteria for KPI 5",
+            "kpi_35_smoking_status_screened": "Does not fulfil criteria for KPI 6",
+            "kpi_36_referral_to_smoking_cessation_service": "Does not fulfil criteria for KPI 6",
+            "kpi_37_additional_dietetic_appointment_offered": "Does not fulfil criteria for KPI 5",
+            "kpi_38_patients_attending_additional_dietetic_appointment": "Does not fulfil criteria for KPI 5",
+            "kpi_39_influenza_immunisation_recommended": "Does not fulfil criteria for KPI 5",
+            "kpi_40_sick_day_rules_advice": "Does not fulfil criteria for KPI 1",
+        },
     },
     "care_at_diagnosis": {
         "title": "Care at Diagnosis",
@@ -50,6 +60,11 @@ TEXT = {
             "THYROID DISEASE SCREENING",
             "CARBOHYDRATE COUNTING EDUCATION",
         ],
+        "ineligible_hover_reason": {
+            "kpi_41_coeliac_disease_screening": "Does not fulfil criteria for KPI 7, diagnosed at least 90 days before the end of the audit period",
+            "kpi_42_thyroid_disease_screening": "Does not fulfil criteria for KPI 7, diagnosed at least 90 days before the end of the audit period",
+            "kpi_43_carbohydrate_counting_education": "Does not fulfil criteria for KPI 7, diagnosed at least 90 days before the end of the audit period",
+        },
     },
     "outcomes": {
         "title": "Outcomes",
