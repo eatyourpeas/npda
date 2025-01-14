@@ -11,7 +11,6 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from httpx import HTTPError
 
 from project.npda.general_functions.csv import csv_upload, csv_parse
@@ -219,12 +218,11 @@ def test_multiple_patients(
         pytest.param("Date of Diabetes Diagnosis", "diagnosis_date"),
     ],
 )
-@pytest.mark.django_db
-def test_missing_mandatory_field(test_user, valid_df, column, model_field):
-    valid_df.loc[0, column] = None
+@pytest.mark.django_db(transaction=True)
+def test_missing_mandatory_field(test_user, single_row_valid_df, column, model_field):
+    single_row_valid_df.loc[0, column] = None
 
-    with transaction.atomic():
-        errors = csv_upload_sync(test_user, valid_df, None, ALDER_HEY_PZ_CODE, 2024)
+    errors = csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
 
     assert model_field in errors[0]
 
