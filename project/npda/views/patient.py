@@ -21,7 +21,7 @@ from django.urls import reverse_lazy
 
 
 from project.npda.general_functions import (
-    organisations_adapter,
+    organisations_adapter
 )
 from project.npda.general_functions.quarter_for_date import (
     retrieve_quarter_for_date,
@@ -255,7 +255,7 @@ class PatientCreateView(
 
             Submission = apps.get_model("npda", "Submission")
             submission, created = Submission.objects.update_or_create(
-                audit_year=date.today().year,
+                audit_year=self.request.session["selected_audit_year"],
                 paediatric_diabetes_unit=paediatric_diabetes_unit,
                 submission_active=True,
                 defaults={
