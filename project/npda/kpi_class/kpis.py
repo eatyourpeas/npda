@@ -3313,9 +3313,10 @@ class CalculateKPIS:
             hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
 
         # For each patient, calculate the median of their HbA1c values
-        median_hba1cs = []
-        for _, hba1c_values in hba1c_values_by_patient.items():
-            median_hba1cs.append(self.calculate_median(hba1c_values))
+        hba1c_values_by_patient = self.get_median_hba1c_values_by_patient(eligible_patients)
+
+        # Extract just the median values
+        median_hba1cs = [values["median"] for values in hba1c_values_by_patient.values()]
 
         # Finally calculate the median of the medians
         median_of_median_hba1cs = self.calculate_median(median_hba1cs)
