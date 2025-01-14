@@ -863,6 +863,71 @@ def get_pt_level_table_data(
         headers = ["nhs_number"] + kpi_attr_names
         return headers, data
 
+    elif category == "outcomes":
+        data = {}
+
+        # Need to do some manual work as calculate_kpi methods perform aggregations of individual
+        # pt values.
+
+        # Create a calculate_kpis stub to access helper methods
+        calculate_kpis_stub = CalculateKPIS()
+        get_median_hba1c_values_by_patient = calculate_kpis_stub.get_median_hba1c_values_by_patient
+
+        # kpi 44 mean hba1c
+        # Get the eligible pts
+        kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
+            calculate_kpis_stub.kpi_name_registry.get_attribute_name(44)
+        ]["patient_querysets"]
+
+        # Get the median hba1c values
+        median_hba1c_values = get_median_hba1c_values_by_patient(kpi_pt_querysets["eligible"])
+        from pprint import pprint
+
+        print("median_hba1c_values")
+        pprint(median_hba1c_values)
+        # median_hba1c_values looks like a dict with pt.pk as key and data as value
+        # {
+        #     164: {
+        #         "hb1ac_values": [
+        #             Decimal("85.00"),
+        #             Decimal("80.00"),
+        #             Decimal("80.00"),
+        #             Decimal("69.00"),
+        #             Decimal("84.00"),
+        #             Decimal("59.00"),
+        #             Decimal("71.00"),
+        #             Decimal("74.00"),
+        #         ],
+        #         "median": 77.0, 
+        #         "nhs_number": "4739254131",
+        #     },
+        #     165: {
+        #         "hb1ac_values": [
+        #             Decimal("78.00"),
+        #             Decimal("85.00"),
+        #             Decimal("76.00"),
+        #             Decimal("60.00"),
+        #             Decimal("81.00"),
+        #             Decimal("79.00"),
+        #             Decimal("60.00"),
+        #             Decimal("59.00"),
+        #         ],
+        #         "median": 77.0, 
+        #         "nhs_number": "4373272123",
+        #     },
+        # }
+
+        # Now need to add to data dict
+        for pt_pk, pt_data in median_hba1c_values.items():
+            data[pt_pk] = {
+                "nhs_number": pt_data["nhs_number"],
+                "kpi_44_mean_hba1c": pt_data["median"],
+            }
+        
+        # repeat for median hba1c
+        print()
+        
+
     elif category == "treatment":
         data = {}
 
