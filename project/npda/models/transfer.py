@@ -33,13 +33,6 @@ class Transfer(models.Model):
         null=True,
     )
 
-    previous_pz_code = models.CharField(
-        verbose_name="Previous Paediatric Diabetes Unit PZ Code",
-        max_length=10,
-        blank=True,
-        null=True,
-    )
-
     # relationships
     paediatric_diabetes_unit = models.ForeignKey(
         to="npda.PaediatricDiabetesUnit",

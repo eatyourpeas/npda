@@ -151,3 +151,55 @@ def test_npda_user_cannot_submit_same_patient_twice_within_the_same_submission(
     )
     # This patient should be in the previous year's submission as well as this year's submission
     assert Submission.objects.filter(paediatric_diabetes_unit=pdu).count() == 2
+
+
+@pytest.xfail.django_db
+def test_submission_moves_when_patient_transfers(
+    seed_groups_fixture,
+    seed_patients_fixture,
+    seed_users_fixture,
+    client,
+):
+    """Test that a patient is removed from the old submission and added to the new submission when they transfer."""
+
+    # Get Alder Hey user from fixture
+    ah_user = NPDAUser.objects.filter(
+        organisation_employers__pz_code=ALDER_HEY_PZ_CODE
+    ).first()
+
+    # Login as Alder Hey user
+    client = login_and_verify_user(client, ah_user)
+
+    # Get Alder Hey PDU
+    pdu = PaediatricsDiabetesUnitFactory(pz_code=ALDER_HEY_PZ_CODE)
+
+    # Create a submission
+    new_submission = Submission.objects.create(
+        paediatric_diabetes_unit=pdu,
+        audit_year=audit_dates[0].year,
+        submission_date=timezone.now(),
+        submission_by=ah_user,  # user is the user who is logged in. Passed in as a parameter
+        submission_active=True,
+    )
+
+    # Create a patient
+    patient = PatientFactory()
+
+    # Add patient to submission
+    new_submission.patients.add(patient)
+
+    # Check patient was added to submission
+    assert new_submission.patients.count() == 1
+    assert patient in new_submission.patients.all()
+
+    # transfer patient to another PDU
+    gosh_pdu = PaediatricsDiabetesUnitFactory(pz_code=GOSH_PZ_CODE)
+
+    patient.transfer.date_leaving_service = date.today()
+    patient.transfer.reason_leaving_service = 1
+    patient.transfer.previous_pz_code = ALDER_HEY_PZ_CODE
+    patient.transfer.paediatric_diabetes_unit = gosh_pdu
+
+    patient.transfer.save()
+
+    #  Check Alder Hey submission is empty
