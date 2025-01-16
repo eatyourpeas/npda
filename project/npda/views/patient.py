@@ -18,7 +18,7 @@ from django.http import HttpResponse
 from django.urls import reverse_lazy
 
 # Third party imports
-
+import nhs_number
 
 from project.npda.general_functions import (
     organisations_adapter
@@ -77,12 +77,15 @@ class PatientListView(
             submissions__submission_active=True,
             submissions__audit_year=self.request.session.get("selected_audit_year"),
         )
+        
         # filter by contents of the search bar
         search = self.request.GET.get("search-input")
         if search:
+            search = nhs_number.standardise_format(search) or search
             filtered_patients &= Q(
                 Q(nhs_number__icontains=search) | Q(pk__icontains=search)
             )
+        
         # filter patients to the view preference of the user
         if self.request.user.view_preference == 1:
             # PDU view
