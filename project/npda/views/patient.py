@@ -43,6 +43,9 @@ from ..general_functions.session import refresh_session_object_synchronously
 logger = logging.getLogger(__name__)
 
 
+SORTABLE_FIELDS = ["pk", "nhs_number", "index_of_multiple_deprivation_quintile"]
+
+
 class PatientListView(
     LoginAndOTPRequiredMixin,
     CheckPDUListMixin,
@@ -62,14 +65,14 @@ class PatientListView(
         Scope to patient only in the same organisation as the user and current audit year
         """
         patient_queryset = super().get_queryset()
-        # sort the queryset by the user'selection
-        sort_by = self.request.GET.get("sort_by", "pk")  # Default sort by npda_id
-        sort = self.request.GET.get("sort", "asc")  # Default sort by ascending order
-        if sort_by in ["pk", "nhs_number"]:
-            if sort == "asc":
-                sort_by = sort_by
-            else:
-                sort_by = f"-{sort_by}"
+
+        requested_sort_by = self.request.GET.get("sort_by")
+        requested_sort = self.request.GET.get("sort")
+
+        # Check we are sorting by a fixed set of fields rather than the full Django __ notation
+        sort_by = requested_sort_by if requested_sort_by in SORTABLE_FIELDS else "pk"
+
+        sort_by = f"-{sort_by}" if requested_sort == "desc" else sort_by 
 
         # apply filters and annotations to the queryset
         pz_code = self.request.session.get("pz_code")
@@ -151,9 +154,7 @@ class PatientListView(
             )
         )
         context["chosen_pdu"] = self.request.session.get("pz_code")
-        # Add current page and sorting parameters to the context
         context["current_page"] = self.request.GET.get("page", 1)
-        context["sort_by"] = self.request.GET.get("sort_by", "pk")
         return context
 
     def get(self, request, *args: str, **kwargs) -> HttpResponse:
