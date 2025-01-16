@@ -1,0 +1,14 @@
+<button
+    hx-get="?sort_by={{ field }}&page={{ current_page }}&sort={% if sort_by == field %}desc{% else %}asc{% endif %}"
+    hx-trigger="click throttle:1s"
+    hx-target="#patient_table"
+    hx-swap="innerHTML swap:100ms">
+
+    {% if not sort_by or field not in sort_by %}
+      <i class="fa-arrow-down-1-9 fa-solid mr-2 text-rcpch_dark_grey"></i>
+    {% elif sort_by == field %}
+      <i class="fa-arrow-down-1-9 fa-solid mr-2"></i>
+    {% else %}
+      <i class="fa-arrow-up-9-1 fa-solid mr-2"></i>
+    {% endif %}
+</button>
