@@ -43,9 +43,6 @@ from ..general_functions.session import refresh_session_object_synchronously
 logger = logging.getLogger(__name__)
 
 
-SORTABLE_FIELDS = ["pk", "nhs_number", "index_of_multiple_deprivation_quintile"]
-
-
 class PatientListView(
     LoginAndOTPRequiredMixin,
     CheckPDUListMixin,
@@ -58,6 +55,20 @@ class PatientListView(
     template_name = "patients.html"
     paginate_by = 50
 
+    def get_sort_by(self):
+        sort_by_param = self.request.GET.get("sort_by")
+        sort_param = self.request.GET.get("sort")
+
+        sort_by = None
+
+        # Check we are sorting by a fixed set of fields rather than the full Django __ notation
+        if sort_by_param in ["nhs_number", "index_of_multiple_deprivation_quintile"]:
+            sort_by = sort_by_param
+        
+        sort_by = f"-{sort_by}" if sort_param == "desc" else sort_by 
+
+        return sort_by
+
     def get_queryset(self):
         """
         Return all patients with the number of errors in their visits
@@ -65,14 +76,6 @@ class PatientListView(
         Scope to patient only in the same organisation as the user and current audit year
         """
         patient_queryset = super().get_queryset()
-
-        requested_sort_by = self.request.GET.get("sort_by")
-        requested_sort = self.request.GET.get("sort")
-
-        # Check we are sorting by a fixed set of fields rather than the full Django __ notation
-        sort_by = requested_sort_by if requested_sort_by in SORTABLE_FIELDS else "pk"
-
-        sort_by = f"-{sort_by}" if requested_sort == "desc" else sort_by 
 
         # apply filters and annotations to the queryset
         pz_code = self.request.session.get("pz_code")
@@ -95,6 +98,8 @@ class PatientListView(
             filtered_patients &= Q(
                 submissions__paediatric_diabetes_unit__pz_code=pz_code
             )
+
+        sort_by = self.get_sort_by() or "pk"
 
         patient_queryset = (
             patient_queryset.filter(filtered_patients)
@@ -155,6 +160,8 @@ class PatientListView(
         )
         context["chosen_pdu"] = self.request.session.get("pz_code")
         context["current_page"] = self.request.GET.get("page", 1)
+        context["sort_by"] = self.get_sort_by()
+
         return context
 
     def get(self, request, *args: str, **kwargs) -> HttpResponse:
