@@ -99,18 +99,16 @@ class PatientListView(
                 submissions__paediatric_diabetes_unit__pz_code=pz_code
             )
 
+        patient_queryset = patient_queryset.filter(filtered_patients)
+
         sort_by = self.get_sort_by() or "pk"
 
-        patient_queryset = (
-            patient_queryset.filter(filtered_patients)
-            .annotate(
-                audit_year=F("submissions__audit_year"),
-                visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
-                last_upload_date=Max("submissions__submission_date"),
-                most_recent_visit_date=Max("visit__visit_date"),
-            )
-            .order_by("is_valid", "visit_error_count", sort_by)
-        )
+        patient_queryset = patient_queryset.annotate(
+            audit_year=F("submissions__audit_year"),
+            visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
+            last_upload_date=Max("submissions__submission_date"),
+            most_recent_visit_date=Max("visit__visit_date"),
+        ).order_by("is_valid", "visit_error_count", sort_by)
 
         # add another annotation to the queryset to signpost the latest quarter
         # This does involve iterating over the queryset, but it is necessary to add the latest_quarter attribute to each object
@@ -133,25 +131,11 @@ class PatientListView(
         Pass the context to the template
         """
         context = super().get_context_data(**kwargs)
-        total_valid_patients = (
-            Patient.objects.filter(submissions__submission_active=True)
-            .annotate(
-                visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
-            )
-            .order_by("is_valid", "visit_error_count", "pk")
-            .filter(visit__is_valid=True, visit_error_count__lt=1)
-            .count()
-        )
+
         context["pz_code"] = self.request.session.get("pz_code")
         context["selected_audit_year"] = self.request.session.get(
             "selected_audit_year", "None"
         )
-        context["total_valid_patients"] = total_valid_patients
-        context["total_invalid_patients"] = (
-            Patient.objects.filter(submissions__submission_active=True).count()
-            - total_valid_patients
-        )
-        context["index_of_first_invalid_patient"] = total_valid_patients + 1
         context["pdu_choices"] = (
             organisations_adapter.paediatric_diabetes_units_to_populate_select_field(
                 requesting_user=self.request.user,
@@ -172,10 +156,11 @@ class PatientListView(
             # by calling the get_queryset method again with the new ods_code/pz_code stored in session
             queryset = self.get_queryset()
             context = self.get_context_data()
+
             # Paginate the queryset
             page_size = self.get_paginate_by(queryset)
             page_number = request.GET.get("page", 1)
-            paginator, page, queryset, is_paginated = self.paginate_queryset(
+            paginator, page, queryset, _ = self.paginate_queryset(
                 queryset, page_size
             )
 
@@ -184,8 +169,6 @@ class PatientListView(
             context["patient_list"] = queryset
             context["paginator"] = paginator
             context["page_obj"] = page
-            context["is_paginated"] = is_paginated
-            context["patient_list"] = queryset
 
             return render(request, "partials/patient_table.html", context=context)
         return response
