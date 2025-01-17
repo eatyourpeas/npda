@@ -70,11 +70,6 @@ class PatientListView(
         return sort_by
 
     def get_queryset(self):
-        """
-        Return all patients with the number of errors in their visits
-        Order by valid patients first, then by number of errors in visits, then by primary key
-        Scope to patient only in the same organisation as the user and current audit year
-        """
         patient_queryset = super().get_queryset()
 
         # apply filters and annotations to the queryset
@@ -101,14 +96,19 @@ class PatientListView(
 
         patient_queryset = patient_queryset.filter(filtered_patients)
 
-        sort_by = self.get_sort_by() or "pk"
-
         patient_queryset = patient_queryset.annotate(
             audit_year=F("submissions__audit_year"),
             visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
             last_upload_date=Max("submissions__submission_date"),
             most_recent_visit_date=Max("visit__visit_date"),
-        ).order_by("is_valid", "visit_error_count", sort_by)
+        )
+
+        sort_by = self.get_sort_by()
+
+        if sort_by:
+            patient_queryset = patient_queryset.order_by(sort_by)
+        else:
+            patient_queryset = patient_queryset.order_by("is_valid", "-visit_error_count")
 
         # add another annotation to the queryset to signpost the latest quarter
         # This does involve iterating over the queryset, but it is necessary to add the latest_quarter attribute to each object
@@ -125,11 +125,6 @@ class PatientListView(
         return patient_queryset
 
     def get_context_data(self, **kwargs):
-        """
-        Add total number of valid and invalid patients to the context, as well as the index of the first invalid patient in the list
-        Include the number of errors in each patient's visits
-        Pass the context to the template
-        """
         context = super().get_context_data(**kwargs)
 
         context["pz_code"] = self.request.session.get("pz_code")
