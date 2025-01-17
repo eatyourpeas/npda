@@ -110,17 +110,26 @@ class PatientListView(
         else:
             patient_queryset = patient_queryset.order_by("is_valid", "-visit_error_count")
 
-        # add another annotation to the queryset to signpost the latest quarter
-        # This does involve iterating over the queryset, but it is necessary to add the latest_quarter attribute to each object
-        # as django does not support annotations with custom functions, at least, not without rewriting it in SQL or using the Func class
-        # and the queryset is not large
-        for obj in patient_queryset:
-            if obj.most_recent_visit_date is not None:
-                obj.latest_quarter = retrieve_quarter_for_date(
-                    obj.most_recent_visit_date
+        # Add extra fields to the patient that we can't add to the query. This is ok because the queryset will be max the page size.
+        seen_error = False
+        seen_valid = False
+
+        for patient in patient_queryset:
+            # Signpost the latest quarter
+            if patient.most_recent_visit_date is not None:
+                patient.latest_quarter = retrieve_quarter_for_date(
+                    patient.most_recent_visit_date
                 )
-            else:
-                obj.latest_quarter = None
+            
+            # Highlight the separation between patients with errors and those without
+            # unless we are sorting by a particular field in which case errors appear mixed
+            if not sort_by:
+                if not seen_error and (not patient.is_valid or patient.visit_error_count > 0):
+                    patient.is_first_error = True
+                    seen_error = True
+                elif not seen_valid and patient.is_valid and patient.visit_error_count == 0:
+                    patient.is_first_valid = True
+                    seen_valid = True            
 
         return patient_queryset
 
@@ -145,27 +154,10 @@ class PatientListView(
 
     def get(self, request, *args: str, **kwargs) -> HttpResponse:
         response = super().get(request, *args, **kwargs)
+        
         if request.htmx:
-            # filter the patients to only those in the same organisation as the user
-            # trigger a GET request from the patient table to update the list of patients
-            # by calling the get_queryset method again with the new ods_code/pz_code stored in session
-            queryset = self.get_queryset()
-            context = self.get_context_data()
+            return render(request, "partials/patient_table.html", context=self.get_context_data())
 
-            # Paginate the queryset
-            page_size = self.get_paginate_by(queryset)
-            page_number = request.GET.get("page", 1)
-            paginator, page, queryset, _ = self.paginate_queryset(
-                queryset, page_size
-            )
-
-            # Update the context with the paginated queryset and pagination information
-            context = self.get_context_data()
-            context["patient_list"] = queryset
-            context["paginator"] = paginator
-            context["page_obj"] = page
-
-            return render(request, "partials/patient_table.html", context=context)
         return response
 
 

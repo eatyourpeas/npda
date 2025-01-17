@@ -2,7 +2,7 @@
 {% load npda_tags %}
 {% url 'patients' as patients_url %}
 
-{% if patient_list %}
+{% if page_obj %}
   <div class="w-full overflow-x-scroll">
     <table class="font-montserrat table-md table mt-2 mb-5 text-sm text-left rtl:text-right">
       <thead class="bg-rcpch_dark_blue text-xs text-white uppercase">
@@ -35,7 +35,20 @@
         </tr>
       </thead>
       <tbody>
-        {% for patient in patient_list %}
+        {% for patient in page_obj %}
+          {% if patient.is_first_valid or patient.is_first_error %}
+            <thead class="bg-rcpch_strong_blue text-xs text-white text-gray-700 uppercase bg-gray-50">
+              <tr>
+                <th colspan="13" class="px-6 py-3">
+                  {%if patient.is_first_valid %}
+                    Patients where all records have been validated
+                  {% else %}
+                    Patients with records failing validation
+                  {% endif %}
+                </th>
+              </tr>
+            </thead>
+          {% endif %}
           <tr class="{% if forloop.counter|divisibleby:2 %} bg-gray-100 {% endif %} hover:bg-gray-200">
             {% with nhs_number_error=patient.errors|error_for_field:"nhs_number" gp_error=patient.errors|error_for_field:"gp_practice_ods_code" %}
               <td class="whitespace-nowrap">
