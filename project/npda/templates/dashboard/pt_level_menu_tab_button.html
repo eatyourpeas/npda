@@ -1,4 +1,6 @@
-<button class="{% if selected %} bg-rcpch_pink text-white {% else %} bg-rcpch_lightest_grey {% endif %}  p-5 max-lg:w-full flex-1"
+<button class="{% if selected %} bg-rcpch_pink text-white {% else %} bg-rcpch_lightest_grey {% endif %}
+        p-5 max-lg:w-full flex-1 relative
+        before:absolute before:bottom-0 before:left-0 before:w-full before:h-2 before:bg-transparent hover:before:bg-rcpch_light_blue"
         hx-get="/get_patient_level_report_partial"
         hx-vals='{"selected": "{{ key }}"}'
         hx-target="#pt_level_report"
