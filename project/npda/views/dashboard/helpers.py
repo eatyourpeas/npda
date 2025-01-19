@@ -2,6 +2,7 @@
 
 # Python imports
 from collections import Counter, defaultdict
+from decimal import Decimal
 import logging
 from dateutil.relativedelta import relativedelta
 from typing import Literal
@@ -861,75 +862,77 @@ def get_pt_level_table_data(
 
         # Finally add the headers. Need to add nhs_number
         headers = ["nhs_number"] + kpi_attr_names
+        print(data)
         return headers, data
 
     elif category == "outcomes":
-        data = {}
 
         # Need to do some manual work as calculate_kpi methods perform aggregations of individual
         # pt values.
 
-        # Create a calculate_kpis stub to access helper methods
-        calculate_kpis_stub = CalculateKPIS()
-        get_median_hba1c_values_by_patient = calculate_kpis_stub.get_median_hba1c_values_by_patient
+        # access helper methods
+        get_median_hba1c_values_by_patient = (
+            calculate_kpis_object.get_median_hba1c_values_by_patient
+        )
+        calculate_mean = calculate_kpis_object.calculate_mean
 
         # kpi 44 mean hba1c
         # Get the eligible pts
         kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
-            calculate_kpis_stub.kpi_name_registry.get_attribute_name(44)
+            calculate_kpis_object.kpi_name_registry.get_attribute_name(44)
         ]["patient_querysets"]
 
-        # Get the median hba1c values
-        median_hba1c_values = get_median_hba1c_values_by_patient(kpi_pt_querysets["eligible"])
 
-        # median_hba1c_values looks like a dict with pt.pk as key and data as value
+        # Start with the median hba1c values
+        data = get_median_hba1c_values_by_patient(kpi_pt_querysets["eligible"])
+
+        # data looks like a dict with pt.pk as key and data as value
         # {
         #     164: {
         #         "hb1ac_values": [
         #             Decimal("85.00"),
-        #             Decimal("80.00"),
-        #             Decimal("80.00"),
-        #             Decimal("69.00"),
-        #             Decimal("84.00"),
-        #             Decimal("59.00"),
-        #             Decimal("71.00"),
+        #             ...
         #             Decimal("74.00"),
         #         ],
-        #         "median": 77.0, 
+        #         "median": 77.0, <------------------- median value
         #         "nhs_number": "4739254131",
         #     },
         #     165: {
         #         "hb1ac_values": [
         #             Decimal("78.00"),
-        #             Decimal("85.00"),
-        #             Decimal("76.00"),
-        #             Decimal("60.00"),
-        #             Decimal("81.00"),
-        #             Decimal("79.00"),
-        #             Decimal("60.00"),
+        #             ...
         #             Decimal("59.00"),
         #         ],
-        #         "median": 77.0, 
+        #         "median": 77.0,
         #         "nhs_number": "4373272123",
         #     },
         # }
 
-        # Now need to add to data dict
-        for pt_pk, pt_data in median_hba1c_values.items():
-            data[pt_pk] = {
-                "nhs_number": pt_data["nhs_number"],
-                "kpi_44_mean_hba1c": pt_data["median"],
-            }
-        
-        # kpi 45 median hba1c
-        # Get the eligible pts
-        kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
-            calculate_kpis_stub.kpi_name_registry.get_attribute_name(45)
-        ]["patient_querysets"]
+        # Have enough to start constructing the data dict for the table
+        # We can use the same `hba1c_values` dict, just need to pop `hba1c_values` item
+        # Grab kpi_attr_names for ease of iteration (only 46-49) as manually
+        # assigning 44+45
+        kpi_attr_names = kpi_attr_names[2:]
+        for pt_pk in data:
 
-        # Get the median hba1c values
-        median_hba1c_values = get_median_hba1c_values_by_patient(kpi_pt_querysets["eligible"])
-        
+            pt_data: dict = data[pt_pk]
+
+            # Whilst iterating, need to also add 'mean' hba1c values per patient's values object
+            hba1cs: list[Decimal] = pt_data.pop("hb1ac_values")
+            data[pt_pk]["kpi_44_mean_hba1c"] = calculate_mean(hba1cs)
+            # Rename
+            data[pt_pk]["kpi_45_median_hba1c"] = pt_data.pop("median")
+            
+            # Remaining kpis 46-49
+            # NOTE: because each key is already eligible
+            # breakpoint()
+            # for attr_name in kpi_attr_names:
+            #     data[pt_pk][attr_name] = 
+            
+
+        import pprint
+
+        pprint.pprint(data)
 
     elif category == "treatment":
         data = {}
