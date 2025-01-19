@@ -65,8 +65,8 @@
                       {% with result=results|get_item:kpi_attr_name %}
                       <p>
                           {% if kpi_attr_name == "nhs_number" %}
-                              <span class="tooltip tooltip-right block" data-tip="View patient details">
-                                <a href="{% url 'patient-update' pt_pk %}" class="block w-full h-full">
+                              <span class="tooltip tooltip-right block" data-tip="View patient's visits">
+                                <a href="{% url 'patient_visits' pt_pk %}" class="block w-full h-full">
                                 {{ result }}
                                 <i class="fa-solid fa-arrow-up-right-from-square text-rcpch_strong_blue"></i>
                                 </a>
