@@ -955,9 +955,6 @@ def get_pt_level_table_data(
                 pk=pt_pk
             ).exists()
 
-        import pprint
-
-        pprint.pprint(data)
         # Finally add the headers. Need to add nhs_number
         headers = ["nhs_number"] + kpi_attr_names
 
