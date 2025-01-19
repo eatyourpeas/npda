@@ -881,10 +881,7 @@ def get_pt_level_table_data(
 
         # Get the median hba1c values
         median_hba1c_values = get_median_hba1c_values_by_patient(kpi_pt_querysets["eligible"])
-        from pprint import pprint
 
-        print("median_hba1c_values")
-        pprint(median_hba1c_values)
         # median_hba1c_values looks like a dict with pt.pk as key and data as value
         # {
         #     164: {
@@ -924,8 +921,14 @@ def get_pt_level_table_data(
                 "kpi_44_mean_hba1c": pt_data["median"],
             }
         
-        # repeat for median hba1c
-        print()
+        # kpi 45 median hba1c
+        # Get the eligible pts
+        kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
+            calculate_kpis_stub.kpi_name_registry.get_attribute_name(45)
+        ]["patient_querysets"]
+
+        # Get the median hba1c values
+        median_hba1c_values = get_median_hba1c_values_by_patient(kpi_pt_querysets["eligible"])
         
 
     elif category == "treatment":

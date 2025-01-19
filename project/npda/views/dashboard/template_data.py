@@ -79,6 +79,9 @@ TEXT = {
             "Continuous Glucose Monitoring",
             "Hybrid Closed Loop",
         ],
+        "ineligible_hover_reason": {
+            
+        },
     },
 }
 # TODO: might be nicer to move into above dict
