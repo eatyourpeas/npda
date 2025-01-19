@@ -923,9 +923,9 @@ def get_pt_level_table_data(
 
             # Whilst iterating, need to also add 'mean' hba1c values per patient's values object
             hba1cs: list[Decimal] = pt_data.pop("hb1ac_values")
-            data[pt_pk]["kpi_44_mean_hba1c"] = calculate_mean(hba1cs)
+            data[pt_pk]["kpi_44_mean_hba1c"] = round(calculate_mean(hba1cs), 1)
             # Rename
-            data[pt_pk]["kpi_45_median_hba1c"] = pt_data.pop("median")
+            data[pt_pk]["kpi_45_median_hba1c"] = round(pt_data.pop("median"), 1)
 
             # Remaining kpis 46-49
             # NOTE: because each key is already all eligible pts, we just need to find
@@ -946,10 +946,14 @@ def get_pt_level_table_data(
             )
 
             # kpi 48
-            data[pt_pk][get_attribute_name(48)] = kpi_48_passed_pt_pks_queryset.filter(pk=pt_pk).exists()
+            data[pt_pk][get_attribute_name(48)] = kpi_48_passed_pt_pks_queryset.filter(
+                pk=pt_pk
+            ).exists()
 
             # kpi 49
-            data[pt_pk][get_attribute_name(49)] = (kpi_49_passed_pt_pks_queryset.filter(pk=pt_pk).exists())
+            data[pt_pk][get_attribute_name(49)] = kpi_49_passed_pt_pks_queryset.filter(
+                pk=pt_pk
+            ).exists()
 
         import pprint
 
