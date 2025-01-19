@@ -875,12 +875,13 @@ def get_pt_level_table_data(
             calculate_kpis_object.get_median_hba1c_values_by_patient
         )
         calculate_mean = calculate_kpis_object.calculate_mean
+        get_attribute_name = calculate_kpis_object.kpi_name_registry.get_attribute_name
 
         # kpi 44 mean hba1c
         # Get the eligible pts
-        kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
-            calculate_kpis_object.kpi_name_registry.get_attribute_name(44)
-        ]["patient_querysets"]
+        kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][get_attribute_name(44)][
+            "patient_querysets"
+        ]
 
         # Start with the median hba1c values
         data = get_median_hba1c_values_by_patient(kpi_pt_querysets["eligible"])
@@ -908,16 +909,13 @@ def get_pt_level_table_data(
         # }
 
         # Have enough to start constructing the data dict for the table
-        # We can use the same `hba1c_values` dict, just need to pop `hba1c_values` item
-        # Grab kpi_attr_names for ease of iteration (only 46-49) as manually
-        # assigning 44+45
-        kpi_attr_names = kpi_attr_names[2:]
 
         kpi_48_passed_pt_pks_queryset: QuerySet = kpi_calculations_object["calculated_kpi_values"][
-            calculate_kpis_object.kpi_name_registry.get_attribute_name(48)
-        ]["patient_querysets"]["passed"].values_list(
-            "pk", flat=True
-        )
+            get_attribute_name(48)
+        ]["patient_querysets"]["passed"].values_list("pk", flat=True)
+        kpi_49_passed_pt_pks_queryset: QuerySet = kpi_calculations_object["calculated_kpi_values"][
+            get_attribute_name(49)
+        ]["patient_querysets"]["passed"].values_list("pk", flat=True)
 
         for pt_pk in data:
 
@@ -934,25 +932,32 @@ def get_pt_level_table_data(
             # relevant values for each key
 
             # Kpi 46
-            data[pt_pk][kpi_attr_names[0]] = (
+            data[pt_pk][get_attribute_name(46)] = (
                 calculate_kpis_object.get_number_of_admissions_for_patient(
                     pt_pk=pt_pk,
                 )
             )
 
             # kpi 47
-            data[pt_pk][kpi_attr_names[1]] = (
+            data[pt_pk][get_attribute_name(47)] = (
                 calculate_kpis_object.get_number_of_dka_admissions_for_patient(
                     pt_pk=pt_pk,
                 )
             )
 
             # kpi 48
-            data[pt_pk][kpi_attr_names[2]] = kpi_48_passed_pt_pks_queryset.filter(pk=pt_pk).exists()
+            data[pt_pk][get_attribute_name(48)] = kpi_48_passed_pt_pks_queryset.filter(pk=pt_pk).exists()
+
+            # kpi 49
+            data[pt_pk][get_attribute_name(49)] = (kpi_49_passed_pt_pks_queryset.filter(pk=pt_pk).exists())
 
         import pprint
 
         pprint.pprint(data)
+        # Finally add the headers. Need to add nhs_number
+        headers = ["nhs_number"] + kpi_attr_names
+
+        return headers, data
 
     elif category == "treatment":
         data = {}
