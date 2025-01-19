@@ -912,6 +912,13 @@ def get_pt_level_table_data(
         # Grab kpi_attr_names for ease of iteration (only 46-49) as manually
         # assigning 44+45
         kpi_attr_names = kpi_attr_names[2:]
+
+        kpi_48_passed_pt_pks_queryset: QuerySet = kpi_calculations_object["calculated_kpi_values"][
+            calculate_kpis_object.kpi_name_registry.get_attribute_name(48)
+        ]["patient_querysets"]["passed"].values_list(
+            "pk", flat=True
+        )
+
         for pt_pk in data:
 
             pt_data: dict = data[pt_pk]
@@ -939,6 +946,9 @@ def get_pt_level_table_data(
                     pt_pk=pt_pk,
                 )
             )
+
+            # kpi 48
+            data[pt_pk][kpi_attr_names[2]] = kpi_48_passed_pt_pks_queryset.filter(pk=pt_pk).exists()
 
         import pprint
 
