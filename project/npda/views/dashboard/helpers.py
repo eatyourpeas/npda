@@ -862,7 +862,7 @@ def get_pt_level_table_data(
 
         # Finally add the headers. Need to add nhs_number
         headers = ["nhs_number"] + kpi_attr_names
-        print(data)
+
         return headers, data
 
     elif category == "outcomes":
@@ -881,7 +881,6 @@ def get_pt_level_table_data(
         kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
             calculate_kpis_object.kpi_name_registry.get_attribute_name(44)
         ]["patient_querysets"]
-
 
         # Start with the median hba1c values
         data = get_median_hba1c_values_by_patient(kpi_pt_querysets["eligible"])
@@ -910,7 +909,7 @@ def get_pt_level_table_data(
 
         # Have enough to start constructing the data dict for the table
         # We can use the same `hba1c_values` dict, just need to pop `hba1c_values` item
-        # Grab kpi_attr_names for ease of iteration (only 46-49) as manually
+        # Grab kpi_attr_names for ease of iteration (only 46-49) as manually
         # assigning 44+45
         kpi_attr_names = kpi_attr_names[2:]
         for pt_pk in data:
@@ -922,13 +921,24 @@ def get_pt_level_table_data(
             data[pt_pk]["kpi_44_mean_hba1c"] = calculate_mean(hba1cs)
             # Rename
             data[pt_pk]["kpi_45_median_hba1c"] = pt_data.pop("median")
-            
+
             # Remaining kpis 46-49
-            # NOTE: because each key is already eligible
-            # breakpoint()
-            # for attr_name in kpi_attr_names:
-            #     data[pt_pk][attr_name] = 
-            
+            # NOTE: because each key is already all eligible pts, we just need to find
+            # relevant values for each key
+
+            # Kpi 46
+            data[pt_pk][kpi_attr_names[0]] = (
+                calculate_kpis_object.get_number_of_admissions_for_patient(
+                    pt_pk=pt_pk,
+                )
+            )
+
+            # kpi 47
+            data[pt_pk][kpi_attr_names[1]] = (
+                calculate_kpis_object.get_number_of_dka_admissions_for_patient(
+                    pt_pk=pt_pk,
+                )
+            )
 
         import pprint
 

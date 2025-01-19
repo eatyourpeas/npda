@@ -3486,6 +3486,24 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
+    def get_number_of_admissions_for_patient(self, pt_pk: int) -> int:
+        """Required for pt level report as `calculate_kpi_46_number_of_admissions` calculates an aggregate but need pt-level.
+
+        Returns an int representing the number of Visits
+        with a valid Admission
+        """
+
+        # Get the visits that match the valid admission criteria
+        valid_visit_with_admission_count = Visit.objects.filter(
+            Q(hospital_admission_date__range=self.AUDIT_DATE_RANGE)
+            | Q(hospital_discharge_date__range=self.AUDIT_DATE_RANGE),
+            hospital_admission_reason__in=[choice[0] for choice in HOSPITAL_ADMISSION_REASONS],
+            patient__pk=pt_pk,
+            visit_date__range=self.AUDIT_DATE_RANGE,
+        ).count()
+
+        return valid_visit_with_admission_count
+
     def calculate_kpi_47_number_of_dka_admissions(
         self,
     ) -> KPIResult:
@@ -3549,6 +3567,28 @@ class CalculateKPIS:
             total_failed=total_failed,
             patient_querysets=patient_querysets,
         )
+
+    def get_number_of_dka_admissions_for_patient(self, pt_pk: int) -> int:
+        """Required for pt level report as `calculate_kpi_47_number_of_dka_admissions` calculates an aggregate but need pt-level.
+
+        Returns an int representing the number of Visits
+        with a valid DKA Admission
+        """
+
+        # Get the visits that match the valid dka admission criteria
+        valid_visits_with_dka_admission_count = Visit.objects.filter(
+            # admission start date OR discharge date within audit period
+            Q(
+                Q(hospital_admission_date__range=self.AUDIT_DATE_RANGE)
+                | Q(hospital_discharge_date__range=self.AUDIT_DATE_RANGE)
+            ),
+            # DKA reason 2
+            hospital_admission_reason=HOSPITAL_ADMISSION_REASONS[1][0],
+            patient__pk=pt_pk,
+            visit_date__range=self.AUDIT_DATE_RANGE,
+        ).count()
+
+        return valid_visits_with_dka_admission_count
 
     def calculate_kpi_48_required_additional_psychological_support(
         self,
