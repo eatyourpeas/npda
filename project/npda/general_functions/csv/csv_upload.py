@@ -3,6 +3,7 @@ from datetime import date
 import logging
 import asyncio
 import collections
+import json
 
 # django imports
 from django.apps import apps
@@ -27,11 +28,10 @@ from project.npda.forms.external_patient_validators import validate_patient_asyn
 from project.npda.forms.external_visit_validators import validate_visit_async
 
 
-async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
+async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
     """
     Processes standardised NPDA csv file and persists results in NPDA tables
     Returns the empty dict if successful, otherwise ValidationErrors indexed by the row they occurred at
-    Also return the dataframe for later summary purposes
     """
 
     # Get the models
@@ -175,13 +175,13 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     # Set previous submission to inactive
     if await Submission.objects.filter(
         paediatric_diabetes_unit__pz_code=pdu.pz_code,
-        audit_year=date.today().year,
+        audit_year=audit_year,
         submission_active=True,
     ).aexists():
         original_submission = await Submission.objects.filter(
             submission_active=True,
             paediatric_diabetes_unit__pz_code=pdu.pz_code,
-            audit_year=date.today().year,
+            audit_year=audit_year,
         ).aget()  # there can be only one of these - store it in a variable in case we need to revert
     else:
         original_submission = None
@@ -191,7 +191,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     try:
         new_submission = await Submission.objects.acreate(
             paediatric_diabetes_unit=pdu,
-            audit_year=date.today().year,
+            audit_year=audit_year,
             submission_date=timezone.now(),
             submission_by=user,  # user is the user who is logged in. Passed in as a parameter
             submission_active=True,
@@ -316,5 +316,10 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code):
     # Only create xlsx file if the csv file was created.
     if new_submission.csv_file:
         _ = write_errors_to_xlsx(errors_to_return, new_submission)
+    
+    # Store the errors to report back to the user in the Data Quality Report
+    if errors_to_return:
+        new_submission.errors = json.dumps(errors_to_return)
+        await new_submission.asave()
 
     return errors_to_return

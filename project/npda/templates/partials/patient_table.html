@@ -9,26 +9,7 @@
         <tr class="snap-x">
           <th scope="col" class="px-2 py-3 text-center">
             <span class="flex flex-row">
-              <div id="nhs_num_sort_label"  hx-preserve  class="swap swap-rotate">
-                <button hx-preserve
-                        hx-get="{{ asc_url }}?sort_by=nhs_number&page={{ current_page }}&sort=asc"
-                        hx-on:htmx:after-request="document.getElementById('nhs_num_sort_label').classList.toggle('swap-active');"
-                        hx-trigger="click throttle:1s"
-                        hx-target="#patient_table"
-                        hx-swap="innerHTML swap:100ms"
-                        class="swap-on">
-                  <i class="fa-arrow-up-9-1 fa-solid mr-2"> </i>
-                </button>
-                <button hx-preserve
-                        hx-get="{{ desc_url }}?sort_by=nhs_number&page={{ current_page }}&sort=desc"
-                        hx-on:htmx:after-request="document.getElementById('nhs_num_sort_label').classList.toggle('swap-active');"
-                        hx-trigger="click throttle:1s"
-                        hx-target="#patient_table"
-                        hx-swap="innerHTML swap:100ms"
-                        class="swap-off">
-                  <i class="fa-arrow-down-1-9 fa-solid mr-2"></i>
-                </button>
-              </div>
+              {% include 'partials/page_elements/sort_icon.html' with field="nhs_number" %}
               NHS Number
             </span>
           </th>
@@ -37,26 +18,7 @@
           <th scope="col" class="px-2 py-3 text-center">Postcode</th>
           <th scope="col" class="px-2 py-3 text-center">
             <span class="flex flex-row">
-              <div id="deprivation_sort_label"  hx-preserve  class="swap swap-rotate">
-                <button hx-preserve
-                        hx-get="{{ asc_url }}?sort_by=index_of_multiple_deprivation_quintile&page={{ current_page }}&sort=asc"
-                        hx-on:htmx:after-request="document.getElementById('deprivation_sort_label').classList.toggle('swap-active');"
-                        hx-trigger="click throttle:1s"
-                        hx-target="#patient_table"
-                        hx-swap="innerHTML swap:100ms"
-                        class="swap-on">
-                  <i class="fa-arrow-up-9-1 fa-solid mr-2"> </i>
-                </button>
-                <button hx-preserve
-                        hx-get="{{ desc_url }}?sort_by=index_of_multiple_deprivation_quintile&page={{ current_page }}&sort=desc"
-                        hx-on:htmx:after-request="document.getElementById('deprivation_sort_label').classList.toggle('swap-active');"
-                        hx-trigger="click throttle:1s"
-                        hx-target="#patient_table"
-                        hx-swap="innerHTML swap:100ms"
-                        class="swap-off">
-                  <i class="fa-arrow-down-1-9 fa-solid mr-2"></i>
-                </button>
-              </div>
+              {% include 'partials/page_elements/sort_icon.html' with field="index_of_multiple_deprivation_quintile" %}
               Deprivation Quintile
             </span>
           </th>
@@ -280,6 +242,6 @@
          viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
     </svg>
-    <span>No patients uploaded yet.</span>
+    <span>No patients found.</span>
   </div>
 {% endif %}

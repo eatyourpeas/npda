@@ -18,10 +18,10 @@ from django.http import HttpResponse
 from django.urls import reverse_lazy
 
 # Third party imports
-
+import nhs_number
 
 from project.npda.general_functions import (
-    organisations_adapter,
+    organisations_adapter
 )
 from project.npda.general_functions.quarter_for_date import (
     retrieve_quarter_for_date,
@@ -55,6 +55,20 @@ class PatientListView(
     template_name = "patients.html"
     paginate_by = 50
 
+    def get_sort_by(self):
+        sort_by_param = self.request.GET.get("sort_by")
+        sort_param = self.request.GET.get("sort")
+
+        sort_by = None
+
+        # Check we are sorting by a fixed set of fields rather than the full Django __ notation
+        if sort_by_param in ["nhs_number", "index_of_multiple_deprivation_quintile"]:
+            sort_by = sort_by_param
+        
+        sort_by = f"-{sort_by}" if sort_param == "desc" else sort_by 
+
+        return sort_by
+
     def get_queryset(self):
         """
         Return all patients with the number of errors in their visits
@@ -62,14 +76,6 @@ class PatientListView(
         Scope to patient only in the same organisation as the user and current audit year
         """
         patient_queryset = super().get_queryset()
-        # sort the queryset by the user'selection
-        sort_by = self.request.GET.get("sort_by", "pk")  # Default sort by npda_id
-        sort = self.request.GET.get("sort", "asc")  # Default sort by ascending order
-        if sort_by in ["pk", "nhs_number"]:
-            if sort == "asc":
-                sort_by = sort_by
-            else:
-                sort_by = f"-{sort_by}"
 
         # apply filters and annotations to the queryset
         pz_code = self.request.session.get("pz_code")
@@ -77,18 +83,23 @@ class PatientListView(
             submissions__submission_active=True,
             submissions__audit_year=self.request.session.get("selected_audit_year"),
         )
+        
         # filter by contents of the search bar
         search = self.request.GET.get("search-input")
         if search:
+            search = nhs_number.standardise_format(search) or search
             filtered_patients &= Q(
                 Q(nhs_number__icontains=search) | Q(pk__icontains=search)
             )
+        
         # filter patients to the view preference of the user
         if self.request.user.view_preference == 1:
             # PDU view
             filtered_patients &= Q(
                 submissions__paediatric_diabetes_unit__pz_code=pz_code
             )
+
+        sort_by = self.get_sort_by() or "pk"
 
         patient_queryset = (
             patient_queryset.filter(filtered_patients)
@@ -148,9 +159,9 @@ class PatientListView(
             )
         )
         context["chosen_pdu"] = self.request.session.get("pz_code")
-        # Add current page and sorting parameters to the context
         context["current_page"] = self.request.GET.get("page", 1)
-        context["sort_by"] = self.request.GET.get("sort_by", "pk")
+        context["sort_by"] = self.get_sort_by()
+
         return context
 
     def get(self, request, *args: str, **kwargs) -> HttpResponse:
@@ -255,7 +266,7 @@ class PatientCreateView(
 
             Submission = apps.get_model("npda", "Submission")
             submission, created = Submission.objects.update_or_create(
-                audit_year=date.today().year,
+                audit_year=self.request.session["selected_audit_year"],
                 paediatric_diabetes_unit=paediatric_diabetes_unit,
                 submission_active=True,
                 defaults={
