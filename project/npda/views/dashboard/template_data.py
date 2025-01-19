@@ -92,7 +92,12 @@ TEXT = {
             "Hybrid Closed Loop",
         ],
         "ineligible_hover_reason": {
-            
+            "kpi_44_mean_hba1c": "Does not fulfil criteria for KPI 1",
+            "kpi_45_median_hba1c": "Does not fulfil criteria for KPI 1",
+            "kpi_46_number_of_admissions": "Does not fulfil criteria for KPI 1",
+            "kpi_47_number_of_dka_admissions": "Does not fulfil criteria for KPI 1",
+            "kpi_48_required_additional_psych_support": "Does not fulfil criteria for KPI 1",
+            "kpi_49_albuminuria_present": "Does not fulfil criteria for KPI 1",
         },
     },
 }
