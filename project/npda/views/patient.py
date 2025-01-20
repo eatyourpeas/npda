@@ -108,28 +108,7 @@ class PatientListView(
         if sort_by:
             patient_queryset = patient_queryset.order_by(sort_by)
         else:
-            patient_queryset = patient_queryset.order_by("is_valid", "-visit_error_count")
-
-        # Add extra fields to the patient that we can't add to the query. This is ok because the queryset will be max the page size.
-        seen_error = False
-        seen_valid = False
-
-        for patient in patient_queryset:
-            # Signpost the latest quarter
-            if patient.most_recent_visit_date is not None:
-                patient.latest_quarter = retrieve_quarter_for_date(
-                    patient.most_recent_visit_date
-                )
-            
-            # Highlight the separation between patients with errors and those without
-            # unless we are sorting by a particular field in which case errors appear mixed
-            if not sort_by:
-                if not seen_error and (not patient.is_valid or patient.visit_error_count > 0):
-                    patient.is_first_error = True
-                    seen_error = True
-                elif not seen_valid and patient.is_valid and patient.visit_error_count == 0:
-                    patient.is_first_valid = True
-                    seen_valid = True            
+            patient_queryset = patient_queryset.order_by("is_valid", "-visit_error_count")            
 
         return patient_queryset
 
@@ -149,6 +128,35 @@ class PatientListView(
         context["chosen_pdu"] = self.request.session.get("pz_code")
         context["current_page"] = self.request.GET.get("page", 1)
         context["sort_by"] = self.get_sort_by()
+
+        # Add extra fields to the patient that we can't add to the query. This is ok because the queryset will be max the page size.
+        error_count_in_page = 0
+        valid_count_in_page = 0
+
+        for patient in context["page_obj"]:
+            # Signpost the latest quarter
+            if patient.most_recent_visit_date is not None:
+                patient.latest_quarter = retrieve_quarter_for_date(
+                    patient.most_recent_visit_date
+                )
+            
+            # Highlight the separation between patients with errors and those without
+            # unless we are sorting by a particular field in which case errors appear mixed
+            if not context["sort_by"]:
+                if not patient.is_valid or patient.visit_error_count > 0:
+                    if error_count_in_page == 0:
+                        patient.is_first_error = True
+                    
+                    error_count_in_page += 1
+
+                if patient.is_valid and patient.visit_error_count == 0:
+                    if valid_count_in_page == 0:
+                        patient.is_first_valid = True
+                    
+                    valid_count_in_page += 1
+
+        context["error_count_in_page"] = error_count_in_page
+        context["valid_count_in_page"] = valid_count_in_page
 
         return context
 
