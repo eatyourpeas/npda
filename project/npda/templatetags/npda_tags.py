@@ -245,6 +245,12 @@ def errors_for_category(selected_category, errors_by_field):
     return "\n".join(error_messages)
 
 
+@register.filter
+def category_has_errors(category, errors_by_field):
+    # Lazy implementation but performance doesn't matter here
+    return bool(errors_for_category(category, errors_by_field))
+
+
 @register.simple_tag
 def today_date():
     return date.today().strftime("%Y-%m-%d")

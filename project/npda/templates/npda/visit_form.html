@@ -55,7 +55,15 @@
                   {% with field_category|colour_for_category as background_colour %}
                     {% if field_category == "Measurements" or field_category == "HBA1c" or field_category == "Treatment" or field_category == "CGM" or field_category == "BP" %}
                       <li class="inline-block p-2 font-mono bg-{{ background_colour }} hover:shadow-md hover:underline">
-                        <a href="#{{ field_category|cut:" " }}_anchor">{{ field_category }}</a>
+                        <a href="#{{ field_category|cut:" " }}_anchor">
+                          {% if field_category|category_has_errors:visit_instance.errors %}
+                            <span class="fa-stack text-rcpch_red">
+                              <i class="fa-circle fa-stack-1x fas"></i>
+                              <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                            </span>
+                          {% endif %}
+                          {{ field_category }}
+                        </a>
                       </li>
                     {% endif %}
                   {% endwith %}
@@ -171,7 +179,15 @@
                   {% with field_category|colour_for_category as background_colour %}
                     {% if field_category == "Foot Care" or field_category == "DECS" or field_category == "ACR" or field_category == "Cholesterol" or field_category == "Thyroid" or field_category == "Coeliac" or field_category == "Psychology" or field_category == "Smoking" or field_category == "Dietician" or field_category == "Sick Day Rules" or field_category == "Immunisation (flu)" %}
                       <li class="inline-block p-2 font-mono bg-{{ background_colour }} hover:shadow-md hover:underline">
-                        <a href="#{{ field_category|cut:" " }}_anchor">{{ field_category }}</a>
+                        <a href="#{{ field_category|cut:" " }}_anchor">
+                          {% if field_category|category_has_errors:visit_instance.errors %}
+                            <span class="fa-stack text-rcpch_red">
+                              <i class="fa-circle fa-stack-1x fas"></i>
+                              <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                            </span>
+                          {% endif %}
+                          {{ field_category }}
+                        </a>
                       </li>
                     {% endif %}
                   {% endwith %}
