@@ -70,11 +70,6 @@ class PatientListView(
         return sort_by
 
     def get_queryset(self):
-        """
-        Return all patients with the number of errors in their visits
-        Order by valid patients first, then by number of errors in visits, then by primary key
-        Scope to patient only in the same organisation as the user and current audit year
-        """
         patient_queryset = super().get_queryset()
 
         # apply filters and annotations to the queryset
@@ -99,59 +94,31 @@ class PatientListView(
                 submissions__paediatric_diabetes_unit__pz_code=pz_code
             )
 
-        sort_by = self.get_sort_by() or "pk"
+        patient_queryset = patient_queryset.filter(filtered_patients)
 
-        patient_queryset = (
-            patient_queryset.filter(filtered_patients)
-            .annotate(
-                audit_year=F("submissions__audit_year"),
-                visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
-                last_upload_date=Max("submissions__submission_date"),
-                most_recent_visit_date=Max("visit__visit_date"),
-            )
-            .order_by("is_valid", "visit_error_count", sort_by)
+        patient_queryset = patient_queryset.annotate(
+            audit_year=F("submissions__audit_year"),
+            visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
+            last_upload_date=Max("submissions__submission_date"),
+            most_recent_visit_date=Max("visit__visit_date"),
         )
 
-        # add another annotation to the queryset to signpost the latest quarter
-        # This does involve iterating over the queryset, but it is necessary to add the latest_quarter attribute to each object
-        # as django does not support annotations with custom functions, at least, not without rewriting it in SQL or using the Func class
-        # and the queryset is not large
-        for obj in patient_queryset:
-            if obj.most_recent_visit_date is not None:
-                obj.latest_quarter = retrieve_quarter_for_date(
-                    obj.most_recent_visit_date
-                )
-            else:
-                obj.latest_quarter = None
+        sort_by = self.get_sort_by()
+
+        if sort_by:
+            patient_queryset = patient_queryset.order_by(sort_by)
+        else:
+            patient_queryset = patient_queryset.order_by("is_valid", "-visit_error_count")            
 
         return patient_queryset
 
     def get_context_data(self, **kwargs):
-        """
-        Add total number of valid and invalid patients to the context, as well as the index of the first invalid patient in the list
-        Include the number of errors in each patient's visits
-        Pass the context to the template
-        """
         context = super().get_context_data(**kwargs)
-        total_valid_patients = (
-            Patient.objects.filter(submissions__submission_active=True)
-            .annotate(
-                visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
-            )
-            .order_by("is_valid", "visit_error_count", "pk")
-            .filter(visit__is_valid=True, visit_error_count__lt=1)
-            .count()
-        )
+
         context["pz_code"] = self.request.session.get("pz_code")
         context["selected_audit_year"] = self.request.session.get(
             "selected_audit_year", "None"
         )
-        context["total_valid_patients"] = total_valid_patients
-        context["total_invalid_patients"] = (
-            Patient.objects.filter(submissions__submission_active=True).count()
-            - total_valid_patients
-        )
-        context["index_of_first_invalid_patient"] = total_valid_patients + 1
         context["pdu_choices"] = (
             organisations_adapter.paediatric_diabetes_units_to_populate_select_field(
                 requesting_user=self.request.user,
@@ -162,32 +129,43 @@ class PatientListView(
         context["current_page"] = self.request.GET.get("page", 1)
         context["sort_by"] = self.get_sort_by()
 
+        # Add extra fields to the patient that we can't add to the query. This is ok because the queryset will be max the page size.
+        error_count_in_page = 0
+        valid_count_in_page = 0
+
+        for patient in context["page_obj"]:
+            # Signpost the latest quarter
+            if patient.most_recent_visit_date is not None:
+                patient.latest_quarter = retrieve_quarter_for_date(
+                    patient.most_recent_visit_date
+                )
+            
+            # Highlight the separation between patients with errors and those without
+            # unless we are sorting by a particular field in which case errors appear mixed
+            if not context["sort_by"]:
+                if not patient.is_valid or patient.visit_error_count > 0:
+                    if error_count_in_page == 0:
+                        patient.is_first_error = True
+                    
+                    error_count_in_page += 1
+
+                if patient.is_valid and patient.visit_error_count == 0:
+                    if valid_count_in_page == 0:
+                        patient.is_first_valid = True
+                    
+                    valid_count_in_page += 1
+
+        context["error_count_in_page"] = error_count_in_page
+        context["valid_count_in_page"] = valid_count_in_page
+
         return context
 
     def get(self, request, *args: str, **kwargs) -> HttpResponse:
         response = super().get(request, *args, **kwargs)
+        
         if request.htmx:
-            # filter the patients to only those in the same organisation as the user
-            # trigger a GET request from the patient table to update the list of patients
-            # by calling the get_queryset method again with the new ods_code/pz_code stored in session
-            queryset = self.get_queryset()
-            context = self.get_context_data()
-            # Paginate the queryset
-            page_size = self.get_paginate_by(queryset)
-            page_number = request.GET.get("page", 1)
-            paginator, page, queryset, is_paginated = self.paginate_queryset(
-                queryset, page_size
-            )
+            return render(request, "partials/patient_table.html", context=self.get_context_data())
 
-            # Update the context with the paginated queryset and pagination information
-            context = self.get_context_data()
-            context["patient_list"] = queryset
-            context["paginator"] = paginator
-            context["page_obj"] = page
-            context["is_paginated"] = is_paginated
-            context["patient_list"] = queryset
-
-            return render(request, "partials/patient_table.html", context=context)
         return response
 
 

@@ -1,0 +1,24 @@
+<tr class="bg-rcpch_dark_blue py-5 text-xs text-white text-gray-700 uppercase bg-gray-50">
+    <th colspan="8" class="px-2">
+    <strong>
+        {{page_obj.start_index}}-{{page_obj.end_index}} of {{ paginator.count }} patients</strong>
+    </th>
+    <th colspan="2">
+    <!-- Pagination controls -->
+    <div class="pagination text-right">
+        <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">« first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last »</a>
+        {% endif %}
+        </span>
+    </div>
+    </th>
+</tr>
