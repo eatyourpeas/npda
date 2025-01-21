@@ -762,11 +762,7 @@ def get_pt_level_table_data(
     """
 
     get_attribute_name = calculate_kpis_object.kpi_name_registry.get_attribute_name
-    kpi_attr_names = [
-        get_attribute_name(i)
-        for i in KPI_CATEGORY_ATTR_MAP[category]
-    ]
-    
+    kpi_attr_names = [get_attribute_name(i) for i in KPI_CATEGORY_ATTR_MAP[category]]
 
     if category == "health_checks":
 
@@ -967,50 +963,67 @@ def get_pt_level_table_data(
         # Maps for frontend rendering
         # Tx map
         tx_attr_vals_map = {
-            get_attribute_name(13) : "1-3 injections/day",
-            get_attribute_name(14) : "4+ injections/day",
-            get_attribute_name(15) : "Insulin pump",
-            get_attribute_name(16) : "1-3 injections + blood glucose lowering meds",
-            get_attribute_name(17) : "4+ injections + blood glucose lowering meds",
-            get_attribute_name(18) : "Insulin pump + blood glucose lowering meds",
-            get_attribute_name(19) : "Dietary management alone",
-            get_attribute_name(20) : "Dietary management + blood glucose lowering meds",
+            get_attribute_name(13): "1-3 injections/day",
+            get_attribute_name(14): "4+ injections/day",
+            get_attribute_name(15): "Insulin pump",
+            get_attribute_name(16): "1-3 injections + blood glucose lowering meds",
+            get_attribute_name(17): "4+ injections + blood glucose lowering meds",
+            get_attribute_name(18): "Insulin pump + blood glucose lowering meds",
+            get_attribute_name(19): "Dietary management alone",
+            get_attribute_name(20): "Dietary management + blood glucose lowering meds",
         }
         # CGM map
         cgm_attr_vals_map = {
             get_attribute_name(21): "Flash glucose monitor",
             get_attribute_name(22): "Continuous glucose monitor with alarms",
         }
-        
 
         # Grab eligible patients (KPI 1, same for all)
         eligible_pts = kpi_calculations_object["calculated_kpi_values"][get_attribute_name(13)][
             "patient_querysets"
         ]["eligible"]
-        
-        # Start constructing the data dict
-        
+
+        # Start constructing the data dict
+
         for pt in eligible_pts:
-            
+
             # Add nhs number
             data[pt.pk]["nhs_number"] = pt.nhs_number
-            
-            # Tx regimen col -> find the first True value in the tx_vals_attr_map
+
+            # Tx regimen col -> find the first True value in the tx_vals_attr_map
             data[pt.pk]["tx_regimen"] = None
             for tx_val_attr in tx_attr_vals_map:
-                if kpi_calculations_object["calculated_kpi_values"][tx_val_attr]["patient_querysets"]["passed"].filter(pk=pt.pk).exists():
+                if (
+                    kpi_calculations_object["calculated_kpi_values"][tx_val_attr][
+                        "patient_querysets"
+                    ]["passed"]
+                    .filter(pk=pt.pk)
+                    .exists()
+                ):
                     data[pt.pk]["tx_regimen"] = tx_attr_vals_map[tx_val_attr]
                     break
-            
+
             # CGM col -> find the first True value in the CGM kpis
             data[pt.pk]["cgm"] = None
             for glucose_monitoring_kpi_attr in cgm_attr_vals_map:
-                if kpi_calculations_object["calculated_kpi_values"][glucose_monitoring_kpi_attr]["patient_querysets"]["passed"].filter(pk=pt.pk).exists():
+                if (
+                    kpi_calculations_object["calculated_kpi_values"][glucose_monitoring_kpi_attr][
+                        "patient_querysets"
+                    ]["passed"]
+                    .filter(pk=pt.pk)
+                    .exists()
+                ):
                     data[pt.pk]["cgm"] = cgm_attr_vals_map[glucose_monitoring_kpi_attr]
                     break
-            
+
             # HCL col -> true or false
-            data[pt.pk][get_attribute_name(24)] = kpi_calculations_object["calculated_kpi_values"][get_attribute_name(24)]["patient_querysets"]["passed"].filter(pk=pt.pk).exists()
+            data[pt.pk][get_attribute_name(24)] = (
+                kpi_calculations_object["calculated_kpi_values"][get_attribute_name(24)][
+                    "patient_querysets"
+                ]["passed"]
+                .filter(pk=pt.pk)
+                .exists()
+            )
 
         # Finally add the headers. Need to add nhs_number
         headers = ["nhs_number", "tx_regimen", "cgm", get_attribute_name(24)]
