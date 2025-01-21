@@ -2,7 +2,6 @@ import re
 import itertools
 from django import template, forms
 from django.conf import settings
-from ..general_functions import get_visit_category_for_field
 from ...constants import (
     VisitCategories,
     VISIT_FIELD_FLAT_LIST,
@@ -31,19 +30,6 @@ def is_in(url_name, args):
 
 
 class_re = re.compile(r'(?<=class=["\'])(.*)(?=["\'])')
-
-
-@register.filter
-def match_category(value):
-    """
-    matches a category to a field in the visit form
-    """
-    field_name = value.name
-    visit_category = get_visit_category_for_field(field_name=field_name)
-    if visit_category:
-        return visit_category.value
-    else:
-        return None
 
 
 @register.filter
@@ -78,32 +64,6 @@ def colour_for_category(category):
         if colour["category"].value == category:
             return colour["colour"]
     return None
-
-
-@register.simple_tag
-def category_for_first_item(form, field, index):
-    """
-    Return categories only for those first fields in the category
-    """
-    if index < 3:
-        if index == 2:
-            current_visit_category = get_visit_category_for_field(field_name=field.name)
-            return current_visit_category.value
-        return ""
-
-    current_visit_category = get_visit_category_for_field(field_name=field.name)
-    if field.name == "visit_date":
-        return ""
-
-    previous_field = list(form)[index - 2]
-    previous_visit_category = get_visit_category_for_field(
-        field_name=previous_field.name
-    )
-
-    if current_visit_category == previous_visit_category:
-        return ""
-    else:
-        return current_visit_category.value
 
 
 @register.filter
