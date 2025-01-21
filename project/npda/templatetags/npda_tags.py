@@ -203,6 +203,13 @@ def category_has_errors(category, errors_by_field):
     return bool(errors_for_category(category, errors_by_field))
 
 
+# The alternative of creating a new nested data structure was quite a big refactor
+# so I've gone with this simple but hacky version
+@register.filter
+def categories_have_errors(categories_by_comma, errors_by_field):
+    return any([category_has_errors(category, errors_by_field) for category in categories_by_comma.split(",")])
+
+
 @register.simple_tag
 def today_date():
     return date.today().strftime("%Y-%m-%d")
