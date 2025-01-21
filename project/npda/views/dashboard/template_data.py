@@ -78,9 +78,7 @@ TEXT = {
             "Required additional psych support",
             "Albuminuria present",
         ],
-        "ineligible_hover_reason": {
-            
-        },
+        "ineligible_hover_reason": {},
     },
     "treatment": {
         "title": "Treatment",
@@ -92,12 +90,7 @@ TEXT = {
             "Hybrid Closed Loop",
         ],
         "ineligible_hover_reason": {
-            "kpi_44_mean_hba1c": "Does not fulfil criteria for KPI 1",
-            "kpi_45_median_hba1c": "Does not fulfil criteria for KPI 1",
-            "kpi_46_number_of_admissions": "Does not fulfil criteria for KPI 1",
-            "kpi_47_number_of_dka_admissions": "Does not fulfil criteria for KPI 1",
-            "kpi_48_required_additional_psych_support": "Does not fulfil criteria for KPI 1",
-            "kpi_49_albuminuria_present": "Does not fulfil criteria for KPI 1",
+            # "tx_regimen": "Does not fulfil criteria for any of KPIs 13-20",
         },
     },
 }
@@ -107,5 +100,13 @@ KPI_CATEGORY_ATTR_MAP = {
     "additional_care_processes": list(range(33, 41)),
     "care_at_diagnosis": list(range(41, 44)),
     "outcomes": list(range(44, 50)),
-    "treatment": list(range(13, 25)),
+    "treatment": list(
+        range(13, 21),
+    )
+    + [
+        21,
+        22,
+        # Omit 23 as looking at values for all eligible pts, KPI23 is only subset of T1DM
+        24,
+    ],
 }

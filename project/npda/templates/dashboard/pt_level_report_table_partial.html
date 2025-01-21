@@ -59,11 +59,10 @@
               {% for pt_pk, results in table_data.row_data.items %}
 
                 <tr class="bg-white border-b hover:bg-gray-100">
-
                   {% for kpi_attr_name in table_data.headers %}
                     <td class="px-6 py-4">
                       {% with result=results|get_item:kpi_attr_name %}
-                      <p>
+                      <p class="{{ kpi_attr_name }}">
                           {% if kpi_attr_name == "nhs_number" %}
                               <span class="tooltip tooltip-right block" data-tip="View patient's visits">
                                 <a href="{% url 'patient_visits' pt_pk %}" class="block w-full h-full">
@@ -74,13 +73,18 @@
                             </div>
                           {% elif kpi_attr_name == "total" %}
                             {{ result.0 }} / {{ result.1 }}
-                          {% elif kpi_attr_name == "value" %}
-                            {{ result }}
 
                     {% comment %} TODO: THIS IS UGLY (possibly the worst i ever written), MAKE PARTIALS PER TABLE TAB {% endcomment %}
                           {% comment %} NUMBERS {% endcomment %}
                           {% elif kpi_attr_name == 'kpi_44_mean_hba1c' or kpi_attr_name == 'kpi_45_median_hba1c' or kpi_attr_name == 'kpi_46_number_of_admissions' or kpi_attr_name == 'kpi_47_number_of_dka_admissions' %}
                             {{ result }}
+
+                          {% comment %} TREATMENT TAB {% endcomment %}
+                          {% elif kpi_attr_name == 'cgm' %}
+                            {{ result }}
+                          {% elif kpi_attr_name == 'tx_regimen' and result is not None %}
+                            {{ result }}
+
                           {% elif result is True %}
                             {% comment %} PASS {% endcomment %}
                               <i class="fa-solid fa-circle-check text-success"></i>
@@ -89,7 +93,8 @@
                             <i class="fa-solid fa-circle-exclamation text-error"></i>
                           {% else %}
                           {% comment %} INELIGIBLE {% endcomment %}
-                            <span class="tooltip tooltip-top block" data-tip="{{ table_data.ineligible_hover_reason|get_item:kpi_attr_name }}">
+                            <span class="tooltip tooltip-top block"
+                            data-tip="{{ table_data.ineligible_hover_reason|get_item:kpi_attr_name|default:"Ineligible" }}">
                               <i class="fa-solid fa-ban text-muted"></i>
                             </span>
                           {% endif %}
