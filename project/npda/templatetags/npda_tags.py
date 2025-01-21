@@ -164,6 +164,17 @@ def error_for_field(errors_by_field, field):
 
 
 @register.filter
+def errors_for_form_field(errors_by_field, field):
+    if field.errors:
+        return field.errors
+    
+    if field.name in errors_by_field:
+        return [error["message"] for error in errors_by_field[field.name]]
+
+    return []
+
+
+@register.filter
 def errors_for_category(selected_category, errors_by_field):
     """
     Returns all error messages for a given category
