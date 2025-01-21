@@ -1011,9 +1011,6 @@ def get_pt_level_table_data(
             
             # HCL col -> true or false
             data[pt.pk][get_attribute_name(24)] = kpi_calculations_object["calculated_kpi_values"][get_attribute_name(24)]["patient_querysets"]["passed"].filter(pk=pt.pk).exists()
-        
-        from pprint import pprint
-        pprint(data)
 
         # Finally add the headers. Need to add nhs_number
         headers = ["nhs_number", "tx_regimen", "cgm", get_attribute_name(24)]
