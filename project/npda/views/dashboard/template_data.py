@@ -90,7 +90,7 @@ TEXT = {
             "Hybrid Closed Loop",
         ],
         "ineligible_hover_reason": {
-            # "tx_regimen": "Does not fulfil criteria for any of KPIs 13-20",
+            "tx_regimen": "Does not fulfil criteria for any of KPIs 13-20",
         },
     },
 }
