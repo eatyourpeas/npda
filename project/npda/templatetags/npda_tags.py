@@ -164,17 +164,6 @@ def error_for_field(errors_by_field, field):
 
 
 @register.filter
-def errors_for_form_field(errors_by_field, field):
-    if field.errors:
-        return field.errors
-    
-    if errors_by_field and field.name in errors_by_field:
-        return [error["message"] for error in errors_by_field[field.name]]
-
-    return []
-
-
-@register.filter
 def errors_for_category(selected_category, errors_by_field):
     """
     Returns all error messages for a given category
@@ -203,22 +192,6 @@ def errors_for_category(selected_category, errors_by_field):
 
     error_messages = [error["message"] for error in errors]
     return "\n".join(error_messages)
-
-
-@register.filter
-def category_has_errors(category, errors_by_field):
-    if errors_by_field is None:
-        return False
-
-    # Lazy implementation but performance doesn't matter here
-    return bool(errors_for_category(category, errors_by_field))
-
-
-# The alternative of creating a new nested data structure was quite a big refactor
-# so I've gone with this simple but hacky version
-@register.filter
-def categories_have_errors(categories_by_comma, errors_by_field):
-    return any([category_has_errors(category, errors_by_field) for category in categories_by_comma.split(",")])
 
 
 @register.simple_tag

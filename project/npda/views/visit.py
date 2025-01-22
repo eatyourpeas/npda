@@ -108,6 +108,7 @@ class VisitCreateView(
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
         context["button_title"] = "Add New Visit"
+
         return context
 
     def get_success_url(self):

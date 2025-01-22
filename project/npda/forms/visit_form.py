@@ -6,6 +6,7 @@ from ...constants import *
 from ..general_functions.validate_dates import validate_date
 from ..forms.external_visit_validators import validate_visit_sync 
 from ..models import Visit
+from ..forms.form_errors import lookup_errors
 
 
 class DateInput(forms.DateInput):
@@ -791,6 +792,25 @@ class VisitForm(forms.ModelForm):
                     )
 
         return cleaned_data
+    
+    # These are form methods as we can't pass more than one argument to a template filter
+    def fields_with_errors(self):
+        for field in self:
+            yield (field, lookup_errors(self, self.instance, field.name))
+    
+    def categories_with_errors(self):
+        ret = []
+
+        for category, fields in VISIT_FIELDS:
+            for field in fields:
+                if lookup_errors(self, self.instance, field):
+                    ret.push(category)
+        
+        return ret
+    
+    def any_category_has_errors(self, categories):
+        categories_with_errors = self.categories_with_errors()
+        return any([category in categories_with_errors for category in categories])
 
     # Called when submitting the questionnaire. For CSV upload, instances are created directly in csv_upload to preserve
     # invalid data. Without overriding save here, the data from the dGC call would not be saved as the fields are not
