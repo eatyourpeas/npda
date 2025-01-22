@@ -168,7 +168,7 @@ def errors_for_form_field(errors_by_field, field):
     if field.errors:
         return field.errors
     
-    if field.name in errors_by_field:
+    if errors_by_field and field.name in errors_by_field:
         return [error["message"] for error in errors_by_field[field.name]]
 
     return []
