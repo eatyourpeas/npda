@@ -393,6 +393,8 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Systolic Blood Pressure out of range. Cannot be above 240"
                 )
+        
+        return systolic_blood_pressure
 
     def clean_diastolic_blood_pressure(self):
         diastolic_blood_pressure = self.cleaned_data["diastolic_blood_pressure"]
@@ -406,6 +408,8 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Diastolic Blood pressure out of range. Cannot be above 120"
                 )
+        
+        return diastolic_blood_pressure
 
     def clean_albumin_creatinine_ratio(self):
         albumin_creatinine_ratio = self.cleaned_data["albumin_creatinine_ratio"]
@@ -419,6 +423,8 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Urinary Albumin Level (ACR) out of range. Cannot be above 50"
                 )
+        
+        return albumin_creatinine_ratio
 
     def clean_total_cholesterol(self):
         total_cholesterol = self.cleaned_data["total_cholesterol"]
@@ -432,6 +438,8 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Total Cholesterol Level (mmol/l) out of range. Cannot be above 12"
                 )
+        
+        return total_cholesterol
 
     """
     Custom clean methods for all fields requiring dates
