@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 
 # Django imports
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 
 from project.constants.colors import *
@@ -335,27 +335,20 @@ def get_map_chart_partial(request):
 
 
 @login_and_otp_required()
-def get_colored_figures_chart_partial(
+def get_progress_bar_chart_partial(
     request,
-    colored: int,
-    total_figures: int,
 ):
     try:
 
         if not request.htmx:
             return HttpResponseBadRequest("This view is only accessible via HTMX")
+        
+        
 
-        # Get a list of booleans to determine which figures are colored (to iterate easily in the
-        # template)
-        is_colored = [True if i < colored else False for i in range(total_figures)]
+        values = request.GET
+        print(f'PROGRESS BAR: {values}')
 
-        return render(
-            request,
-            "dashboard/colored_figures_chart_partial.html",
-            context={
-                "is_colored": is_colored,
-            },
-        )
+        return HttpResponse(f'{values}')
     except Exception as e:
         logger.error("Error generating colored figures chart", exc_info=True)
         return render(

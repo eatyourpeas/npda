@@ -123,9 +123,9 @@ urlpatterns = [
         name="get_map_chart_partial",
     ),
     path(
-        "get_colored_figures_chart_partial/<int:colored>/<int:total_figures>",
-        view=get_colored_figures_chart_partial,
-        name="get_colored_figures_chart_partial",
+        "get_progress_bar_chart_partial",
+        view=get_progress_bar_chart_partial,
+        name="get_progress_bar_chart_partial",
     ),
     path(
         "get_simple_bar_chart_pcts_partial",
