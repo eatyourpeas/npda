@@ -22,6 +22,7 @@ import pytest
 # 3rd party imports
 from django.urls import reverse
 from django.utils import timezone
+from django.apps import apps
 
 from project.constants.user import RCPCH_AUDIT_TEAM
 
@@ -162,6 +163,8 @@ def test_submission_moves_when_patient_transfers(
 ):
     """Test that a patient is removed from the old submission and added to the new submission when they transfer."""
 
+    Transfer = apps.get_model("npda.Transfer")
+
     # Get Alder Hey user from fixture
     ah_user = NPDAUser.objects.filter(
         organisation_employers__pz_code=ALDER_HEY_PZ_CODE
@@ -197,8 +200,10 @@ def test_submission_moves_when_patient_transfers(
 
     patient.transfer.date_leaving_service = date.today()
     patient.transfer.reason_leaving_service = 1
-    patient.transfer.previous_pz_code = ALDER_HEY_PZ_CODE
-    patient.transfer.paediatric_diabetes_unit = gosh_pdu
+
+    Transfer.objects.create(
+        patient=patient, transfer_date=date.today(), paediatric_diabetes_unit=gosh_pdu
+    )
 
     patient.transfer.save()
 

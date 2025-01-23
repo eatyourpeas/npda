@@ -22,7 +22,6 @@ urlpatterns = [
     path("view_preference", view=view_preference, name="view_preference"),
     path("audit-year", view=audit_year, name="audit-year"),
     path("upload_csv", view=upload_csv, name="upload_csv"),
-    
     # Submission views
     path(
         "submissions",
@@ -45,6 +44,11 @@ urlpatterns = [
         "patient/<int:pk>/delete",
         PatientDeleteView.as_view(),
         name="patient-delete",
+    ),
+    path(
+        "patient/<int:pk>/patient_transfer",
+        view=patient_transfer,
+        name="patient_transfer",
     ),
     # Visit views
     path(

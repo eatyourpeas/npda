@@ -42,3 +42,10 @@ input[type="radio"]:checked {
   opacity: 1;
   transition: opacity 500ms ease-out;
 }
+
+.modal {
+  display: none;
+}
+.modal.show {
+  display: block;
+}

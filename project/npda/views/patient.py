@@ -20,9 +20,7 @@ from django.urls import reverse_lazy
 # Third party imports
 
 
-from project.npda.general_functions import (
-    organisations_adapter
-)
+from project.npda.general_functions import organisations_adapter
 from project.npda.general_functions.quarter_for_date import (
     retrieve_quarter_for_date,
 )
@@ -354,3 +352,8 @@ class PatientDeleteView(
     model = Patient
     success_message = "Child removed from database"
     success_url = reverse_lazy("patients")
+
+
+def patient_transfer(request, patient_id):
+    print("Patient transfer {}".format(patient_id))
+    return HttpResponse("Patient transfer")
