@@ -206,19 +206,33 @@ def errors_for_category(selected_category, errors_by_field):
 
 
 @register.filter
-def category_has_errors(category, errors_by_field):
-    if errors_by_field is None:
-        return False
+def category_has_errors(category, form):
+    category_fields = []
 
-    # Lazy implementation but performance doesn't matter here
-    return bool(errors_for_category(category, errors_by_field))
+    for visit_category, fields in VISIT_FIELDS:
+        if visit_category.value == category:
+            category_fields += fields
+    
+    # Errors can be either:
+    #  - On the bound form field after submitting the questionnaire
+    for field in form:
+        if field.name in category_fields and field.errors:
+            return True
+    
+    #  - On the instance itself after a CSV upload
+    if form.instance.errors:
+        for field in form.instance.errors.keys():
+            if field in category_fields:
+                return True
+    
+    return False
 
 
 # The alternative of creating a new nested data structure was quite a big refactor
 # so I've gone with this simple but hacky version
 @register.filter
-def categories_have_errors(categories_by_comma, errors_by_field):
-    return any([category_has_errors(category, errors_by_field) for category in categories_by_comma.split(",")])
+def categories_have_errors(categories_by_comma, form):
+    return any([category_has_errors(category, form) for category in categories_by_comma.split(",")])
 
 
 @register.simple_tag
