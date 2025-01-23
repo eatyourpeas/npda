@@ -338,17 +338,105 @@ def get_map_chart_partial(request):
 def get_progress_bar_chart_partial(
     request,
 ):
+    """Expects request.GET to contain obj as this struct:
+    {
+        'attr_1': {
+            "count":int,
+            "total":int,
+            "pct":int,
+            "label":str
+        },
+        'attr_2": ...
+    }
+    """
     try:
 
         if not request.htmx:
             return HttpResponseBadRequest("This view is only accessible via HTMX")
-        
-        
 
-        values = request.GET
-        print(f'PROGRESS BAR: {values}')
+        values = {}
+        # Django Query dict makes vals a list so need to extact first val
+        for attr, vals in request.GET.items():
+            values[attr] = json.loads(vals)
 
-        return HttpResponse(f'{values}')
+        # Create horizontal bar chart with percentages (looking like progress bar)
+        fig = go.Figure()
+
+        # Prepare data for the chart
+        labels = [values[attr]["label"] for attr in values]
+        percentages = [values[attr]["pct"] for attr in values]
+        counts = [f"{values[attr]['count']} / {values[attr]['total']}" for attr in values]
+
+        # Add background bars (grey) representing 100% width
+        fig.add_trace(
+            go.Bar(
+                x=[100] * len(values),
+                y=labels,
+                orientation="h",
+                marker=dict(color="lightgrey"),
+                showlegend=False,
+                hoverinfo="none",
+                name="Background",
+            )
+        )
+
+        # Add actual data bars (blue)
+        fig.add_trace(
+            go.Bar(
+                x=percentages,
+                y=labels,
+                orientation="h",
+                marker=dict(color=RCPCH_DARK_BLUE),
+                text=counts,
+                textposition="inside",
+                insidetextanchor="end",
+                name="Progress",
+            )
+        )
+
+        # Add text annotations above each bar
+        for i, label in enumerate(labels):
+            fig.add_annotation(
+                x=0,  # Start of the bar
+                y=i,
+                text=label,
+                showarrow=False,
+                xanchor="left",
+                yanchor="bottom",
+                font=dict(size=14, color="black"),
+                align="left",
+                yshift=30,  # Shift the text upwards for readability
+            )
+
+        # Update layout for nicer aesthet
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=0, b=0),
+            xaxis=dict(visible=False),  # Hide x-axis
+            yaxis=dict(
+                title="",  # Remove axis title
+                showgrid=False,  # Remove grid
+                showticklabels=False,  # Hide y-axis labels
+            ),
+            barmode="overlay",  # Ensure bars overlap properly
+            plot_bgcolor="white",  # White background for clean visuals
+            showlegend=False,  # Hide legend
+            bargap=0.4,  # Increase space between bars
+        )
+
+        chart_html = fig.to_html(
+            full_html=False,
+            include_plotlyjs=False,
+            config={
+                "displayModeBar": False,
+            },
+            default_height=DEFAULT_CHART_HTML_HEIGHT,
+        )
+
+        return render(
+            request,
+            "dashboard/progress_bar_chart_partial.html",
+            {"chart_html": chart_html},
+        )
     except Exception as e:
         logger.error("Error generating colored figures chart", exc_info=True)
         return render(
