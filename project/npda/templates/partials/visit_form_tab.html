@@ -4,7 +4,7 @@
   name="visit_tab"
   role="tab"
   class="basis-full md:basis-1/3 tab font-bold mb-2 text-black border-b-4 hover:border-b-rcpch_pink border-b-rcpch_light_blue_tint3 border-solid border-0 bg-rcpch_light_blue"
-  aria-label="{{label}} {% if categories|categories_have_errors:visit_instance.errors %} ❗ {% endif %}"
+  aria-label="{{label}} {% if categories|categories_have_errors:form %} ❗ {% endif %}"
   {% if checked %} checked {% endif %}
 />
 <div role="tabpanel" class="tab-content order-1 basis-full rounded-none">
@@ -14,7 +14,7 @@
       {% for field_category in categories|split_by_comma %}
         <li class="inline-block p-2 font-mono bg-{{ field_category|colour_for_category }} hover:shadow-md hover:underline">
           <a href="#{{ field_category|cut:" " }}_anchor">
-            {% if field_category|category_has_errors:visit_instance.errors %}
+            {% if field_category|category_has_errors:form %}
               <span class="fa-stack text-rcpch_red">
                 <i class="fa-circle fa-stack-1x fas"></i>
                 <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
