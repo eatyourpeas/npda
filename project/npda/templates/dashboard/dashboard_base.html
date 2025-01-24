@@ -7,8 +7,8 @@
      hx-trigger="dashboard from:body"
      hx-swap="innerHTML">
   <div class="my-6">
-    <h1 class="text-5xl text-center">
-      PDU Dashboard for {{ pdu_lead_organisation.name }} ({{ pdu_object.pz_code }})
+    <h1 class="text-4xl text-center">
+      PDU Dashboard for {{ lead_organisation }} ({{ pdu_object.pz_code }})
     </h1>
     <p class="text-center text-gray-500 mt-2">
       Calculated at {{ kpi_calculations_object.calculation_datetime }}
@@ -20,38 +20,30 @@
     {% include 'dashboard/components/cards/pdu_card.html' %}
     <!-- Audit Details Card -->
     {% include 'dashboard/components/cards/audit_details_card.html' %}
-
     <div class="flex flex-col gap-3">
       <!-- HBa1c CARD -->
       {% include 'dashboard/components/cards/hba1c_card.html' %}
       <!-- ADMISSIONS CARD -->
       {% include 'dashboard/components/cards/admissions_card.html' %}
     </div>
-
-
   </div>
   <!-- UNIT REPORT -->
   <h1 class="text-5xl text-center my-6">Unit Report</h1>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-
     <!-- PATIENT CHARACTERISTICS CARD -->
     {% include 'dashboard/components/cards/patient_characteristics_card.html' %}
-
     <div class="flex flex-col gap-3">
       <!-- TREATMENT REGIMEN CARD -->
       {% include 'dashboard/components/cards/treatment_regimen_card.html' %}
       <!-- GLUCOSE MONITORING CARD -->
       {% include 'dashboard/components/cards/glucose_monitoring_card.html' %}
     </div>
-
     <div class="flex flex-col gap-3">
       <!-- Total Eligible Patients Card -->
       {% include 'dashboard/components/cards/total_eligible_patients_card.html' %}
       <!-- HCL CARD -->
       {% include 'dashboard/components/cards/hcl_use_card.html' %}
-
     </div>
-
   </div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
     <!-- HEALTH CHECKS COMPLETION RATE CARD -->
@@ -76,5 +68,5 @@
   <!-- PATIENT LEVEL REPORT -->
   <h1 class="text-5xl text-center my-6">Patient-Level Report</h1>
   <!-- SELECT TABS & TABLE -->
-  {% include 'dashboard/pt_level_report_table_partial.html' with text=default_pt_level_menu_text selected=default_pt_level_menu_tab_selected highlight=default_highlight table_data=default_table_data  %}
+  {% include 'dashboard/pt_level_report_table_partial.html' with text=default_pt_level_menu_text selected=default_pt_level_menu_tab_selected highlight=default_highlight table_data=default_table_data %}
 </div>

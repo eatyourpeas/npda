@@ -9,7 +9,7 @@ from project.npda.general_functions import (
     organisations_adapter,
     get_audit_period_for_date,
     get_current_audit_year,
-    SUPPORTED_AUDIT_YEARS
+    SUPPORTED_AUDIT_YEARS,
 )
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,7 @@ def create_session_object(user):
 
     session = {
         "pz_code": pz_code,
+        "lead_organisation": primary_organisation.paediatric_diabetes_unit.lead_organisation_name,
         "pdu_choices": list(pdu_choices),
         "can_upload_csv": can_upload_csv,
         "can_complete_questionnaire": can_complete_questionnaire,
