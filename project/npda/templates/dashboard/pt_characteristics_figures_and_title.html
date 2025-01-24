@@ -1,7 +1,5 @@
 <div class="flex flex-col mt-2">
-    <p class="rcpch_dark_blue text-sm">{{ kpi_label }}: {{ values.pct }}% ({{ values.count }} / {{ values.total }})</p>
     <div
-    class="py-2"
     hx-get="{% url 'get_progress_bar_chart_partial' %}"
     hx-vals="{{values}}"
     hx-trigger="load" hx-swap="innerHTML"

@@ -357,7 +357,15 @@ def get_progress_bar_chart_partial(
         values = {}
         # Django Query dict makes vals a list so need to extact first val
         for attr, vals in request.GET.items():
+            # Skip these
+            if attr in [
+                "kpi_8_total_deaths",
+            ]:
+                continue
+            
             values[attr] = json.loads(vals)
+
+        print(f"{values=}")
 
         # Create horizontal bar chart with percentages (looking like progress bar)
         fig = go.Figure()
@@ -380,6 +388,20 @@ def get_progress_bar_chart_partial(
             )
         )
 
+        # Add text annotations above each bar
+        for i, label in enumerate(labels):
+            fig.add_annotation(
+                x=0,  # Start of the bar
+                y=i,
+                text=f"{label} ({percentages[i]}%)",
+                showarrow=False,
+                xanchor="left",
+                yanchor="bottom",
+                font=dict(size=14, color="black"),
+                align="left",
+                yshift=30,  # Shift the text upwards for readability
+            )
+
         # Add actual data bars (blue)
         fig.add_trace(
             go.Bar(
@@ -393,20 +415,6 @@ def get_progress_bar_chart_partial(
                 name="Progress",
             )
         )
-
-        # Add text annotations above each bar
-        for i, label in enumerate(labels):
-            fig.add_annotation(
-                x=0,  # Start of the bar
-                y=i,
-                text=label,
-                showarrow=False,
-                xanchor="left",
-                yanchor="bottom",
-                font=dict(size=14, color="black"),
-                align="left",
-                yshift=30,  # Shift the text upwards for readability
-            )
 
         # Update layout for nicer aesthet
         fig.update_layout(
@@ -441,7 +449,7 @@ def get_progress_bar_chart_partial(
         logger.error("Error generating colored figures chart", exc_info=True)
         return render(
             request,
-            "dashboard/colored_figures_chart_partial.html",
+            "dashboard/progress_bar_chart_partial.html",
             {"error": "Something went wrong!"},
         )
 

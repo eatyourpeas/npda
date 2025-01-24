@@ -141,7 +141,7 @@ def dashboard(request):
             if attr_name in pt_characteristics_value_counts[category]:
                 pt_characteristics_value_counts[category][attr_name]["label"] = (
                     pt_char_attr_labels_map[attr_name]
-                )   
+                )
 
     # Get TreatmentRegimen / Glucose Monitoring
     tx_regimen_value_counts_pct = get_tx_regimen_value_counts_pcts(

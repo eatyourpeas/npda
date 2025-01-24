@@ -11,36 +11,26 @@
 {% else %}
 <div class="p-2 h-full flex flex-col justify-between">
     {% comment %} CARE {% endcomment %}
-    <div class="flex flex-col mb-4">
+    <div class="flex flex-col mb-1">
       <h4 class='font-bold'>Care</h4>
 
       {% include 'dashboard/pt_characteristics_figures_and_title.html' with values=charts.pt_characteristics_value_counts.data.care key='care' %}
 
-      {% comment %} {% include 'dashboard/pt_characteristics_figures_and_title.html' with kpi_label="Complete year of care" values=charts.pt_characteristics_value_counts.data.care.kpi_5_total_t1dm_complete_year %}
-
-      {% include 'dashboard/pt_characteristics_figures_and_title.html' with kpi_label="Aged 12+ with complete year of care" values=charts.pt_characteristics_value_counts.data.care.kpi_6_total_t1dm_complete_year_gte_12yo %} {% endcomment %}
-
     </div>
 
     {% comment %} DIED / TRANSITIONED {% endcomment %}
-    <div class="flex flex-col mb-4">
+    <div class="flex flex-col mb-1">
       <h4 class='font-bold'>Died or transitioned</h4>
 
-      {% comment %} {% include 'dashboard/pt_characteristics_figures_and_title.html' with kpi_label="Died" values=charts.pt_characteristics_value_counts.data.died_or_transitioned.kpi_8_total_deaths %}
-
-      {% include 'dashboard/pt_characteristics_figures_and_title.html' with kpi_label="Transitioned" values=charts.pt_characteristics_value_counts.data.died_or_transitioned.kpi_9_total_service_transitions %} {% endcomment %}
+      {% include 'dashboard/pt_characteristics_figures_and_title.html' with values=charts.pt_characteristics_value_counts.data.died_or_transitioned key='died_or_transitioned' %}
 
     </div>
 
     {% comment %} COMORBIDITY / TESTING {% endcomment %}
-    <div class="flex flex-col mb-4">
+    <div class="flex flex-col mb-1">
       <h4 class='font-bold'>Comorbidity & Testing</h4>
 
-      {% comment %} {% include 'dashboard/pt_characteristics_figures_and_title.html' with kpi_label="Coeliac disease" values=charts.pt_characteristics_value_counts.data.comorbidity_and_testing.kpi_10_total_coeliacs %}
-
-      {% include 'dashboard/pt_characteristics_figures_and_title.html' with kpi_label="Thyroid disease" values=charts.pt_characteristics_value_counts.data.comorbidity_and_testing.kpi_11_total_thyroids %}
-
-      {% include 'dashboard/pt_characteristics_figures_and_title.html' with kpi_label="Ketone testing" values=charts.pt_characteristics_value_counts.data.comorbidity_and_testing.kpi_12_total_ketone_test_equipment %} {% endcomment %}
+      {% include 'dashboard/pt_characteristics_figures_and_title.html' with values=charts.pt_characteristics_value_counts.data.comorbidity_and_testing key='comorbidity_and_testing' %}
 
     </div>
   </div>
