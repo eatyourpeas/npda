@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count, Case, When, Max, Q, F
-from django.forms import BaseForm, ValidationError
+from django.forms import BaseForm
 from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -20,9 +20,7 @@ from django.urls import reverse_lazy
 # Third party imports
 import nhs_number
 
-from project.npda.general_functions import (
-    organisations_adapter
-)
+from project.npda.general_functions import organisations_adapter
 from project.npda.general_functions.quarter_for_date import (
     retrieve_quarter_for_date,
 )
@@ -64,8 +62,8 @@ class PatientListView(
         # Check we are sorting by a fixed set of fields rather than the full Django __ notation
         if sort_by_param in ["nhs_number", "index_of_multiple_deprivation_quintile"]:
             sort_by = sort_by_param
-        
-        sort_by = f"-{sort_by}" if sort_param == "desc" else sort_by 
+
+        sort_by = f"-{sort_by}" if sort_param == "desc" else sort_by
 
         return sort_by
 
@@ -78,15 +76,17 @@ class PatientListView(
             submissions__submission_active=True,
             submissions__audit_year=self.request.session.get("selected_audit_year"),
         )
-        
+
         # filter by contents of the search bar
         search = self.request.GET.get("search-input")
         if search:
             search = nhs_number.standardise_format(search) or search
             filtered_patients &= Q(
-                Q(nhs_number__icontains=search) | Q(pk__icontains=search)
+                Q(nhs_number__icontains=search)
+                | Q(pk__icontains=search)
+                | Q(unique_identifier__icontains=search)
             )
-        
+
         # filter patients to the view preference of the user
         if self.request.user.view_preference == 1:
             # PDU view
@@ -108,7 +108,9 @@ class PatientListView(
         if sort_by:
             patient_queryset = patient_queryset.order_by(sort_by)
         else:
-            patient_queryset = patient_queryset.order_by("is_valid", "-visit_error_count")            
+            patient_queryset = patient_queryset.order_by(
+                "is_valid", "-visit_error_count"
+            )
 
         return patient_queryset
 
@@ -139,20 +141,20 @@ class PatientListView(
                 patient.latest_quarter = retrieve_quarter_for_date(
                     patient.most_recent_visit_date
                 )
-            
+
             # Highlight the separation between patients with errors and those without
             # unless we are sorting by a particular field in which case errors appear mixed
             if not context["sort_by"]:
                 if not patient.is_valid or patient.visit_error_count > 0:
                     if error_count_in_page == 0:
                         patient.is_first_error = True
-                    
+
                     error_count_in_page += 1
 
                 if patient.is_valid and patient.visit_error_count == 0:
                     if valid_count_in_page == 0:
                         patient.is_first_valid = True
-                    
+
                     valid_count_in_page += 1
 
         context["error_count_in_page"] = error_count_in_page
@@ -162,9 +164,11 @@ class PatientListView(
 
     def get(self, request, *args: str, **kwargs) -> HttpResponse:
         response = super().get(request, *args, **kwargs)
-        
+
         if request.htmx:
-            return render(request, "partials/patient_table.html", context=self.get_context_data())
+            return render(
+                request, "partials/patient_table.html", context=self.get_context_data()
+            )
 
         return response
 

@@ -44,7 +44,21 @@ class Patient(models.Model):
     """
 
     nhs_number = CharField(  # the NHS number for England and Wales
-        "NHS Number", unique=False, validators=[validate_nhs_number]
+        "NHS Number",
+        unique=False,
+        validators=[validate_nhs_number],
+        null=True,
+        blank=True,
+        help_text="This is a unique reference number for Jersey patients. It is used to identify the patient in the audit.",
+    )
+
+    unique_reference_number = CharField(
+        "Unique Reference Number",
+        max_length=50,
+        unique=False,
+        blank=True,
+        null=True,
+        help_text="This is the NHS number for England and Wales. It is used to identify the patient in the audit.",
     )
 
     sex = models.IntegerField("Stated gender", choices=SEX_TYPE, blank=True, null=True)
@@ -124,6 +138,7 @@ class Patient(models.Model):
         ordering = (
             "pk",
             "nhs_number",
+            "unique_reference_number",
         )
         permissions = [
             CAN_LOCK_CHILD_PATIENT_DATA_FROM_EDITING,
