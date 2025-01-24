@@ -82,6 +82,7 @@ def get_new_session_fields(user, pz_code):
     ret = {}
 
     Submission = apps.get_model("npda", "Submission")
+    PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
     can_upload_csv = True
     can_complete_questionnaire = True
 
@@ -127,6 +128,9 @@ def get_new_session_fields(user, pz_code):
                 can_complete_questionnaire = True
 
         ret["pz_code"] = pz_code
+        ret["lead_organisation"] = PaediatricDiabetesUnit.objects.get(
+            pz_code=pz_code
+        ).lead_organisation_name
         ret["pdu_choices"] = list(
             organisations_adapter.paediatric_diabetes_units_to_populate_select_field(
                 requesting_user=user, user_instance=None
