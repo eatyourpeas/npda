@@ -1,15 +1,22 @@
-CSV_HEADINGS = (
-    # patient
+UNIQUE_IDENTIFIER_ENGLAND = (
     {
         "heading": "NHS Number",
         "model_field": "nhs_number",
         "model": "Patient",
     },
+)
+
+UNIQUE_IDENTIFIER_JERSEY = (
     {
         "heading": "Unique Reference Number",
         "model_field": "unique_reference_number",
         "model": "Patient",
     },
+)
+
+
+CSV_HEADING_OBJECTS = (
+    # patient
     {
         "heading": "Date of Birth",
         "model_field": "date_of_birth",
@@ -261,7 +268,7 @@ CSV_HEADINGS = (
     },
 )
 
-HEADINGS_LIST = [item["heading"] for item in CSV_HEADINGS]
+# HEADINGS_LIST = [item["heading"] for item in CSV_HEADINGS]
 
 ALL_DATES = [
     "Date of Birth",
@@ -361,7 +368,6 @@ CSV_DATA_TYPES_MINUS_DATES = {
 }
 
 NONNULL_FIELDS = [
-    "NHS Number",
     "Date of Birth",
     "Diabetes Type",
     "PDU Number",

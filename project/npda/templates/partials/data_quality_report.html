@@ -49,7 +49,7 @@
             {% for individual_error in error_list %}
               <tr>
                 <td class="px-6 py-4">{{ row_number }}</td>
-                <td class="px-6 py-4">{{ field|heading_for_field }}</td>
+                <td class="px-6 py-4">{% heading_for_field pz_code field %}</td>
                 <td class="px-6 py-4">{{ individual_error|join_with_comma }}</td>
               </tr>
             {% endfor %}

@@ -6,7 +6,9 @@ from ...constants import (
     VisitCategories,
     VISIT_FIELD_FLAT_LIST,
     VISIT_FIELDS,
-    CSV_HEADINGS,
+    CSV_HEADING_OBJECTS,
+    UNIQUE_IDENTIFIER_ENGLAND,
+    UNIQUE_IDENTIFIER_JERSEY,
 )
 from datetime import date
 
@@ -66,11 +68,19 @@ def colour_for_category(category):
     return None
 
 
-@register.filter
-def heading_for_field(field):
+@register.simple_tag
+def heading_for_field(pz_code, field):
     """
     Returns the heading for a given field
     """
+    if pz_code == "PZ248":
+        # Jersey
+        CSV_HEADINGS = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_JERSEY
+    else:
+        # England
+        CSV_HEADINGS = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_ENGLAND
+
+    CSV_HEADINGS = [item["heading"] for item in CSV_HEADINGS]
     for item in CSV_HEADINGS:
         if field == item["model_field"]:
             return item["heading"]

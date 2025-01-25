@@ -1,26 +1,33 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="w-full flex flex-col justify-center items-center min-h-fit">
-  <div class="container flex flex-col justify-center items-center my-20">
-    <div class="w-6/12 mb-12">
-      <div role="alert" class="alert border-t-1 border-blue-400 shadow-lg">
-        <i class="fa-2xl fa-file-csv fa-solid"></i>
-        <div>
-          <h3 class="font-bold">Template - Audit Template (.csv)</h3>
-          <div class="text-xs">
-            Our upload facility is built for .csv files with a specific structure. It is heavily encouraged to use our .csv file as a template.
+  <div class="w-full flex flex-col justify-center items-center min-h-fit">
+    <div class="container flex flex-col justify-center items-center my-20">
+      <div class="w-6/12 mb-12">
+        <div role="alert" class="alert border-t-1 border-blue-400 shadow-lg">
+          <i class="fa-2xl fa-file-csv fa-solid"></i>
+          <div>
+            <h3 class="font-bold">Template - Audit Template (.csv)</h3>
+            <div class="text-xs">
+              Our upload facility is built for .csv files with a specific structure. It is heavily encouraged to use our .csv file as a template.
+            </div>
+          </div>
+          <div class="tooltip"
+               data-tip="To avoid unpredictable results, specific columns are expected in all uploaded .csv files. To keep it simple - we recommend populating our template file before uploading it.">
+            <button class="btn btn-sm">
+              Why?<i class="fa-circle-question fa-solid"></i>
+            </button>
           </div>
         </div>
-        <div class="tooltip"
-             data-tip="To avoid unpredictable results, specific columns are expected in all uploaded .csv files. To keep it simple - we recommend populating our template file before uploading it.">
-          <button class="btn btn-sm">
-            Why?<i class="fa-circle-question fa-solid"></i>
-          </button>
+        {% if pz_code == 'PZ248' %}
+          <a href="{% url 'download_template' region="jersey" %}"
+             download="npda_base.csv"
+             class="bg-rcpch_light_blue border-rcpch_light_blue btn w-full text-lg text-white focus:bg-rcpch_pink hover:bg-rcpch_dark_blue"><i class="fa-file-arrow-down fa-solid"></i> Download Jersey NPDA CSV template</a>
+        {% else %}
+          <a href="{% url 'download_template' region="england_wales" %}"
+             download="npda_base.csv"
+             class="bg-rcpch_light_blue border-rcpch_light_blue btn w-full text-lg text-white focus:bg-rcpch_pink hover:bg-rcpch_dark_blue"><i class="fa-file-arrow-down fa-solid"></i> Download England/Wales NPDA CSV template</a>
         </div>
-      </div>
-      <a href="{% url 'download_template' %}"
-         download="npda_base.csv"
-         class="bg-rcpch_light_blue border-rcpch_light_blue btn w-full text-lg text-white focus:bg-rcpch_pink hover:bg-rcpch_dark_blue"><i class="fa-file-arrow-down fa-solid"></i> Download NPDA CSV template</a>
+      {% endif %}
     </div>
     <form method="post"
           enctype="multipart/form-data"

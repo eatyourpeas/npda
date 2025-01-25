@@ -14,8 +14,9 @@ import numpy as np
 from project.constants import (
     ALL_DATES,
     CSV_DATA_TYPES_MINUS_DATES,
-    CSV_HEADINGS,
-    HEADINGS_LIST,
+    UNIQUE_IDENTIFIER_ENGLAND,
+    UNIQUE_IDENTIFIER_JERSEY,
+    CSV_HEADING_OBJECTS,
 )
 
 # Logging setup
@@ -31,7 +32,7 @@ class ParsedCSVFile:
     parse_type_error_columns: list[str]
 
 
-def csv_parse(csv_file):
+def csv_parse(csv_file, is_jersey=False):
     """
     Read the csv file and return a pandas dataframe
     Assigns the correct data types to the columns
@@ -43,6 +44,14 @@ def csv_parse(csv_file):
     # If it does not, we will use the predefined column names
     # If it does, we will use the column names in the csv file
     # The exception is if the first row of the csv file does not match any of the predefined column names, in which case we will reject the csv
+
+    # Define the column names to be used in the csv file: the unique identifier in Jersy is different from the one in England
+    if is_jersey:
+        HEADINGS_LIST = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_JERSEY
+    else:
+        HEADINGS_LIST = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_ENGLAND
+
+    HEADINGS_LIST = [item["heading"] for item in HEADINGS_LIST]
 
     # Convert the predefined column names to lowercase
     lowercase_headings_list = [heading.lower() for heading in HEADINGS_LIST]

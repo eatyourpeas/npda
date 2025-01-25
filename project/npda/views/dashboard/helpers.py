@@ -851,7 +851,12 @@ def get_pt_level_table_data(
             # querysets for each kpi -> if not in either, must mean they are ineligible (therefore None)
             data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
             # Additional values we can calculate now
-            data[pt.pk]["nhs_number"] = pt.nhs_number
+            if pt.nhs_number:
+                data[pt.pk]["nhs_number"] = pt.nhs_number
+            if pt.unique_reference_number:
+                data[pt.pk]["nhs_number"] = pt.unique_reference_number
+            else:
+                data[pt.pk]["nhs_number"] = "Unknown"
 
         # For each kpi, update the data dict with the pts that have passed and failed
         for kpi_attr_name in kpi_attr_names:
@@ -867,6 +872,7 @@ def get_pt_level_table_data(
                 data[pt.pk][kpi_attr_name] = False
 
         # Finally add the headers. Need to add nhs_number
+
         headers = ["nhs_number"] + kpi_attr_names
         return headers, data
 

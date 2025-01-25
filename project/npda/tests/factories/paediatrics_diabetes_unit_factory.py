@@ -40,7 +40,7 @@ class PaediatricsDiabetesUnitFactory(factory.django.DjangoModelFactory):
             "lead_organisation_ods_code", CHELWEST_ODS_CODE
         )
 
-        # NOTE: filtered only on pz_code as this is the most important 
+        # NOTE: filtered only on pz_code as this is the most important
         # attribute. The ods_code could be 'error' or different within
         # same pz_code, so adds complexity.
         pdus = PaediatricDiabetesUnit.objects.filter(pz_code=pz_code)
