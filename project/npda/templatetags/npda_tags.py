@@ -167,7 +167,7 @@ def error_for_field(errors_by_field, field):
 def errors_for_form_field(errors_by_field, field):
     if field.errors:
         return field.errors
-    
+
     if errors_by_field and field.name in errors_by_field:
         return [error["message"] for error in errors_by_field[field.name]]
 
@@ -218,7 +218,12 @@ def category_has_errors(category, errors_by_field):
 # so I've gone with this simple but hacky version
 @register.filter
 def categories_have_errors(categories_by_comma, errors_by_field):
-    return any([category_has_errors(category, errors_by_field) for category in categories_by_comma.split(",")])
+    return any(
+        [
+            category_has_errors(category, errors_by_field)
+            for category in categories_by_comma.split(",")
+        ]
+    )
 
 
 @register.simple_tag
@@ -277,18 +282,46 @@ def extract_digits(value, underscore_index=0):
         return int(matches[underscore_index])
     return 0
 
+
 @register.filter
-def get_item(dictionary:dict, key:str):
+def get_item(dictionary: dict, key: str):
     """Get a value using a variable from a dictionary"""
-    return dictionary.get(key, '')
+    return dictionary.get(key, "")
+
 
 @register.simple_tag
 def docs_url():
     return settings.DOCS_URL
 
+
 @register.filter
 def format_nhs_number(nhs_number):
     if nhs_number and len(nhs_number) >= 10:
         return f"{nhs_number[:3]} {nhs_number[3:6]} {nhs_number[6:]}"
-    
+
     return nhs_number
+
+
+@register.simple_tag
+def jersify(pz_code, field):
+    """
+    Tests to see if this field is rendered in a form with patients from Jersey
+    If so will return unique reference number otherwise will return nhs number
+    """
+    if pz_code == "PZ248":
+        # Jersey
+        if (
+            field.id_for_label == "id_unique_reference_number"
+            or field.id_for_label != "id_nhs_number"
+        ):
+            return True
+        else:
+            return False
+    else:
+        if (
+            field.id_for_label == "id_nhs_number"
+            or field.id_for_label != "id_unique_reference_number"
+        ):
+            return True
+        else:
+            return False

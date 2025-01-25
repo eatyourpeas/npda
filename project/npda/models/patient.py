@@ -49,7 +49,7 @@ class Patient(models.Model):
         validators=[validate_nhs_number],
         null=True,
         blank=True,
-        help_text="This is a unique reference number for Jersey patients. It is used to identify the patient in the audit.",
+        help_text="This is the NHS number for England and Wales. It is used to identify the patient in the audit.",
     )
 
     unique_reference_number = CharField(
@@ -58,7 +58,7 @@ class Patient(models.Model):
         unique=False,
         blank=True,
         null=True,
-        help_text="This is the NHS number for England and Wales. It is used to identify the patient in the audit.",
+        help_text="This is a unique reference number for Jersey patients. It is used to identify the patient in the audit.",
     )
 
     sex = models.IntegerField("Stated gender", choices=SEX_TYPE, blank=True, null=True)
