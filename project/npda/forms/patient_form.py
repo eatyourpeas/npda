@@ -13,7 +13,6 @@ from django import forms
 # django imports
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from httpx import HTTPError
 
 from ...constants.styles.form_styles import *
 from ..models import Patient
@@ -40,6 +39,13 @@ class NHSNumberField(forms.CharField):
             raise ValidationError("Invalid NHS number")
 
 
+class UniqueReferenceNumberField(forms.CharField):
+
+    def validate(self, value):
+        if value and not value.isdigit():
+            raise ValidationError("Invalid Unique Reference Number")
+
+
 class PostcodeField(forms.CharField):
     def to_python(self, value):
         postcode = super().to_python(value)
@@ -54,6 +60,7 @@ class PatientForm(forms.ModelForm):
         model = Patient
         fields = [
             "nhs_number",
+            "unique_reference_number",
             "sex",
             "date_of_birth",
             "postcode",
@@ -66,11 +73,15 @@ class PatientForm(forms.ModelForm):
         ]
         field_classes = {
             "nhs_number": NHSNumberField,
+            "unique_reference_number": UniqueReferenceNumberField,
             "postcode": PostcodeField,
             "gp_practice_postcode": PostcodeField,
         }
         widgets = {
             "nhs_number": forms.TextInput(
+                attrs={"class": TEXT_INPUT},
+            ),
+            "unique_reference_number": forms.TextInput(
                 attrs={"class": TEXT_INPUT},
             ),
             "sex": forms.Select(),

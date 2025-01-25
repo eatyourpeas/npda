@@ -14,9 +14,10 @@
             </div>
             <div class="divider divider-horizontal after:bg-rcpch_strong_blue_light_tint1 before:bg-rcpch_strong_blue_light_tint3 hidden lg:flex">
             </div>
+            <div></div>
             <input type="text"
                    class="text-center placeholder-gray-300 focus:bg-rcpch_strong_blue_light_tint2 hover:bg-rcpch_strong_blue_light_tint2 focus:placeholder-gray-500 p-2 m-2 text-wrap w-full"
-                   placeholder="Enter an NHS number..."
+                   {% if pz_code == 'PZ248' %} placeholder="Enter a Unique Reference Number or NPDA ID..." {% else %} placeholder="Enter an NHS number or NPDA ID..." {% endif %}
                    id="search-input"
                    name="search-input"
                    hx-get="{% url 'patients' %}"
@@ -43,18 +44,16 @@
             <div class="divider divider-horizontal after:bg-rcpch_strong_blue_light_tint1 before:bg-rcpch_strong_blue_light_tint3 hidden lg:flex">
             </div>
             {% if perms.npda.add_patient %}
-                <a href="{% url 'patient-add' %}"
-                  class="btn btn-info h-auto w-full md:w-auto {% if not can_alter_this_audit_year_submission %} btn-disabled {% endif %}">
-                  <i class="fa-solid fa-person-circle-plus"></i>
-                  Add patient
-                </a>
+              <a href="{% url 'patient-add' %}"
+                 class="btn btn-info h-auto w-full md:w-auto {% if not can_alter_this_audit_year_submission %}btn-disabled{% endif %}">
+                <i class="fa-solid fa-person-circle-plus"></i>
+                Add patient
+              </a>
             {% endif %}
           </label>
         </label>
       </div>
-      <div id="patient_table">
-        {% include 'partials/patient_table.html' %}
-      </div>
+      <div id="patient_table">{% include 'partials/patient_table.html' %}</div>
     </div>
   </div>
 {% endblock %}
