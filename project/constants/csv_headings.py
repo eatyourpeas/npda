@@ -334,8 +334,13 @@ ALL_VISIT_DATES = [
     ("hospital_discharge_date", "Discharge date (Hospital provider spell)"),
 ]
 
-CSV_DATA_TYPES_MINUS_DATES = {
+JERSEY_CSV_DATA_TYPES = {"Unique Reference Number": "string"}
+
+ENGLAND_CSV_DATA_TYPES = {
     "NHS Number": "string",
+}
+
+CSV_DATA_TYPES_MINUS_DATES = {
     "Postcode of usual address": "string",
     "Stated gender": "Int8",
     "Ethnic Category": "string",  # choices are all capital letters
