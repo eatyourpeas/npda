@@ -71,7 +71,7 @@ class SubmissionsListView(
             "-submission_active",
             "-submission_date",
         )
-        
+
         return final
 
     def get_context_data(self, **kwargs: Any) -> dict:
@@ -91,7 +91,10 @@ class SubmissionsListView(
         ).first()  # there can be only one of these
         if requested_active_submission:
             # If a submission exists and it was created by uploading a csv, summarize the csv data
-            if self.request.session.get("can_upload_csv"):
+            if (
+                self.request.session.get("can_upload_csv")
+                and requested_active_submission.csv_file
+            ):
                 # check if the user has permission to upload csv (not this function is not available in this brance but is in live)
                 parsed_csv = csv_parse(requested_active_submission.csv_file)
                 if requested_active_submission.errors:
@@ -189,6 +192,7 @@ class SubmissionsListView(
         :return: The response
         """
         return super().render_to_response(context)
+
 
 @login_and_otp_required()
 def upload_csv(request):
