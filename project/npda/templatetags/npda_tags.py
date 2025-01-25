@@ -358,3 +358,16 @@ def nhs_number_vs_urn(pz_code, patient=None):
                 return f"{patient.nhs_number[:3]} {patient.nhs_number[3:6]} {patient.nhs_number[6:]}"
             return patient.nhs_number
         return "NHS Number"
+
+
+@register.simple_tag
+def jersify_errors_for_unique_patient_identifier(
+    pz_code, nhs_number_errors, unique_reference_number_errors
+):
+    """
+    Visit errors depending on whether the patient is from Jersey or not
+    """
+    if pz_code == "PZ248":
+        return unique_reference_number_errors
+    else:
+        return nhs_number_errors

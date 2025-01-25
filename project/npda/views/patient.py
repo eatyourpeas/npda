@@ -60,7 +60,11 @@ class PatientListView(
         sort_by = None
 
         # Check we are sorting by a fixed set of fields rather than the full Django __ notation
-        if sort_by_param in ["nhs_number", "index_of_multiple_deprivation_quintile"]:
+        if sort_by_param in [
+            "nhs_number",
+            "unique_reference_number",
+            "index_of_multiple_deprivation_quintile",
+        ]:
             sort_by = sort_by_param
 
         sort_by = f"-{sort_by}" if sort_param == "desc" else sort_by
@@ -82,9 +86,11 @@ class PatientListView(
         if search:
             search = nhs_number.standardise_format(search) or search
             filtered_patients &= Q(
-                Q(nhs_number__icontains=search)
+                (
+                    Q(nhs_number__icontains=search)
+                    | Q(unique_reference_number__icontains=search)
+                )
                 | Q(pk__icontains=search)
-                | Q(unique_identifier__icontains=search)
             )
 
         # filter patients to the view preference of the user
