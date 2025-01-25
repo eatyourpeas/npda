@@ -177,29 +177,9 @@ class VisitUpdateView(
             "Sick Day Rules",
             "Immunisation (flu)",
         ]
-        categories_with_errors = []
-        categories_without_errors = []
-        routine_measurements_categories_with_errors = []
-        annual_review_categories_with_errors = []
-        for category in visit_categories:
-            if category["has_error"] == False:
-                categories_without_errors.append(category["category"])
-            else:
-                categories_with_errors.append(category["category"])
-                if category["category"] in context["routine_measurements_categories"]:
-                    routine_measurements_categories_with_errors.append(
-                        category["category"]
-                    )
-                elif category["category"] in context["annual_review_categories"]:
-                    annual_review_categories_with_errors.append(category["category"])
-        context["routine_measurements_categories_with_errors"] = (
-            routine_measurements_categories_with_errors
-        )
-        context["annual_review_categories_with_errors"] = (
-            annual_review_categories_with_errors
-        )
-        context["categories_with_errors"] = categories_with_errors
-        context["categories_without_errors"] = categories_without_errors
+        context["categories_with_errors"] = [
+            category["category"] for category in visit_categories if category["has_error"]
+        ]
 
         return context
 

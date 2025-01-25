@@ -3,7 +3,6 @@ import itertools
 import logging
 from django import template, forms
 from django.conf import settings
-from ..general_functions import get_visit_category_for_field
 from ...constants import (
     VisitCategories,
     VISIT_FIELD_FLAT_LIST,
@@ -34,19 +33,6 @@ def is_in(url_name, args):
 
 
 class_re = re.compile(r'(?<=class=["\'])(.*)(?=["\'])')
-
-
-@register.filter
-def match_category(value):
-    """
-    matches a category to a field in the visit form
-    """
-    field_name = value.name
-    visit_category = get_visit_category_for_field(field_name=field_name)
-    if visit_category:
-        return visit_category.value
-    else:
-        return None
 
 
 @register.filter
@@ -81,30 +67,6 @@ def colour_for_category(category):
         if colour["category"].value == category:
             return colour["colour"]
     return None
-
-
-@register.simple_tag
-def category_for_first_item(form, field, index):
-    """
-    Return categories only for those first fields in the category
-    """
-    if index < 3:
-        if index == 2:
-            current_visit_category = get_visit_category_for_field(field_name=field.name)
-            return current_visit_category.value
-        return ""
-
-    current_visit_category = get_visit_category_for_field(field_name=field.name)
-    if field.name == "visit_date":
-        return ""
-
-    previous_field = list(form)[index - 2]
-    previous_visit_category = get_visit_category_for_field(field_name=previous_field.name)
-
-    if current_visit_category == previous_visit_category:
-        return ""
-    else:
-        return current_visit_category.value
 
 
 @register.filter
@@ -142,27 +104,16 @@ def centile_sds(field):
     return centile, sds
 
 
-@register.simple_tag
-def is_not_excluded_centile_field(field):
-    exclude = [
-        "id_height_centile",
-        "id_height_sds",
-        "id_weight_centile",
-        "id_weight_sds",
-        "id_bmi_centile",
-        "id_bmi_sds",
-        "id_bmi",
-    ]
-    if field.id_for_label not in exclude:
-        return True
-    return False
-
-
 @register.filter
 def join_with_comma(value):
     if isinstance(value, list):
         return ", ".join(map(str, value))
     return value
+
+
+@register.filter
+def split_by_comma(value):
+    return value.split(",")
 
 
 @register.simple_tag
@@ -216,6 +167,17 @@ def error_for_field(errors_by_field, field):
 
 
 @register.filter
+def errors_for_form_field(errors_by_field, field):
+    if field.errors:
+        return field.errors
+    
+    if errors_by_field and field.name in errors_by_field:
+        return [error["message"] for error in errors_by_field[field.name]]
+
+    return []
+
+
+@register.filter
 def errors_for_category(selected_category, errors_by_field):
     """
     Returns all error messages for a given category
@@ -236,6 +198,36 @@ def errors_for_category(selected_category, errors_by_field):
 
     error_messages = [error["message"] for error in errors]
     return "\n".join(error_messages)
+
+
+@register.filter
+def category_has_errors(category, form):
+    category_fields = []
+
+    for visit_category, fields in VISIT_FIELDS:
+        if visit_category.value == category:
+            category_fields += fields
+    
+    # Errors can be either:
+    #  - On the bound form field after submitting the questionnaire
+    for field in form:
+        if field.name in category_fields and field.errors:
+            return True
+    
+    #  - On the instance itself after a CSV upload
+    if form.instance.errors:
+        for field in form.instance.errors.keys():
+            if field in category_fields:
+                return True
+    
+    return False
+
+
+# The alternative of creating a new nested data structure was quite a big refactor
+# so I've gone with this simple but hacky version
+@register.filter
+def categories_have_errors(categories_by_comma, form):
+    return any([category_has_errors(category, form) for category in categories_by_comma.split(",")])
 
 
 @register.simple_tag
