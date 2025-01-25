@@ -6,7 +6,7 @@
     <div class="overflow-x-auto">
       <div class="min-w-full inline-block px-10 py-2">
         <div class="w-full overflow-x-auto relative">
-          <strong>All {{ submission.audit_year }} Audit Visits for {{ patient.nhs_number }} (NPDA ID-{{ patient.pk }})</strong>
+          <strong>All {{ submission.audit_year }} Audit Visits for {% nhs_number_vs_urn pz_code patient %} (NPDA ID-{{ patient.pk }})</strong>
           {% if visits %}
             <table class="font-montserrat table-md w-full table mb-5 text-sm text-left text-gray-400 text-gray-500 rtl:text-right">
               <thead class="bg-rcpch_dark_blue text-xs text-white text-gray-700 uppercase bg-gray-50">
@@ -29,12 +29,12 @@
                                 {% if item.has_error %}
                                   <div class="-mt-20 tooltip tooltip-bottom visible text-center text-white hover:text-white"
                                        data-tip='{{ item.category|errors_for_category:visit.visit.errors|safe|linebreaksbr }}'>
-                                       {% if not visit.visit.is_valid %}
-                                        <span class="fa-stack text-rcpch_red">
-                                          <i class="fa-circle fa-stack-1x fas"></i>
-                                          <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                                        </span>
-                                      {% endif %}
+                                    {% if not visit.visit.is_valid %}
+                                      <span class="fa-stack text-rcpch_red">
+                                        <i class="fa-circle fa-stack-1x fas"></i>
+                                        <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                                      </span>
+                                    {% endif %}
                                     {{ item.category }}
                                   </div>
                                 {% else %}

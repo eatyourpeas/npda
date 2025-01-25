@@ -6,6 +6,11 @@ CSV_HEADINGS = (
         "model": "Patient",
     },
     {
+        "heading": "Unique Reference Number",
+        "model_field": "unique_reference_number",
+        "model": "Patient",
+    },
+    {
         "heading": "Date of Birth",
         "model_field": "date_of_birth",
         "model": "Patient",

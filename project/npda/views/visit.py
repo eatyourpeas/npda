@@ -104,6 +104,7 @@ class VisitCreateView(
         context = super().get_context_data(**kwargs)
         context["patient_id"] = self.kwargs["patient_id"]
         patient = Patient.objects.get(pk=self.kwargs["patient_id"])
+        context["patient"] = patient
         context["nhs_number"] = patient.nhs_number
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
@@ -151,6 +152,7 @@ class VisitUpdateView(
         context["visit_instance"] = visit_instance
         context["visit_errors"] = [visit_instance.errors]
         context["patient_id"] = self.kwargs["patient_id"]
+        context["patient"] = visit_instance.patient
         context["nhs_number"] = visit_instance.patient.nhs_number
         context["visit_id"] = self.kwargs["pk"]
         context["title"] = "Edit Visit Details"
@@ -178,7 +180,9 @@ class VisitUpdateView(
             "Immunisation (flu)",
         ]
         context["categories_with_errors"] = [
-            category["category"] for category in visit_categories if category["has_error"]
+            category["category"]
+            for category in visit_categories
+            if category["has_error"]
         ]
 
         return context

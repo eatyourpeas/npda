@@ -147,6 +147,8 @@ class Patient(models.Model):
         ]
 
     def __str__(self) -> str:
+        if self.unique_reference_number:
+            return f"ID: {self.pk}, {self.unique_reference_number}"
         return f"ID: {self.pk}, {self.nhs_number}"
 
     def get_absolute_url(self):

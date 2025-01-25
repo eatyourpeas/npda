@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from ...constants.styles import *
 from ...constants import *
 from ..general_functions.validate_dates import validate_date
-from ..forms.external_visit_validators import validate_visit_sync 
+from ..forms.external_visit_validators import validate_visit_sync
 from ..models import Visit
 
 
@@ -58,7 +58,7 @@ class VisitForm(forms.ModelForm):
             "hospital_discharge_date",
             "hospital_admission_reason",
             "dka_additional_therapies",
-            "hospital_admission_other"
+            "hospital_admission_other",
         ]
 
         widgets = {
@@ -101,7 +101,7 @@ class VisitForm(forms.ModelForm):
             "hospital_discharge_date": DateInput(),
             "hospital_admission_reason": forms.Select(),
             "dka_additional_therapies": forms.Select(),
-            "hospital_admission_other": forms.TextInput(attrs={"class": TEXT_INPUT})
+            "hospital_admission_other": forms.TextInput(attrs={"class": TEXT_INPUT}),
         }
 
     categories = [
@@ -393,7 +393,7 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Systolic Blood Pressure out of range. Cannot be above 240"
                 )
-        
+
         return systolic_blood_pressure
 
     def clean_diastolic_blood_pressure(self):
@@ -408,7 +408,7 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Diastolic Blood pressure out of range. Cannot be above 120"
                 )
-        
+
         return diastolic_blood_pressure
 
     def clean_albumin_creatinine_ratio(self):
@@ -423,7 +423,7 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Urinary Albumin Level (ACR) out of range. Cannot be above 50"
                 )
-        
+
         return albumin_creatinine_ratio
 
     def clean_total_cholesterol(self):
@@ -438,7 +438,7 @@ class VisitForm(forms.ModelForm):
                 raise ValidationError(
                     "Total Cholesterol Level (mmol/l) out of range. Cannot be above 12"
                 )
-        
+
         return total_cholesterol
 
     """
@@ -724,12 +724,12 @@ class VisitForm(forms.ModelForm):
         for [result_field, fields_to_attach_errors] in [
             ["height_result", ["height"]],
             ["weight_result", ["weight"]],
-            ["bmi_result", ["height", "weight"]]
+            ["bmi_result", ["height", "weight"]],
         ]:
             result = getattr(self.async_validation_results, result_field)
 
             if result and type(result) is ValidationError:
-                for field in fields_to_attach_errors: 
+                for field in fields_to_attach_errors:
                     self.add_error(field, result)
 
     def clean(self):
@@ -759,9 +759,9 @@ class VisitForm(forms.ModelForm):
                 observation_date=observation_date,
                 height=height,
                 weight=weight,
-                sex=sex
+                sex=sex,
             )
-        
+
         self.handle_async_validation_errors()
 
         # Check that the hba1c value is within the correct range
@@ -794,7 +794,7 @@ class VisitForm(forms.ModelForm):
 
     # Called when submitting the questionnaire. For CSV upload, instances are created directly in csv_upload to preserve
     # invalid data. Without overriding save here, the data from the dGC call would not be saved as the fields are not
-    # in the list at the top (that we expect to receive from a POST). 
+    # in the list at the top (that we expect to receive from a POST).
     def save(self, commit=True):
         instance = super().save(commit=False)
 
@@ -802,7 +802,9 @@ class VisitForm(forms.ModelForm):
             instance.bmi = self.async_validation_results.bmi
 
             for field_prefix in ["height", "weight", "bmi"]:
-                result = getattr(self.async_validation_results, f"{field_prefix}_result")
+                result = getattr(
+                    self.async_validation_results, f"{field_prefix}_result"
+                )
 
                 if result and not type(result) is ValidationError:
                     setattr(instance, f"{field_prefix}_centile", result.centile)
