@@ -28,6 +28,8 @@ class DateInput(forms.DateInput):
 
 class NHSNumberField(forms.CharField):
     def to_python(self, value):
+        if not value:
+            return value
         number = super().to_python(value)
         normalised = nhs_number.standardise_format(number)
 

@@ -339,3 +339,22 @@ def jersify(pz_code, field):
             return True
         else:
             return False
+
+
+@register.simple_tag
+def nhs_number_vs_urn(pz_code, patient=None):
+    """
+    Tests to see if this field is rendered in a form with patients from Jersey
+    If so will return unique reference number otherwise will return a formatted nhs number
+    """
+    if pz_code == "PZ248":
+        if patient and patient.unique_reference_number:
+            return patient.unique_reference_number
+        # Jersey
+        return "Unique Reference Number"
+    else:
+        if patient and patient.nhs_number:
+            if len(patient.nhs_number) >= 10:
+                return f"{patient.nhs_number[:3]} {patient.nhs_number[3:6]} {patient.nhs_number[6:]}"
+            return patient.nhs_number
+        return "NHS Number"
