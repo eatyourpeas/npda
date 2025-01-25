@@ -365,8 +365,6 @@ def get_progress_bar_chart_partial(
 
             values[attr] = json.loads(vals)
 
-        print(f"{values=}")
-
         # Create horizontal bar chart with percentages (looking like progress bar)
         fig = go.Figure()
 

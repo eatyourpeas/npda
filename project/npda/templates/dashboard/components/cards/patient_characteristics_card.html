@@ -1,4 +1,6 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
+
+
 {% block card_title %}
   Patient Characteristics
 {% endblock card_title%}
@@ -12,7 +14,10 @@
 <div class="p-2 h-full flex flex-col justify-between">
     {% comment %} CARE {% endcomment %}
     <div class="flex flex-col mb-1">
-      <h4 class='font-bold'>Care</h4>
+      <div class="flex items-center">
+        <h4 class='font-bold'>Care</h4>
+        {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/patient_characteristics/#4-number-of-patients-aged-12-with-type-1-diabetes" fa_icon_class="fa-solid fa-eye" %}
+      </div>
 
       {% include 'dashboard/pt_characteristics_figures_and_title.html' with values=charts.pt_characteristics_value_counts.data.care key='care' %}
 
