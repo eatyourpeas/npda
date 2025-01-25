@@ -362,7 +362,7 @@ def get_progress_bar_chart_partial(
                 "kpi_8_total_deaths",
             ]:
                 continue
-            
+
             values[attr] = json.loads(vals)
 
         print(f"{values=}")
@@ -371,6 +371,7 @@ def get_progress_bar_chart_partial(
         fig = go.Figure()
 
         # Prepare data for the chart
+
         labels = [values[attr]["label"] for attr in values]
         percentages = [values[attr]["pct"] for attr in values]
         counts = [f"{values[attr]['count']} / {values[attr]['total']}" for attr in values]
@@ -419,11 +420,14 @@ def get_progress_bar_chart_partial(
         # Update layout for nicer aesthet
         fig.update_layout(
             margin=dict(l=0, r=0, t=0, b=0),
-            xaxis=dict(visible=False),  # Hide x-axis
+            xaxis=dict(
+                visible=False,  # Hide x-axis
+                fixedrange=True,  # Prevent zooming and scrolling on x-axis
+            ),
             yaxis=dict(
-                title="",  # Remove axis title
                 showgrid=False,  # Remove grid
                 showticklabels=False,  # Hide y-axis labels
+                fixedrange=True,  # Prevent zooming and scrolling on y-axis
             ),
             barmode="overlay",  # Ensure bars overlap properly
             plot_bgcolor="white",  # White background for clean visuals
@@ -436,8 +440,18 @@ def get_progress_bar_chart_partial(
             include_plotlyjs=False,
             config={
                 "displayModeBar": False,
+                "scrollZoom": False,  # Disable scroll zoom
+                "doubleClick": False,  # Disable double click zoom
+                "displaylogo": False,  # Hide Plotly logo
+                "modeBarButtonsToRemove": [
+                    "zoom",
+                    "pan",
+                    "select",
+                    "lasso2d",
+                ],  # Remove interactive controls
             },
-            default_height=DEFAULT_CHART_HTML_HEIGHT,
+            # Fine tune height based on progress bars
+            default_height=f"{5*len(labels)}rem",
         )
 
         return render(
