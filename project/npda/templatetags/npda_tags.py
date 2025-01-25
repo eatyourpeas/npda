@@ -1,5 +1,6 @@
 import re
 import itertools
+import logging
 from django import template, forms
 from django.conf import settings
 from ...constants import (
@@ -11,6 +12,8 @@ from ...constants import (
 from datetime import date
 
 register = template.Library()
+
+logger = logging.getLogger(__name__)
 
 
 @register.filter
@@ -183,20 +186,12 @@ def errors_for_category(selected_category, errors_by_field):
     # VISIT_FIELDS: (VisitCategory -> [string])
     # Get the first or default to the empty list
     fields_in_category = next(
-        (
-            fields
-            for (category, fields) in VISIT_FIELDS
-            if category.value == selected_category
-        ),
+        (fields for (category, fields) in VISIT_FIELDS if category.value == selected_category),
         [],
     )
 
     # errors_by_field: { [string] -> [{ message: string }]}
-    errors = [
-        errors
-        for (field, errors) in errors_by_field.items()
-        if field in fields_in_category
-    ]
+    errors = [errors for (field, errors) in errors_by_field.items() if field in fields_in_category]
 
     # flatten
     errors = itertools.chain(*errors)
@@ -291,18 +286,40 @@ def extract_digits(value, underscore_index=0):
         return int(matches[underscore_index])
     return 0
 
+
 @register.filter
-def get_item(dictionary:dict, key:str):
+def get_item(dictionary: dict, key: str):
     """Get a value using a variable from a dictionary"""
-    return dictionary.get(key, '')
+    try:
+        return dictionary.get(key, "")
+    except Exception:
+        logger.error(f"Error getting value from dictionary: {dictionary=} {key=}")
+        return ""
+
 
 @register.simple_tag
 def docs_url():
     return settings.DOCS_URL
 
+
 @register.filter
 def format_nhs_number(nhs_number):
     if nhs_number and len(nhs_number) >= 10:
         return f"{nhs_number[:3]} {nhs_number[3:6]} {nhs_number[6:]}"
-    
+
     return nhs_number
+
+
+@register.filter
+def get_key_where_true(dictionary: dict) -> str:
+    """Get the first key where the value is True.
+
+    NOTE: as dictionaries are unordered, this will not always return the same key.
+    So assumes only one key is True for reliable use.
+
+    If no key is True, return an empty string.
+    """
+    for key, value in dictionary.items():
+        if value:
+            return key
+    return ""

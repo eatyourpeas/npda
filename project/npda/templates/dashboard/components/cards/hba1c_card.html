@@ -1,6 +1,7 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
   HbA1c
+  {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/outcomes" fa_icon_class="fa-solid fa-eye" %}
 {% endblock card_title%}
 {% block card_body %}
 {% if charts.hba1c_value_counts.no_eligible_patients %}

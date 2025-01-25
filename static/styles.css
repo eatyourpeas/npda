@@ -22,7 +22,6 @@
     @apply italic text-white text-sm font-montserrat absolute z-50 text-base leading-6 p-2; /* Tailwind classes for tooltip text */
     white-space: normal;
     max-width: 200px;
-    text-transform: lowercase;
     font-weight: 300;
   }
 }

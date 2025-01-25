@@ -1,6 +1,7 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
   Admissions
+  {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/outcomes/#46-number-of-admissions" fa_icon_class="fa-solid fa-eye" %}
 {% endblock card_title%}
 {% block card_body %}
 {% if charts.admissions_value_counts_absolute.no_eligible_patients %}

@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 
 # Django imports
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 
 from project.constants.colors import *
@@ -62,7 +62,7 @@ def get_patient_level_report_partial(request):
     # Colour the selected menu tab
     highlight = {f"{key}": key == pt_level_menu_tab_selected for key in TEXT.keys()}
 
-    selected_data = TEXT[pt_level_menu_tab_selected]
+    selected_data: dict = TEXT[pt_level_menu_tab_selected]
 
     # Gather the selected category's data
 
@@ -109,6 +109,7 @@ def get_patient_level_report_partial(request):
             "table_data": {
                 "headers": selected_table_headers,
                 "row_data": selected_table_data,
+                "ineligible_hover_reason": selected_data.get("ineligible_hover_reason", {}),
             },
         },
     )
@@ -204,7 +205,8 @@ def get_waffle_chart_partial(request):
                     y=[square["y"]],
                     mode="markers",
                     marker=dict(
-                        size=10,
+                        # Size of the square
+                        size=16,
                         color=square["colour"],
                         symbol="square",
                     ),
@@ -333,32 +335,133 @@ def get_map_chart_partial(request):
 
 
 @login_and_otp_required()
-def get_colored_figures_chart_partial(
+def get_progress_bar_chart_partial(
     request,
-    colored: int,
-    total_figures: int,
 ):
+    """Expects request.GET to contain obj as this struct:
+    {
+        'attr_1': {
+            "count":int,
+            "total":int,
+            "pct":int,
+            "label":str
+        },
+        'attr_2": ...
+    }
+    """
     try:
 
         if not request.htmx:
             return HttpResponseBadRequest("This view is only accessible via HTMX")
 
-        # Get a list of booleans to determine which figures are colored (to iterate easily in the
-        # template)
-        is_colored = [True if i < colored else False for i in range(total_figures)]
+        values = {}
+        # Django Query dict makes vals a list so need to extact first val
+        for attr, vals in request.GET.items():
+            # Skip these
+            if attr in [
+                "kpi_8_total_deaths",
+            ]:
+                continue
+
+            values[attr] = json.loads(vals)
+
+        # Create horizontal bar chart with percentages (looking like progress bar)
+        fig = go.Figure()
+
+        # Prepare data for the chart
+
+        labels = [values[attr]["label"] for attr in values]
+        percentages = [values[attr]["pct"] for attr in values]
+        counts = [f"{values[attr]['count']} / {values[attr]['total']}" for attr in values]
+
+        # Add background bars (grey) representing 100% width
+        fig.add_trace(
+            go.Bar(
+                x=[100] * len(values),
+                y=labels,
+                orientation="h",
+                marker=dict(color=RCPCH_LIGHT_GREY),
+                showlegend=False,
+                hoverinfo="none",
+                name="Background",
+            )
+        )
+
+        # Add text annotations above each bar
+        for i, label in enumerate(labels):
+            fig.add_annotation(
+                x=0,  # Start of the bar
+                y=i,
+                text=f"{label} ({counts[i]})",
+                showarrow=False,
+                xanchor="left",
+                yanchor="bottom",
+                font=dict(size=14, color=RCPCH_DARK_BLUE),
+                align="left",
+                yshift=27,  # Shift the text upwards for readability
+            )
+
+        # Add actual data bars (blue)
+        fig.add_trace(
+            go.Bar(
+                x=percentages,
+                y=labels,
+                orientation="h",
+                marker=dict(color=RCPCH_DARK_BLUE),
+                text=[f"{pct}%" for pct in percentages],
+                textposition=["inside" if pct > 5 else "outside" for pct in percentages],
+                insidetextanchor="end",
+                name="Progress",
+            )
+        )
+
+        # Update layout for nicer aesthet
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=0, b=0),
+            xaxis=dict(
+                visible=False,  # Hide x-axis
+                fixedrange=True,  # Prevent zooming and scrolling on x-axis
+            ),
+            yaxis=dict(
+                showgrid=False,  # Remove grid
+                showticklabels=False,  # Hide y-axis labels
+                fixedrange=True,  # Prevent zooming and scrolling on y-axis
+            ),
+            barmode="overlay",  # Ensure bars overlap properly
+            plot_bgcolor="white",  # White background for clean visuals
+            showlegend=False,  # Hide legend
+            bargap=0.4,  # Increase space between bars
+        )
+
+        chart_html = fig.to_html(
+            full_html=False,
+            include_plotlyjs=False,
+            config={
+                "displayModeBar": False,
+                "scrollZoom": False,  # Disable scroll zoom
+                "doubleClick": False,  # Disable double click zoom
+                "displaylogo": False,  # Hide Plotly logo
+                "modeBarButtonsToRemove": [
+                    "zoom",
+                    "pan",
+                    "select",
+                    "lasso2d",
+                ],  # Remove interactive controls
+            },
+            # Fine tune height based on progress bars
+            default_height=f"{5*len(labels)}rem",
+        )
 
         return render(
             request,
-            "dashboard/colored_figures_chart_partial.html",
-            context={
-                "is_colored": is_colored,
-            },
+            "dashboard/progress_bar_chart_partial.html",
+            {"chart_html": chart_html},
         )
     except Exception as e:
         logger.error("Error generating colored figures chart", exc_info=True)
         return render(
             request,
-            "dashboard/colored_figures_chart_partial.html",
+            "dashboard/progress_bar_chart_partial.html",
             {"error": "Something went wrong!"},
         )
 
@@ -440,10 +543,10 @@ def get_simple_bar_chart_pcts_partial(request):
             xaxis_title="",
             yaxis_title="% CYP with T1DM",
             yaxis=dict(
-                range=[0, 120], # Breathing room for percentages above 100
-                tickvals = [0, 25, 50, 75, 100],
-                ticktext = ["0", "25", "50", "75", "100"],
-            ),  
+                range=[0, 120],  # Breathing room for percentages above 100
+                tickvals=[0, 25, 50, 75, 100],
+                ticktext=["0", "25", "50", "75", "100"],
+            ),
             template="simple_white",  # Clean grid style
             # Wrap text
             xaxis=dict(

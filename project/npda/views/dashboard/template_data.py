@@ -16,6 +16,15 @@ TEXT = {
             "FOOT EXAM",
             "TOTAL",
         ],
+        "ineligible_hover_reason": {
+            "kpi_25_hba1c": "Does not fulfil criteria for KPI 5",
+            "kpi_26_bmi": "Does not fulfil criteria for KPI 5 ",
+            "kpi_27_thyroid_screen": "Does not fulfil criteria for KPI 5",
+            "kpi_28_blood_pressure": "Does not fulfil criteria for KPI 6",
+            "kpi_29_urinary_albumin": "Does not fulfil criteria for KPI 6",
+            "kpi_30_retinal_screening": "Does not fulfil criteria for KPI 6",
+            "kpi_31_foot_examination": "Does not fulfil criteria for KPI 6",
+        },
     },
     "additional_care_processes": {
         "title": "Additional Care Proccesses",
@@ -31,6 +40,16 @@ TEXT = {
             "Influenza immunisation recommended",
             "Sick day rules advice",
         ],
+        "ineligible_hover_reason": {
+            "kpi_33_hba1c_4plus": "Does not fulfil criteria for KPI 5",
+            "kpi_34_psychological_assessment": "Does not fulfil criteria for KPI 5",
+            "kpi_35_smoking_status_screened": "Does not fulfil criteria for KPI 6",
+            "kpi_36_referral_to_smoking_cessation_service": "Does not fulfil criteria for KPI 6",
+            "kpi_37_additional_dietetic_appointment_offered": "Does not fulfil criteria for KPI 5",
+            "kpi_38_patients_attending_additional_dietetic_appointment": "Does not fulfil criteria for KPI 5",
+            "kpi_39_influenza_immunisation_recommended": "Does not fulfil criteria for KPI 5",
+            "kpi_40_sick_day_rules_advice": "Does not fulfil criteria for KPI 1",
+        },
     },
     "care_at_diagnosis": {
         "title": "Care at Diagnosis",
@@ -41,18 +60,38 @@ TEXT = {
             "THYROID DISEASE SCREENING",
             "CARBOHYDRATE COUNTING EDUCATION",
         ],
+        "ineligible_hover_reason": {
+            "kpi_41_coeliac_disease_screening": "Does not fulfil criteria for KPI 7, diagnosed at least 90 days before the end of the audit period",
+            "kpi_42_thyroid_disease_screening": "Does not fulfil criteria for KPI 7, diagnosed at least 90 days before the end of the audit period",
+            "kpi_43_carbohydrate_counting_education": "Does not fulfil criteria for KPI 7, diagnosed at least 90 days before the end of the audit period",
+        },
     },
     "outcomes": {
         "title": "Outcomes",
         "description": "Outcomes are presented below for all children and young people with Type 1 diabetes. HbA1c excludes all measurements taken in the first 90 days after diagnosis.",
+        "headers": [
+            "NHS NUMBER",
+            "Mean HbA1c",
+            "Median HbA1c",
+            "Number of Admissions",
+            "Number of DKA Admissions",
+            "Required additional psych support",
+            "Albuminuria present",
+        ],
+        "ineligible_hover_reason": {},
     },
     "treatment": {
         "title": "Treatment",
-        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Nemo veniam nihil, est adipisci quis optio esse ad neque, eligendi rem omnis earum. Adipisci at veritatis, animi sapiente corrupti commodi dolorum! ",
+        "description": "Treatment regimens are presented below for all children and young people included within the audit.",
         "headers": [
             "NHS NUMBER",
-            "value",
+            "Treatment Regimen",
+            "Continuous Glucose Monitoring",
+            "Hybrid Closed Loop",
         ],
+        "ineligible_hover_reason": {
+            "tx_regimen": "Does not fulfil criteria for any of KPIs 13-20",
+        },
     },
 }
 # TODO: might be nicer to move into above dict
@@ -60,6 +99,14 @@ KPI_CATEGORY_ATTR_MAP = {
     "health_checks": list(range(25, 32)),
     "additional_care_processes": list(range(33, 41)),
     "care_at_diagnosis": list(range(41, 44)),
-    "outcomes": list(range(44, 47)),
-    "treatment": list(range(13, 21)),
+    "outcomes": list(range(44, 50)),
+    "treatment": list(
+        range(13, 21),
+    )
+    + [
+        21,
+        22,
+        # Omit 23 as looking at values for all eligible pts, KPI23 is only subset of T1DM
+        24,
+    ],
 }
