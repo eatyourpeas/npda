@@ -37,22 +37,22 @@ def write_errors_to_xlsx(
     """
     xlsx_file: str = new_submission.csv_file.path.replace(".csv", ".xlsx")
 
+    is_jersey = new_submission.paediatric_diabetes_unit.pz_code == "PZ248"
+
     # Get original data
-    df = csv_parse(new_submission.csv_file).df
+    df = csv_parse(new_submission.csv_file, is_jersey=is_jersey).df
     # Write an xlsx of the original data.
     df.to_excel(xlsx_file, sheet_name="Uploaded data (raw)", index=False)
 
     # If the csv file is from Jersey, add the Jersey unique identifier to the CSV headings, otherwise add the England unique identifier
-    if new_submission.paediatric_diabetes_unit.pz_code == "PZ248":
-        CSV_HEADINGS = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_JERSEY
-        # convert the headings to a list of strings
-        CSV_HEADINGS = [item["heading"] for item in CSV_HEADINGS]
+    if is_jersey:
+        CSV_HEADINGS = UNIQUE_IDENTIFIER_JERSEY + CSV_HEADING_OBJECTS
+
         flattened_errors = flatten_errors(
             errors, df["Unique Reference Number"], CSV_HEADINGS
         )
     else:
-        CSV_HEADINGS = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_ENGLAND
-
+        CSV_HEADINGS = UNIQUE_IDENTIFIER_ENGLAND + CSV_HEADING_OBJECTS
         flattened_errors = flatten_errors(errors, df["NHS Number"], CSV_HEADINGS)
 
     # Add sheet that lists the errors.

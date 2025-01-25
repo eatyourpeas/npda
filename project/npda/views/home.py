@@ -58,10 +58,11 @@ async def home(request):
         form = UploadFileForm(request.POST, request.FILES)
         user_csv = request.FILES["csv_upload"]
         pz_code = request.session.get("pz_code")
+        is_jersey = pz_code == "PZ248"
         if request.session.get("can_upload_csv") is True:
             # check to see if the CSV is valid - cannot accept CSVs with no header. All other header errors are non-lethal but are reported back to the user
             try:
-                parsed_csv = csv_parse(user_csv)
+                parsed_csv = csv_parse(user_csv, is_jersey=is_jersey)
             except ValueError as e:
                 messages.error(
                     request=request,

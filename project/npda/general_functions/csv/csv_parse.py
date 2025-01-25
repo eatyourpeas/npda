@@ -47,9 +47,9 @@ def csv_parse(csv_file, is_jersey=False):
 
     # Define the column names to be used in the csv file: the unique identifier in Jersy is different from the one in England
     if is_jersey:
-        HEADINGS_LIST = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_JERSEY
+        HEADINGS_LIST = UNIQUE_IDENTIFIER_JERSEY + CSV_HEADING_OBJECTS
     else:
-        HEADINGS_LIST = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_ENGLAND
+        HEADINGS_LIST = UNIQUE_IDENTIFIER_ENGLAND + CSV_HEADING_OBJECTS
 
     HEADINGS_LIST = [item["heading"] for item in HEADINGS_LIST]
 
