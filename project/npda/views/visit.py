@@ -1,5 +1,6 @@
 # python imports
 import datetime
+import logging
 
 # Django imports
 from django.contrib import messages
@@ -25,6 +26,7 @@ from .mixins import (
 )
 
 # Third party imports
+logger = logging.getLogger(__name__)
 
 
 class PatientVisitsListView(
@@ -127,6 +129,8 @@ class VisitCreateView(
     def form_valid(self, form, **kwargs):
         self.object = form.save(commit=False)
         self.object.patient_id = self.kwargs["patient_id"]
+        self.object.errors = None
+        self.object.is_valid = True
         super(VisitCreateView, self).form_valid(form)
         return HttpResponseRedirect(self.get_success_url())
 
