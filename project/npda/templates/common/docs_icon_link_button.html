@@ -1,0 +1,19 @@
+{% comment %} LINKS WITH BASE URL BEING DOCS
+
+Requires:
+- `rel_url` prop which will append to docs base url
+- `fa_icon_class`: FontAwesome icon class for the icon
+
+Optional:
+  `extra_classes` - extra styles
+
+{% endcomment %}
+
+{% load npda_tags %}
+{% docs_url as docs_base_url %}
+{% with additional_classes=extra_classes|default:"" %}
+<div class="tooltip" data-tip="View KPI Definition">
+  {% include 'common/icon_link_button.html' with link=docs_base_url|add:rel_url fa_icon_class=fa_icon_class extra_classes="text-rcpch_pink "|add:additional_classes   %}
+</div>
+{% endwith %}
+

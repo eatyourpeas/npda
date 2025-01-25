@@ -9,7 +9,7 @@ from datetime import date, datetime, timedelta
 # Python imports
 from decimal import Decimal
 from pprint import pformat
-from typing import Any, Dict, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 from dateutil.relativedelta import relativedelta
 
@@ -1461,9 +1461,7 @@ class CalculateKPIS:
 
         # Define the subquery to find the latest visit
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk"))
-            .order_by("-visit_date")
-            .values("pk")[:1]
+            Visit.objects.filter(patient=OuterRef("pk")).order_by("-visit_date").values("pk")[:1]
         )
         # Filter the Patient queryset based on the subquery if treatment_regimen = 5
         passed_patients = eligible_patients.filter(
@@ -3302,27 +3300,10 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        # Calculate median HBa1c for each patient
-        visit_value_cols = ["patient__pk", "hba1c"]
-        # Retrieve all visits with valid HbA1c values
-        valid_visits = Visit.objects.filter(
-            visit_date__range=self.AUDIT_DATE_RANGE,
-            hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90),
-            patient__in=eligible_patients,
-        ).values(*visit_value_cols)
+        hba1c_values_by_patient = self.get_median_hba1c_values_by_patient(eligible_patients)
 
-        # Group HbA1c values by patient ID into a list so can use
-        # calculate_median method
-        # We're doing this in Python instead of Django ORM because median
-        # aggregation gets complicated
-        hba1c_values_by_patient = defaultdict(list)
-        for visit in valid_visits:
-            hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
-
-        # For each patient, calculate the median of their HbA1c values
-        median_hba1cs = []
-        for _, hba1c_values in hba1c_values_by_patient.items():
-            median_hba1cs.append(self.calculate_median(hba1c_values))
+        # Extract just the median values
+        median_hba1cs = [values["median"] for values in hba1c_values_by_patient.values()]
 
         # Finally calculate the mean of the medians
         mean_of_median_hba1cs = self.calculate_mean(median_hba1cs)
@@ -3342,6 +3323,53 @@ class CalculateKPIS:
             total_failed=-1,
             patient_querysets=patient_querysets,
         )
+
+    def get_median_hba1c_values_by_patient(
+        self,
+        eligible_patients: QuerySet[Patient],
+    ):
+        """Helper to enable reuse
+
+        Returns a dictionary of patient IDs with a list of their HbA1c values looking like:
+
+            {
+                3757: {
+                'hb1ac_values': [Decimal('47.00'), Decimal('46.00'), Decimal('45.00')],
+                'nhs_number': '4722553467'
+                },
+                3758: {
+                'hb1ac_values': [Decimal('49.00'), Decimal('48.00'), Decimal('47.00')],
+                'nhs_number': '4279935300'},
+                }
+        """
+
+        # Calculate median HBa1c for each patient
+        visit_value_cols = ["patient__pk", "hba1c", "patient__nhs_number"]
+        # Retrieve all visits with valid HbA1c values
+        valid_visits = Visit.objects.filter(
+            visit_date__range=self.AUDIT_DATE_RANGE,
+            hba1c_date__gt=F("patient__diagnosis_date") + timedelta(days=90),
+            patient__in=eligible_patients,
+        ).values(*visit_value_cols)
+
+        # Group HbA1c values by patient ID into a list so can use
+        # calculate_median method
+        # We're doing this in Python instead of Django ORM because median
+        # aggregation gets complicated
+        hba1c_values_by_patient = defaultdict(lambda: {"hb1ac_values": [], "nhs_number": ""})
+        for visit in valid_visits:
+            hba1c_values_by_patient[visit["patient__pk"]]["hb1ac_values"].append(visit["hba1c"])
+            hba1c_values_by_patient[visit["patient__pk"]]["nhs_number"] = visit[
+                "patient__nhs_number"
+            ]
+
+        # Now calculate the median for each patient
+        for patient_id, values in hba1c_values_by_patient.items():
+            hba1c_values_by_patient[patient_id]["median"] = self.calculate_median(
+                values["hb1ac_values"]
+            )
+
+        return dict(hba1c_values_by_patient)
 
     def calculate_kpi_45_median_hba1c(
         self,
@@ -3383,9 +3411,10 @@ class CalculateKPIS:
             hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
 
         # For each patient, calculate the median of their HbA1c values
-        median_hba1cs = []
-        for _, hba1c_values in hba1c_values_by_patient.items():
-            median_hba1cs.append(self.calculate_median(hba1c_values))
+        hba1c_values_by_patient = self.get_median_hba1c_values_by_patient(eligible_patients)
+
+        # Extract just the median values
+        median_hba1cs = [values["median"] for values in hba1c_values_by_patient.values()]
 
         # Finally calculate the median of the medians
         median_of_median_hba1cs = self.calculate_median(median_hba1cs)
@@ -3565,6 +3594,24 @@ class CalculateKPIS:
             patient_querysets=patient_querysets,
         )
 
+    def get_number_of_admissions_for_patient(self, pt_pk: int) -> int:
+        """Required for pt level report as `calculate_kpi_46_number_of_admissions` calculates an aggregate but need pt-level.
+
+        Returns an int representing the number of Visits
+        with a valid Admission
+        """
+
+        # Get the visits that match the valid admission criteria
+        valid_visit_with_admission_count = Visit.objects.filter(
+            Q(hospital_admission_date__range=self.AUDIT_DATE_RANGE)
+            | Q(hospital_discharge_date__range=self.AUDIT_DATE_RANGE),
+            hospital_admission_reason__in=[choice[0] for choice in HOSPITAL_ADMISSION_REASONS],
+            patient__pk=pt_pk,
+            visit_date__range=self.AUDIT_DATE_RANGE,
+        ).count()
+
+        return valid_visit_with_admission_count
+
     def calculate_kpi_47_number_of_dka_admissions(
         self,
     ) -> KPIResult:
@@ -3628,6 +3675,28 @@ class CalculateKPIS:
             total_failed=total_failed,
             patient_querysets=patient_querysets,
         )
+
+    def get_number_of_dka_admissions_for_patient(self, pt_pk: int) -> int:
+        """Required for pt level report as `calculate_kpi_47_number_of_dka_admissions` calculates an aggregate but need pt-level.
+
+        Returns an int representing the number of Visits
+        with a valid DKA Admission
+        """
+
+        # Get the visits that match the valid dka admission criteria
+        valid_visits_with_dka_admission_count = Visit.objects.filter(
+            # admission start date OR discharge date within audit period
+            Q(
+                Q(hospital_admission_date__range=self.AUDIT_DATE_RANGE)
+                | Q(hospital_discharge_date__range=self.AUDIT_DATE_RANGE)
+            ),
+            # DKA reason 2
+            hospital_admission_reason=HOSPITAL_ADMISSION_REASONS[1][0],
+            patient__pk=pt_pk,
+            visit_date__range=self.AUDIT_DATE_RANGE,
+        ).count()
+
+        return valid_visits_with_dka_admission_count
 
     def calculate_kpi_48_required_additional_psychological_support(
         self,

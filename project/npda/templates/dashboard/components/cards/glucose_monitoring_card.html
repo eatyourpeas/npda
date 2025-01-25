@@ -1,6 +1,7 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
 Glucose Monitoring
+{% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/glucose_monitoring" fa_icon_class="fa-solid fa-eye" %}
 {% endblock card_title%}
 {% block card_body %}
 {% if charts.glucose_monitoring_value_counts_pct.no_eligible_patients %}

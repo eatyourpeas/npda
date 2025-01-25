@@ -106,6 +106,8 @@ def dashboard(request):
     calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
 
     kpi_calculations_object = calculate_kpis.calculate_kpis_for_pdus(pz_codes=[pz_code])
+    # Extract helpers
+    get_attribute_name = calculate_kpis.kpi_name_registry.get_attribute_name
 
     # From this, gather specific chart data required
 
@@ -123,10 +125,23 @@ def dashboard(request):
         calculate_kpis.kpi_name_registry,
         kpi_calculations_object["calculated_kpi_values"],
     )
-    # A single chart has 5 figures -> based on pct, return the number of figures coloured
-    pt_characteristics_value_counts_with_figure_counts = add_number_of_figures_coloured_for_chart(
-        pt_characteristics_value_counts
-    )
+    # Add labels for frontend
+    pt_char_attr_labels_map = {
+        get_attribute_name(4): "Aged 12+",
+        get_attribute_name(5): "Complete year of care",
+        get_attribute_name(6): "Aged 12+ with complete year of care",
+        get_attribute_name(8): "Died",
+        get_attribute_name(9): "Transitioned",
+        get_attribute_name(10): "Coeliac disease",
+        get_attribute_name(11): "Thyroid disease",
+        get_attribute_name(12): "Ketone testing",
+    }
+    for attr_name in pt_char_attr_labels_map:
+        for category in ["care", "died_or_transitioned", "comorbidity_and_testing"]:
+            if attr_name in pt_characteristics_value_counts[category]:
+                pt_characteristics_value_counts[category][attr_name]["label"] = (
+                    pt_char_attr_labels_map[attr_name]
+                )
 
     # Get TreatmentRegimen / Glucose Monitoring
     tx_regimen_value_counts_pct = get_tx_regimen_value_counts_pcts(
@@ -233,7 +248,15 @@ def dashboard(request):
                 "labels": list(total_eligible_pts_diabetes_type_value_counts.keys()),
             },
             "pt_characteristics_value_counts": {
-                "data": pt_characteristics_value_counts_with_figure_counts,
+                "data": {
+                    "care": json.dumps(pt_characteristics_value_counts["care"]),
+                    "died_or_transitioned": json.dumps(
+                        pt_characteristics_value_counts["died_or_transitioned"]
+                    ),
+                    "comorbidity_and_testing": json.dumps(
+                        pt_characteristics_value_counts["comorbidity_and_testing"]
+                    ),
+                }
             },
             "tx_regimen_value_counts_pct": {
                 "no_eligible_patients": kpi_calculations_object["calculated_kpi_values"][
@@ -319,6 +342,7 @@ def dashboard(request):
         "default_table_data": {
             "headers": default_pt_level_table_headers,
             "row_data": default_pt_level_table_data,
+            "ineligible_hover_reason": TEXT["health_checks"]["ineligible_hover_reason"],
         },
         # TODO: this should be an enum but we're currently not doing benchmarking so can update
         # at that point

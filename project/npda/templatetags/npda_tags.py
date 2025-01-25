@@ -1,5 +1,6 @@
 import re
 import itertools
+import logging
 from django import template, forms
 from django.conf import settings
 from ...constants import (
@@ -13,6 +14,8 @@ from ...constants import (
 from datetime import date
 
 register = template.Library()
+
+logger = logging.getLogger(__name__)
 
 
 @register.filter
@@ -312,6 +315,12 @@ def get_item(dictionary: dict, key: str):
     """Get a value using a variable from a dictionary"""
     return dictionary.get(key, "")
 
+    try:
+        return dictionary.get(key, "")
+    except Exception:
+        logger.error(f"Error getting value from dictionary: {dictionary=} {key=}")
+        return ""
+
 
 @register.simple_tag
 def docs_url():
@@ -324,6 +333,21 @@ def format_nhs_number(nhs_number):
         return f"{nhs_number[:3]} {nhs_number[3:6]} {nhs_number[6:]}"
 
     return nhs_number
+
+
+@register.filter
+def get_key_where_true(dictionary: dict) -> str:
+    """Get the first key where the value is True.
+
+    NOTE: as dictionaries are unordered, this will not always return the same key.
+    So assumes only one key is True for reliable use.
+
+    If no key is True, return an empty string.
+    """
+    for key, value in dictionary.items():
+        if value:
+            return key
+    return ""
 
 
 @register.simple_tag

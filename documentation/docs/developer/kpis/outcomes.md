@@ -8,7 +8,7 @@
 
 **Denominator**: Total number of eligible patients (measure 1)
 
-**Notes**: The median for each patient is calculated. We then calculate the mean of the medians. Django does not support Median aggregation function, so this is done manually through a custom `Median` class.
+**Notes**: The median for each patient is calculated. We then calculate the mean of the medians. Django does not support Median aggregation function, so this is done manually through a custom `calculate_median` method.
 
 **Data Items**: 17
 

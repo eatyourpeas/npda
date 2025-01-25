@@ -1,6 +1,7 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
   Additional Care Proccesses
+  {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/additional_processes" fa_icon_class="fa-solid fa-eye" %}
 {% endblock card_title%}
 {% block card_body %}
 {% if charts.pt_characteristics_value_counts.data.care.kpi_4_total_t1dm_gte_12yo.total == 0 %}
