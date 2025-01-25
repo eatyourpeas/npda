@@ -1,6 +1,7 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
   Health Checks Completion Rate
+  {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/7_key_processes/#321-health-check-completion-rate" fa_icon_class="fa-solid fa-eye" %}
 {% endblock card_title%}
 {% block card_body %}
 {% if charts.pt_characteristics_value_counts.data.care.kpi_4_total_t1dm_gte_12yo.total == 0 %}

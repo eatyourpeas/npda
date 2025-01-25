@@ -316,3 +316,18 @@ def format_nhs_number(nhs_number):
         return f"{nhs_number[:3]} {nhs_number[3:6]} {nhs_number[6:]}"
 
     return nhs_number
+
+
+@register.filter
+def get_key_where_true(dictionary: dict) -> str:
+    """Get the first key where the value is True.
+
+    NOTE: as dictionaries are unordered, this will not always return the same key.
+    So assumes only one key is True for reliable use.
+
+    If no key is True, return an empty string.
+    """
+    for key, value in dictionary.items():
+        if value:
+            return key
+    return ""

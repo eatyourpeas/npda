@@ -1,6 +1,7 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
   Hybrid Closed Loop Use
+  {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/hybrid_closed_loop_system" fa_icon_class="fa-solid fa-eye" %}
 {% endblock card_title%}
 {% block card_body %}
 {% if charts.hcl_use_per_quarter_value_counts_pct.no_eligible_patients %}

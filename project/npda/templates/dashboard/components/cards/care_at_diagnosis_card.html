@@ -1,6 +1,7 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
   Care at Diagnosis
+  {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/care_at_diagnosis" fa_icon_class="fa-solid fa-eye" %}
 {% endblock card_title%}
 {% block card_body %}
 {% if charts.care_at_diagnosis_value_count.no_eligible_patients %}

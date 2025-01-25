@@ -14,9 +14,37 @@
       <div class="bg-white border border-gray-300 rounded-lg shadow text-rcpch_dark_blue h-full p-2">
       <!-- CURRENT SELECTION DESCRIPTION -->
       <div class="flex flex-col">
-        <p class="font-bold text-rcpch_dark_blue">Description</p>
+        <div class="flex items-center">
+          <p class="font-bold text-rcpch_dark_blue">Description</p>
+
+          {% comment %} LINK TO KPI DEFINITIONS {% endcomment %}
+          {% with selected=highlight|get_key_where_true %}
+            {% if selected == 'health_checks' %}
+              {% with kpi_docs_url="7_key_processes" %}
+                {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/"|add:kpi_docs_url fa_icon_class="fa-solid fa-eye" %}
+              {% endwith %}
+            {% elif selected == 'additional_care_processes' %}
+              {% with kpi_docs_url="additional_processes" %}
+                {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/"|add:kpi_docs_url fa_icon_class="fa-solid fa-eye" %}
+              {% endwith %}
+            {% elif selected == 'care_at_diagnosis' %}
+              {% with kpi_docs_url="care_at_diagnosis" %}
+                {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/"|add:kpi_docs_url fa_icon_class="fa-solid fa-eye" %}
+              {% endwith %}
+            {% elif selected == 'outcomes' %}
+              {% with kpi_docs_url="outcomes" %}
+                {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/"|add:kpi_docs_url fa_icon_class="fa-solid fa-eye" %}
+              {% endwith %}
+            {% elif selected == 'treatment' %}
+              {% with kpi_docs_url="treatment_regimen" %}
+                {% include 'common/docs_icon_link_button.html' with rel_url="developer/kpis/"|add:kpi_docs_url fa_icon_class="fa-solid fa-eye" %}
+              {% endwith %}
+            {% endif %}
+          {% endwith %}
+        </div>
         <p>
           {{ text.description }}
+
         </p>
       </div>
       <div class="flex flex-col my-2 gap-2">
