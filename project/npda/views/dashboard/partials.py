@@ -382,7 +382,7 @@ def get_progress_bar_chart_partial(
                 x=[100] * len(values),
                 y=labels,
                 orientation="h",
-                marker=dict(color="lightgrey"),
+                marker=dict(color=RCPCH_LIGHT_GREY),
                 showlegend=False,
                 hoverinfo="none",
                 name="Background",
@@ -394,13 +394,13 @@ def get_progress_bar_chart_partial(
             fig.add_annotation(
                 x=0,  # Start of the bar
                 y=i,
-                text=f"{label} ({percentages[i]}%)",
+                text=f"{label} ({counts[i]})",
                 showarrow=False,
                 xanchor="left",
                 yanchor="bottom",
-                font=dict(size=14, color="black"),
+                font=dict(size=14, color=RCPCH_DARK_BLUE),
                 align="left",
-                yshift=30,  # Shift the text upwards for readability
+                yshift=27,  # Shift the text upwards for readability
             )
 
         # Add actual data bars (blue)
@@ -410,8 +410,8 @@ def get_progress_bar_chart_partial(
                 y=labels,
                 orientation="h",
                 marker=dict(color=RCPCH_DARK_BLUE),
-                text=counts,
-                textposition="inside",
+                text=[f"{pct}%" for pct in percentages],
+                textposition=["inside" if pct > 5 else "outside" for pct in percentages],
                 insidetextanchor="end",
                 name="Progress",
             )
