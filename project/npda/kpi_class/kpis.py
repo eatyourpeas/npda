@@ -16,12 +16,10 @@ from dateutil.relativedelta import relativedelta
 # Django imports
 from django.apps import apps
 from django.db.models import (
-    Avg,
     Case,
     Count,
     Exists,
     F,
-    Func,
     IntegerField,
     OuterRef,
     Q,
@@ -477,8 +475,7 @@ class CalculateKPIS:
         self.total_kpi_1_eligible_pts_base_query_set = self.patients.filter(
             # Valid attributes
             (
-                Q(nhs_number__isnull=False)
-                | (Q(unique_reference_number__isnull=False))
+                (Q(nhs_number__isnull=False) | Q(unique_reference_number__isnull=False))
                 & Q(date_of_birth__isnull=False)
                 # Visit / admisison date within audit period
                 & Q(visit__visit_date__range=(self.AUDIT_DATE_RANGE))
@@ -872,8 +869,7 @@ class CalculateKPIS:
         eligible_patients = self.patients.filter(
             # Valid attributes
             (
-                Q(nhs_number__isnull=False)
-                | (Q(unique_reference_number__isnull=False))
+                (Q(nhs_number__isnull=False) | Q(unique_reference_number__isnull=False))
                 & Q(date_of_birth__isnull=False)
                 # * Age < 25y years at the start of the audit period
                 & Q(date_of_birth__gt=self.audit_start_date - relativedelta(years=25))
@@ -1461,7 +1457,9 @@ class CalculateKPIS:
 
         # Define the subquery to find the latest visit
         latest_visit_subquery = (
-            Visit.objects.filter(patient=OuterRef("pk")).order_by("-visit_date").values("pk")[:1]
+            Visit.objects.filter(patient=OuterRef("pk"))
+            .order_by("-visit_date")
+            .values("pk")[:1]
         )
         # Filter the Patient queryset based on the subquery if treatment_regimen = 5
         passed_patients = eligible_patients.filter(
@@ -3300,10 +3298,14 @@ class CalculateKPIS:
         )
         total_ineligible = self.total_patients_count - total_eligible
 
-        hba1c_values_by_patient = self.get_median_hba1c_values_by_patient(eligible_patients)
+        hba1c_values_by_patient = self.get_median_hba1c_values_by_patient(
+            eligible_patients
+        )
 
         # Extract just the median values
-        median_hba1cs = [values["median"] for values in hba1c_values_by_patient.values()]
+        median_hba1cs = [
+            values["median"] for values in hba1c_values_by_patient.values()
+        ]
 
         # Finally calculate the mean of the medians
         mean_of_median_hba1cs = self.calculate_mean(median_hba1cs)
@@ -3356,9 +3358,13 @@ class CalculateKPIS:
         # calculate_median method
         # We're doing this in Python instead of Django ORM because median
         # aggregation gets complicated
-        hba1c_values_by_patient = defaultdict(lambda: {"hb1ac_values": [], "nhs_number": ""})
+        hba1c_values_by_patient = defaultdict(
+            lambda: {"hb1ac_values": [], "nhs_number": ""}
+        )
         for visit in valid_visits:
-            hba1c_values_by_patient[visit["patient__pk"]]["hb1ac_values"].append(visit["hba1c"])
+            hba1c_values_by_patient[visit["patient__pk"]]["hb1ac_values"].append(
+                visit["hba1c"]
+            )
             hba1c_values_by_patient[visit["patient__pk"]]["nhs_number"] = visit[
                 "patient__nhs_number"
             ]
@@ -3411,10 +3417,14 @@ class CalculateKPIS:
             hba1c_values_by_patient[visit["patient__pk"]].append(visit["hba1c"])
 
         # For each patient, calculate the median of their HbA1c values
-        hba1c_values_by_patient = self.get_median_hba1c_values_by_patient(eligible_patients)
+        hba1c_values_by_patient = self.get_median_hba1c_values_by_patient(
+            eligible_patients
+        )
 
         # Extract just the median values
-        median_hba1cs = [values["median"] for values in hba1c_values_by_patient.values()]
+        median_hba1cs = [
+            values["median"] for values in hba1c_values_by_patient.values()
+        ]
 
         # Finally calculate the median of the medians
         median_of_median_hba1cs = self.calculate_median(median_hba1cs)
@@ -3605,7 +3615,9 @@ class CalculateKPIS:
         valid_visit_with_admission_count = Visit.objects.filter(
             Q(hospital_admission_date__range=self.AUDIT_DATE_RANGE)
             | Q(hospital_discharge_date__range=self.AUDIT_DATE_RANGE),
-            hospital_admission_reason__in=[choice[0] for choice in HOSPITAL_ADMISSION_REASONS],
+            hospital_admission_reason__in=[
+                choice[0] for choice in HOSPITAL_ADMISSION_REASONS
+            ],
             patient__pk=pt_pk,
             visit_date__range=self.AUDIT_DATE_RANGE,
         ).count()

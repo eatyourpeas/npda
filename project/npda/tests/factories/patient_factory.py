@@ -43,6 +43,7 @@ LOCATION = location_wgs84, location_bng
 
 VALID_FIELDS = {
     "nhs_number": "6239431915",
+    # "unique_reference_number": 123456,
     "sex": SEX_TYPE[0][0],
     "date_of_birth": TODAY - relativedelta(years=10),
     "postcode": "NW1 2DB",

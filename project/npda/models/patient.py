@@ -1,9 +1,6 @@
 # python imports
 from datetime import date
 import logging
-from enum import Enum
-
-from httpx import HTTPError
 
 # django imports
 from django.contrib.gis.db import models
@@ -13,6 +10,7 @@ from django.contrib.gis.db.models import (
     PositiveSmallIntegerField,
     PointField,
 )
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 
@@ -145,6 +143,17 @@ class Patient(models.Model):
             CAN_UNLOCK_CHILD_PATIENT_DATA_FROM_EDITING,
             CAN_OPT_OUT_CHILD_FROM_INCLUSION_IN_AUDIT,
         ]
+
+    def clean(self):
+        super().clean()
+        if not self.nhs_number and not self.unique_reference_number:
+            raise ValidationError(
+                "Either NHS Number or Unique Reference Number must be provided."
+            )
+        if self.nhs_number and self.unique_reference_number:
+            raise ValidationError(
+                "Only one of NHS Number or Unique Reference Number should be provided."
+            )
 
     def __str__(self) -> str:
         if self.unique_reference_number:

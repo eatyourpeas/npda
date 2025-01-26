@@ -15,7 +15,6 @@ from project.npda.forms.external_patient_validators import (
 )
 from project.npda.tests.factories.patient_factory import (
     TODAY,
-    DATE_OF_BIRTH,
     VALID_FIELDS,
     VALID_FIELDS_WITH_GP_POSTCODE,
     INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
