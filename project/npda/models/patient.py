@@ -1,9 +1,6 @@
 # python imports
 from datetime import date
 import logging
-from enum import Enum
-
-from httpx import HTTPError
 
 # django imports
 from django.contrib.gis.db import models

@@ -1,7 +1,6 @@
 {% load static %}
 {% load npda_tags %}
 {% url 'patients' as patients_url %}
-
 {% if page_obj %}
   <div class="w-full overflow-x-scroll">
     <table class="font-montserrat table-md table mt-2 mb-5 text-sm text-left rtl:text-right">
@@ -28,8 +27,11 @@
           <th scope="col" class="px-2 py-3 text-center">Diagnosis Date</th>
           <th scope="col"
               class="px-2 py-3 text-center tooltip tooltip-bottom"
-              data-tip="The most recent quarter for which data has been uploaded.">
-            Latest Quarter <i class="fa-question-circle fas"></i>
+              data-tip="The distance travelled to the PDU.">
+            <span>
+              {% include 'partials/page_elements/sort_icon.html' with field="distance_from_lead_organisation" %}
+              Distance to PDU <i class="fa-question-circle fas"></i>
+            </span>
           </th>
           <th scope="col"></th>
         </tr>
@@ -40,10 +42,10 @@
             <thead class="bg-rcpch_strong_blue text-xs text-white text-gray-700 uppercase bg-gray-50">
               <tr>
                 <th colspan="13" class="px-6 py-3">
-                  {%if patient.is_first_valid %}
-                    Patients where all records have been validated: {{valid_count_in_page}}
+                  {% if patient.is_first_valid %}
+                    Patients where all records have been validated: {{ valid_count_in_page }}
                   {% else %}
-                    Patients with records failing validation: {{error_count_in_page}}
+                    Patients with records failing validation: {{ error_count_in_page }}
                   {% endif %}
                 </th>
               </tr>
@@ -52,11 +54,10 @@
           <tr class="{% if forloop.counter|divisibleby:2 %} bg-gray-100 {% endif %} hover:bg-gray-200">
             {% with nhs_number_error=patient.errors|error_for_field:"nhs_number" gp_error=patient.errors|error_for_field:"gp_practice_ods_code" %}
               <td class="whitespace-nowrap">
-                <a
-                  class="btn flex p-1 h-full tooltip tooltip-right {% if nhs_number_error or gp_error %} text-rcpch_red {% else %} hover:text-rcpch_pink {% endif %}"
-                  target="_blank"
-                  href="{% url 'patient-update' patient.pk %}"
-                  data-tip="{% if nhs_number_error or gp_error %} {{ nhs_number_error }} {{gp_error}} {% else %} View patient details (opens new tab) {% endif %}">
+                <a class="btn flex p-1 h-full tooltip tooltip-right {% if nhs_number_error or gp_error %} text-rcpch_red {% else %} hover:text-rcpch_pink {% endif %}"
+                   target="_blank"
+                   href="{% url 'patient-update' patient.pk %}"
+                   data-tip="{% if nhs_number_error or gp_error %} {{ nhs_number_error }} {{ gp_error }} {% else %} View patient details (opens new tab) {% endif %}">
                   <span class="fa-stack">
                     {% if nhs_number_error or gp_error %}
                       <i class="fa-circle fa-stack-1x fas"></i>
@@ -169,12 +170,13 @@
                 {{ patient.diagnosis_date }}
               {% endif %}
             </td>
-            <td class="px-6 py-4 text-center">{{ patient.latest_quarter|default:'-' }}</td>
+            <td class="px-6 py-4 text-center">
+              {{ patient.distance_from_lead_organisation|round_distance:1 }} km
+            </td>
             <td class="text-right whitespace-nowrap">
               <a href="{% url 'patient_visits' patient.pk %}"
-                class="align-center flex tooltip tooltip-left {% if patient.visit_error_count < 1 %} text-rcpch_pink {% else %} text-rcpch_red {% endif %}"
-                data-tip="{% if patient.visit_error_count > 0 %} {{ patient.visit_error_count }} visit{{ patient.visit_error_count|pluralize }} {{ patient.visit_error_count|pluralize:'has, have' }} errors that need addressing. Items have been saved but will not be included until rectified. {% else %} View patient visits {% endif %}"
-                >
+                 class="align-center flex tooltip tooltip-left {% if patient.visit_error_count < 1 %} text-rcpch_pink {% else %} text-rcpch_red {% endif %}"
+                 data-tip="{% if patient.visit_error_count > 0 %} {{ patient.visit_error_count }} visit{{ patient.visit_error_count|pluralize }} {{ patient.visit_error_count|pluralize:'has, have' }} errors that need addressing. Items have been saved but will not be included until rectified. {% else %} View patient visits {% endif %}">
                 {% if patient.visit_error_count > 0 %}
                   <span class="fa-stack">
                     <i class="fa-circle fa-stack-1x fas"></i>
@@ -186,14 +188,14 @@
                 {% endif %}
                 <!-- caret -->
                 <svg class="w-8 h-8 self-center"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  fill="none"
-                  stroke-linecap="round"
-                  stroke-linejoin="round">
+                     width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     stroke-width="2"
+                     stroke="currentColor"
+                     fill="none"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
                   <path stroke="none" d="M0 0h24v24H0z" />
                   <polyline points="9 6 15 12 9 18" />
                 </svg>
