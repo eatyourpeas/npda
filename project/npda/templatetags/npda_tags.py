@@ -9,6 +9,7 @@ from ...constants import (
     VISIT_FIELD_FLAT_LIST,
     VISIT_FIELDS,
     CSV_HEADINGS,
+    VisitCategories,
 )
 
 from django.contrib.gis.measure import D
@@ -351,3 +352,32 @@ def round_distance(value, decimal_places):
     if isinstance(value, D):
         return round(value.km, decimal_places)
     return value
+
+
+@register.filter
+def tab_identifier(value):
+
+    if value in [
+        VisitCategories.MEASUREMENT.value,
+        VisitCategories.HBA1.value,
+        VisitCategories.TREATMENT.value,
+        VisitCategories.CGM.value,
+        VisitCategories.BP.value,
+    ]:
+        return "Routine Measurements"
+    elif value in [
+        VisitCategories.FOOT.value,
+        VisitCategories.DECS.value,
+        VisitCategories.ACR.value,
+        VisitCategories.CHOLESTEROL.value,
+        VisitCategories.THYROID.value,
+        VisitCategories.COELIAC.value,
+        VisitCategories.PSYCHOLOGY.value,
+        VisitCategories.SMOKING.value,
+        VisitCategories.DIETETIAN.value,
+        VisitCategories.SICK_DAY.value,
+        VisitCategories.FLU.value,
+    ]:
+        return "Annual Review"
+    elif value in [VisitCategories.HOSPITAL_ADMISSION.value]:
+        return "Inpatient Entry"
