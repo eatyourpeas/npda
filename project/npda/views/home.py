@@ -25,16 +25,8 @@ from ..general_functions.session import (
     get_new_session_fields,
     refresh_audit_years_in_session,
     refresh_session_object_asynchronously,
-    refresh_session_object_synchronously,
 )
 from ..general_functions.view_preference import get_or_update_view_preference
-from ..kpi_class.kpis import CalculateKPIS
-from ..general_functions.map import (
-    get_children_by_pdu_audit_year,
-    generate_distance_from_organisation_scatterplot_figure,
-    generate_dataframe_and_aggregated_distance_data_from_cases,
-)
-from ..general_functions.rcpch_nhs_organisations import fetch_organisation_by_ods_code
 from ..general_functions.audit_period import get_current_audit_year
 
 # RCPCH imports
@@ -97,7 +89,7 @@ async def home(request):
                 dataframe=parsed_csv.df,
                 csv_file=user_csv,
                 pdu_pz_code=pz_code,
-                audit_year=audit_year
+                audit_year=audit_year,
             )
             # log user activity
             VisitActivity = apps.get_model("npda", "VisitActivity")

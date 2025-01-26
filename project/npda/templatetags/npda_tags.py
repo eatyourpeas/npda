@@ -1,6 +1,7 @@
 import re
 import itertools
 import logging
+
 from django import template, forms
 from django.conf import settings
 from ...constants import (
@@ -9,6 +10,8 @@ from ...constants import (
     VISIT_FIELDS,
     CSV_HEADINGS,
 )
+
+from django.contrib.gis.measure import D
 from datetime import date
 
 register = template.Library()
@@ -170,7 +173,7 @@ def error_for_field(errors_by_field, field):
 def errors_for_form_field(errors_by_field, field):
     if field.errors:
         return field.errors
-    
+
     if errors_by_field and field.name in errors_by_field:
         return [error["message"] for error in errors_by_field[field.name]]
 
@@ -186,12 +189,20 @@ def errors_for_category(selected_category, errors_by_field):
     # VISIT_FIELDS: (VisitCategory -> [string])
     # Get the first or default to the empty list
     fields_in_category = next(
-        (fields for (category, fields) in VISIT_FIELDS if category.value == selected_category),
+        (
+            fields
+            for (category, fields) in VISIT_FIELDS
+            if category.value == selected_category
+        ),
         [],
     )
 
     # errors_by_field: { [string] -> [{ message: string }]}
-    errors = [errors for (field, errors) in errors_by_field.items() if field in fields_in_category]
+    errors = [
+        errors
+        for (field, errors) in errors_by_field.items()
+        if field in fields_in_category
+    ]
 
     # flatten
     errors = itertools.chain(*errors)
@@ -207,19 +218,19 @@ def category_has_errors(category, form):
     for visit_category, fields in VISIT_FIELDS:
         if visit_category.value == category:
             category_fields += fields
-    
+
     # Errors can be either:
     #  - On the bound form field after submitting the questionnaire
     for field in form:
         if field.name in category_fields and field.errors:
             return True
-    
+
     #  - On the instance itself after a CSV upload
     if form.instance.errors:
         for field in form.instance.errors.keys():
             if field in category_fields:
                 return True
-    
+
     return False
 
 
@@ -227,7 +238,12 @@ def category_has_errors(category, form):
 # so I've gone with this simple but hacky version
 @register.filter
 def categories_have_errors(categories_by_comma, form):
-    return any([category_has_errors(category, form) for category in categories_by_comma.split(",")])
+    return any(
+        [
+            category_has_errors(category, form)
+            for category in categories_by_comma.split(",")
+        ]
+    )
 
 
 @register.simple_tag
@@ -323,3 +339,12 @@ def get_key_where_true(dictionary: dict) -> str:
         if value:
             return key
     return ""
+
+
+@register.filter
+def round_distance(value, decimal_places):
+    if value is None:
+        return "-"
+    if isinstance(value, D):
+        return round(value.km, decimal_places)
+    return value
