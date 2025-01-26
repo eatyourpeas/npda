@@ -302,6 +302,13 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
                     patient_form.async_validation_results.location_wgs84
                 )
 
+                # We need to call full_clean to ensure the model is in a valid state before saving
+                # especially to ensure the nhs_number and unique_reference_number are not both None
+                if (
+                    patient.nhs_number is None
+                    and patient.unique_reference_number is None
+                ):
+                    patient.full_clean()
                 await patient.asave()
 
                 # add the patient to a new Transfer instance
