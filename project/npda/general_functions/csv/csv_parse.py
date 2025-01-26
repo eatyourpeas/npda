@@ -93,6 +93,33 @@ def csv_parse(csv_file, is_jersey=False):
             "Suspected too many values in the first row, please check there are no extra values"
         )
 
+    # Rows where the unique identifier is missing will be removed - count the number of rows before and after
+    total_row_count = df.shape[0]
+    if is_jersey:
+        unique_reference_number_nonnull_row_count = df[
+            "Unique Reference Number"
+        ].count()
+        if unique_reference_number_nonnull_row_count == 0:
+            raise ValueError(
+                "No Unique Reference Numbers found in the file. Please ensure all rows have a unique identifier and upload the file again."
+            )
+        discrepancy = total_row_count - unique_reference_number_nonnull_row_count
+    else:
+        nhs_number_nonnull_row_count = df["NHS Number"].count()
+        if nhs_number_nonnull_row_count == 0:
+            raise ValueError(
+                "No NHS Numbers found in the file. Please ensure all rows have a unique identifier and upload the file again."
+            )
+        discrepancy = total_row_count - nhs_number_nonnull_row_count
+    if discrepancy > 0:
+        if discrepancy == 1:
+            raise ValueError(
+                f"{discrepancy} row has no unique identifier. Please ensure all rows have a unique identifier and upload the file again."
+            )
+        raise ValueError(
+            f"{discrepancy} rows have no unique identifier. Please ensure all rows have a unique identifier and upload the file again."
+        )
+
     # Accept columns case insensitively but replace them with their official version to make life easier later
     for column in df.columns:
         if not column in HEADINGS_LIST and column.lower() in lowercase_headings_list:

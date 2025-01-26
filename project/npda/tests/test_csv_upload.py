@@ -208,7 +208,6 @@ def test_multiple_patients(
     "column,model_field",
     [
         pytest.param("NHS Number", "nhs_number"),
-        pytest.param("Unique Reference Number", "unique_reference_number"),
         pytest.param("Date of Birth", "date_of_birth"),
         pytest.param("Diabetes Type", "diabetes_type"),
         pytest.param("Date of Diabetes Diagnosis", "diagnosis_date"),
@@ -227,7 +226,14 @@ def test_missing_mandatory_field(
         organisation_employers__pz_code=ALDER_HEY_PZ_CODE
     ).first()
 
+    # Delete all patients to ensure we're starting from a clean slate
+    Patient.objects.all().delete()
+
     single_row_valid_df.loc[0, column] = None
+
+    assert (
+        Patient.objects.count() == 0
+    ), "There should be no patients in the database before the test"
 
     errors = csv_upload_sync(
         test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024

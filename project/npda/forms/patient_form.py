@@ -42,6 +42,11 @@ class NHSNumberField(forms.CharField):
 
 
 class UniqueReferenceNumberField(forms.CharField):
+    def to_python(self, value):
+        if not value:
+            return value
+        number = super().to_python(value)
+        return number
 
     def validate(self, value):
         if value and not value.isdigit():
@@ -135,7 +140,7 @@ class PatientForm(forms.ModelForm):
             self.cleaned_data[key] = value
 
     def clean(self):
-        cleaned_data = self.cleaned_data
+        cleaned_data = super().clean()  # self.cleaned_data
 
         date_of_birth = cleaned_data.get("date_of_birth")
         diagnosis_date = cleaned_data.get("diagnosis_date")
