@@ -62,7 +62,7 @@ def colour_for_category(category):
         {"category": VisitCategories.PSYCHOLOGY, "colour": "rcpch_yellow_dark_tint"},
         {"category": VisitCategories.SMOKING, "colour": "rcpch_strong_green_dark_tint"},
         {"category": VisitCategories.DIETETIAN, "colour": "rcpch_aqua_green_dark_tint"},
-        {"category": VisitCategories.SICK_DAY, "colour": "rcpch_purple_dark_tint"},
+        {"category": VisitCategories.SICK_DAY, "colour": "rcpch_pink_light_tint2"},
         {"category": VisitCategories.FLU, "colour": "rcpch_orange"},
         {
             "category": VisitCategories.HOSPITAL_ADMISSION,
