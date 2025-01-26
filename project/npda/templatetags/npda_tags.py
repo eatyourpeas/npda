@@ -64,7 +64,10 @@ def colour_for_category(category):
         {"category": VisitCategories.DIETETIAN, "colour": "rcpch_aqua_green_dark_tint"},
         {"category": VisitCategories.SICK_DAY, "colour": "rcpch_purple_dark_tint"},
         {"category": VisitCategories.FLU, "colour": "rcpch_orange"},
-        {"category": VisitCategories.HOSPITAL_ADMISSION, "colour": "rcpch_red"},
+        {
+            "category": VisitCategories.HOSPITAL_ADMISSION,
+            "colour": "rcpch_strong_green_dark_tint",
+        },
     ]
     for colour in colours:
         if colour["category"].value == category:
