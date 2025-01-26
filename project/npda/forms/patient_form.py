@@ -143,6 +143,23 @@ class PatientForm(forms.ModelForm):
         gp_practice_ods_code = cleaned_data.get("gp_practice_ods_code")
         gp_practice_postcode = cleaned_data.get("gp_practice_postcode")
 
+        nhs_number = cleaned_data.get("nhs_number")
+        unique_reference_number = cleaned_data.get("unique_reference_number")
+
+        if not nhs_number and not unique_reference_number:
+            self.add_error(
+                "nhs_number",
+                ValidationError(
+                    "Either NHS Number or Unique Reference Number must be provided."
+                ),
+            )
+            self.add_error(
+                "unique_reference_number",
+                ValidationError(
+                    "Either NHS Number or Unique Reference Number must be provided."
+                ),
+            )
+
         if diagnosis_date is not None and date_of_birth is not None:
             if diagnosis_date < date_of_birth:
                 self.add_error(

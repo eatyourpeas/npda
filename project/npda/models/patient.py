@@ -14,7 +14,10 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 
-from project.npda.models.custom_validators import validate_nhs_number
+from project.npda.models.custom_validators import (
+    validate_nhs_number,
+    validate_unique_reference_number,
+)
 
 # npda imports
 from ...constants import (
@@ -54,6 +57,7 @@ class Patient(models.Model):
         "Unique Reference Number",
         max_length=50,
         unique=False,
+        validators=[validate_unique_reference_number],
         blank=True,
         null=True,
         help_text="This is a unique reference number for Jersey patients. It is used to identify the patient in the audit.",
