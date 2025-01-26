@@ -231,9 +231,6 @@ def test_missing_mandatory_field(
 
     single_row_valid_df.loc[0, column] = None
 
-    print("single_row_valid_df")
-    print(single_row_valid_df)
-
     assert (
         Patient.objects.count() == 0
     ), "There should be no patients in the database before the test"
@@ -413,8 +410,6 @@ def test_over_25(test_user, single_row_valid_df):
 @pytest.mark.django_db
 def test_invalid_diabetes_type(test_user, single_row_valid_df):
     single_row_valid_df["Diabetes Type"] = 45
-
-    print(single_row_valid_df["Date of Birth"])
 
     errors = csv_upload_sync(
         test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024
