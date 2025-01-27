@@ -23,7 +23,7 @@ class AutoLogoutMiddleware:
 
             current_time = time()
 
-            # Initialize last_activity if not set
+            # Initialise last_activity if not set
             if "last_activity" not in request.session:
                 request.session["last_activity"] = current_time
 
