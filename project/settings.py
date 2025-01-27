@@ -81,9 +81,7 @@ if DEBUG is True:
     LOCAL_DEV_ADMIN_EMAIL = os.getenv("LOCAL_DEV_ADMIN_EMAIL")
     LOCAL_DEV_ADMIN_PASSWORD = os.getenv("LOCAL_DEV_ADMIN_PASSWORD")
 
-    if (
-        os.environ.get("RUN_MAIN") == "true"
-    ):  # Prevent double execution during reloading
+    if os.environ.get("RUN_MAIN") == "true":  # Prevent double execution during reloading
         import debugpy
 
         DEBUGPY_PORT = os.getenv("DEBUGPY_PORT", None)
@@ -92,16 +90,12 @@ if DEBUG is True:
         else:
             try:
                 DEBUGPY_PORT = int(DEBUGPY_PORT)  # Convert to integer
-                debugpy.listen(
-                    ("0.0.0.0", DEBUGPY_PORT)
-                )  # Ensure port matches in VSCode config
+                debugpy.listen(("0.0.0.0", DEBUGPY_PORT))  # Ensure port matches in VSCode config
                 logger.debug(
                     f"Debugging is enabled on port {DEBUGPY_PORT}, waiting for debugger to attach..."
                 )
             except ValueError:
-                logger.error(
-                    f"Invalid DEBUGPY_PORT value: {DEBUGPY_PORT}. Must be an integer."
-                )
+                logger.error(f"Invalid DEBUGPY_PORT value: {DEBUGPY_PORT}. Must be an integer.")
 
 
 # GENERAL CAPTCHA SETTINGS
@@ -152,6 +146,8 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     #  2 factor authentication
     "django_otp.middleware.OTPMiddleware",
+    # autologout
+    "project.npda.middleware.AutoLogoutMiddleware",
 ]
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
@@ -190,6 +186,11 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True  # cannot access session cookie on client-side using JS
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # session expires on browser close
 
+# Auto-logout
+AUTO_LOGOUT_IDLE_TIME = os.environ.get(
+    "AUTO_LOGOUT_IDLE_TIME",
+    60 * 30,  # Default: 30 minutes
+)
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -211,9 +212,7 @@ else:
 
 DATABASES = {"default": database_config}
 
-AUTHENTICATION_BACKENDS = (
-    "django.contrib.auth.backends.ModelBackend",  # this is default
-)
+AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)  # this is default
 
 
 # Password validation
