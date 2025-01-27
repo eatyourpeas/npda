@@ -187,8 +187,8 @@ SESSION_COOKIE_HTTPONLY = True  # cannot access session cookie on client-side us
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # session expires on browser close
 
 # Auto-logout
-AUTO_LOGOUT_IDLE_TIME = os.environ.get(
-    "AUTO_LOGOUT_IDLE_TIME",
+AUTO_LOGOUT_IDLE_TIME_SECONDS = os.environ.get(
+    "AUTO_LOGOUT_IDLE_TIME_SECONDS",
     60 * 30,  # Default: 30 minutes
 )
 

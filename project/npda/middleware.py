@@ -30,7 +30,7 @@ class AutoLogoutMiddleware:
             last_activity = request.session.get("last_activity")
 
             # Check if idle timeout has been exceeded
-            idle_time_limit = settings.AUTO_LOGOUT_IDLE_TIME
+            idle_time_limit = settings.AUTO_LOGOUT_IDLE_TIME_SECONDS
 
             if (current_time - last_activity) > idle_time_limit:
                 logout(request)

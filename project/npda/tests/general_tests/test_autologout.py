@@ -5,11 +5,12 @@ from http import HTTPStatus
 # Python imports
 import pytest
 from django.conf import settings
+
 # 3rd party imports
 from django.urls import reverse
 from freezegun import freeze_time
 
-from project.constants.user import RCPCH_AUDIT_TEAM
+
 # E12 imports
 from project.npda.models import NPDAUser
 from project.npda.tests.model_tests.test_submissions import ALDER_HEY_PZ_CODE
@@ -33,11 +34,11 @@ def test_auto_logout_django_auto_logout(
     assert response.status_code == HTTPStatus.OK, "User unable to access home"
 
     # Simulate session expiry with freezegun
-    future_time = datetime.now() + timedelta(days=1)
+    future_time = datetime.now() + settings.AUTO_LOGOUT_IDLE_TIME_SECONDS + timedelta(seconds=1)
     with freeze_time(future_time):
         response = client.get(reverse("home"))
 
     assert (
         response.status_code == HTTPStatus.FOUND
     ), f"User not redirected after expected auto-logout; {response.status_code=}"
-    assert response.url == reverse(getattr(settings, "LOGIN_REDIRECT_URL", "two_factor:profile"))
+    assert response.url == reverse(getattr(settings, "LOGOUT_REDIRECT_URL", "two_factor:profile"))
