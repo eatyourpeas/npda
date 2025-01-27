@@ -35,15 +35,15 @@
                                         <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
                                       </span>
                                     {% endif %}
-                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}#{{ item.category|cut:' ' }}_anchor"
-                                       _="on click set input[name='visit_tab'][value='{{ item.category|tab_identifier }}']'s checked to true then wait 50ms then scroll to #{{ item.category|cut:' ' }}_anchor">
-                                    {{ item.category }}</a>
+                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
+                                      {{ item.category }}
+                                    </a>
                                   </div>
                                 {% else %}
                                   <div class="tooltip tooltip-top visible text-center text-white hover:text-white">
-                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}#{{ item.category|cut:' ' }}_anchor"
-                                       _="on click set input[name='visit_tab'][value='{{ item.category|tab_identifier }}']'s checked to true then wait 50ms then scroll to #{{ item.category|cut:' ' }}_anchor">
-                                    {{ item.category }}</a>
+                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
+                                      {{ item.category }}
+                                    </a>
                                   </div>
                                 {% endif %}
                               </small>

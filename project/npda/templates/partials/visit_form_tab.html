@@ -3,7 +3,7 @@
        name="visit_tab"
        role="tab"
        class="basis-full md:basis-1/3 tab font-bold mb-2 text-black border-b-4 hover:border-b-rcpch_pink border-b-rcpch_light_blue_tint3 border-solid border-0 bg-rcpch_light_blue"
-       value="{{ label }}"
+       value="{{ label|lowerify }}"
        aria-label="{{ label }} {% if categories|categories_have_errors:form %}❗{% endif %}"
        {% if checked %}checked{% endif %} />
 <div role="tabpanel" class="tab-content order-1 basis-full rounded-none">
@@ -93,3 +93,25 @@
     {% endwith %}
   {% endfor %}
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const tabValue = params.get('tab');
+
+      if (tabValue) {
+          // Select the appropriate tab
+          const tabInput = document.querySelector(`input[name='visit_tab'][value='${tabValue}']`);
+          if (tabInput) {
+              tabInput.checked = true;
+
+              // Delay scrolling to the anchor for smooth transition
+              const anchor = document.querySelector(window.location.hash);
+              if (anchor) {
+                  setTimeout(() => {
+                      anchor.scrollIntoView({ behavior: 'smooth' });
+                  }, 100); // Delay to ensure the tab content has loaded
+              }
+          }
+      }
+  });
+</script>

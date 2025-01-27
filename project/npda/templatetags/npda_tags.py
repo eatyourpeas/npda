@@ -364,7 +364,7 @@ def tab_identifier(value):
         VisitCategories.CGM.value,
         VisitCategories.BP.value,
     ]:
-        return "Routine Measurements"
+        return "Routine Measurements".lower().replace(" ", "_")
     elif value in [
         VisitCategories.FOOT.value,
         VisitCategories.DECS.value,
@@ -378,6 +378,13 @@ def tab_identifier(value):
         VisitCategories.SICK_DAY.value,
         VisitCategories.FLU.value,
     ]:
-        return "Annual Review"
+        return "Annual Review".lower().replace(" ", "_")
     elif value in [VisitCategories.HOSPITAL_ADMISSION.value]:
-        return "Inpatient Entry"
+        return "Inpatient Entry".lower().replace(" ", "_")
+
+
+@register.filter
+def lowerify(value):
+    # replace spaces with underscores and make lowercase
+    value = value.replace(" ", "_")
+    return value.lower()
