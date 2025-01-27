@@ -29,17 +29,21 @@
                                 {% if item.has_error %}
                                   <div class="-mt-20 tooltip tooltip-bottom visible text-center text-white hover:text-white"
                                        data-tip='{{ item.category|errors_for_category:visit.visit.errors|safe|linebreaksbr }}'>
-                                       {% if not visit.visit.is_valid %}
-                                        <span class="fa-stack text-rcpch_red">
-                                          <i class="fa-circle fa-stack-1x fas"></i>
-                                          <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                                        </span>
-                                      {% endif %}
-                                    {{ item.category }}
+                                    {% if not visit.visit.is_valid %}
+                                      <span class="fa-stack text-rcpch_red">
+                                        <i class="fa-circle fa-stack-1x fas"></i>
+                                        <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                                      </span>
+                                    {% endif %}
+                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
+                                      {{ item.category }}
+                                    </a>
                                   </div>
                                 {% else %}
                                   <div class="tooltip tooltip-top visible text-center text-white hover:text-white">
-                                    {{ item.category }}
+                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
+                                      {{ item.category }}
+                                    </a>
                                   </div>
                                 {% endif %}
                               </small>
