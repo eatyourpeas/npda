@@ -39,6 +39,7 @@ gunicorn>=22.0.0
 autopep8==2.0.4
 black>=24.3.0
 djlint==1.36.3
+isort==5.13.2
 
 # testing and code analysis
 coverage==7.4.3
