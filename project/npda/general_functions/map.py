@@ -69,7 +69,8 @@ def get_children_by_pdu_audit_year(
     if patients:
         filtered_patients = patients.filter(
             ~Q(postcode__isnull=True)
-            | ~Q(postcode__exact=""),  # Exclude patients with no postcode
+            | ~Q(postcode__exact=""),  # Exclude patients with no postcode or location
+            ~Q(location_wgs84__isnull=True),
         )
 
         filtered_patients = filtered_patients.annotate(
