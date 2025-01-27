@@ -125,7 +125,7 @@ VISIT_CATEGORY_COLOURS = (
     (VisitCategories.DIETETIAN, "rcpch_aqua_green_dark_tint"),
     (VisitCategories.SICK_DAY, "rcpch_purple_dark_tint"),
     (VisitCategories.FLU, "rcpch_orange"),
-    (VisitCategories.HOSPITAL_ADMISSION, "rcpch_red"),
+    (VisitCategories.HOSPITAL_ADMISSION, "green_light_tint3"),
 )
 
 VISIT_FIELD_FLAT_LIST = (

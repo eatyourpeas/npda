@@ -32,8 +32,11 @@
           <th scope="col" class="px-2 py-3 text-center">Diagnosis Date</th>
           <th scope="col"
               class="px-2 py-3 text-center tooltip tooltip-bottom"
-              data-tip="The most recent quarter for which data has been uploaded.">
-            Latest Quarter <i class="fa-question-circle fas"></i>
+              data-tip="The distance travelled to the PDU.">
+            <span>
+              {% include 'partials/page_elements/sort_icon.html' with field="distance_from_lead_organisation" %}
+              Distance to PDU <i class="fa-question-circle fas"></i>
+            </span>
           </th>
           <th scope="col"></th>
         </tr>
@@ -60,6 +63,7 @@
                 <a class="btn flex p-1 h-full tooltip tooltip-right {% if nhs_number_error or gp_error %} text-rcpch_red {% else %} hover:text-rcpch_pink {% endif %}"
                    target="_blank"
                    href="{% url 'patient-update' patient.pk %}"
+                   HEAD
                    data-tip="{% if unique_identifier_error or gp_error %} {{ unique_identifier_error }} {{ gp_error }} {% else %} View patient details (opens new tab) {% endif %}">
                   <span class="fa-stack">
                     {% if unique_identifier_error or gp_error %}
@@ -173,7 +177,9 @@
                 {{ patient.diagnosis_date }}
               {% endif %}
             </td>
-            <td class="px-6 py-4 text-center">{{ patient.latest_quarter|default:'-' }}</td>
+            <td class="px-6 py-4 text-center">
+              {{ patient.distance_from_lead_organisation|round_distance:1 }} km
+            </td>
             <td class="text-right whitespace-nowrap">
               <a href="{% url 'patient_visits' patient.pk %}"
                  class="align-center flex tooltip tooltip-left {% if patient.visit_error_count < 1 %} text-rcpch_pink {% else %} text-rcpch_red {% endif %}"

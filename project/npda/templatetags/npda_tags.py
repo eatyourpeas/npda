@@ -1,16 +1,24 @@
 import re
 import itertools
 import logging
+
 from django import template, forms
 from django.conf import settings
 from ...constants import (
     VisitCategories,
     VISIT_FIELD_FLAT_LIST,
     VISIT_FIELDS,
+<<<<<<< HEAD
     CSV_HEADING_OBJECTS,
     UNIQUE_IDENTIFIER_ENGLAND,
     UNIQUE_IDENTIFIER_JERSEY,
+=======
+    CSV_HEADINGS,
+    VisitCategories,
+>>>>>>> origin/live
 )
+
+from django.contrib.gis.measure import D
 from datetime import date
 
 register = template.Library()
@@ -61,9 +69,12 @@ def colour_for_category(category):
         {"category": VisitCategories.PSYCHOLOGY, "colour": "rcpch_yellow_dark_tint"},
         {"category": VisitCategories.SMOKING, "colour": "rcpch_strong_green_dark_tint"},
         {"category": VisitCategories.DIETETIAN, "colour": "rcpch_aqua_green_dark_tint"},
-        {"category": VisitCategories.SICK_DAY, "colour": "rcpch_purple_dark_tint"},
+        {"category": VisitCategories.SICK_DAY, "colour": "rcpch_pink_light_tint2"},
         {"category": VisitCategories.FLU, "colour": "rcpch_orange"},
-        {"category": VisitCategories.HOSPITAL_ADMISSION, "colour": "rcpch_red"},
+        {
+            "category": VisitCategories.HOSPITAL_ADMISSION,
+            "colour": "rcpch_strong_green_dark_tint",
+        },
     ]
     for colour in colours:
         if colour["category"].value == category:
@@ -244,10 +255,17 @@ def category_has_errors(category, form):
 # The alternative of creating a new nested data structure was quite a big refactor
 # so I've gone with this simple but hacky version
 @register.filter
+<<<<<<< HEAD
 def categories_have_errors(categories_by_comma, errors_by_field):
     return any(
         [
             category_has_errors(category, errors_by_field)
+=======
+def categories_have_errors(categories_by_comma, form):
+    return any(
+        [
+            category_has_errors(category, form)
+>>>>>>> origin/live
             for category in categories_by_comma.split(",")
         ]
     )
@@ -350,6 +368,7 @@ def get_key_where_true(dictionary: dict) -> str:
     return ""
 
 
+<<<<<<< HEAD
 @register.simple_tag
 def jersify(pz_code, field):
     """
@@ -405,3 +424,48 @@ def jersify_errors_for_unique_patient_identifier(
         return unique_reference_number_errors
     else:
         return nhs_number_errors
+=======
+@register.filter
+def round_distance(value, decimal_places):
+    if value is None:
+        return "-"
+    if isinstance(value, D):
+        return round(value.km, decimal_places)
+    return value
+
+
+@register.filter
+def tab_identifier(value):
+
+    if value in [
+        VisitCategories.MEASUREMENT.value,
+        VisitCategories.HBA1.value,
+        VisitCategories.TREATMENT.value,
+        VisitCategories.CGM.value,
+        VisitCategories.BP.value,
+    ]:
+        return "Routine Measurements".lower().replace(" ", "_")
+    elif value in [
+        VisitCategories.FOOT.value,
+        VisitCategories.DECS.value,
+        VisitCategories.ACR.value,
+        VisitCategories.CHOLESTEROL.value,
+        VisitCategories.THYROID.value,
+        VisitCategories.COELIAC.value,
+        VisitCategories.PSYCHOLOGY.value,
+        VisitCategories.SMOKING.value,
+        VisitCategories.DIETETIAN.value,
+        VisitCategories.SICK_DAY.value,
+        VisitCategories.FLU.value,
+    ]:
+        return "Annual Review".lower().replace(" ", "_")
+    elif value in [VisitCategories.HOSPITAL_ADMISSION.value]:
+        return "Inpatient Entry".lower().replace(" ", "_")
+
+
+@register.filter
+def lowerify(value):
+    # replace spaces with underscores and make lowercase
+    value = value.replace(" ", "_")
+    return value.lower()
+>>>>>>> origin/live

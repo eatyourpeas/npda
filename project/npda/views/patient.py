@@ -1,14 +1,16 @@
 # python imports
-from datetime import date
 import logging
 
 # Django imports
 from django.apps import apps
 from django.utils import timezone
 from django.contrib import messages
+from django.contrib.gis.db.models.functions import Distance
+from django.contrib.gis.geos import Point
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count, Case, When, Max, Q, F
+from django.forms import BaseForm
 from django.forms import BaseForm
 from django.http.response import HttpResponse
 from django.shortcuts import render
@@ -17,17 +19,19 @@ from django.views.generic import ListView
 from django.http import HttpResponse
 from django.urls import reverse_lazy
 
+
 # Third party imports
 import nhs_number
 
-from project.npda.general_functions import organisations_adapter
-from project.npda.general_functions.quarter_for_date import (
+# Project imports
+from project.npda.general_functions import (
+    organisations_adapter,
+    fetch_organisation_by_ods_code,
     retrieve_quarter_for_date,
 )
-from project.npda.models import NPDAUser
+from project.npda.models import NPDAUser, Patient
 
 # RCPCH imports
-from ..models import Patient
 from ..forms.patient_form import PatientForm
 from .mixins import (
     CheckCanCompleteQuestionnaireMixin,
@@ -64,6 +68,7 @@ class PatientListView(
             "nhs_number",
             "unique_reference_number",
             "index_of_multiple_deprivation_quintile",
+            "distance_from_lead_organisation",
         ]:
             sort_by = sort_by_param
 
@@ -74,8 +79,14 @@ class PatientListView(
     def get_queryset(self):
         patient_queryset = super().get_queryset()
 
+        PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+
         # apply filters and annotations to the queryset
         pz_code = self.request.session.get("pz_code")
+        paediatric_diabetes_unit = PaediatricDiabetesUnit.objects.get(pz_code=pz_code)
+        paediatric_diabetes_unit_lead_organisation = fetch_organisation_by_ods_code(
+            ods_code=paediatric_diabetes_unit.lead_organisation_ods_code
+        )
         filtered_patients = Q(
             submissions__submission_active=True,
             submissions__audit_year=self.request.session.get("selected_audit_year"),
@@ -107,6 +118,14 @@ class PatientListView(
             visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
             last_upload_date=Max("submissions__submission_date"),
             most_recent_visit_date=Max("visit__visit_date"),
+            distance_from_lead_organisation=Distance(
+                "location_wgs84",
+                Point(
+                    paediatric_diabetes_unit_lead_organisation["longitude"],
+                    paediatric_diabetes_unit_lead_organisation["latitude"],
+                    srid=4326,
+                ),
+            ),
         )
 
         sort_by = self.get_sort_by()

@@ -35,11 +35,15 @@
                                         <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
                                       </span>
                                     {% endif %}
-                                    {{ item.category }}
+                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
+                                      {{ item.category }}
+                                    </a>
                                   </div>
                                 {% else %}
                                   <div class="tooltip tooltip-top visible text-center text-white hover:text-white">
-                                    {{ item.category }}
+                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
+                                      {{ item.category }}
+                                    </a>
                                   </div>
                                 {% endif %}
                               </small>
