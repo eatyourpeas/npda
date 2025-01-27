@@ -5,11 +5,9 @@ from http import HTTPStatus
 # Python imports
 import pytest
 from django.conf import settings
-
 # 3rd party imports
 from django.urls import reverse
 from freezegun import freeze_time
-
 
 # E12 imports
 from project.npda.models import NPDAUser
@@ -34,7 +32,11 @@ def test_auto_logout_django_auto_logout(
     assert response.status_code == HTTPStatus.OK, "User unable to access home"
 
     # Simulate session expiry with freezegun
-    future_time = datetime.now() + settings.AUTO_LOGOUT_IDLE_TIME_SECONDS + timedelta(seconds=1)
+    future_time = (
+        datetime.now()
+        + timedelta(seconds=settings.AUTO_LOGOUT_IDLE_TIME_SECONDS)
+        + timedelta(milliseconds=1)
+    )
     with freeze_time(future_time):
         response = client.get(reverse("home"))
 
