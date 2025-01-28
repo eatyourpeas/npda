@@ -5,7 +5,7 @@
   <div class="flex justify-center bg-white py-8">
     <div class="max-w-full lg:max-w-[75%] px-2 bg-white font-montserrat">
       <strong>
-        {{ title }} - NHS Number {{ nhs_number }}
+        {{ title }} - {% nhs_number_vs_urn pz_code %} {% nhs_number_vs_urn pz_code patient %}
       </strong>
       <form id="update-form"
             method="post"
@@ -43,7 +43,6 @@
           {% include 'partials/visit_form_tab.html' with checked="true" label="Routine Measurements" categories="Measurements,HBA1c,Treatment,CGM,BP" %}
           {% include 'partials/visit_form_tab.html' with label="Annual Review" categories="Foot Care,DECS,ACR,Cholesterol,Thyroid,Coeliac,Psychology,Smoking,Dietician,Sick Day Rules,Immunisation (flu)" %}
           {% include 'partials/visit_form_tab.html' with label="Inpatient Entry" categories="Hospital Admission" %}
-          
         </div>
         <div class="flex justify-end">
           <button type="submit"

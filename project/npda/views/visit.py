@@ -1,5 +1,6 @@
 # python imports
 import datetime
+import logging
 
 # Django imports
 from django.contrib import messages
@@ -25,6 +26,7 @@ from .mixins import (
 )
 
 # Third party imports
+logger = logging.getLogger(__name__)
 
 
 class PatientVisitsListView(
@@ -104,7 +106,7 @@ class VisitCreateView(
         context = super().get_context_data(**kwargs)
         context["patient_id"] = self.kwargs["patient_id"]
         patient = Patient.objects.get(pk=self.kwargs["patient_id"])
-        context["nhs_number"] = patient.nhs_number
+        context["patient"] = patient
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
         context["button_title"] = "Add New Visit"
@@ -127,6 +129,8 @@ class VisitCreateView(
     def form_valid(self, form, **kwargs):
         self.object = form.save(commit=False)
         self.object.patient_id = self.kwargs["patient_id"]
+        self.object.errors = None
+        self.object.is_valid = True
         super(VisitCreateView, self).form_valid(form)
         return HttpResponseRedirect(self.get_success_url())
 
@@ -151,7 +155,7 @@ class VisitUpdateView(
         context["visit_instance"] = visit_instance
         context["visit_errors"] = [visit_instance.errors]
         context["patient_id"] = self.kwargs["patient_id"]
-        context["nhs_number"] = visit_instance.patient.nhs_number
+        context["patient"] = visit_instance.patient
         context["visit_id"] = self.kwargs["pk"]
         context["title"] = "Edit Visit Details"
         context["button_title"] = "Edit Visit Details"
@@ -178,7 +182,9 @@ class VisitUpdateView(
             "Immunisation (flu)",
         ]
         context["categories_with_errors"] = [
-            category["category"] for category in visit_categories if category["has_error"]
+            category["category"]
+            for category in visit_categories
+            if category["has_error"]
         ]
 
         return context

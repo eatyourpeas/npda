@@ -8,7 +8,9 @@ from ...constants import (
     VisitCategories,
     VISIT_FIELD_FLAT_LIST,
     VISIT_FIELDS,
-    CSV_HEADINGS,
+    CSV_HEADING_OBJECTS,
+    UNIQUE_IDENTIFIER_ENGLAND,
+    UNIQUE_IDENTIFIER_JERSEY,
     VisitCategories,
 )
 
@@ -76,11 +78,19 @@ def colour_for_category(category):
     return None
 
 
-@register.filter
-def heading_for_field(field):
+@register.simple_tag
+def heading_for_field(pz_code, field):
     """
     Returns the heading for a given field
     """
+    if pz_code == "PZ248":
+        # Jersey
+        CSV_HEADINGS = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_JERSEY
+    else:
+        # England
+        CSV_HEADINGS = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_ENGLAND
+
+    CSV_HEADINGS = [item["heading"] for item in CSV_HEADINGS]
     for item in CSV_HEADINGS:
         if field == item["model_field"]:
             return item["heading"]
@@ -310,6 +320,8 @@ def extract_digits(value, underscore_index=0):
 @register.filter
 def get_item(dictionary: dict, key: str):
     """Get a value using a variable from a dictionary"""
+    return dictionary.get(key, "")
+
     try:
         return dictionary.get(key, "")
     except Exception:
@@ -345,6 +357,63 @@ def get_key_where_true(dictionary: dict) -> str:
     return ""
 
 
+@register.simple_tag
+def jersify(pz_code, field):
+    """
+    Tests to see if this field is rendered in a form with patients from Jersey
+    If so will return unique reference number otherwise will return nhs number
+    """
+    if pz_code == "PZ248":
+        # Jersey
+        if (
+            field.id_for_label == "id_unique_reference_number"
+            or field.id_for_label != "id_nhs_number"
+        ):
+            return True
+        else:
+            return False
+    else:
+        if (
+            field.id_for_label == "id_nhs_number"
+            or field.id_for_label != "id_unique_reference_number"
+        ):
+            return True
+        else:
+            return False
+
+
+@register.simple_tag
+def nhs_number_vs_urn(pz_code, patient=None):
+    """
+    Tests to see if this field is rendered in a form with patients from Jersey
+    If so will return unique reference number otherwise will return a formatted nhs number
+    """
+    if pz_code == "PZ248":
+        if patient and patient.unique_reference_number:
+            return patient.unique_reference_number
+        # Jersey
+        return "Unique Reference Number"
+    else:
+        if patient and patient.nhs_number:
+            if len(patient.nhs_number) >= 10:
+                return f"{patient.nhs_number[:3]} {patient.nhs_number[3:6]} {patient.nhs_number[6:]}"
+            return patient.nhs_number
+        return "NHS Number"
+
+
+@register.simple_tag
+def jersify_errors_for_unique_patient_identifier(
+    pz_code, nhs_number_errors, unique_reference_number_errors
+):
+    """
+    Visit errors depending on whether the patient is from Jersey or not
+    """
+    if pz_code == "PZ248":
+        return unique_reference_number_errors
+    else:
+        return nhs_number_errors
+
+
 @register.filter
 def round_distance(value, decimal_places):
     if value is None:
@@ -356,7 +425,6 @@ def round_distance(value, decimal_places):
 
 @register.filter
 def tab_identifier(value):
-
     if value in [
         VisitCategories.MEASUREMENT.value,
         VisitCategories.HBA1.value,

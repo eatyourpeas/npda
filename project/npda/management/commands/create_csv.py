@@ -15,7 +15,19 @@ Example use:
         --pts=5 \
         --visits="CDCD DHPC ACDC CDCD" \
         --hb_target=T \
-        --age_range=11_15
+        --age_range=11_15 \
+        --pz_code="PZ999" \
+        --build
+    
+    # Jersey
+
+    python manage.py create_csv \
+        --pts=5 \
+        --visits="CDCD DHPC ACDC CDCD" \
+        --hb_target=T \
+        --age_range=11_15 \
+        --pz_code="PZ248" \
+        --build
 
     Will generate 1 csv file with 5 patients, each with 12 visits, with the visit encoding provided.
     The HbA1c target range for each visit will be set to 'TARGET'.
@@ -76,6 +88,10 @@ Example use:
             - T (TARGET)
             - A (ABOVE)
             - W (WELL_ABOVE)
+    
+    --pz_code (str, required):
+        String for PZ code of the Paediatric Diabetes Unit.
+        Defaults to 'PZ999' for England. Pass 'PZ248' for Jersey.
 
     --age_range (str, optional):
         The possible age range for the patients to be seeded.
@@ -106,7 +122,6 @@ from collections import defaultdict
 from datetime import datetime
 import os
 import random
-import sys
 import logging
 
 from django.utils import timezone
@@ -116,7 +131,11 @@ import pandas as pd
 from project.constants.csv_headings import (
     ALL_DATES,
     CSV_DATA_TYPES_MINUS_DATES,
-    CSV_HEADINGS,
+    CSV_HEADING_OBJECTS,
+    UNIQUE_IDENTIFIER_JERSEY,
+    UNIQUE_IDENTIFIER_ENGLAND,
+    ENGLAND_CSV_DATA_TYPES,
+    JERSEY_CSV_DATA_TYPES,
 )
 from project.npda.general_functions.audit_period import (
     get_audit_period_for_date,
@@ -126,6 +145,7 @@ from project.npda.general_functions.data_generator_extended import (
     FakePatientCreator,
     HbA1cTargetRange,
 )
+from project.npda.general_functions.csv import csv_header
 from project.npda.management.commands.seed_submission import (
     letter_name_map,
     hb_target_map,
@@ -138,7 +158,6 @@ from project.npda.management.commands.seed_submission import (
 # Logging
 logger = logging.getLogger(__name__)
 
-PZ_CODE = "PZ999"
 GP_ODS_CODES = [
     "A81001",
     "A81002",
@@ -161,9 +180,6 @@ GP_ODS_CODES = [
     "A81023",
     "A81025",
 ]
-TEMPLATE_HEADERS = pd.read_csv(
-    "project/npda/dummy_sheets/npda_csv_submission_template_for_use_from_april_2021.csv"
-).columns
 
 
 class Command(BaseCommand):
@@ -195,6 +211,12 @@ class Command(BaseCommand):
             type=str,
             choices=["T", "A", "W"],
             help="HBA1C Target range for visit seeding.",
+        )
+        parser.add_argument(
+            "--pz_code",
+            type=str,
+            default="PZ999",
+            help="PZ Code of the Paediatric Diabetes Unit.",
         )
         parser.add_argument(
             "--submission_date",
@@ -253,6 +275,7 @@ class Command(BaseCommand):
         visit_types = parsed_values["visit_types"]
         submission_date = parsed_values["submission_date"]
         age_range = parsed_values["age_range"]
+        pdu = parsed_values["pz_code"]
         output_path = parsed_values["output_path"]
         build_flag = parsed_values["build_flag"]
 
@@ -290,9 +313,7 @@ class Command(BaseCommand):
             visit_types[i : i + 4] for i in range(0, len(visit_types), 4)
         ]
         for chunk in visit_types_chunks:
-            self.print_info(
-                "    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk)
-            )
+            self.print_info("    ".join(f"{CYAN}{visit}{RESET}" for visit in chunk))
 
         self.generate_csv(
             audit_start_date,
@@ -300,18 +321,15 @@ class Command(BaseCommand):
             n_pts_to_seed,
             age_range,
             hba1c_target,
+            pdu,
             visits,
             visit_types,
             output_path,
             build_flag,
         )
-        self.print_success(
-            f"✨ CSV generated successfully at {self.csv_name}.\n"
-        )
+        self.print_success(f"✨ CSV generated successfully at {self.csv_name}.\n")
         if build_flag:
-            self.print_info(
-                f"Coalesce the build csv files using the --coalesce flag."
-            )
+            self.print_info(f"Coalesce the build csv files using the --coalesce flag.")
 
     def generate_csv(
         self,
@@ -320,6 +338,7 @@ class Command(BaseCommand):
         n_pts_to_seed,
         age_range,
         hba1c_target,
+        pdu,
         visits,
         visit_types,
         output_path,
@@ -354,7 +373,12 @@ class Command(BaseCommand):
         #     model_field : csv_heading
         #   }
         # }
-        csv_map = self._get_map_model_csv_heading_field()
+        if pdu == "PZ248":
+            is_jersey = True
+        else:
+            is_jersey = False
+
+        csv_map = self._get_map_model_csv_heading_field(is_jersey=is_jersey)
 
         # Initialise data list, where each item is a dict relating to a row in the csv
         # Each dict will have keys as csv headings and values as the data
@@ -377,13 +401,11 @@ class Command(BaseCommand):
                         csv_heading,
                     ) in field_heading_mappings.items():
                         if model == "Visit":
-                            visit_dict[csv_heading] = getattr(
-                                visit, model_field
-                            )
+                            visit_dict[csv_heading] = getattr(visit, model_field)
                         elif model == "Patient":
                             # Foreign key so need to manually set the value
                             if model_field == "pdu":
-                                visit_dict[csv_heading] = PZ_CODE
+                                visit_dict[csv_heading] = pdu
                                 continue
                             if model_field == "gp_ods_code":
                                 visit_dict[csv_heading] = gp_ods_code
@@ -398,7 +420,9 @@ class Command(BaseCommand):
 
                 data.append(visit_dict)
 
-        df = self._set_valid_dtypes(pd.DataFrame(data))
+        is_jersey = True if pdu == "PZ248" else False
+
+        df = self._set_valid_dtypes(pd.DataFrame(data), is_jersey)
 
         self.csv_name = self._get_file_name(
             n_pts_to_seed=n_pts_to_seed,
@@ -407,6 +431,7 @@ class Command(BaseCommand):
             output_path=output_path,
             age_range=age_range,
             hb_target=hba1c_target,
+            pz_code=pdu,
         )
         df.to_csv(
             self.csv_name,
@@ -416,16 +441,15 @@ class Command(BaseCommand):
     def _run_coalesce(self, **options):
         self.print_info("Coalescing build csv files...")
 
+        pdu = options["pz_code"]
+        is_jersey = True if pdu == "PZ248" else False
+
         # Get the existing build files
         existing_build_files = [
-            f
-            for f in os.listdir(options["output_path"])
-            if f.startswith("build")
+            f for f in os.listdir(options["output_path"]) if f.startswith("build")
         ]
         if not existing_build_files:
-            self.print_error(
-                f"No build files to coalesce in {options['output_path']}/"
-            )
+            self.print_error(f"No build files to coalesce in {options['output_path']}/")
             return
         self.print_info(f"{CYAN}Existing build files: {RESET}\n")
         for file in existing_build_files:
@@ -447,22 +471,21 @@ class Command(BaseCommand):
 
         # Concatenate the dataframes
         df = pd.concat(dfs, axis=0, join="outer").reset_index(drop=True)
-        df = self._set_valid_dtypes(df)
+        df = self._set_valid_dtypes(
+            df,
+            is_jersey=is_jersey,
+        )
 
         df.info()
 
-        csv_file_name = (
-            f"coalesced_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
-        )
+        csv_file_name = f"coalesced_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
         full_csv_path = os.path.join(options["output_path"], csv_file_name)
         df.to_csv(
             full_csv_path,
             index=False,
         )
 
-        self.print_success(
-            f"\n✨ CSV coalesced successfully at {full_csv_path}.\n"
-        )
+        self.print_success(f"\n✨ CSV coalesced successfully at {full_csv_path}.\n")
 
         # PRINT OUT DIFFERENCE IN DATA TYPES
         comparison_csv = "dummy_sheet_invalid.csv"
@@ -477,9 +500,7 @@ class Command(BaseCommand):
                 mismatched_dtypes[col] = (orig_dtypes[col], new_dtypes[col])
 
         # Print out mismatched columns and their respective data types
-        self.print_error(
-            f"Columns with differing data types from {comparison_csv}:"
-        )
+        self.print_error(f"Columns with differing data types from {comparison_csv}:")
         self.print_info("NOTE: columns with Nan are cast to float")
         for col, (orig_type, new_type) in mismatched_dtypes.items():
             print(
@@ -491,10 +512,21 @@ class Command(BaseCommand):
 
         return
 
-    def _set_valid_dtypes(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _set_valid_dtypes(self, df: pd.DataFrame, is_jersey=False) -> pd.DataFrame:
         """Sets the correct data types for the dataframe, making them same as original
         dummy_sheet_invalid.csv file (to ensure we handle errors).
         """
+        if is_jersey:
+            CSV_DATA_TYPES_MINUS_DATES.update(JERSEY_CSV_DATA_TYPES)
+            TEMPLATE_HEADERS = pd.read_csv(
+                "project/npda/dummy_sheets/npda_csv_submission_template_for_use_from_april_2025.csv"
+            ).columns
+        else:
+            CSV_DATA_TYPES_MINUS_DATES.update(ENGLAND_CSV_DATA_TYPES)
+            TEMPLATE_HEADERS = pd.read_csv(
+                "project/npda/dummy_sheets/npda_csv_submission_template_for_use_from_april_2021.csv"
+            ).columns
+
         for header in df.columns:
             if header in ALL_DATES:
                 continue
@@ -516,9 +548,10 @@ class Command(BaseCommand):
                     for date_header in ALL_DATES
                 },
             )
-            # Reorder columns
-            [TEMPLATE_HEADERS]
+            # # Reorder columns
+            # [TEMPLATE_HEADERS]
         )
+        df = df[TEMPLATE_HEADERS]
 
         # Ensure the formatting is right for validation
         for date_header in ALL_DATES:
@@ -532,15 +565,9 @@ class Command(BaseCommand):
                 if dtype.startswith("Int"):  # Handle nullable integers
                     df[column] = (
                         df[column]
-                        .replace(
-                            {np.nan: pd.NA, None: pd.NA}
-                        )  # Replace missing values
+                        .replace({np.nan: pd.NA, None: pd.NA})  # Replace missing values
                         .apply(
-                            lambda x: (
-                                int(x)
-                                if pd.notna(x) and x == int(x)
-                                else pd.NA
-                            )
+                            lambda x: (int(x) if pd.notna(x) and x == int(x) else pd.NA)
                         )  # Ensure valid integers
                         .astype(dtype)  # Cast to nullable Int dtype
                     )
@@ -551,9 +578,7 @@ class Command(BaseCommand):
                         .astype("string")
                     )
                 elif dtype.startswith("float"):  # Handle floats
-                    df[column] = (
-                        df[column].replace({None: np.nan}).astype(dtype)
-                    )
+                    df[column] = df[column].replace({None: np.nan}).astype(dtype)
                 else:
                     raise ValueError(
                         f"Unsupported dtype from CSV_DATA_TYPES_MINUS_DATES: {dtype}\n (for {column=} {df[column].dtype=})"
@@ -579,16 +604,12 @@ class Command(BaseCommand):
                     datetime.strptime(submission_date_str, "%Y-%m-%d")
                 ).date()
             except ValueError:
-                self.print_error(
-                    "Invalid submission_date format. Use YYYY-MM-DD."
-                )
+                self.print_error("Invalid submission_date format. Use YYYY-MM-DD.")
                 return
         else:
             submission_date = timezone.now().date()
 
-        audit_start_date, audit_end_date = get_audit_period_for_date(
-            submission_date
-        )
+        audit_start_date, audit_end_date = get_audit_period_for_date(submission_date)
 
         # Number of patients to seed (pts)
         n_pts_to_seed = options["pts"]
@@ -610,6 +631,9 @@ class Command(BaseCommand):
         # age range
         age_range = age_range_map[options["age_range"]]
 
+        # pdu
+        pz_code = options["pz_code"]
+
         # output path
         output_path = options["output_path"]
 
@@ -621,6 +645,7 @@ class Command(BaseCommand):
             "audit_start_date": audit_start_date,
             "audit_end_date": audit_end_date,
             "hba1c_target": hba1c_target,
+            "pz_code": pz_code,
             "visits": visits,
             "visit_types": visit_types,
             "submission_date": submission_date,
@@ -636,6 +661,7 @@ class Command(BaseCommand):
         output_path: str,
         age_range: AgeRange,
         hb_target: HbA1cTargetRange,
+        pz_code: str,
         build: bool = False,
     ) -> str:
 
@@ -651,7 +677,7 @@ class Command(BaseCommand):
 
         output_path = os.path.join(
             output_path,
-            f"{building_str}{datetime.now().strftime("%Y%m%d%H%M%S")}-npda-seed-data-{n_pts_to_seed}pts-{age_range.name}-{hb_target.name}-{visits.replace(' ', '')}.csv",
+            f"{building_str}{datetime.now().strftime("%Y%m%d%H%M%S")}-npda-seed-data-{pz_code}-{n_pts_to_seed}pts-{age_range.name}-{hb_target.name}-{visits.replace(' ', '')}.csv",
         )
         return output_path
 
@@ -669,7 +695,7 @@ class Command(BaseCommand):
 
         return "".join(rendered_vt_names)
 
-    def _get_map_model_csv_heading_field(self) -> dict:
+    def _get_map_model_csv_heading_field(self, is_jersey) -> dict:
         """Generates dict that looks like:
 
         {
@@ -690,6 +716,11 @@ class Command(BaseCommand):
         """
 
         map_model_csv_heading_field = defaultdict(dict)
+
+        if is_jersey:
+            CSV_HEADINGS = UNIQUE_IDENTIFIER_JERSEY + CSV_HEADING_OBJECTS
+        else:
+            CSV_HEADINGS = UNIQUE_IDENTIFIER_ENGLAND + CSV_HEADING_OBJECTS
 
         for item in CSV_HEADINGS:
             # pdu no longer has model defined

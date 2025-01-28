@@ -5,7 +5,7 @@
   {% if request.user.view_preference == 1 %}
     <!-- national view -->
     <h1 class="font-montserrat text-md text-rcpch_dark_blue font-semibold">
-      All Submissions for {{ pz_code }}
+      All Submissions for {{ lead_organisation }} ({{ pz_code }})
     </h1>
   {% elif request.user.view_preference == 2 %}
     <!-- PDU view   -->

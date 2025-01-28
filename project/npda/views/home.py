@@ -50,10 +50,11 @@ async def home(request):
         form = UploadFileForm(request.POST, request.FILES)
         user_csv = request.FILES["csv_upload"]
         pz_code = request.session.get("pz_code")
+        is_jersey = pz_code == "PZ248"
         if request.session.get("can_upload_csv") is True:
             # check to see if the CSV is valid - cannot accept CSVs with no header. All other header errors are non-lethal but are reported back to the user
             try:
-                parsed_csv = csv_parse(user_csv)
+                parsed_csv = csv_parse(user_csv, is_jersey=is_jersey)
             except ValueError as e:
                 messages.error(
                     request=request,
@@ -133,12 +134,16 @@ async def home(request):
     return render(request=request, template_name=template, context=context)
 
 
-def download_template(request):
+def download_template(request, region):
     """
     Creates the template csv for users to fill out and upload into NPDA
     """
+    if region == "england_wales":
+        file = csv_header()
+    elif region == "jersey":
+        file = csv_header(is_jersey=True)
     return HttpResponse(
-        csv_header(),
+        file,
         content_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="npda_template.csv"'},
     )

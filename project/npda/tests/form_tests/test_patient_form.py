@@ -1,5 +1,4 @@
 # Standard imports
-from enum import Enum
 import pytest
 import logging
 import dataclasses
@@ -8,18 +7,14 @@ from unittest.mock import Mock, patch
 # 3rd Party imports
 from django.core.exceptions import ValidationError
 from dateutil.relativedelta import relativedelta
-from httpx import HTTPError
 
 # NPDA Imports
-from project.npda.models.patient import Patient
 from project.npda.forms.patient_form import PatientForm
 from project.npda.forms.external_patient_validators import (
     PatientExternalValidationResult,
 )
-from project.npda import general_functions
 from project.npda.tests.factories.patient_factory import (
     TODAY,
-    DATE_OF_BIRTH,
     VALID_FIELDS,
     VALID_FIELDS_WITH_GP_POSTCODE,
     INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,

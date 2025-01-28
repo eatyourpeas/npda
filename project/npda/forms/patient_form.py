@@ -13,7 +13,6 @@ from django import forms
 # django imports
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from httpx import HTTPError
 
 from ...constants.styles.form_styles import *
 from ..models import Patient
@@ -29,6 +28,8 @@ class DateInput(forms.DateInput):
 
 class NHSNumberField(forms.CharField):
     def to_python(self, value):
+        if not value:
+            return value
         number = super().to_python(value)
         normalised = nhs_number.standardise_format(number)
 
@@ -38,6 +39,18 @@ class NHSNumberField(forms.CharField):
     def validate(self, value):
         if value and not nhs_number.is_valid(value):
             raise ValidationError("Invalid NHS number")
+
+
+class UniqueReferenceNumberField(forms.CharField):
+    def to_python(self, value):
+        if not value:
+            return value
+        number = super().to_python(value)
+        return number
+
+    def validate(self, value):
+        if value and not value.isdigit():
+            raise ValidationError("Invalid Unique Reference Number")
 
 
 class PostcodeField(forms.CharField):
@@ -54,6 +67,7 @@ class PatientForm(forms.ModelForm):
         model = Patient
         fields = [
             "nhs_number",
+            "unique_reference_number",
             "sex",
             "date_of_birth",
             "postcode",
@@ -66,11 +80,15 @@ class PatientForm(forms.ModelForm):
         ]
         field_classes = {
             "nhs_number": NHSNumberField,
+            "unique_reference_number": UniqueReferenceNumberField,
             "postcode": PostcodeField,
             "gp_practice_postcode": PostcodeField,
         }
         widgets = {
             "nhs_number": forms.TextInput(
+                attrs={"class": TEXT_INPUT},
+            ),
+            "unique_reference_number": forms.TextInput(
                 attrs={"class": TEXT_INPUT},
             ),
             "sex": forms.Select(),
@@ -122,13 +140,30 @@ class PatientForm(forms.ModelForm):
             self.cleaned_data[key] = value
 
     def clean(self):
-        cleaned_data = self.cleaned_data
+        cleaned_data = super().clean()  # self.cleaned_data
 
         date_of_birth = cleaned_data.get("date_of_birth")
         diagnosis_date = cleaned_data.get("diagnosis_date")
         death_date = cleaned_data.get("death_date")
         gp_practice_ods_code = cleaned_data.get("gp_practice_ods_code")
         gp_practice_postcode = cleaned_data.get("gp_practice_postcode")
+
+        nhs_number = cleaned_data.get("nhs_number")
+        unique_reference_number = cleaned_data.get("unique_reference_number")
+
+        if not nhs_number and not unique_reference_number:
+            self.add_error(
+                "nhs_number",
+                ValidationError(
+                    "Either NHS Number or Unique Reference Number must be provided."
+                ),
+            )
+            self.add_error(
+                "unique_reference_number",
+                ValidationError(
+                    "Either NHS Number or Unique Reference Number must be provided."
+                ),
+            )
 
         if diagnosis_date is not None and date_of_birth is not None:
             if diagnosis_date < date_of_birth:

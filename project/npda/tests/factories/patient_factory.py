@@ -124,6 +124,16 @@ class PatientFactory(factory.django.DjangoModelFactory):
             )
 
     @factory.lazy_attribute
+    def unique_reference_number(self):
+        """Returns a unique reference number which has not been used in the db yet."""
+        unique_reference_number = random.randint(100000, 999999)
+        while Patient.objects.filter(
+            unique_reference_number=unique_reference_number
+        ).exists():
+            unique_reference_number = random.randint(100000, 999999)
+        return unique_reference_number
+
+    @factory.lazy_attribute
     def date_of_birth(self):
         """Set date_of_birth based on the selected age_range."""
         min_age, max_age = self.age_range.value
