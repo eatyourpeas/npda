@@ -9,7 +9,7 @@ def get_visit_categories(instance, form):
     categories = []
     for category, fields in VISIT_FIELDS:
         present = False
-        errors = []
+        errors = {}
 
         # Data can be either:
         #  - On the bound form field after submitting the questionnaire
@@ -19,7 +19,7 @@ def get_visit_categories(instance, form):
                     present = True
                     
                     if field.errors:
-                        errors = field.errors
+                        errors[field.name] = field.errors
 
         #  - On the instance itself after a CSV upload
         if instance:
@@ -30,7 +30,7 @@ def get_visit_categories(instance, form):
             if instance.errors:
                 for field in instance.errors.keys():
                     if field in fields:
-                        errors = [error["message"] for error in instance.errors[field]]
+                        errors[field] = [error["message"] for error in instance.errors[field]]
 
         categories.append(
             {
@@ -57,9 +57,10 @@ def get_visit_tabs(form):
         category_names = [c.value for c in categories]
         categories = [c for c in all_categories if c["name"] in category_names]
 
-        errors = []
+        errors = {}
         for category in categories:
-            errors += category["errors"]
+            for field, field_errors in category["errors"].items():
+                errors[field] = field_errors
 
         tab = {
             "name": tab_name,

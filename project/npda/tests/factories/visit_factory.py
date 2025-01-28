@@ -9,7 +9,6 @@ import factory
 
 # rcpch imports
 from project.npda.models import Visit
-from project.constants.visit_categories import VISIT_FIELDS
 
 COMPLETED_VISIT = {
     "height": 123,

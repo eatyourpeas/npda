@@ -34,7 +34,7 @@
       </div>
       {% for field in form %}
         {% if field.field.category == category.name %}
-          {% with visit_instance.errors|errors_for_form_field:field as errors %}
+          {% with category.errors|get_item:field.name as errors %}
             <div class="flex flex-row flex-wrap my-2 mx-2">
               <div class="flex items-center justify-start w-full md:w-1/3">
                 <label for="{{ field.id_for_label }}"

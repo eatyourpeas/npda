@@ -146,12 +146,9 @@ class VisitUpdateView(
     form_class = VisitForm
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        visit_instance = context["form"].instance
-        # TODO MRB: remove this
-        context["visit_instance"] = visit_instance 
+        context = super().get_context_data(**kwargs) 
         context["patient_id"] = self.kwargs["patient_id"]
-        context["nhs_number"] = visit_instance.patient.nhs_number
+        context["nhs_number"] = context["form"].patient.nhs_number
         context["visit_id"] = self.kwargs["pk"]
         context["title"] = "Edit Visit Details"
         context["button_title"] = "Edit Visit Details"

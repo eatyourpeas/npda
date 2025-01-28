@@ -6,7 +6,6 @@ from django import template, forms
 from django.conf import settings
 from ...constants import (
     VisitCategories,
-    VISIT_FIELDS,
     CSV_HEADINGS,
     VisitCategories,
 )
@@ -80,11 +79,6 @@ def join_with_comma(value):
     return value
 
 
-@register.filter
-def split_by_comma(value):
-    return value.split(",")
-
-
 @register.simple_tag
 def site_contact_email():
     return settings.SITE_CONTACT_EMAIL
@@ -130,17 +124,6 @@ def error_for_field(errors_by_field, field):
     error_messages = [error["message"] for error in errors]
 
     return "\n".join(error_messages)
-
-
-@register.filter
-def errors_for_form_field(errors_by_field, field):
-    if field.errors:
-        return field.errors
-
-    if errors_by_field and field.name in errors_by_field:
-        return [error["message"] for error in errors_by_field[field.name]]
-
-    return []
 
 
 @register.simple_tag
@@ -248,36 +231,12 @@ def round_distance(value, decimal_places):
 
 
 @register.filter
-def tab_identifier(value):
-
-    if value in [
-        VisitCategories.MEASUREMENT.value,
-        VisitCategories.HBA1.value,
-        VisitCategories.TREATMENT.value,
-        VisitCategories.CGM.value,
-        VisitCategories.BP.value,
-    ]:
-        return "Routine Measurements".lower().replace(" ", "_")
-    elif value in [
-        VisitCategories.FOOT.value,
-        VisitCategories.DECS.value,
-        VisitCategories.ACR.value,
-        VisitCategories.CHOLESTEROL.value,
-        VisitCategories.THYROID.value,
-        VisitCategories.COELIAC.value,
-        VisitCategories.PSYCHOLOGY.value,
-        VisitCategories.SMOKING.value,
-        VisitCategories.DIETETIAN.value,
-        VisitCategories.SICK_DAY.value,
-        VisitCategories.FLU.value,
-    ]:
-        return "Annual Review".lower().replace(" ", "_")
-    elif value in [VisitCategories.HOSPITAL_ADMISSION.value]:
-        return "Inpatient Entry".lower().replace(" ", "_")
-
-
-@register.filter
 def lowerify(value):
     # replace spaces with underscores and make lowercase
     value = value.replace(" ", "_")
     return value.lower()
+
+
+@register.filter
+def flatten(values):
+    return list(itertools.chain(*values))

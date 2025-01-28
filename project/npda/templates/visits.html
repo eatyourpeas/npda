@@ -27,7 +27,7 @@
                             <small>
                               <div class="tooltip tooltip-top visible text-center text-white hover:text-white"
                                 {% if item.errors %}
-                                  data-tip='{{ item.errors|join:", " }}'
+                                  data-tip='{{ item.errors.values|flatten|join:", " }}'
                                 {% endif %}
                               >
                                 {% if item.errors %}
