@@ -7,7 +7,7 @@ import plotly.io as pio
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 
-from project.constants.colors import *
+import project.constants.colors as colors
 from project.npda.models.paediatric_diabetes_unit import (
     PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
 )
@@ -146,24 +146,24 @@ def get_waffle_chart_partial(request):
         # Prepare waffle chart
         # TODO: ADD IN A BUNCH OF COLORS HERE. ?COULD SPECIFY COLORS IN GET REQUEST
         colours = [
-            RCPCH_DARK_BLUE,
-            RCPCH_PINK,
-            RCPCH_MID_GREY,
-            RCPCH_CHARCOAL_DARK,
-            RCPCH_RED,
-            RCPCH_ORANGE,
-            RCPCH_YELLOW,
-            RCPCH_STRONG_GREEN,
-            RCPCH_AQUA_GREEN,
-            RCPCH_PURPLE,
-            RCPCH_PURPLE_LIGHT_TINT2,
-            RCPCH_PURPLE_DARK_TINT,
-            RCPCH_RED_LIGHT_TINT3,
-            RCPCH_ORANGE_LIGHT_TINT3,
-            RCPCH_STRONG_GREEN_LIGHT_TINT3,
-            RCPCH_AQUA_GREEN_LIGHT_TINT3,
-            RCPCH_ORANGE_LIGHT_TINT3,
-            RCPCH_DARK_GREY,
+            colors.RCPCH_DARK_BLUE,
+            colors.RCPCH_PINK,
+            colors.RCPCH_MID_GREY,
+            colors.RCPCH_CHARCOAL_DARK,
+            colors.RCPCH_RED,
+            colors.RCPCH_ORANGE,
+            colors.RCPCH_YELLOW,
+            colors.RCPCH_STRONG_GREEN,
+            colors.RCPCH_AQUA_GREEN,
+            colors.RCPCH_PURPLE,
+            colors.RCPCH_PURPLE_LIGHT_TINT2,
+            colors.RCPCH_PURPLE_DARK_TINT,
+            colors.RCPCH_RED_LIGHT_TINT3,
+            colors.RCPCH_ORANGE_LIGHT_TINT3,
+            colors.RCPCH_STRONG_GREEN_LIGHT_TINT3,
+            colors.RCPCH_AQUA_GREEN_LIGHT_TINT3,
+            colors.RCPCH_ORANGE_LIGHT_TINT3,
+            colors.RCPCH_DARK_GREY,
         ][: len(data)]
 
         # Create Plotly waffle chart
@@ -380,7 +380,7 @@ def get_progress_bar_chart_partial(
                 x=[100] * len(values),
                 y=labels,
                 orientation="h",
-                marker=dict(color=RCPCH_LIGHT_GREY),
+                marker=dict(color=colors.RCPCH_LIGHT_GREY),
                 showlegend=False,
                 hoverinfo="none",
                 name="Background",
@@ -396,7 +396,7 @@ def get_progress_bar_chart_partial(
                 showarrow=False,
                 xanchor="left",
                 yanchor="bottom",
-                font=dict(size=14, color=RCPCH_DARK_BLUE),
+                font=dict(size=14, color=colors.RCPCH_DARK_BLUE),
                 align="left",
                 yshift=27,  # Shift the text upwards for readability
             )
@@ -407,7 +407,7 @@ def get_progress_bar_chart_partial(
                 x=percentages,
                 y=labels,
                 orientation="h",
-                marker=dict(color=RCPCH_DARK_BLUE),
+                marker=dict(color=colors.RCPCH_DARK_BLUE),
                 text=[f"{pct}%" for pct in percentages],
                 textposition=["inside" if pct > 5 else "outside" for pct in percentages],
                 insidetextanchor="end",
@@ -500,7 +500,7 @@ def get_simple_bar_chart_pcts_partial(request):
             # so add the '#' if it's not there
             bar_color = f"#{bar_color}" if bar_color[0] != "#" else bar_color
         else:
-            bar_color = RCPCH_DARK_BLUE
+            bar_color = colors.RCPCH_DARK_BLUE
 
         # NOTE: don't need to handle empty data as the template handles this
         data_raw = json.loads(request.GET.get("data"))
@@ -606,9 +606,9 @@ def get_hcl_scatter_plot(request):
         percentages = [data[q]["pct"] for q in data]
         passed = [data[q]["total_passed"] for q in data]
         eligible = [data[q]["total_eligible"] for q in data]
-        colors = [RCPCH_LIGHT_BLUE for _ in data]
+        all_colors = [colors.RCPCH_LIGHT_BLUE for _ in data]
         # highlight the last quarter
-        colors[-1] = RCPCH_PINK
+        all_colors[-1] = colors.RCPCH_PINK
 
         # Create scatter plot
         fig = go.Figure()
@@ -620,10 +620,10 @@ def get_hcl_scatter_plot(request):
                 mode="lines+markers",
                 marker=dict(
                     size=12,
-                    color=colors,
+                    color=all_colors,
                     symbol="square",
                 ),
-                line=dict(color=RCPCH_LIGHT_BLUE),
+                line=dict(color=colors.RCPCH_LIGHT_BLUE),
                 hovertemplate="<b>%{x}</b>:Eligible passed: %{customdata[0]} / %{customdata[1]} (%{y:.1f}%)<extra></extra>",
                 customdata=list(zip(passed, eligible)),
             )
@@ -644,7 +644,7 @@ def get_hcl_scatter_plot(request):
             y=percentages[-1],
             text=f"{percentages[-1]}%",
             showarrow=False,
-            font=dict(color=RCPCH_PINK, size=12),
+            font=dict(color=colors.RCPCH_PINK, size=12),
             yshift=yshift,
         )
 
@@ -674,5 +674,141 @@ def get_hcl_scatter_plot(request):
         return render(
             request,
             "dashboard/hcl_scatter_plot_partial.html",
+            {"error": "Something went wrong!"},
+        )
+
+
+def get_treemap_chart_partial(request):
+    try:
+
+        if not request.htmx:
+            return HttpResponseBadRequest("This view is only accessible via HTMX")
+
+        # Fetch data from query parameters
+        data = {}
+        for key, value in request.GET.items():
+            data[key] = int(value)
+
+        # Define top-level ethnicity categories and their colors
+        parent_colors = {
+            "White": colors.RCPCH_LIGHT_BLUE,
+            "Asian": colors.RCPCH_PINK,
+            "Black": colors.RCPCH_MID_GREY,
+            "Mixed": colors.RCPCH_YELLOW,
+            "Other": colors.RCPCH_DARK_BLUE,
+        }
+
+        # Define ethnicity mapping to parents
+        ethnicity_parent_map = {
+            "Not known": "Other",
+            "Any other mixed background": "Mixed",
+            "African": "Black",
+            "Pakistani or British Pakistani": "Asian",
+            "Caribbean": "Black",
+            "British, Mixed British": "White",
+            "Any other White background": "White",
+            "Any other Black background": "Black",
+            "Mixed (White and Black Caribbean)": "Mixed",
+            "Irish": "White",
+            "Any other ethnic group": "Other",
+            "Chinese": "Asian",
+            "Any other Asian background": "Asian",
+            "Mixed (White and Asian)": "Mixed",
+            "Indian or British Indian": "Asian",
+            "Not Stated": "Other",
+            "Mixed (White and Black African)": "Mixed",
+            "Bangladeshi or British Bangladeshi": "Asian",
+        }
+
+        # Ethnicity data with percentage distribution
+        data = {
+            "Not known": 2,
+            "Any other mixed background": 7,
+            "African": 4,
+            "Pakistani or British Pakistani": 5,
+            "Caribbean": 7,
+            "British, Mixed British": 4,
+            "Any other White background": 2,
+            "Any other Black background": 6,
+            "Mixed (White and Black Caribbean)": 4,
+            "Irish": 4,
+            "Any other ethnic group": 6,
+            "Chinese": 3,
+            "Any other Asian background": 7,
+            "Mixed (White and Asian)": 6,
+            "Indian or British Indian": 6,
+            "Not Stated": 6,
+            "Mixed (White and Black African)": 7,
+            "Bangladeshi or British Bangladeshi": 4,
+        }
+
+        # Extract lists
+        ethnicities = list(data.keys())
+        percentages = list(data.values())
+        parents = [ethnicity_parent_map[ethnicity] for ethnicity in ethnicities]  # Assign parents
+
+        # Ensure unique parent labels in the treemap
+        parent_labels = list(set(parents))  # Get unique parent categories
+        parent_values = [
+            sum(data[eth] for eth in ethnicities if ethnicity_parent_map[eth] == parent)
+            for parent in parent_labels
+        ]
+
+        # Define all labels (parents first, then children)
+        all_labels = parent_labels + ethnicities
+        all_parents = ["ALL"] * len(parent_labels) + parents
+
+        # Define values (parents first, then children)
+        all_values = parent_values + percentages
+
+        # Assign the same color to subcategories as their parent
+        all_colors = {p: parent_colors[p] for p in parent_labels}  # Assign parent colors
+        all_colors.update(
+            # Apply same color to children
+            {eth: parent_colors[ethnicity_parent_map[eth]] for eth in ethnicities}
+        )
+
+        # Create Treemap
+        fig = go.Figure(
+            go.Treemap(
+                labels=all_labels,  # Labels including parents
+                parents=all_parents,  # Hierarchical structure
+                values=all_values,  # Sizes
+                textinfo="label+percent parent",  # Show labels and percentages
+                marker=dict(
+                    # Apply parent colors to subcategories
+                    colors=[all_colors[label] for label in all_labels]
+                ),
+                hovertemplate=(
+                    "<b>%{label}</b><br>" "N=%{value} (%{percentRoot:.0%})<br><extra></extra>"
+                ),
+            )
+        )
+
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=0, b=0),
+        )
+
+        # Convert Plotly figure to HTML
+        chart_html = fig.to_html(
+            full_html=False,
+            include_plotlyjs=False,
+            config={
+                "displayModeBar": False,
+            },
+            default_height=DEFAULT_CHART_HTML_HEIGHT,
+        )
+
+        return render(
+            request,
+            "dashboard/treemap_chart_partial.html",
+            {"chart_html": chart_html},
+        )
+
+    except Exception as e:
+        logger.error("Error generating treemap chart", exc_info=True)
+        return render(
+            request,
+            "dashboard/treemap_chart_partial.html",
             {"error": "Something went wrong!"},
         )

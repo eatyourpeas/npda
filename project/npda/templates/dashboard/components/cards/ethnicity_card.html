@@ -4,8 +4,8 @@
 {% endblock card_title%}
 {% block card_body %}
 <div
-hx-get="{% url 'get_waffle_chart_partial' %}"
-hx-vals='{{ charts.pt_ethnicity_value_counts_pct.data }}'
+hx-get="{% url 'get_treemap_chart_partial' %}"
+hx-vals='{{ charts.pt_ethnicity_value_counts.data }}'
 hx-trigger="load" hx-swap="innerHTML"
 _="on htmx:afterSwap remove #loading-spinner-ethnicity-card"></div>
 

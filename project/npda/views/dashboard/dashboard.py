@@ -215,8 +215,9 @@ def dashboard(request):
     )
     # Convert to pcts
     pt_sex_value_counts_pct = convert_value_counts_dict_to_pct(pt_sex_value_counts)
-    pt_ethnicity_value_counts_pct = convert_value_counts_dict_to_pct(pt_ethnicity_value_counts)
     pt_imd_value_counts_pct = convert_value_counts_dict_to_pct(pt_imd_value_counts)
+    
+    logger.debug(f'{pt_ethnicity_value_counts=}')
 
     # Gather other context vars
     current_date = date.today()
@@ -322,8 +323,8 @@ def dashboard(request):
             "pt_sex_value_counts_pct": {
                 "data": json.dumps(pt_sex_value_counts_pct),
             },
-            "pt_ethnicity_value_counts_pct": {
-                "data": json.dumps(pt_ethnicity_value_counts_pct),
+            "pt_ethnicity_value_counts": {
+                "data": json.dumps(pt_ethnicity_value_counts),
             },
             "pt_imd_value_counts_pct": {
                 "data": json.dumps(pt_imd_value_counts_pct),
