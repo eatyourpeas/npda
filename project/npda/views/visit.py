@@ -16,7 +16,6 @@ from ..forms.visit_form import VisitForm
 from ..general_functions import get_visit_categories, get_visit_tabs
 from ..kpi_class.kpis import CalculateKPIS
 from ..models import Patient, Transfer, Visit
-from ...constants.visit_categories import VISIT_TABS
 from .mixins import (
     CheckCanCompleteQuestionnaireMixin,
     CheckCurrentAuditYearMixin,
@@ -57,7 +56,7 @@ class PatientVisitsListView(
         visits = Visit.objects.filter(patient=patient).order_by("is_valid", "id")
         calculated_visits = []
         for visit in visits:
-            visit_categories = get_visit_categories(visit)
+            visit_categories = get_visit_categories(instance=visit, form=None)
             calculated_visits.append({"visit": visit, "categories": visit_categories})
         context["visits"] = calculated_visits
         context["patient"] = patient
@@ -109,8 +108,7 @@ class VisitCreateView(
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
         context["button_title"] = "Add New Visit"
-        # TODO MRB: make this work again
-        # context["visit_tabs"] = VISIT_TABS
+        context["visit_tabs"] = get_visit_tabs(form=None)
         return context
 
     def get_success_url(self):

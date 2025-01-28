@@ -2,7 +2,7 @@ import urllib.parse
 from ...constants import VISIT_FIELDS, VISIT_TABS, VISIT_CATEGORY_COLOURS
 
 
-def get_visit_categories(instance, form=None):
+def get_visit_categories(instance, form):
     """
     Returns visit categories present in this visit instance, and tags them as to whether they contain errors
     """
@@ -22,14 +22,15 @@ def get_visit_categories(instance, form=None):
                         errors = field.errors
 
         #  - On the instance itself after a CSV upload
-        for field in fields:
-            if getattr(instance, field):
-                present = True
+        if instance:
+            for field in fields:
+                if getattr(instance, field):
+                    present = True
 
-        if instance.errors:
-            for field in instance.errors.keys():
-                if field in fields:
-                    errors = [error["message"] for error in instance.errors[field]]
+            if instance.errors:
+                for field in instance.errors.keys():
+                    if field in fields:
+                        errors = [error["message"] for error in instance.errors[field]]
 
         categories.append(
             {
@@ -46,7 +47,9 @@ def get_visit_categories(instance, form=None):
 
 def get_visit_tabs(form):
     tabs = []
-    all_categories = get_visit_categories(form.instance, form)
+    instance = form.instance if form else None
+
+    all_categories = get_visit_categories(instance, form)
 
     assigned_active_tab = False
 
