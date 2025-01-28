@@ -40,13 +40,15 @@ def get_visit_categories(instance, form=None):
                 "colour": VISIT_CATEGORY_COLOURS[category]
             }
         )
-        
+
     return categories
 
 
 def get_visit_tabs(form):
     tabs = []
     all_categories = get_visit_categories(form.instance, form)
+
+    assigned_active_tab = False
 
     for tab_name, categories in VISIT_TABS:
         category_names = [c.value for c in categories]
@@ -62,6 +64,15 @@ def get_visit_tabs(form):
             "errors": errors
         }
 
+        # Show the first tab with errors
+        if errors and not assigned_active_tab:
+            tab["active"] = True
+            assigned_active_tab = True
+
         tabs.append(tab)
+    
+    # Otherwise show the first one
+    if not assigned_active_tab:
+        tabs[0]["active"] = True
 
     return tabs

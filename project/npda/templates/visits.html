@@ -25,25 +25,21 @@
                         {% if item.present %}
                           <span class="bg-{{ item.colour }} px-1 py-0.25 mx-1 my-1 text-sm font-semibold text-white">
                             <small>
-                              {% if item.errors %}
-                                <div class="-mt-20 tooltip tooltip-bottom visible text-center text-white hover:text-white"
-                                      data-tip='{{ item.errors|join:", " }}'>
+                              <div class="tooltip tooltip-top visible text-center text-white hover:text-white"
+                                {% if item.errors %}
+                                  data-tip='{{ item.errors|join:", " }}'
+                                {% endif %}
+                              >
+                                {% if item.errors %}
                                   <span class="fa-stack text-rcpch_red">
                                     <i class="fa-circle fa-stack-1x fas"></i>
                                     <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
                                   </span>
-                                  {% comment %}TODO MRB: Fix these{% endcomment %}
-                                  <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
-                                    {{ item.name }}
-                                  </a>
-                                </div>
-                              {% else %}
-                                <div class="tooltip tooltip-top visible text-center text-white hover:text-white">
-                                  <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
-                                    {{ item.name }}
-                                  </a>
-                                </div>
-                              {% endif %}
+                                {% endif %}
+                                <a href="{% url 'visit-update' patient.pk visit.visit.pk %}#{{ item.anchor }}">
+                                  {{ item.name }}
+                                </a>
+                              </div>
                             </small>
                           </span>
                         {% endif %}

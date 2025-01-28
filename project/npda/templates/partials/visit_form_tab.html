@@ -27,7 +27,8 @@
   </div>
   {% for category in categories %}
     <div class="flex flex-col mb-6 bg-white border-4 border-rcpch_lightest_grey ">
-      <a name="{{category.anchor}}"></a>
+      <a name="{{category.anchor}}"
+        {% if category.errors %} data-has-errors {% endif %}></a>
       <div class="badge badge-outline p-2 bg-{{ category.colour }} text-white">
         {{ category.name }}
       </div>
@@ -91,25 +92,3 @@
     </div>
   {% endfor %}
 </div>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-      const params = new URLSearchParams(window.location.search);
-      const tabValue = params.get('tab');
-
-      if (tabValue) {
-          // Select the appropriate tab
-          const tabInput = document.querySelector(`input[name='visit_tab'][value='${tabValue}']`);
-          if (tabInput) {
-              tabInput.checked = true;
-
-              // Delay scrolling to the anchor for smooth transition
-              const anchor = document.querySelector(window.location.hash);
-              if (anchor) {
-                  setTimeout(() => {
-                      anchor.scrollIntoView({ behavior: 'smooth' });
-                  }, 100); // Delay to ensure the tab content has loaded
-              }
-          }
-      }
-  });
-</script>
