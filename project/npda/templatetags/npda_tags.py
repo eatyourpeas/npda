@@ -237,11 +237,11 @@ def category_has_errors(category, form):
 # The alternative of creating a new nested data structure was quite a big refactor
 # so I've gone with this simple but hacky version
 @register.filter
-def categories_have_errors(categories_by_comma, form):
+def categories_have_errors(categories, form):
     return any(
         [
             category_has_errors(category, form)
-            for category in categories_by_comma.split(",")
+            for category in categories
         ]
     )
 

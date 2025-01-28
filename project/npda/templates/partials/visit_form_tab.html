@@ -10,7 +10,7 @@
   <div class="flex align-middle items-center bg-gray-100 p-2 m-2">
     <span class="mr-2 text-nowrap"><i class="fa-solid fa-list"></i> Skip to section: </span>
     <ul class="flex gap-2 flex-wrap my-2">
-      {% for field_category in categories|split_by_comma %}
+      {% for field_category in categories %}
         <li class="inline-block p-2 font-mono bg-{{ field_category|colour_for_category }} hover:shadow-md hover:underline">
           <a href="#{{ field_category|cut:" " }}_anchor">
             {% if field_category|category_has_errors:form %}
@@ -25,7 +25,7 @@
       {% endfor %}
     </ul>
   </div>
-  {% for field_category in categories|split_by_comma %}
+  {% for field_category in categories %}
     {% with field_category|colour_for_category as background_colour %}
       <div class="flex flex-col mb-6 bg-white border-4 border-rcpch_lightest_grey ">
         <a name="{{ field_category|cut:" " }}_anchor"></a>

@@ -16,6 +16,7 @@ from ..forms.visit_form import VisitForm
 from ..general_functions import get_visit_categories
 from ..kpi_class.kpis import CalculateKPIS
 from ..models import Patient, Transfer, Visit
+from ...constants.visit_categories import VISIT_TABS
 from .mixins import (
     CheckCanCompleteQuestionnaireMixin,
     CheckCurrentAuditYearMixin,
@@ -108,6 +109,7 @@ class VisitCreateView(
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
         context["button_title"] = "Add New Visit"
+        context["visit_tabs"] = VISIT_TABS
         return context
 
     def get_success_url(self):
@@ -155,26 +157,7 @@ class VisitUpdateView(
         context["title"] = "Edit Visit Details"
         context["button_title"] = "Edit Visit Details"
         context["form_method"] = "update"
-        context["routine_measurements_categories"] = [
-            "Measurements",
-            "HBA1c",
-            "Treatment",
-            "CGM",
-            "BP",
-        ]
-        context["annual_review_categories"] = [
-            "Foot Care",
-            "DECS",
-            "ACR",
-            "Cholesterol",
-            "Thyroid",
-            "Coeliac",
-            "Psychology",
-            "Smoking",
-            "Dietician",
-            "Sick Day Rules",
-            "Immunisation (flu)",
-        ]
+        context["visit_tabs"] = VISIT_TABS
 
         return context
 

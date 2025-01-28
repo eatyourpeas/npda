@@ -78,4 +78,30 @@ VISIT_FIELDS = (
     (VisitCategories.SICK_DAY, SICK_DAY_FIELDS),
     (VisitCategories.FLU, FLU_FIELDS),
     (VisitCategories.HOSPITAL_ADMISSION, HOSPITAL_ADMISSION_FIELDS),
+)      
+
+VISIT_TABS = (
+    ("Routine Measurements", [
+        VisitCategories.MEASUREMENT.value,
+        VisitCategories.HBA1.value,
+        VisitCategories.TREATMENT.value,
+        VisitCategories.CGM.value,
+        VisitCategories.BP.value
+    ]),
+    ("Annual Review", [
+        VisitCategories.FOOT.value,
+        VisitCategories.DECS.value,
+        VisitCategories.ACR.value,
+        VisitCategories.CHOLESTEROL.value,
+        VisitCategories.THYROID.value,
+        VisitCategories.COELIAC.value,
+        VisitCategories.PSYCHOLOGY.value,
+        VisitCategories.SMOKING.value,
+        VisitCategories.DIETETIAN.value,
+        VisitCategories.SICK_DAY.value,
+        VisitCategories.FLU.value
+    ]),
+    ("Inpatient Entry", [
+        VisitCategories.HOSPITAL_ADMISSION.value
+    ])
 )

@@ -40,10 +40,9 @@
           {% endif %}
         {% endfor %}
         <div role="tablist" class="flex flex-wrap">
-          {% include 'partials/visit_form_tab.html' with checked="true" label="Routine Measurements" categories="Measurements,HBA1c,Treatment,CGM,BP" %}
-          {% include 'partials/visit_form_tab.html' with label="Annual Review" categories="Foot Care,DECS,ACR,Cholesterol,Thyroid,Coeliac,Psychology,Smoking,Dietician,Sick Day Rules,Immunisation (flu)" %}
-          {% include 'partials/visit_form_tab.html' with label="Inpatient Entry" categories="Hospital Admission" %}
-          
+          {% for tab, categories in visit_tabs %}
+            {% include 'partials/visit_form_tab.html' with checked="true" label=tab categories=categories %}
+          {% endfor %}
         </div>
         <div class="flex justify-end">
           <button type="submit"
