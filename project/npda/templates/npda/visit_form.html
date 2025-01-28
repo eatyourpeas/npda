@@ -40,8 +40,8 @@
           {% endif %}
         {% endfor %}
         <div role="tablist" class="flex flex-wrap">
-          {% for tab, categories in visit_tabs %}
-            {% include 'partials/visit_form_tab.html' with checked="true" label=tab categories=categories %}
+          {% for tab in visit_tabs %}
+            {% include 'partials/visit_form_tab.html' with checked="true" label=tab.name categories=tab.categories %}
           {% endfor %}
         </div>
         <div class="flex justify-end">

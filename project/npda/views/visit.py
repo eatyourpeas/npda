@@ -13,7 +13,7 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 # RCPCH imports
 from ..forms.visit_form import VisitForm
-from ..general_functions import get_visit_categories
+from ..general_functions import get_visit_categories, get_visit_tabs
 from ..kpi_class.kpis import CalculateKPIS
 from ..models import Patient, Transfer, Visit
 from ...constants.visit_categories import VISIT_TABS
@@ -109,7 +109,8 @@ class VisitCreateView(
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
         context["button_title"] = "Add New Visit"
-        context["visit_tabs"] = VISIT_TABS
+        # TODO MRB: make this work again
+        # context["visit_tabs"] = VISIT_TABS
         return context
 
     def get_success_url(self):
@@ -157,7 +158,7 @@ class VisitUpdateView(
         context["title"] = "Edit Visit Details"
         context["button_title"] = "Edit Visit Details"
         context["form_method"] = "update"
-        context["visit_tabs"] = VISIT_TABS
+        context["visit_tabs"] = get_visit_tabs(visit_instance)
 
         return context
 

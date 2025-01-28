@@ -59,6 +59,7 @@ class VisitCategories(Enum):
     FLU = "Immunisation (flu)"
     HOSPITAL_ADMISSION = "Hospital Admission"
 
+# TODO MRB: merge all these to make it less likely we forget to update one
 
 VISIT_FIELDS = (
     (VisitCategories.MEASUREMENT, MEASUREMENT_FIELDS),
@@ -78,30 +79,50 @@ VISIT_FIELDS = (
     (VisitCategories.SICK_DAY, SICK_DAY_FIELDS),
     (VisitCategories.FLU, FLU_FIELDS),
     (VisitCategories.HOSPITAL_ADMISSION, HOSPITAL_ADMISSION_FIELDS),
-)      
+)
+
+VISIT_CATEGORY_COLOURS = {
+    VisitCategories.MEASUREMENT: "rcpch_yellow",
+    VisitCategories.HBA1: "rcpch_dark_grey",
+    VisitCategories.TREATMENT: "rcpch_strong_green_light_tint1",
+    VisitCategories.CGM: "rcpch_aqua_green_light_tint1",
+    VisitCategories.BP: "rcpch_orange_light_tint1",
+    VisitCategories.FOOT: "rcpch_gold",
+    VisitCategories.DECS: "rcpch_vivid_green",
+    VisitCategories.ACR: "rcpch_red_light_tint2",
+    VisitCategories.CHOLESTEROL: "rcpch_orange_dark_tint",
+    VisitCategories.THYROID: "rcpch_red_dark_tint",
+    VisitCategories.COELIAC: "rcpch_purple_light_tint2",
+    VisitCategories.PSYCHOLOGY: "rcpch_yellow_dark_tint",
+    VisitCategories.SMOKING: "rcpch_strong_green_dark_tint",
+    VisitCategories.DIETETIAN: "rcpch_aqua_green_dark_tint",
+    VisitCategories.SICK_DAY: "rcpch_pink_light_tint2",
+    VisitCategories.FLU: "rcpch_orange",
+    VisitCategories.HOSPITAL_ADMISSION: "rcpch_strong_green_dark_tint",
+}
 
 VISIT_TABS = (
     ("Routine Measurements", [
-        VisitCategories.MEASUREMENT.value,
-        VisitCategories.HBA1.value,
-        VisitCategories.TREATMENT.value,
-        VisitCategories.CGM.value,
-        VisitCategories.BP.value
+        VisitCategories.MEASUREMENT,
+        VisitCategories.HBA1,
+        VisitCategories.TREATMENT,
+        VisitCategories.CGM,
+        VisitCategories.BP
     ]),
     ("Annual Review", [
-        VisitCategories.FOOT.value,
-        VisitCategories.DECS.value,
-        VisitCategories.ACR.value,
-        VisitCategories.CHOLESTEROL.value,
-        VisitCategories.THYROID.value,
-        VisitCategories.COELIAC.value,
-        VisitCategories.PSYCHOLOGY.value,
-        VisitCategories.SMOKING.value,
-        VisitCategories.DIETETIAN.value,
-        VisitCategories.SICK_DAY.value,
-        VisitCategories.FLU.value
+        VisitCategories.FOOT,
+        VisitCategories.DECS,
+        VisitCategories.ACR,
+        VisitCategories.CHOLESTEROL,
+        VisitCategories.THYROID,
+        VisitCategories.COELIAC,
+        VisitCategories.PSYCHOLOGY,
+        VisitCategories.SMOKING,
+        VisitCategories.DIETETIAN,
+        VisitCategories.SICK_DAY,
+        VisitCategories.FLU
     ]),
     ("Inpatient Entry", [
-        VisitCategories.HOSPITAL_ADMISSION.value
+        VisitCategories.HOSPITAL_ADMISSION
     ])
 )
