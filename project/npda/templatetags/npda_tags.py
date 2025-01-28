@@ -6,7 +6,6 @@ from django import template, forms
 from django.conf import settings
 from ...constants import (
     VisitCategories,
-    VISIT_FIELD_FLAT_LIST,
     VISIT_FIELDS,
     CSV_HEADINGS,
     VisitCategories,
@@ -162,9 +161,6 @@ def error_for_field(errors_by_field, field):
         return ""
 
     concatenated_fields = ""
-
-    if field in VISIT_FIELD_FLAT_LIST:
-        return "There are errors associated with one or more of this child's visits."
 
     errors = errors_by_field[field] if field in errors_by_field else []
 
