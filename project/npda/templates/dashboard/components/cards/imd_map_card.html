@@ -11,7 +11,7 @@
        _="on htmx:afterSwap remove #loading-spinner-imd-map">
     <figure>
       <div id="organisation_cases_map" style="width: 100%">
-        {% include 'dashboard/map_chart_partial.html' with chart_html=chart_html %}
+        {% include 'dashboard/map_chart_partial.html' with chart_html=chart_html aggregated_distances=aggregated_distances %}
       </div>
     </figure>
   </div>

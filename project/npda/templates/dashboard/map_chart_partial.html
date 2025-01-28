@@ -1,7 +1,24 @@
 {% if error %}
-<div class="alert alert-danger">
-  <i class="fa-solid fa-person-circle-exclamation"></i> {{ error }}
-</div>
+  <div class="alert alert-danger">
+    <i class="fa-solid fa-person-circle-exclamation"></i> {{ error }}
+  </div>
 {% elif chart_html %}
-<div id='chart_html'>{{ chart_html|safe }}</div>
+  <div id='chart_html'>{{ chart_html|safe }}</div>
+  {% if aggregated_distances.max_distance_travelled_km %}
+    <div class="badge bg-rcpch_pink text-white badge-lg">
+      Distances travelled to clinic:
+    </div>
+    <div class="badge bg-rcpch_light_blue text-white badge-lg">
+      Maximum: {{ aggregated_distances.max_distance_travelled_km }} km ({{ aggregated_distances.max_distance_travelled_mi }} miles)
+    </div>
+    <div class="badge bg-rcpch_light_blue text-white badge-lg">
+      Mean: {{ aggregated_distances.mean_distance_travelled_km }} km ({{ aggregated_distances.mean_distance_travelled_mi }} miles)
+    </div>
+    <div class="badge bg-rcpch_light_blue text-white badge-lg">
+      Median: {{ aggregated_distances.median_distance_travelled_km }} km ({{ aggregated_distances.median_distance_travelled_mi }} miles)
+    </div>
+    <div class="badge bg-rcpch_light_blue text-white badge-lg">
+      Standard Deviation: {{ aggregated_distances.std_distance_travelled_km }} km ({{ aggregated_distances.std_distance_travelled_mi }} miles)
+    </div>
+  {% endif %}
 {% endif %}

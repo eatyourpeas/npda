@@ -456,3 +456,40 @@ def lowerify(value):
     # replace spaces with underscores and make lowercase
     value = value.replace(" ", "_")
     return value.lower()
+
+
+@register.filter
+def centile_for_field(field, centile_sds):
+    """
+    Returns the centile for a given field
+    """
+    if field.id_for_label == "id_height":
+        centile = field.form.instance.height_centile
+        sds = field.form.instance.height_sds
+    elif field.id_for_label == "id_weight":
+        centile = field.form.instance.weight_centile
+        sds = field.form.instance.weight_sds
+    elif field.id_for_label == "id_bmi":
+        centile = field.form.instance.bmi_centile
+        sds = field.form.instance.bmi_sds
+    else:
+        return ""
+
+    if centile is not None:
+        if centile >= 99.9:
+            centile = "centile: ≥99.6ᵗʰ"
+        elif centile < 0.4:
+            centile = "centile: ≤0.4ᵗʰ"
+        centile = f"centile {centile}"
+    if sds is not None:
+        sds = f"SDS: {sds}"
+    else:
+        sds = ""
+        centile = ""
+
+    if centile_sds == "centile":
+        return centile
+    elif centile_sds == "sds":
+        return sds
+    else:
+        return ""
