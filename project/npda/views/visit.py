@@ -147,7 +147,6 @@ class VisitUpdateView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         visit_instance = Visit.objects.get(pk=self.kwargs["pk"])
-        visit_categories = get_visit_categories(visit_instance)
         context["visit_instance"] = visit_instance
         context["visit_errors"] = [visit_instance.errors]
         context["patient_id"] = self.kwargs["patient_id"]
@@ -156,7 +155,6 @@ class VisitUpdateView(
         context["title"] = "Edit Visit Details"
         context["button_title"] = "Edit Visit Details"
         context["form_method"] = "update"
-        context["visit_categories"] = visit_categories
         context["routine_measurements_categories"] = [
             "Measurements",
             "HBA1c",
@@ -176,9 +174,6 @@ class VisitUpdateView(
             "Dietician",
             "Sick Day Rules",
             "Immunisation (flu)",
-        ]
-        context["categories_with_errors"] = [
-            category["category"] for category in visit_categories if category["has_error"]
         ]
 
         return context
