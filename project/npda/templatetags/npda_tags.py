@@ -4,11 +4,7 @@ import logging
 
 from django import template, forms
 from django.conf import settings
-from ...constants import (
-    VisitCategories,
-    CSV_HEADINGS,
-    VisitCategories,
-)
+from ...constants import CSV_HEADINGS
 
 from django.contrib.gis.measure import D
 from datetime import date
