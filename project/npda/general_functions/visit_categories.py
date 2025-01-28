@@ -8,38 +8,39 @@ def get_visit_categories(instance, form=None):
     """
     categories = []
     for category, fields in VISIT_FIELDS:
-        category_present = False
-        category_error_present = False
+        present = False
+        errors = []
 
         # Data can be either:
         #  - On the bound form field after submitting the questionnaire
         if form:
             for field in form:
                 if field.name in fields:
-                    category_present = True
+                    present = True
                     
                     if field.errors:
-                        category_error_present = True
+                        errors = field.errors
 
         #  - On the instance itself after a CSV upload
         for field in fields:
             if getattr(instance, field):
-                category_present = True
+                present = True
 
         if instance.errors:
             for field in instance.errors.keys():
                 if field in fields:
-                    category_error_present = True
+                    errors = [error["message"] for error in instance.errors[field]]
 
         categories.append(
             {
                 "name": category.value,
-                "present": category_present,
-                "has_errors": category_error_present,
+                "present": present,
+                "errors": errors,
                 "anchor": urllib.parse.quote_plus(category.value),
                 "colour": VISIT_CATEGORY_COLOURS[category]
             }
         )
+        
     return categories
 
 
@@ -51,10 +52,14 @@ def get_visit_tabs(form):
         category_names = [c.value for c in categories]
         categories = [c for c in all_categories if c["name"] in category_names]
 
+        errors = []
+        for category in categories:
+            errors += category["errors"]
+
         tab = {
             "name": tab_name,
             "categories": categories,
-            "has_errors": any([c["has_errors"] for c in categories])
+            "errors": errors
         }
 
         tabs.append(tab)

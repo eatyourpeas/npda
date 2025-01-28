@@ -143,37 +143,6 @@ def errors_for_form_field(errors_by_field, field):
     return []
 
 
-@register.filter
-def errors_for_category(selected_category, errors_by_field):
-    """
-    Returns all error messages for a given category
-    """
-
-    # VISIT_FIELDS: (VisitCategory -> [string])
-    # Get the first or default to the empty list
-    fields_in_category = next(
-        (
-            fields
-            for (category, fields) in VISIT_FIELDS
-            if category.value == selected_category
-        ),
-        [],
-    )
-
-    # errors_by_field: { [string] -> [{ message: string }]}
-    errors = [
-        errors
-        for (field, errors) in errors_by_field.items()
-        if field in fields_in_category
-    ]
-
-    # flatten
-    errors = itertools.chain(*errors)
-
-    error_messages = [error["message"] for error in errors]
-    return "\n".join(error_messages)
-
-
 @register.simple_tag
 def today_date():
     return date.today().strftime("%Y-%m-%d")

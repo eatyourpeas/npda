@@ -41,7 +41,7 @@
         {% endfor %}
         <div role="tablist" class="flex flex-wrap">
           {% for tab in visit_tabs %}
-            {% include 'partials/visit_form_tab.html' with checked="true" label=tab.name categories=tab.categories has_errors=tab.has_errors %}
+            {% include 'partials/visit_form_tab.html' with checked="true" label=tab.name categories=tab.categories errors=tab.errors %}
           {% endfor %}
         </div>
         <div class="flex justify-end">

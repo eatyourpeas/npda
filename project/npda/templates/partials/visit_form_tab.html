@@ -4,7 +4,7 @@
        role="tab"
        class="basis-full md:basis-1/3 tab font-bold mb-2 text-black border-b-4 hover:border-b-rcpch_pink border-b-rcpch_light_blue_tint3 border-solid border-0 bg-rcpch_light_blue"
        value="{{ label|lowerify }}"
-       aria-label="{{ label }} {% if has_errors %}❗{% endif %}"
+       aria-label="{{ label }} {% if errors %}❗{% endif %}"
        {% if checked %}checked{% endif %} />
 <div role="tabpanel" class="tab-content order-1 basis-full rounded-none">
   <div class="flex align-middle items-center bg-gray-100 p-2 m-2">
@@ -13,7 +13,7 @@
       {% for category in categories %}
         <li class="inline-block p-2 font-mono bg-{{ category.colour }} hover:shadow-md hover:underline">
           <a href="#{{category.anchor}}">
-            {% if category.has_errors %}
+            {% if category.errors %}
               <span class="fa-stack text-rcpch_red">
                 <i class="fa-circle fa-stack-1x fas"></i>
                 <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
