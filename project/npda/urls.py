@@ -25,13 +25,23 @@ urlpatterns = [
     
     # Submission views
     path(
-        "submissions",
+        "period/<int:audit_period_id>/pdu/<str:pz_code>/submissions",
         view=SubmissionsListView.as_view(),
-        name="submissions",
+        name="submissions-pdu",
+    ),
+    path(
+        "period/<int:audit_period_id>/all/submissions",
+        view=SubmissionsListView.as_view(),
+        name="submissions-all",
     ),
     # Patient views
     path(
         "patients",
+        view=patientListLandingView,
+        name="patients-landing"
+    ),
+    path(
+        "patients/<int:year>",
         view=PatientListView.as_view(),
         name="patients",
     ),

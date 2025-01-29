@@ -118,7 +118,7 @@
                       {% endif %}
                     </form>
                     {% if submission.submission_active %}
-                      <a href="{% url 'patients' %}"
+                      <a href="{% url 'patients' year=selected_audit_year %}"
                          class="bg-rcpch_light_blue border-[6px] border-rcpch_light_blue btn-sm w-full h-auto grow px-2 py-1 font-semibold text-center text-white rounded-none hover:bg-rcpch_pink hover:border-rcpch_pink hover:text-white xl:max-w-max">
                         <div class="tooltip tooltip-left"
                              data-tip="View submission details, including the patients uploaded.">

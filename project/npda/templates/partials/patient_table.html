@@ -1,6 +1,6 @@
 {% load static %}
 {% load npda_tags %}
-{% url 'patients' as patients_url %}
+{% url 'patients' year=selected_audit_year as patients_url %}
 {% if page_obj %}
   <div class="w-full overflow-x-scroll">
     <table class="font-montserrat table-md table mt-2 mb-5 text-sm text-left rtl:text-right">

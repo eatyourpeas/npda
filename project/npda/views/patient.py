@@ -12,7 +12,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count, Case, When, Max, Q, F
 from django.forms import BaseForm
 from django.http.response import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView
 from django.http import HttpResponse
@@ -29,7 +29,7 @@ from project.npda.general_functions import (
 from project.npda.general_functions.quarter_for_date import (
     retrieve_quarter_for_date,
 )
-from project.npda.models import NPDAUser, Patient
+from project.npda.models import NPDAUser, Patient, AuditPeriod
 
 # RCPCH imports
 from ..forms.patient_form import PatientForm
@@ -43,6 +43,12 @@ from .mixins import (
 from ..general_functions.session import refresh_session_object_synchronously
 
 logger = logging.getLogger(__name__)
+
+
+def patientListLandingView(request):
+    open_audit_period = AuditPeriod.objects.filter(is_open=True).order_by("-start_date").first()
+    url = reverse_lazy("patients", kwargs={"year": open_audit_period.start_date.year})
+    return redirect(url)
 
 
 class PatientListView(

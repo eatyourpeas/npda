@@ -19,7 +19,7 @@
                    placeholder="Enter an NHS number..."
                    id="search-input"
                    name="search-input"
-                   hx-get="{% url 'patients' %}"
+                   hx-get="{% url 'patients' year=selected_audit_year %}"
                    hx-trigger="keyup changed delay:500ms"
                    hx-target="#patient_table"
                    hx-swap="innerHTML"
@@ -35,7 +35,7 @@
                     hx-target="#patient_table"
                     hx-trigger="click"
                     hx-indicator="#search_spinner"
-                    hx-get="{% url 'patients' %}"
+                    hx-get="{% url 'patients' year=selected_audit_year %}"
                     hx-disabled-elt="this">
               <span class="md:hidden text-white">Search patients</span>
               <i class="fa-solid fa-magnifying-glass text-white"></i>

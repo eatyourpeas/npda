@@ -92,7 +92,7 @@
               <span class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border opacity-40 pointer-events-none hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">Create New Visit</span>
             {% endif %}
           {% endif %}
-          <a href="{% url 'patients' %}"
+          <a href="{% url 'patients' year=selected_audit_year %}"
              class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">Back to Patient List</a>
           <div class="py-20">
             <div class="bg-rcpch_light_blue border-rcpch_light_blue_tint3 relative px-4 py-3 text-white border"

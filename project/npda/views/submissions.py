@@ -45,20 +45,25 @@ class SubmissionsListView(
         """
         Retrieve all submissions for the current PZ code, unless view_preference is set to 2 (national view)
         """
+
         PaediatricDiabetesUnit = apps.get_model(
             app_label="npda", model_name="PaediatricDiabetesUnit"
         )
         pdu = PaediatricDiabetesUnit.objects.get(
-            pz_code=self.request.session.get("pz_code"),
+            pz_code=self.kwargs["pz_code"],
         )
+
+        # TODO MRB: handle national (pz_code is not set)
+        #           instaed of view preference
+
         if self.request.user.view_preference == 1:
             base_queryset = self.model.objects.filter(
                 paediatric_diabetes_unit=pdu,
-                audit_year=self.request.session.get("selected_audit_year"),
+                audit_year=self.kwargs["year"],
             )
         else:
             base_queryset = self.model.objects.filter(
-                audit_year=self.request.session.get("selected_audit_year")
+                audit_year=self.kwargs["year"]
             ).all()
 
         final = base_queryset.annotate(

@@ -50,7 +50,7 @@
         <div class="flex justify-end">
           <a role="button"
              class="btn rcpch-light-blue-btn"
-             href='{% url 'patients' %}'>Back to list</a>
+             href='{% url 'patients' year=selected_audit_year %}'>Back to list</a>
           <button type="submit"
                   value="Submit"
                   class="btn rcpch-light-blue-btn {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}">

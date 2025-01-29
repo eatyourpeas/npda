@@ -18,7 +18,7 @@
         {% endif %}
         {% if can_complete_questionnaire %}
         <li class="flex items-center hover:inner-shadow">
-          <a href="{% url 'patients' %}"
+          <a href="{% url 'patients-landing' %}"
               class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'patients' %}"
               aria-current="page">Questionnaire</a>
         </li>
@@ -32,10 +32,7 @@
     {% include "navbar/components/nav_link.html" with url_name="dashboard" nav_text="Dashboard" %}
   </li>
 
-  {% comment %} SUBMISSIONS {% endcomment %}
-  <li class="">
-    {% include "navbar/components/nav_link.html" with url_name="submissions" nav_text="Submissions" %}
-  </li>
+  {% comment %} SUBMISSIONS TODO MRB: put me back!{% endcomment %}
 
   {% comment %} USER MANAGEMENT {% endcomment %}
   <li class="">
