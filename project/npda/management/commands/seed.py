@@ -11,6 +11,7 @@ from .create_groups import groups_seeder
 from .seed_functions.paediatric_diabetes_units_seeder import (
     paediatric_diabetes_units_seeder,
 )
+from .seed_functions.audit_periods_seeder import audit_periods_seeder
 
 
 class Command(BaseCommand):
@@ -30,6 +31,9 @@ class Command(BaseCommand):
         elif options["mode"] == "seed_paediatric_diabetes_units":
             self.stdout.write("seeding paediatric diabetes units...")
             paediatric_diabetes_units_seeder()
+        elif options["mode"] == "seed_audit_periods":
+            self.stdout.write("seeding audit periods...")
+            audit_periods_seeder()
 
         else:
             self.stdout.write("No options supplied...")
