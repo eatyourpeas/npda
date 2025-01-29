@@ -794,14 +794,15 @@ class VisitForm(forms.ModelForm):
 
         return cleaned_data
 
-    # Called when submitting the questionnaire. For CSV upload, instances are created directly in csv_upload to preserve
-    # invalid data. Without overriding save here, the data from the dGC call would not be saved as the fields are not
-    # in the list at the top (that we expect to receive from a POST).
-    def save(self, commit=True):
-        instance = super().save(commit=False)
+    def save(self):
+        # We deliberately don't call super.save here as it throws ValueError on validation errors
+        # and for CSV uploads we don't want that to stop us. As of Django 5.1.5 it doesn't do anything
+        # else other than saving the model or setting up save_m2m. We don't use the latter so
+        # I haven't implemented it here. The risk is that future versions of Django will add more
+        # behaviour that we miss out on.
 
         if getattr(self, "async_validation_results"):
-            instance.bmi = self.async_validation_results.bmi
+            self.instance.bmi = self.async_validation_results.bmi
 
             for field_prefix in ["height", "weight", "bmi"]:
                 result = getattr(
@@ -809,10 +810,9 @@ class VisitForm(forms.ModelForm):
                 )
 
                 if result and not type(result) is ValidationError:
-                    setattr(instance, f"{field_prefix}_centile", result.centile)
-                    setattr(instance, f"{field_prefix}_sds", result.sds)
+                    setattr(self.instance, f"{field_prefix}_centile", result.centile)
+                    setattr(self.instance, f"{field_prefix}_sds", result.sds)
 
-        if commit:
-            instance.save()
+        self.instance.save()
 
-        return instance
+        return self.instance

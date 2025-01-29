@@ -179,17 +179,20 @@ class PatientForm(forms.ModelForm):
         ]:
             self.handle_async_validation_result(key)
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
+    def save(self):
+        # We deliberately don't call super.save here as it throws ValueError on validation errors
+        # and for CSV uploads we don't want that to stop us. As of Django 5.1.5 it doesn't do anything
+        # else other than saving the model or setting up save_m2m. We don't use the latter so
+        # I haven't implemented it here. The risk is that future versions of Django will add more
+        # behaviour that we miss out on.
 
-        instance.index_of_multiple_deprivation_quintile = (
+        self.instance.index_of_multiple_deprivation_quintile = (
             self.async_validation_results.index_of_multiple_deprivation_quintile
         )
 
-        instance.location_bng = self.async_validation_results.location_bng
-        instance.location_wgs84 = self.async_validation_results.location_wgs84
+        self.instance.location_bng = self.async_validation_results.location_bng
+        self.instance.location_wgs84 = self.async_validation_results.location_wgs84
 
-        if commit:
-            instance.save()
+        self.instance.save()
 
-        return instance
+        return self.instance

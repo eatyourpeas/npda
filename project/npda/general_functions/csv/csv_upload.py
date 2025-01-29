@@ -1,5 +1,6 @@
 # python imports
 from datetime import date
+from asgiref.sync import sync_to_async
 import logging
 import asyncio
 import collections
@@ -129,25 +130,20 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
             visit_forms,
         )
 
-    def create_instance(model, form):
+    def retain_errors_and_invalid_field_data(form):
         # We want to retain fields even if they're invalid so that we can return them to the user
         # Use the field value from cleaned_data, falling back to data if it's not there
-        data = {}
-
         for key, value in form.cleaned_data.items():
-            data[key] = value
+            setattr(form.instance, key, value)
         
         for key, value in form.data.items():
-            if key not in data:
-                data[key] = value
+            if key not in form.cleaned_data:
+                setattr(form.instance, key, value)
 
-        instance = model(**data)
-        instance.is_valid = form.is_valid()
-        instance.errors = (
+        form.instance.is_valid = form.is_valid()
+        form.instance.errors = (
             None if form.is_valid() else form.errors.get_json_data(escape_html=True)
         )
-
-        return instance
 
     async def validate_rows_in_parallel(rows_by_patient, async_client):
         tasks = []
@@ -272,46 +268,38 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
             parsed_visits,
         ) in validation_results_by_patient:
             record_errors_from_form(errors_to_return, patient_row_index, patient_form)
+            
+            patient = None
 
             try:
-                patient = create_instance(Patient, patient_form)
+                retain_errors_and_invalid_field_data(patient_form)
+                patient = await sync_to_async(lambda: patient_form.save())()
 
-                # We don't call PatientForm.save as there's no async version so we have to set this manually
-                patient.index_of_multiple_deprivation_quintile = (
-                    patient_form.async_validation_results.index_of_multiple_deprivation_quintile
-                )
+                if patient:
+                    # add the patient to a new Transfer instance
+                    transfer_fields["paediatric_diabetes_unit"] = pdu
+                    transfer_fields["patient"] = patient
+                    await Transfer.objects.acreate(**transfer_fields)
 
-                patient.location_bng = (
-                    patient_form.async_validation_results.location_bng
-                )
-                patient.location_wgs84 = (
-                    patient_form.async_validation_results.location_wgs84
-                )
-
-                await patient.asave()
-
-                # add the patient to a new Transfer instance
-                transfer_fields["paediatric_diabetes_unit"] = pdu
-                transfer_fields["patient"] = patient
-                await Transfer.objects.acreate(**transfer_fields)
-
-                await new_submission.patients.aadd(patient)
+                    await new_submission.patients.aadd(patient)
             except Exception as error:
                 logger.exception(f"Error saving patient for {pdu_pz_code} from {csv_file}[{patient_row_index}]: {error}")
 
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(str(error))
 
-            for visit_form, visit_row_index in parsed_visits:
-                record_errors_from_form(errors_to_return, visit_row_index, visit_form)
+            if patient:
+                for visit_form, visit_row_index in parsed_visits:
+                    record_errors_from_form(errors_to_return, visit_row_index, visit_form)
 
-                try:
-                    visit = create_instance(Visit, visit_form)
-                    visit.patient = patient
-                    await visit.asave()
-                except Exception as error:
-                    logger.exception(f"Error saving visit for {pdu_pz_code} from {csv_file}[{visit_row_index}]: {error}")
-                    errors_to_return[visit_row_index]["__all__"].append(str(error))
+                    try:
+                        retain_errors_and_invalid_field_data(visit_form)
+                        visit_form.instance.patient = patient
+
+                        await sync_to_async(lambda: visit_form.save())()
+                    except Exception as error:
+                        logger.exception(f"Error saving visit for {pdu_pz_code} from {csv_file}[{visit_row_index}]: {error}")
+                        errors_to_return[visit_row_index]["__all__"].append(str(error))
 
     # Only create xlsx file if the csv file was created.
     if new_submission.csv_file:
