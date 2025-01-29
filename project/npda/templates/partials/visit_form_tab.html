@@ -80,12 +80,20 @@
                     <!-- text input -->
                     <input type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text rounded-none {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire or field.id_for_label == 'id_bmi' %}opacity-40 pointer-events-none{% endif %}" {% if field.field.required %}placeholder="Required"{% endif %} {% if field.value %} value={{ field.value }} {% elif field.value == 0 %} value="0.0" {% endif %}>
                     {% if field.value is not None %}
-                      <div class="badge bg-rcpch_light_blue text-white badge-lg">
-                        {{ field|centile_for_field:'centile' }}
-                      </div>
-                      <div class="badge bg-rcpch_light_blue text-white badge-lg">
-                        {{ field|centile_for_field:'sds' }}
-                      </div>
+                      {% with field|centile_for_field:'centile' as centile %}
+                        {% if centile %}
+                          <div class="badge bg-rcpch_light_blue text-white badge-lg">
+                            {{ centile }}
+                          </div>
+                        {% endif %}
+                      {% endwith %}
+                      {% with field|centile_for_field:'sds' as sds %}
+                        {% if sds %}
+                          <div class="badge bg-rcpch_light_blue text-white badge-lg">
+                            {{ sds }}
+                          </div>
+                        {% endif %}
+                      {% endwith %}
                     {% endif %}
                     {% if field.id_for_label == "id_weight" %}{{ field.bmi }}{% endif %}
                   {% endif %}
