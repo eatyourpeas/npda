@@ -179,7 +179,7 @@ class PatientForm(forms.ModelForm):
         ]:
             self.handle_async_validation_result(key)
 
-    def save(self):
+    def save(self, commit=True):
         # We deliberately don't call super.save here as it throws ValueError on validation errors
         # and for CSV uploads we don't want that to stop us. As of Django 5.1.5 it doesn't do anything
         # else other than saving the model or setting up save_m2m. We don't use the latter so
@@ -193,6 +193,7 @@ class PatientForm(forms.ModelForm):
         self.instance.location_bng = self.async_validation_results.location_bng
         self.instance.location_wgs84 = self.async_validation_results.location_wgs84
 
-        self.instance.save()
+        if commit:
+            self.instance.save()
 
         return self.instance
