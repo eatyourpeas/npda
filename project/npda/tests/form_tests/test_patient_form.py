@@ -383,6 +383,8 @@ def test_lookup_location():
 def test_error_looking_up_index_of_multiple_deprivation():
     # TODO MRB: report this back somehow rather than just eat it in the log? (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/334)
     form = PatientForm(VALID_FIELDS)
+    form.is_valid()
+
     patient = form.save()
 
     patient.index_of_multiple_deprivation_quintile = None
