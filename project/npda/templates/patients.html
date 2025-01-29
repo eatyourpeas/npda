@@ -87,6 +87,14 @@
                     View upload history
                   </a>
                 </li>
+                {% if user.is_superuser or request.user.is_rcpch_audit_team_member %}
+                  <li>
+                    <a href="{% url 'patient-add' %}" class="text-rcpch_red">
+                      <i class="fa-solid fa-person-circle-plus"></i>
+                      Add patient (Audit Team only)
+                    </a>
+                  </li>
+                {% endif %}
               </ul>
             </div>
           </form>
