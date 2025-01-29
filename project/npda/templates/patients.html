@@ -40,17 +40,62 @@
               <span class="md:hidden text-white">Search patients</span>
               <i class="fa-solid fa-magnifying-glass text-white"></i>
             </button>
-            <div class="divider divider-horizontal after:bg-rcpch_strong_blue_light_tint1 before:bg-rcpch_strong_blue_light_tint3 hidden lg:flex">
-            </div>
-            {% if perms.npda.add_patient %}
-                <a href="{% url 'patient-add' %}"
-                  class="btn btn-info h-auto w-full md:w-auto {% if not can_alter_this_audit_year_submission %} btn-disabled {% endif %}">
-                  <i class="fa-solid fa-person-circle-plus"></i>
-                  Add patient
-                </a>
-            {% endif %}
+            <div class="divider divider-horizontal after:bg-rcpch_strong_blue_light_tint1 before:bg-rcpch_strong_blue_light_tint3 hidden lg:flex"></div>
           </label>
         </label>
+        {% if can_upload_csv %}
+          <form method="post" action="{% url 'submissions' %}">
+            {% csrf_token %}
+            <div class="dropdown pl-1 pr-1">
+              <ul class="menu menu-horizontal">
+                <li>
+                  <a href="{% url 'upload_csv' %}" class="btn btn-info text-white">
+                    <i class="fa-solid fa-upload"></i>
+                    Upload CSV
+                  </a>
+                </li>
+                <li>
+                  <button
+                    class="btn btn-warning text-white"
+                    name="submit-data"
+                    value="download-report"
+                    type="submit">
+                    <i class="fa-solid fa-file-excel"></i>
+                    Data Quality Report
+                    <span class="badge badge-error">199</span>
+                  </a>
+                </li>
+                <li>
+                  <div tabindex="0" role="button" class="btn btn-info text-white">
+                    <i class="fa-solid fa-chevron-down"></i>
+                  </div>
+                </li>
+              </ul>
+              <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                <li>
+                  <button name="submit-data"
+                    value="download-data"
+                    type="submit">
+                    <i class="fa-solid fa-download"></i>
+                    Download original file
+                  </a>
+                </li>
+                <li>
+                  <a href="{% url 'submissions' %}">
+                    <i class="fa-solid fa-timeline"></i>
+                    View upload history
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </form>
+        {% else %}
+          <a href="{% url 'patient-add' %}"
+            class="btn btn-info h-auto w-full md:w-auto {% if not can_alter_this_audit_year_submission %} btn-disabled {% endif %}">
+            <i class="fa-solid fa-person-circle-plus"></i>
+            Add patient
+          </a>
+        {% endif %}
       </div>
       <div id="patient_table">
         {% include 'partials/patient_table.html' %}

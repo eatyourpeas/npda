@@ -163,16 +163,19 @@ class SubmissionsListView(
                 new_first.save()
             messages.success(request, "Cohort submission deleted successfully")
 
-        if button_name == "download-data":
+        submission = None
+
+        if request.POST.get("audit_id"):
             submission = Submission.objects.filter(
                 pk=request.POST.get("audit_id")
             ).get()
+        else:
+            submission = self.get_queryset().order_by("-submission_date").first()
+
+        if button_name == "download-data":
             return download_csv(request, submission.id)
 
         if button_name == "download-report":
-            submission = Submission.objects.filter(
-                pk=request.POST.get("audit_id")
-            ).get()
             return download_xlsx(request, submission.id)
 
         # POST is not supported for this view
