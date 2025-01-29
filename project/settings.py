@@ -187,10 +187,13 @@ SESSION_COOKIE_HTTPONLY = True  # cannot access session cookie on client-side us
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # session expires on browser close
 
 # Auto-logout
-AUTO_LOGOUT_IDLE_TIME_SECONDS = int(os.environ.get(
-    "AUTO_LOGOUT_IDLE_TIME_SECONDS",
-    60 * 30,  # Default: 30 minutes
-))
+if not (env_auto_logout_idle_time_seconds := os.environ.get("AUTO_LOGOUT_IDLE_TIME_SECONDS")):
+    env_auto_logout_idle_time_seconds = 60 * 30  # Default: 30 minutes
+    logger.warning(
+        "ENV VAR AUTO_LOGOUT_IDLE_TIME_SECONDS MISSING: SETTING DEFAULT TIME: "
+        f"{env_auto_logout_idle_time_seconds}"
+    )
+AUTO_LOGOUT_IDLE_TIME_SECONDS = int(env_auto_logout_idle_time_seconds)
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
