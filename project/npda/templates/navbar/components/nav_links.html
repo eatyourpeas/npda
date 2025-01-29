@@ -2,31 +2,6 @@
 
 {% if user.is_authenticated %}
 
-  {% comment %} SUBMIT DATA {% endcomment %}
-  <li class="flex items-baseline hover:inner-shadow">
-    <details class="group">
-      <summary
-      class="text-xs font-montserrat font-semibold   text-gray-700  text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent group-open:text-rcpch_light_blue group-open:bg-transparent {% active_navbar_tab request 'home' %} {% active_navbar_tab request 'patients' %}"
-      >Submit Data</summary>
-      <ul class="bg-base-100 border p-2">
-        {% if can_upload_csv %}
-          <li class="flex items-center hover:inner-shadow">
-            <a href="{% url 'upload_csv' %}"
-                class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'upload_csv' %}"
-                aria-current="page">Upload CSV</a>
-          </li>
-        {% endif %}
-        {% if can_complete_questionnaire %}
-        <li class="flex items-center hover:inner-shadow">
-          <a href="{% url 'patients' %}"
-              class="text-xs block font-montserrat font-semibold  text-gray-700 lg:border-0 lg:hover:text-primary-700 px-0 lg:px-5 py-2 lg:py-2.5 mr-2 text-gray-400 underline-offset-8 hover:underline hover:text-rcpch_light_blue hover:bg-transparent {% active_navbar_tab request 'patients' %}"
-              aria-current="page">Questionnaire</a>
-        </li>
-        {% endif %}
-      </ul>
-    </details>
-  </li>
-
   {% comment %} DASHBOARD {% endcomment %}
   <li class="">
     {% include "navbar/components/nav_link.html" with url_name="dashboard" nav_text="Dashboard" %}
@@ -34,19 +9,8 @@
 
   {% comment %} SUBMISSIONS {% endcomment %}
   <li class="">
-    {% include "navbar/components/nav_link.html" with url_name="submissions" nav_text="Submissions" %}
+    {% include "navbar/components/nav_link.html" with url_name="patients" nav_text="Submissions" %}
   </li>
-
-  {% comment %} USER MANAGEMENT {% endcomment %}
-  <li class="">
-    {% include "navbar/components/nav_link.html" with url_name="npda_users" nav_text="User Management" %}
-  </li>
-
-  {% if user.is_superuser %}
-    <li>
-      {% include "navbar/components/nav_link.html" with url_name="admin:index" nav_text="Admin" %}
-    </li>
-  {% endif %}
 
 {% endif %}
 

@@ -23,6 +23,14 @@
       <li>
         <a href="{% url 'two_factor:profile' %}"><i class="fa-solid fa-shield"></i>Two Factor Authentication</a>
       </li>
+      <li>
+        <a href="{% url 'two_factor:profile' %}"><i class="fa-solid fa-users"></i>Manage Users</a>
+      </li>
+      {% if user.is_superuser %}
+        <li>
+          <a href="{% url 'admin:index' %}"><i class="fa-solid fa-toolbox"></i>Django Admin</a>
+        </li>
+      {% endif %}
       <form method="post" action="{% url 'logout' %}">
         <li>
           {% csrf_token %}
