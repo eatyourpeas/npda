@@ -40,7 +40,6 @@
               <span class="md:hidden text-white">Search patients</span>
               <i class="fa-solid fa-magnifying-glass text-white"></i>
             </button>
-            <div class="divider divider-horizontal after:bg-rcpch_strong_blue_light_tint1 before:bg-rcpch_strong_blue_light_tint3 hidden lg:flex"></div>
           </label>
         </label>
         {% if can_upload_csv %}
@@ -56,13 +55,15 @@
                 </li>
                 <li>
                   <button
-                    class="btn btn-warning text-white"
+                    class="btn {%if submission_error_count > 0 %} btn-warning {% endif %} text-white"
                     name="submit-data"
                     value="download-report"
                     type="submit">
                     <i class="fa-solid fa-file-excel"></i>
                     Data Quality Report
-                    <span class="badge badge-error">199</span>
+                    {% if submission_error_count > 0 %}
+                      <span class="badge badge-error">{{submission_error_count}}</span>
+                    {% endif %}
                   </a>
                 </li>
                 <li>

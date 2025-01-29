@@ -1,5 +1,6 @@
 # python imports
 import logging
+import json
 
 # Django imports
 from django.apps import apps
@@ -29,7 +30,7 @@ from project.npda.general_functions import (
 from project.npda.general_functions.quarter_for_date import (
     retrieve_quarter_for_date,
 )
-from project.npda.models import NPDAUser, Patient
+from project.npda.models import NPDAUser, Patient, Submission
 
 # RCPCH imports
 from ..forms.patient_form import PatientForm
@@ -137,17 +138,36 @@ class PatientListView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context["pz_code"] = self.request.session.get("pz_code")
-        context["selected_audit_year"] = self.request.session.get(
-            "selected_audit_year", "None"
-        )
+        pz_code = self.request.session.get("pz_code")
+        selected_audit_year = self.request.session.get("selected_audit_year")
+
+        submission_error_count = 0
+
+        if pz_code and selected_audit_year:
+            submission = Submission.objects.filter(
+                paediatric_diabetes_unit__pz_code=pz_code,
+                audit_year=selected_audit_year
+            ).order_by("-submission_date").first()
+
+            if submission.errors:
+                submission_errors = json.loads(submission.errors)
+
+                error_count = 0
+                for errors_for_visit in submission_errors.values():
+                    for errors_for_field in errors_for_visit.values():
+                        submission_error_count += len(errors_for_field)
+
+        context["submission_error_count"] = submission_error_count
+
+        context["pz_code"] = pz_code
+        context["selected_audit_year"] = selected_audit_year or "None"
         context["pdu_choices"] = (
             organisations_adapter.paediatric_diabetes_units_to_populate_select_field(
                 requesting_user=self.request.user,
                 user_instance=self.request.user,
             )
         )
-        context["chosen_pdu"] = self.request.session.get("pz_code")
+        context["chosen_pdu"] = pz_code
         context["current_page"] = self.request.GET.get("page", 1)
         context["sort_by"] = self.get_sort_by()
 
