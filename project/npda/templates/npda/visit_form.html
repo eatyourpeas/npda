@@ -40,10 +40,9 @@
           {% endif %}
         {% endfor %}
         <div role="tablist" class="flex flex-wrap">
-          {% include 'partials/visit_form_tab.html' with checked="true" label="Routine Measurements" categories="Measurements,HBA1c,Treatment,CGM,BP" %}
-          {% include 'partials/visit_form_tab.html' with label="Annual Review" categories="Foot Care,DECS,ACR,Cholesterol,Thyroid,Coeliac,Psychology,Smoking,Dietician,Sick Day Rules,Immunisation (flu)" %}
-          {% include 'partials/visit_form_tab.html' with label="Inpatient Entry" categories="Hospital Admission" %}
-          
+          {% for tab in visit_tabs %}
+            {% include 'partials/visit_form_tab.html' with checked=tab.active label=tab.name categories=tab.categories errors=tab.errors %}
+          {% endfor %}
         </div>
         <div class="flex justify-end">
           <button type="submit"
@@ -61,4 +60,36 @@
       </form>
     </div>
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+
+        const tabs = document.querySelectorAll('input[name="visit_tab"]');
+
+        let anchor;
+
+        if(window.location.hash) {
+          const anchorName = window.location.hash.substring(1);
+
+          for(let i = 0; i < tabs.length; i++) {
+            const tab = tabs[i];
+
+            anchor = tab.nextElementSibling.querySelector(`a[name="${anchorName}"]`);
+            console.log({ anchorName, tab, anchor, nextElementSibling: tab.nextElementSibling, selector: `a[name="${anchorName}"]` });
+
+            if(anchor) {
+              tab.checked = true;
+            } else {
+              tab.checked = false;
+            }
+          } 
+        } else {
+          anchor = document.querySelector('a[data-has-errors]');
+        }
+
+        if(anchor) {
+          anchor.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+  </script>
 {% endblock %}
