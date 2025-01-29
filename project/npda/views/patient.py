@@ -157,6 +157,7 @@ class PatientListView(
                     for errors_for_field in errors_for_visit.values():
                         submission_error_count += len(errors_for_field)
 
+        context["submission_valid_count"] = context["paginator"].count - submission_error_count
         context["submission_error_count"] = submission_error_count
 
         context["pz_code"] = pz_code
