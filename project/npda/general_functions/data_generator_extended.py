@@ -4,7 +4,6 @@ import random
 
 from django.db import transaction
 from project.npda.general_functions.audit_period import (
-    get_audit_period_for_date,
     get_quarters_for_audit_period,
 )
 from project.npda.general_functions.random_date import get_random_date

@@ -7,7 +7,6 @@ from django.apps import apps
 # NPDA Imports
 from project.npda.general_functions import (
     organisations_adapter,
-    get_audit_period_for_date,
     get_current_audit_year,
     SUPPORTED_AUDIT_YEARS
 )
