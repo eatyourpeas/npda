@@ -24,7 +24,7 @@
         <a href="{% url 'two_factor:profile' %}"><i class="fa-solid fa-shield"></i>Two Factor Authentication</a>
       </li>
       <li>
-        <a href="{% url 'two_factor:profile' %}"><i class="fa-solid fa-users"></i>Manage Users</a>
+        <a href="{% url 'npda_users' %}"><i class="fa-solid fa-users"></i>Manage Users</a>
       </li>
       {% if user.is_superuser %}
         <li>
