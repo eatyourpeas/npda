@@ -55,7 +55,7 @@
                 </li>
                 <li>
                   <button
-                    class="btn {%if submission_error_count > 0 %} btn-warning {% endif %} text-white"
+                    class="btn {%if submission_error_count > 0 %} btn-warning {% else %} btn-success {% endif %} text-white"
                     name="submit-data"
                     value="download-report"
                     type="submit">
