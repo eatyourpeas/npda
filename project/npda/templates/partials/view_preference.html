@@ -27,7 +27,7 @@
             hx-target="#global_view_preference"
             hx-trigger="change"
             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-            hx-include="[name='view_preference'], [name='pz_code_select_name']">
+            hx-include="[name='pz_code_select_name']">
       {% for pdu_choice in pdu_choices %}
         <option value="{{ pdu_choice.0 }}"
                 {% if chosen_pdu == pdu_choice.0 %}selected="{{ chosen_pdu }}"{% endif %}>
