@@ -15,6 +15,32 @@ from project.npda.general_functions import (
 logger = logging.getLogger(__name__)
 
 
+def get_submission_actions(pz_code, audit_year):
+    Submission = apps.get_model("npda", "Submission")
+
+    submission = Submission.objects.filter(
+        paediatric_diabetes_unit__pz_code=pz_code,
+        submission_active=True,
+        audit_year=audit_year,
+    ).first()
+
+    can_complete_questionnaire = True
+    can_upload_csv = True
+
+    if submission:
+        if submission.csv_file and submission.csv_file.name:
+            can_upload_csv = True
+            can_complete_questionnaire = False
+        else:
+            can_upload_csv = False
+            can_complete_questionnaire = True
+    
+    return {
+        "can_upload_csv": can_upload_csv,
+        "can_complete_questionnaire": can_complete_questionnaire,
+    }
+
+
 def create_session_object(user):
     """
     Create a session object for the user, based on their permissions.
@@ -22,7 +48,6 @@ def create_session_object(user):
     """
 
     OrganisationEmployer = apps.get_model("npda", "OrganisationEmployer")
-    Submission = apps.get_model("npda", "Submission")
     primary_organisation = OrganisationEmployer.objects.filter(
         npda_user=user, is_primary_employer=True
     ).get()
@@ -33,40 +58,15 @@ def create_session_object(user):
         )
     )
 
-    can_upload_csv = True
-    can_complete_questionnaire = True
-
     audit_year = get_current_audit_year()
-
-    if Submission.objects.filter(
-        paediatric_diabetes_unit=primary_organisation.paediatric_diabetes_unit,
-        submission_active=True,
-        audit_year=audit_year,
-    ).exists():
-        # a submission exists for this PDU for this year
-        submission = Submission.objects.filter(
-            paediatric_diabetes_unit=primary_organisation.paediatric_diabetes_unit,
-            submission_active=True,
-            audit_year=audit_year,
-        ).get()
-        if submission.csv_file and submission.csv_file.name:
-            can_upload_csv = True
-            can_complete_questionnaire = False
-        else:
-            can_upload_csv = False
-            can_complete_questionnaire = True
-    else:
-        can_upload_csv = True
-        can_complete_questionnaire = True
+    submission_actions = get_submission_actions(pz_code, audit_year)
 
     session = {
         "pz_code": pz_code,
         "pdu_choices": list(pdu_choices),
-        "can_upload_csv": can_upload_csv,
-        "can_complete_questionnaire": can_complete_questionnaire,
         "selected_audit_year": audit_year,
         "audit_years": SUPPORTED_AUDIT_YEARS,
-    }
+    } | submission_actions
 
     return session
 
@@ -98,41 +98,14 @@ def get_new_session_fields(user, pz_code):
             )
             raise PermissionDenied()
 
-        if Submission.objects.filter(
-            paediatric_diabetes_unit__pz_code=pz_code,
-            submission_active=True,
-            audit_year=audit_year,
-        ).exists():
-            # a submission exists for this PDU for this year
-            submission = Submission.objects.filter(
-                paediatric_diabetes_unit__pz_code=pz_code,
-                submission_active=True,
-                audit_year=audit_year,
-            ).get()
-
-            if submission.csv_file and submission.csv_file.name:
-                can_upload_csv = True
-                can_complete_questionnaire = (
-                    False
-                    if not (user.is_rcpch_audit_team_member or user.is_superuser)
-                    else True
-                )
-            else:
-                can_upload_csv = (
-                    False
-                    if not (user.is_rcpch_audit_team_member or user.is_superuser)
-                    else True
-                )
-                can_complete_questionnaire = True
-
         ret["pz_code"] = pz_code
         ret["pdu_choices"] = list(
             organisations_adapter.paediatric_diabetes_units_to_populate_select_field(
                 requesting_user=user, user_instance=None
             )
         )
-        ret["can_upload_csv"] = can_upload_csv
-        ret["can_complete_questionnaire"] = can_complete_questionnaire
+        
+        ret |= get_submission_actions(pz_code, audit_year)
 
     return ret
 
