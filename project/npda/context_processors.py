@@ -25,7 +25,7 @@ def can_alter_this_audit_year_submission(request):
             return {"can_alter_this_audit_year_submission": True}
 
     if (
-        request.session.get("selected_audit_year") == get_current_audit_year
+        request.session.get("selected_audit_year") == get_current_audit_year()
         or request.user.is_superuser
     ):
         return {
