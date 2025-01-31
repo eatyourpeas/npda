@@ -44,9 +44,9 @@
               <tr>
                 <th colspan="13" class="px-6 py-3">
                   {% if patient.is_first_valid %}
-                    Patients where all records have been validated: {{ valid_count_in_page }} of {{submission_valid_count}}
+                    Patients where all records have been validated
                   {% else %}
-                    Patients with records failing validation: {{ error_count_in_page }} of {{submission_error_count}}
+                    Patients with records failing validation
                   {% endif %}
                 </th>
               </tr>
