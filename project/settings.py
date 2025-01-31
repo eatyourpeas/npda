@@ -147,7 +147,7 @@ MIDDLEWARE = [
     #  2 factor authentication
     "django_otp.middleware.OTPMiddleware",
     # autologout
-    "project.npda.middleware.AutoLogoutMiddleware",
+    "django_auto_logout.middleware.auto_logout",
 ]
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
