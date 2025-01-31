@@ -34,10 +34,6 @@ WORKDIR /app/
 # (Excludes any files/dirs matched by patterns in .dockerignore)
 COPY . /app/
 
-# Ensure the media directory exists - csv files are stored here
-RUN mkdir -p /media/submissions/csv/
-
-
 # Install Tailwind CSS and DaisyUI
 RUN npm install
 

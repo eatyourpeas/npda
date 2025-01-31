@@ -28,7 +28,6 @@ services:
       - postgis
     volumes:
       - .:/app/
-      - ./media/submissions/csv/:/app/media/submissions/csv/
     command: s/start-dev
     restart: always
 

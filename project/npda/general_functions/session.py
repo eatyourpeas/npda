@@ -28,7 +28,7 @@ def get_submission_actions(pz_code, audit_year):
     can_upload_csv = True
 
     if submission:
-        if submission.csv_file and submission.csv_file.name:
+        if submission.csv_file:
             can_upload_csv = True
             can_complete_questionnaire = False
         else:
