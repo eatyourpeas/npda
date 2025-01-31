@@ -1,3 +1,5 @@
+import json
+
 from django.apps import apps
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -26,7 +28,11 @@ def download_xlsx(request, submission_id):
     filename_without_extension = ".".join(submission.csv_file_name.split(".")[:-1])
     xlsx_file_name = f"{filename_without_extension}_data_quality_report.xlsx"
 
-    xlsx_file = write_errors_to_xlsx(submission.errors or {}, submission.csv_file)
+    errors = {}
+    if submission.errors:
+        errors = json.loads(submission.errors)
+
+    xlsx_file = write_errors_to_xlsx(errors or {}, submission.csv_file)
 
     response = HttpResponse(xlsx_file, content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="{xlsx_file_name}"'
