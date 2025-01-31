@@ -39,12 +39,23 @@ GOSH_ODS_CODE = "RP401"
 audit_dates = audit_period.get_audit_period_for_date(date.today())
 
 
+from httpx import HTTPError
+from django.core.exceptions import ValidationError
+
+from project.npda.tests.factories.patient_factory import (
+    VALID_FIELDS,
+    VALID_FIELDS_WITH_GP_POSTCODE,
+    INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
+    GP_POSTCODE_WITH_SPACES,
+)
+
+from project.npda.forms.external_patient_validators import validate_patient_async
+
+
 @pytest.mark.django_db
 class TestQuestionnaireView:
     @pytest.fixture(autouse=True)
-    def setup(
-        self, seed_groups_fixture, seed_users_fixture, seed_patients_fixture, client
-    ):
+    def setup(self, seed_groups_fixture, seed_users_fixture, seed_patients_fixture, client):
         self.client = client
 
         # Get a user with the correct permissions
@@ -82,9 +93,7 @@ class TestQuestionnaireView:
         response = self.client.post(url, form.data)
 
         # Check that the patient was not saved
-        assert (
-            Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is True
-        )
+        assert Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is True
         assert response.status_code == 302  # Redirects to the patient list page
 
     def test_users_with_correct_permissions_cannot_save_patient_in_different_audit_year(
@@ -112,9 +121,7 @@ class TestQuestionnaireView:
         response = self.client.post(url, form.data)
 
         assert response.status_code == 403
-        assert (
-            Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is False
-        )
+        assert Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is False
 
     def test_rcpch_users_with_correct_permissions_can_still_save_patient_in_different_audit_year(
         self,
@@ -141,9 +148,7 @@ class TestQuestionnaireView:
         response = self.client.post(url, form.data)
 
         assert response.status_code == 302  # Redirects to the patient list page
-        assert (
-            Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is True
-        )
+        assert Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is True
 
     def test_users_without_questionnaire_permissions_cannot_save_patient(self):
         """
@@ -164,9 +169,7 @@ class TestQuestionnaireView:
         response = self.client.post(url, form.data)
 
         assert response.status_code == 403
-        assert (
-            Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is False
-        )
+        assert Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is False
 
     def test_rcpch_users_without_questionnaire_permissions_can_still_save_patient(self):
         """
@@ -192,9 +195,7 @@ class TestQuestionnaireView:
         response = self.client.post(url, form.data)
 
         assert response.status_code == 302
-        assert (
-            Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is True
-        )
+        assert Patient.objects.filter(nhs_number=form.data["nhs_number"]).exists() is True
 
     def test_users_with_correct_permissions_can_save_visit(self):
         """
