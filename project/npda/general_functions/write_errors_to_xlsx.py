@@ -1,6 +1,7 @@
 # import types
 from collections import defaultdict
 from typing import Any, Dict, List, Union
+import io
 
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -8,7 +9,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from ..models.submission import Submission
 
 # import functions
-from project.npda.general_functions.csv import csv_parse
+from project.npda.general_functions.csv.csv_parse import csv_parse
 
 # import third-party libaries
 import pandas as pd
@@ -22,19 +23,20 @@ from ...constants.csv_headings import CSV_HEADINGS
 
 
 def write_errors_to_xlsx(
-    errors: defaultdict[Any, defaultdict[Any, list]], new_submission: Submission
-) -> bool:
+    errors: dict[str, dict[str, list[str]]], original_csv_file_bytes: bytes
+) -> bytes:
     """
-    Write errors to an Excel file. This .xlsx file can later be downloaded by the user to highlight invalid cells when attempting to upload CSV data.
+    Write errors to an Excel file. Highlight invalid cells in the source CSV.
 
     Args:
-      errors (defaultdict[Any, defaultdict[Any, list]]): A dictionary containing errors grouped by row index and field.
+      errors A nested dictionary containing errors grouped by row index, then field.
 
     """
-    xlsx_file: str = new_submission.csv_file.path.replace(".csv", ".xlsx")
+
+    xlsx_file = io.BytesIO()
 
     # Get original data
-    df = csv_parse(new_submission.csv_file).df
+    df = csv_parse(io.BytesIO(initial_bytes=original_csv_file_bytes)).df
     # Write an xlsx of the original data.
     df.to_excel(xlsx_file, sheet_name="Uploaded data (raw)", index=False)
 
@@ -89,9 +91,7 @@ def write_errors_to_xlsx(
     # Save the styled sheet.
     wb.save(xlsx_file)
 
-    # Return True/False based on successful .xlsx creation.
-    print("Running write_errors_to_xlsx")
-    return True
+    return xlsx_file.getvalue()
 
 
 def find_column_index_by_name(column_name: str, ws: Worksheet) -> int | None:
@@ -106,7 +106,7 @@ def find_column_index_by_name(column_name: str, ws: Worksheet) -> int | None:
 
 
 def flatten_errors(
-    errors: defaultdict[int, defaultdict[Any, list]],
+    errors: dict[str, dict[str, list[str]]],
     uploaded_nhs_numbers: "pd.Series[str]",
 ) -> "List[Dict[str, Union[int, str]]]":
     """
