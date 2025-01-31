@@ -12,6 +12,7 @@ django-htmx==1.17.3
 django-two-factor-auth==1.16.0
 django-simple-captcha==0.6.0
 django-citext==1.0.0
+django-auto-logout==0.5.1
 docutils==0.20.1
 geopandas==1.0.1
 markdown
