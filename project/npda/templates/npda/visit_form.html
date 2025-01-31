@@ -23,10 +23,10 @@
               </div>
               <div class="flex space-between md:w-2/3">
                 {% if field.id_for_label == "id_visit_date" %}
-                  <input type="date" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}" {% if field.value %}value={{ field.value|stringformat:'s' }}{% endif %}>
+                  <input type="date" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}" {% if field.value %}value={{ field.value|stringformat:'s' }}{% endif %}>
                   <button type='button'
                           _="on click set #{{ field.id_for_label }}'s value to '{% today_date %}'"
-                          class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+                          class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
                     Today
                   </button>
                 {% endif %}
@@ -47,13 +47,13 @@
         <div class="flex justify-end">
           <button type="submit"
                   value="Submit"
-                  class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+                  class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
             {{ button_title }}
           </button>
           <a class="btn rcpch-btn bg-rcpch_yellow_light_tint1 border border-rcpch_yellow_light_tint1 hover:bg-rcpch_yellow hover:border-rcpch_yellow"
              href="{% url 'patient_visits' patient_id=patient_id %}">Cancel</a>
           {% if form_method == 'update' and perms.npda.delete_visit %}
-            <a class="btn rcpch-btn bg-rcpch_red text-white font-semibold hover:text-white py-2.5 px-3 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}"
+            <a class="btn rcpch-btn bg-rcpch_red text-white font-semibold hover:text-white py-2.5 px-3 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
                href="{% url 'visit-delete' patient_id visit.pk %}">Delete</a>
           {% endif %}
         </div>
