@@ -30,10 +30,8 @@ from project.npda.tests.utils import login_and_verify_user
 logger = logging.getLogger(__name__)
 
 ALDER_HEY_PZ_CODE = "PZ074"
-ALDER_HEY_ODS_CODE = "RBS25"
 
 GOSH_PZ_CODE = "PZ196"
-GOSH_ODS_CODE = "RP401"
 
 
 def check_all_users_in_pdu(user, users, pz_code):

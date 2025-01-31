@@ -28,8 +28,16 @@ def login_and_otp_required():
             )
             return True
 
-        # Prevent unverified users
-        if not user.is_verified():
+        if not user.is_authenticated:
+            logger.info(
+                "User %s is not authenticated. Tried accessing %s",
+                user,
+                view.__qualname__,
+            )
+            return False
+
+        # Prevent unverified (from otp) users
+        if hasattr(user, "is_verified") and not user.is_verified():
             logger.info(
                 "User %s is unverified. Tried accessing %s",
                 user,
