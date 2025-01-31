@@ -153,6 +153,7 @@ class PatientListView(
         submission_error_count = 0
 
         # TODO MRB: this should probably be a method on the Submission model?
+        #           https://github.com/rcpch/national-paediatric-diabetes-audit/issues/533
         if pz_code and selected_audit_year:
             submission = Submission.objects.filter(
                 paediatric_diabetes_unit__pz_code=pz_code,
