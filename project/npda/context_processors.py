@@ -49,6 +49,7 @@ def can_use_questionnaire(request):
         "can_complete_questionnaire", True
     ):
         return {"can_use_questionnaire": True}
+
     return {
-        "can_use_questionnaire": request.session.get("can_use_questionnaire", False)
+        "can_use_questionnaire": False
     }
