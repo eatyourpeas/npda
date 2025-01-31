@@ -116,7 +116,7 @@ async def home(request):
                     request=request,
                     message="Submission completed. There were no errors.",
                 )
-            return redirect("submissions")
+            return redirect("patients")
         else:
             # If the user does not have permission to upload csvs, redirect them to the dashboard page
             messages.error(
