@@ -679,93 +679,86 @@ def get_hcl_scatter_plot(request):
 
 
 def get_treemap_chart_partial(request):
+    """
+    Expects in request.GET:
+
+    {
+        # A map where keys are all parents, values are their colors (children assigned same color)
+        parent_color_map : {
+            "Other": colors.RCPCH_DARK_BLUE,
+            ...
+        },
+
+        # Child to parent map
+        child_parent_map : {
+            "Not known": "Other",
+            "Any other ethnic group": "Other",
+            ...
+        }
+
+        # A data dict with keys being child names, values being ABSOLUTE counts in whole group
+        data : {
+            "Not known" : 3,
+            ...
+        }
+    }
+    """
     try:
 
         if not request.htmx:
             return HttpResponseBadRequest("This view is only accessible via HTMX")
 
         # Fetch data from query parameters
-        data = {}
-        for key, value in request.GET.items():
-            data[key] = int(value)
+        client_errors = []
+        if not (data := json.loads(request.GET.get("data"))):
+            client_errors.append("No data key provided in request.GET")
+        if not (parent_color_map := json.loads(request.GET.get("parent_color_map"))):
+            client_errors.append("No parent_color_map key provided in request.GET")
+        if not (child_parent_map := json.loads(request.GET.get("child_parent_map"))):
+            client_errors.append("No child_parent_map key provided in request.GET")
 
-        # Define top-level ethnicity categories and their colors
-        parent_colors = {
-            "White": colors.RCPCH_LIGHT_BLUE,
-            "Asian": colors.RCPCH_PINK,
-            "Black": colors.RCPCH_MID_GREY,
-            "Mixed": colors.RCPCH_YELLOW,
-            "Other": colors.RCPCH_DARK_BLUE,
-        }
+        # Validate keys and vals
+        for child in data:
+            if child not in child_parent_map:
+                client_errors.append(f"{child} not found in child_parent_map")
 
-        # Define ethnicity mapping to parents
-        ethnicity_parent_map = {
-            "Not known": "Other",
-            "Any other mixed background": "Mixed",
-            "African": "Black",
-            "Pakistani or British Pakistani": "Asian",
-            "Caribbean": "Black",
-            "British, Mixed British": "White",
-            "Any other White background": "White",
-            "Any other Black background": "Black",
-            "Mixed (White and Black Caribbean)": "Mixed",
-            "Irish": "White",
-            "Any other ethnic group": "Other",
-            "Chinese": "Asian",
-            "Any other Asian background": "Asian",
-            "Mixed (White and Asian)": "Mixed",
-            "Indian or British Indian": "Asian",
-            "Not Stated": "Other",
-            "Mixed (White and Black African)": "Mixed",
-            "Bangladeshi or British Bangladeshi": "Asian",
-        }
+        parents_in_map = set(child_parent_map.values())
+        for parent in parent_color_map:
+            if parent not in parents_in_map:
+                client_errors.append(
+                    f"{parent} from parent_color_map not found in child_parent_map"
+                )
 
-        # Ethnicity data with percentage distribution
-        data = {
-            "Not known": 2,
-            "Any other mixed background": 7,
-            "African": 4,
-            "Pakistani or British Pakistani": 5,
-            "Caribbean": 7,
-            "British, Mixed British": 4,
-            "Any other White background": 2,
-            "Any other Black background": 6,
-            "Mixed (White and Black Caribbean)": 4,
-            "Irish": 4,
-            "Any other ethnic group": 6,
-            "Chinese": 3,
-            "Any other Asian background": 7,
-            "Mixed (White and Asian)": 6,
-            "Indian or British Indian": 6,
-            "Not Stated": 6,
-            "Mixed (White and Black African)": 7,
-            "Bangladeshi or British Bangladeshi": 4,
-        }
+        if len(client_errors) > 0:
+            logger.error(f"Treemap partial bad client request with errors: {client_errors}")
+            return HttpResponseBadRequest(client_errors)
 
         # Extract lists
-        ethnicities = list(data.keys())
+        children = list(data.keys())
         percentages = list(data.values())
-        parents = [ethnicity_parent_map[ethnicity] for ethnicity in ethnicities]  # Assign parents
+        parents = [child_parent_map[child] for child in children]  # Assign parents
 
         # Ensure unique parent labels in the treemap
-        parent_labels = list(set(parents))  # Get unique parent categories
-        parent_values = [
-            sum(data[eth] for eth in ethnicities if ethnicity_parent_map[eth] == parent)
-            for parent in parent_labels
-        ]
+        parent_labels = list(set(parents))
+        # Parent values are the sum of their children
+        parent_values = []
+        for parent in parent_labels:
+            parent_values.append(
+                sum([percentages[i] for i in range(len(children)) if parents[i] == parent])
+            )
 
         # Define all labels (parents first, then children)
-        all_labels = parent_labels + ethnicities
+        all_labels = parent_labels + children
         all_parents = ["ALL"] * len(parent_labels) + parents
 
         # Define values (parents first, then children)
         all_values = parent_values + percentages
 
         # Assign the same color to subcategories as their parent
-        all_colors = {p: parent_colors[p] for p in parent_labels}  # Assign parent colors
+        all_colors = {p: parent_color_map[p] for p in parent_labels}  # Assign parent colors
         all_colors.update(
             # Apply same color to children
-            {eth: parent_colors[ethnicity_parent_map[eth]] for eth in ethnicities}
+            {child: parent_color_map[child_parent_map[child]] for child in children}
         )
 
         # Create Treemap

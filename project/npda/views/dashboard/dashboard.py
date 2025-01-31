@@ -9,7 +9,7 @@ from django.apps import apps
 from django.contrib import messages
 from django.shortcuts import render
 
-from project.constants.diabetes_types import DIABETES_TYPES
+from project import constants
 from project.npda.general_functions.quarter_for_date import retrieve_quarter_for_date
 from project.npda.models.paediatric_diabetes_unit import (
     PaediatricDiabetesUnit as PaediatricDiabetesUnitClass,
@@ -25,6 +25,7 @@ from project.npda.kpi_class.kpis import CalculateKPIS
 
 from project.npda.views.decorators import login_and_otp_required
 from project.npda.views.dashboard.template_data import *
+
 
 # LOGGING
 logger = logging.getLogger(__name__)
@@ -53,7 +54,9 @@ def temp_set_eligible_kpi_7(request):
 
     _ = 10
     logger.error(f"🔥 Setting {_} patients to be eligible for KPI 7")
-    to_set_kpi_7_eligible = Patient.objects.filter(diabetes_type=DIABETES_TYPES[0][0])[:_]
+    to_set_kpi_7_eligible = Patient.objects.filter(
+        diabetes_type=constants.diabetes_types.DIABETES_TYPES[0][0]
+    )[:_]
     for pt in to_set_kpi_7_eligible:
         pt.diagnosis_date = CalculateKPIS().audit_start_date + relativedelta(months=4)
         pt.save()
@@ -216,8 +219,6 @@ def dashboard(request):
     # Convert to pcts
     pt_sex_value_counts_pct = convert_value_counts_dict_to_pct(pt_sex_value_counts)
     pt_imd_value_counts_pct = convert_value_counts_dict_to_pct(pt_imd_value_counts)
-    
-    logger.debug(f'{pt_ethnicity_value_counts=}')
 
     # Gather other context vars
     current_date = date.today()
@@ -323,9 +324,13 @@ def dashboard(request):
             "pt_sex_value_counts_pct": {
                 "data": json.dumps(pt_sex_value_counts_pct),
             },
-            "pt_ethnicity_value_counts": {
-                "data": json.dumps(pt_ethnicity_value_counts),
-            },
+            "pt_ethnicity_tree_map_data": json.dumps(
+                {
+                    "data": pt_ethnicity_value_counts,
+                    "parent_color_map": constants.ethnicities.ETHNICITY_PARENT_COLOR_MAP,
+                    "child_parent_map": constants.ethnicities.ETHNICITY_CHILD_PARENT_MAP,
+                }
+            ),
             "pt_imd_value_counts_pct": {
                 "data": json.dumps(pt_imd_value_counts_pct),
             },
