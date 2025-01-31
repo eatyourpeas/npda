@@ -1,5 +1,14 @@
 #!/bin/bash -e
 
+az login --identity
+
+az storage file download \
+    --auth-mode login \
+    --enable-file-backup-request-intent \
+    --account-name ${AZURE_CONFIG_STORAGE_ACCOUNT} \
+    --share-name ${AZURE_CONFIG_FILE_SHARE} \
+    --path .env --dest envs/.env
+
 python manage.py write_azure_pg_password_file
 python manage.py makemigrations
 python manage.py migrate

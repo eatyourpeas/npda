@@ -14,6 +14,9 @@ RUN apt-get update &&\
 # Extra packages required for Material for MkDocs plugins (dependency for git and pdf plugins)
 RUN apt install -y git python3-cffi python3-brotli libpango-1.0-0 libpangoft2-1.0-0
 
+# Install Azure CLI
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
 # Add requirements
 COPY requirements/requirements.txt /app/requirements/requirements.txt
 
