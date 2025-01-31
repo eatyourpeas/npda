@@ -78,11 +78,7 @@ class Submission(models.Model):
 
     def save(self, *args, **kwargs):
         if self.submission_active == False:
-            self.csv_file.delete(
-                save=True
-            )  # delete the csv file if the submission is not active
-            self.csv_file = (
-                None  # set the csv file to None if the submission is not active
-            )
+            self.csv_file = None
+            # keep filename for our records
 
         super().save(*args, **kwargs)
