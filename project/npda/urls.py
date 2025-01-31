@@ -138,6 +138,11 @@ urlpatterns = [
         name="get_hcl_scatter_plot",
     ),
     path(
+        "get_treemap_chart_partial",
+        view=get_treemap_chart_partial,
+        name="get_treemap_chart_partial",
+    ),
+    path(
         "temp_set_eligible_kpi_7",
         view=temp_set_eligible_kpi_7,
         name="temp_set_eligible_kpi_7",
