@@ -12,7 +12,6 @@ from project.npda.tests.utils import login_and_verify_user
 from project.npda.tests.test_csv_upload import mock_remote_calls
 
 
-# @pytest.mark.skip(reason="CSV upload validation errors")
 @pytest.mark.django_db
 def test_generate_csv_upload_to_view(
     seed_groups_fixture,
