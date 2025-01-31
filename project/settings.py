@@ -196,12 +196,13 @@ if not (env_auto_logout_idle_time_seconds := os.environ.get("AUTO_LOGOUT_IDLE_TI
         "ENV VAR AUTO_LOGOUT_IDLE_TIME_SECONDS MISSING: SETTING DEFAULT TIME: "
         f"{env_auto_logout_idle_time_seconds=}"
     )
-    
-    
+AUTO_LOGOUT_IDLE_TIME_SECONDS = int(env_auto_logout_idle_time_seconds)
+logger.info(f"AUTO_LOGOUT_IDLE_TIME_SECONDS: {AUTO_LOGOUT_IDLE_TIME_SECONDS}")
 AUTO_LOGOUT = {
-    "IDLE_TIME": timedelta(seconds=int(env_auto_logout_idle_time_seconds)),
+    "IDLE_TIME": timedelta(seconds=AUTO_LOGOUT_IDLE_TIME_SECONDS),
     "REDIRECT_TO_LOGIN_IMMEDIATELY": True,
-    "MESSAGE": "You have been automatically logged out as there was no activity for 30 minutes. Please login again to continue.",
+    "MESSAGE": "You have been automatically logged out as there was no activity for "
+    f"{AUTO_LOGOUT_IDLE_TIME_SECONDS / 60} minutes. Please login again to continue.",
 }
 
 # Database
