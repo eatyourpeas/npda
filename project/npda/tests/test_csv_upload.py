@@ -136,7 +136,7 @@ def test_user(seed_groups_fixture, seed_users_fixture):
 # The database is not rolled back if we used the built in async support for pytest
 # https://github.com/pytest-dev/pytest-asyncio/issues/226
 @async_to_sync
-async def csv_upload_sync(user, dataframe, csv_file):
+async def csv_upload_sync(user, dataframe):
     return await csv_upload(
         user,
         dataframe,
@@ -260,7 +260,7 @@ def test_error_in_multiple_visits(test_user, one_patient_two_visits):
     df = one_patient_two_visits
     df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
 
-    errors = csv_upload_sync(test_user, df, None)
+    errors = csv_upload_sync(test_user, df)
     assert "treatment" in errors[0]
 
     assert Visit.objects.count() == 2
@@ -288,7 +288,7 @@ def test_multiple_patients_where_one_has_visit_errors_and_the_other_does_not(
 
     df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
 
-    errors = csv_upload_sync(test_user, df, None)
+    errors = csv_upload_sync(test_user, df)
     assert "treatment" in errors[0]
 
     [patient_one, patient_two] = Patient.objects.all()
@@ -326,7 +326,7 @@ def test_multiple_patients_with_visit_errors(
     df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
     df.loc[1, "Diabetes Treatment at time of Hba1c measurement"] = 45
 
-    errors = csv_upload_sync(test_user, df, None)
+    errors = csv_upload_sync(test_user, df)
 
     assert "treatment" in errors[0]
     assert "treatment" in errors[1]

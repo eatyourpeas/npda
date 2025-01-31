@@ -6,7 +6,7 @@ Example use:
     python manage.py seed_submission \
         --pts=50 \
         --visits="CDCD DHPC ACDC CDCD" \
-        --hb_target=T
+        --hb_target=T \
         --user_pk=1 \
         --submission_date="2024-10-18" \
 
