@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import os
 import logging
@@ -173,6 +174,8 @@ TEMPLATES = [
                 "project.npda.context_processors.session_data",
                 "project.npda.context_processors.can_alter_this_audit_year_submission",
                 "project.npda.context_processors.can_use_questionnaire",
+                # Autologout
+                "django_auto_logout.context_processors.auto_logout_client",
             ],
         },
     },
@@ -191,9 +194,15 @@ if not (env_auto_logout_idle_time_seconds := os.environ.get("AUTO_LOGOUT_IDLE_TI
     env_auto_logout_idle_time_seconds = 60 * 30  # Default: 30 minutes
     logger.warning(
         "ENV VAR AUTO_LOGOUT_IDLE_TIME_SECONDS MISSING: SETTING DEFAULT TIME: "
-        f"{env_auto_logout_idle_time_seconds}"
+        f"{env_auto_logout_idle_time_seconds=}"
     )
-AUTO_LOGOUT_IDLE_TIME_SECONDS = int(env_auto_logout_idle_time_seconds)
+    
+    
+AUTO_LOGOUT = {
+    "IDLE_TIME": timedelta(seconds=int(env_auto_logout_idle_time_seconds)),
+    "REDIRECT_TO_LOGIN_IMMEDIATELY": True,
+    "MESSAGE": "You have been automatically logged out as there was no activity for 30 minutes. Please login again to continue.",
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
