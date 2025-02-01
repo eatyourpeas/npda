@@ -91,6 +91,7 @@ TEXT = {
         ],
         "ineligible_hover_reason": {
             "tx_regimen": "Does not fulfil criteria for any of KPIs 13-20",
+            "cgm": "Does not fulfil criteria for KPI 1",
         },
     },
 }
