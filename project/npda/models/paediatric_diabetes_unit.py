@@ -1,7 +1,8 @@
-from django.contrib.gis.db.models import Model, CharField
+from django.contrib.gis.db import models
+from django.contrib.gis.db.models import CharField
 
 
-class PaediatricDiabetesUnit(Model):
+class PaediatricDiabetesUnit(models.Model):
     """
     This model stores the paediatric diabetes unit reference PZ code and ODS code of the associated organisation
     """

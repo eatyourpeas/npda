@@ -81,3 +81,37 @@ def fetch_local_authorities_within_radius(
     response.raise_for_status()
 
     return response.json()
+
+
+def synchronize_pdus_with_rcpch_nhs_organisations():
+    """
+    This function synchronizes the NHS organisations from the RCPCH dataset with the local database.
+    """
+
+    PDU = apps.get_model("npda", "PaediatricDiabetesUnit")
+    Organisation = apps.get_model("npda", "Organisation")
+
+    request_url = (
+        f"{settings.RCPCH_NHS_ORGANISATIONS_API_URL}/paeidatric_diabetes_units/"
+    )
+
+    headers = {"Ocp-Apim-Subscription-Key": settings.RCPCH_NHS_ORGANISATIONS_API_KEY}
+
+    response = requests.get(request_url, headers=headers, timeout=10)
+    response.raise_for_status()
+
+    print(response.json())
+
+    # for pz_code, trust in all_pz_codes_with_their_trust_and_primary_organisation:
+    #     try:
+    #         organisation = Organisation.objects.get(ods_code=pz_code)
+    #     except NHSOrganisation.DoesNotExist:
+    #         organisation = Organisation(ods_code=pz_code)
+
+    #     organisation.trust = trust
+    #     organisation.save()
+
+    #     pdus = PDU.objects.filter(ods_code=pz_code)
+    #     for pdu in pdus:
+    #         pdu.nhs_organisation = organisation
+    #         pdu.save()
