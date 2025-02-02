@@ -230,11 +230,6 @@ class PatientForm(forms.ModelForm):
         if commit:
             self.instance.save()
             if Transfer.objects.filter(patient=self.instance).exists():
-                print("Transfer exists")
-                print(self.cleaned_data)
-                print(self.cleaned_data["date_leaving_service"])
-                print(self.cleaned_data["reason_leaving_service"])
-                print(self.instance)
                 patient_transfer = Transfer.objects.get(patient=self.instance)
                 patient_transfer.date_leaving_service = self.cleaned_data[
                     "date_leaving_service"
