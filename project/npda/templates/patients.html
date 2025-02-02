@@ -5,55 +5,53 @@
   <div hx-get="/patients"
        hx-trigger="patients from:body"
        hx-target="#patient_table">
-    <div class="flex flex-col justify-center px-10 mt-5">
-      <div class="flex flex-wrap">
-        <label class="form-control flex items-center gap-2 grow">
-          <label class="bg-rcpch_strong_blue mx-6 text-white input flex items-center gap-2 w-full h-auto">
-            <div class="hidden lg:block  text-nowrap">
-              <i class="fa-solid fa-hospital-user text-white mr-2"></i> Patient search
+    <div class="flex flex-col justify-center px-1 mt-5">
+      {% if submission %}
+        {% include 'partials/page_elements/patient_table_actions.html' %}
+        <div id="patient_table">{% include 'partials/patient_table.html' %}</div>
+      {% else %}
+        <div class="flex w-full justify-center mt-5 mb-5">
+          <div class="alert alert-info w-2/5 text-white" role="alert">
+            <i class="fa-solid fa-info"></i>
+            We don't have any data from {{ pdu.lead_organisation_name }} for {{ selected_audit_year }}.
+            <br />
+            Choose from the input methods below. You can't change after you add data.
+          </div>
+        </div>
+        <div class="flex w-full justify-center">
+          <div class="card bg-base-100 w-96 shadow-xl">
+            <div class="card-body">
+              <h2 class="card-title">Upload CSV file</h2>
+              <p>Upload CSV files generated from your electronic patient record.</p>
+              <p>
+                NPDA CSV files have a specific format.
+                <a class="link"
+                   href="https://www.rcpch.ac.uk/resources/national-paediatric-diabetes-audit-data-submission"
+                   target="_blank">See our website for details.</a>
+              </p>
+              <p>
+                We recommend this method if you already have a system that can export in that format or are building one.
+              </p>
+              <div class="card-actions justify-end">
+                <a href="{% url 'upload_csv' %}"  class="btn btn-info">Select</a>
+              </div>
             </div>
-            <div class="divider divider-horizontal after:bg-rcpch_strong_blue_light_tint1 before:bg-rcpch_strong_blue_light_tint3 hidden lg:flex">
+          </div>
+          <div class="divider divider-horizontal">OR</div>
+          <div class="card bg-base-100 w-96 shadow-xl">
+            <div class="card-body">
+              <h2 class="card-title">Patient Questionnaire</h2>
+              <p>Use our online form to submit data for each patient.</p>
+              <p>
+                Use this method if you don't have an electronic patient record or you can't export from it in our CSV format.
+              </p>
+              <div class="card-actions justify-end">
+                <a href="{% url 'patient-add' %}" class="btn btn-info">Select</a>
+              </div>
             </div>
-            <div></div>
-            <input type="text"
-                   class="text-center placeholder-gray-300 focus:bg-rcpch_strong_blue_light_tint2 hover:bg-rcpch_strong_blue_light_tint2 focus:placeholder-gray-500 p-2 m-2 text-wrap w-full"
-                   {% if pz_code == 'PZ248' %} placeholder="Enter a Unique Reference Number or NPDA ID..." {% else %} placeholder="Enter an NHS number or NPDA ID..." {% endif %}
-                   id="search-input"
-                   name="search-input"
-                   hx-get="{% url 'patients' %}"
-                   hx-trigger="keyup changed delay:500ms"
-                   hx-target="#patient_table"
-                   hx-swap="innerHTML"
-                   hx-include="[name='search-input']"
-                   hx-params="*"
-                   hx-indicator="#search_spinner" />
-            <div id="search_spinner"
-                 class="htmx-indicator flex items-center px-4 text-white absolute right-14 loading loading-bars loading-sm">
-            </div>
-            <button class="btn btn-info h-auto w-full md:w-auto"
-                    hx-include="#search-input"
-                    hx-swap="innerHTML"
-                    hx-target="#patient_table"
-                    hx-trigger="click"
-                    hx-indicator="#search_spinner"
-                    hx-get="{% url 'patients' %}"
-                    hx-disabled-elt="this">
-              <span class="md:hidden text-white">Search patients</span>
-              <i class="fa-solid fa-magnifying-glass text-white"></i>
-            </button>
-            <div class="divider divider-horizontal after:bg-rcpch_strong_blue_light_tint1 before:bg-rcpch_strong_blue_light_tint3 hidden lg:flex">
-            </div>
-            {% if perms.npda.add_patient %}
-              <a href="{% url 'patient-add' %}"
-                 class="btn btn-info h-auto w-full md:w-auto {% if not can_alter_this_audit_year_submission %}btn-disabled{% endif %}">
-                <i class="fa-solid fa-person-circle-plus"></i>
-                Add patient
-              </a>
-            {% endif %}
-          </label>
-        </label>
-      </div>
-      <div id="patient_table">{% include 'partials/patient_table.html' %}</div>
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

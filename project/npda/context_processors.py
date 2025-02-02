@@ -13,6 +13,7 @@ def session_data(request):
         "lead_organisation": request.session.get("lead_organisation", None),
         "requested_audit_year": request.session.get("requested_audit_year", None),
         "audit_years": request.session.get("audit_years", []),
+        "lead_organisation": request.session.get("lead_organisation", None),
     }
 
 
@@ -27,7 +28,7 @@ def can_alter_this_audit_year_submission(request):
             return {"can_alter_this_audit_year_submission": True}
 
     if (
-        request.session.get("selected_audit_year") == get_current_audit_year
+        request.session.get("selected_audit_year") == get_current_audit_year()
         or request.user.is_superuser
     ):
         return {
@@ -51,6 +52,5 @@ def can_use_questionnaire(request):
         "can_complete_questionnaire", True
     ):
         return {"can_use_questionnaire": True}
-    return {
-        "can_use_questionnaire": request.session.get("can_use_questionnaire", False)
-    }
+
+    return {"can_use_questionnaire": False}

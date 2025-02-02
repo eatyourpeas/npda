@@ -85,7 +85,7 @@ class NPDAUserManager(BaseUserManager):
             is_rcpch_audit_team_member=True,
             is_rcpch_staff=True,
             email_confirmed=True,
-            view_preference=2 # national
+            view_preference=1
         )
 
         paediatric_diabetes_unit = PaediatricDiabetesUnit.objects.get(

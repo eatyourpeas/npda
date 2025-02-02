@@ -150,18 +150,18 @@
       {% endif %}
     {% else %}
       <p class="text-gray-400">
-        No data quality report available for {{ request.session.pz_code }}. {% text_for_data_submission can_upload_csv can_complete_questionnaire %}
+        No data quality report available for {{ request.session.pz_code }}. {% text_for_data_submission can_upload_csv can_use_questionnaire %}
       </p>
     {% endif %}
   {% else %}
     <!-- No submissions so far -->
     {% if can_upload_csv %}
       <p class="text-gray-400">
-        No submissions uploaded yet for {{ request.session.pz_code }}. {% text_for_data_submission can_upload_csv can_complete_questionnaire %}
+        No submissions uploaded yet for {{ request.session.pz_code }}. {% text_for_data_submission can_upload_csv can_use_questionnaire %}
       </p>
-    {% elif can_complete_questionnaire %}
+    {% elif can_use_questionnaire %}
       <p class="text-gray-400">
-        No submissions created yet for {{ request.session.pz_code }}. {% text_for_data_submission can_upload_csv can_complete_questionnaire %}
+        No submissions created yet for {{ request.session.pz_code }}. {% text_for_data_submission can_upload_csv can_use_questionnaire %}
       </p>
     {% endif %}
   {% endif %}

@@ -18,22 +18,23 @@
               {% endif %}
             </span>
           </th>
-          <th scope="col" class="px-2 py-3 text-center">Sex</th>
           <th scope="col" class="px-2 py-3 text-center">Date of Birth</th>
-          <th scope="col" class="px-2 py-3 text-center">Postcode</th>
-          <th scope="col" class="px-2 py-3 text-center">
-            <span class="flex flex-row">
-              {% include 'partials/page_elements/sort_icon.html' with field="index_of_multiple_deprivation_quintile" %}
-              Deprivation Quintile
-            </span>
-          </th>
-          <th scope="col" class="px-2 py-3 text-center">Ethnicity</th>
+          <th scope="col" class="px-2 py-3 text-center">Sex</th>
           <th scope="col" class="px-2 py-3 text-center">Diabetes Type</th>
           <th scope="col" class="px-2 py-3 text-center">Diagnosis Date</th>
-          <th scope="col"
-              class="px-2 py-3 text-center tooltip tooltip-bottom"
-              data-tip="The distance travelled to the PDU.">
-            <span>
+          <th scope="col" class="px-2 py-3 text-center">Postcode</th>
+          <th scope="col" class="px-2 py-3 text-center">
+            <span
+              class="tooltip tooltip-bottom"
+              data-tip="The 'Index of Multiple Deprivation' quintile for the patients postcode.">
+              {% include 'partials/page_elements/sort_icon.html' with field="index_of_multiple_deprivation_quintile" %}
+              IMD <i class="fa-question-circle fas"></i>
+            </span>
+          </th>
+          <th scope="col" class="px-2 py-3 text-center">
+            <span
+              class="tooltip tooltip-bottom"
+              data-tip="The distance 'as the crow flies' from the patients postcode to this PDU.">
               {% include 'partials/page_elements/sort_icon.html' with field="distance_from_lead_organisation" %}
               Distance to PDU <i class="fa-question-circle fas"></i>
             </span>
@@ -48,9 +49,9 @@
               <tr>
                 <th colspan="13" class="px-6 py-3">
                   {% if patient.is_first_valid %}
-                    Patients where all records have been validated: {{ valid_count_in_page }}
+                    Patients where all records have been validated
                   {% else %}
-                    Patients with records failing validation: {{ error_count_in_page }}
+                    Patients with records failing validation
                   {% endif %}
                 </th>
               </tr>
@@ -79,20 +80,6 @@
                 </a>
               </td>
             {% endwith %}
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'sex' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"sex" %}
-                <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'sex' }}">
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  {{ patient.get_sex_display }}
-                </div>
-              {% else %}
-                {{ patient.get_sex_display }}
-              {% endif %}
-            </td>
             <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'date_of_birth' %}text-rcpch_red{% endif %}">
               {% if patient.errors|error_for_field:"date_of_birth" %}
                 <div class="inline-flex tooltip tooltip-top"
@@ -107,46 +94,18 @@
                 {{ patient.date_of_birth }}
               {% endif %}
             </td>
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'postcode' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"postcode" %}
+            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'sex' %}text-rcpch_red{% endif %}">
+              {% if patient.errors|error_for_field:"sex" %}
                 <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'postcode' }}">
+                     data-tip="{{ patient.errors|error_for_field:'sex' }}">
                   <span class="fa-stack">
                     <i class="fa-circle fa-stack-1x fas"></i>
                     <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
                   </span>
-                  {{ patient.postcode }}
+                  {{ patient.get_sex_display }}
                 </div>
               {% else %}
-                {{ patient.postcode }}
-              {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'index_of_multiple_deprivation_quintile' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"index_of_multiple_deprivation_quintile" %}
-                <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'index_of_multiple_deprivation_quintile' }}">
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  {{ patient.index_of_multiple_deprivation_quintile }}
-                </div>
-              {% else %}
-                {{ patient.index_of_multiple_deprivation_quintile }}
-              {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'ethnicity' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"ethnicity" %}
-                <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'ethnicity' }}">
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  {{ patient.get_ethnicity_display }}
-                </div>
-              {% else %}
-                {{ patient.get_ethnicity_display }}
+                {{ patient.get_sex_display }}
               {% endif %}
             </td>
             <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'diabetes_type' %}text-rcpch_red{% endif %}">
@@ -175,6 +134,34 @@
                 </div>
               {% else %}
                 {{ patient.diagnosis_date }}
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'postcode' %}text-rcpch_red{% endif %}">
+              {% if patient.errors|error_for_field:"postcode" %}
+                <div class="inline-flex tooltip tooltip-top"
+                     data-tip="{{ patient.errors|error_for_field:'postcode' }}">
+                  <span class="fa-stack">
+                    <i class="fa-circle fa-stack-1x fas"></i>
+                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                  </span>
+                  {{ patient.postcode }}
+                </div>
+              {% else %}
+                {{ patient.postcode }}
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'index_of_multiple_deprivation_quintile' %}text-rcpch_red{% endif %}">
+              {% if patient.errors|error_for_field:"index_of_multiple_deprivation_quintile" %}
+                <div class="inline-flex tooltip tooltip-top"
+                     data-tip="{{ patient.errors|error_for_field:'index_of_multiple_deprivation_quintile' }}">
+                  <span class="fa-stack">
+                    <i class="fa-circle fa-stack-1x fas"></i>
+                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                  </span>
+                  {{ patient.index_of_multiple_deprivation_quintile }}
+                </div>
+              {% else %}
+                {{ patient.index_of_multiple_deprivation_quintile }}
               {% endif %}
             </td>
             <td class="px-6 py-4 text-center">

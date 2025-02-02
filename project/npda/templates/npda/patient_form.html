@@ -21,7 +21,7 @@
               {% if field.field.widget|is_select %}
                 <select id="{{ field.id_for_label }}"
                         name="{{ field.html_name }}"
-                        class="select rcpch-select {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+                        class="select rcpch-select {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
                   {% for choice in field.field.choices %}
                     <option value="{{ choice.0 }}"
                             {% if field.value|stringformat:'s' == choice.0|stringformat:'s' %} selected="true" {% endif %}>
@@ -30,14 +30,11 @@
                   {% endfor %}
                 </select>
               {% else %}
-                {% jersify pz_code field as viewable %}
-                {% if viewable %}
-                  <input id="{{ field.id_for_label }}"
-                         name="{{ field.html_name }}"
-                         class="input rcpch-input-text {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}"
-                         {% if field.field.widget|is_dateinput %} type="date" {% else %} type="text" {% endif %}
-                         {% if field.value %}value="{{ field.value|stringformat:'s' }}"{% endif %}>
-                {% endif %}
+                <input id="{{ field.id_for_label }}"
+                       name="{{ field.html_name }}"
+                       class="input rcpch-input-text {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
+                       {% if field.field.widget|is_dateinput %} type="date" {% else %} type="text" {% endif %}
+                       {% if field.value %}value="{{ field.value|stringformat:'s' }}"{% endif %}>
               {% endif %}
               {% for error in field.errors %}
                 <div role="alert" class="alert alert-error py-1 my-0 rounded-none">
@@ -59,12 +56,12 @@
              href='{% url 'patients' %}'>Back to list</a>
           <button type="submit"
                   value="Submit"
-                  class="btn rcpch-light-blue-btn {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+                  class="btn rcpch-light-blue-btn {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
             {{ button_title }}
           </button>
         </div>
         {% if form_method == 'update' and perms.npda.delete_patient %}
-          <a class="bg-rcpch_red text-white font-semibold hover:text-white py-2.5 px-3 mt-20 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint {% if not can_alter_this_audit_year_submission or not can_complete_questionnaire %}opacity-40 pointer-events-none{% endif %}"
+          <a class="bg-rcpch_red text-white font-semibold hover:text-white py-2.5 px-3 mt-20 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
              href="{% url 'patient-delete' patient_id %}">Delete</a>
         {% endif %}
       </form>

@@ -11,6 +11,7 @@ import pytest
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.core.exceptions import ValidationError
+from django.contrib.gis.geos import Point
 from httpx import HTTPError
 
 from project.npda.general_functions.csv import csv_upload, csv_parse
@@ -26,6 +27,7 @@ from project.npda.forms.external_patient_validators import (
 )
 from project.npda.forms.external_visit_validators import (
     VisitExternalValidationResult,
+    CentileAndSDS,
 )
 
 
@@ -34,12 +36,15 @@ MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT = PatientExternalValidationResult(
     gp_practice_ods_code=VALID_FIELDS["gp_practice_ods_code"],
     gp_practice_postcode=None,
     index_of_multiple_deprivation_quintile=INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
-    location_bng=None,
-    location_wgs84=None,
+    location_bng=Point(100, -100),
+    location_wgs84=Point(200, -200),
 )
 
 MOCK_VISIT_EXTERNAL_VALIDATION_RESULT = VisitExternalValidationResult(
-    None, None, None, None
+    height_result=CentileAndSDS(centile=Decimal(0.5), sds=Decimal(0.5)),
+    weight_result=CentileAndSDS(centile=Decimal(0.5), sds=Decimal(0.5)),
+    bmi=Decimal(0.5),
+    bmi_result=CentileAndSDS(centile=Decimal(0.5), sds=Decimal(0.5)),
 )
 
 
@@ -78,7 +83,6 @@ def valid_df(dummy_sheets_folder):
 def single_row_valid_df(dummy_sheets_folder):
     file = dummy_sheets_folder / "dummy_sheet.csv"
     df = csv_parse(file).df
-
     df = df.head(1)
 
     return df
@@ -664,6 +668,33 @@ def test_error_looking_up_index_of_multiple_deprivation(test_user, single_row_va
 
 
 @pytest.mark.django_db
+def test_save_location_from_postcode(test_user, single_row_valid_df):
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
+
+    patient = Patient.objects.first()
+    assert patient.location_bng == MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT.location_bng
+    assert (
+        patient.location_wgs84 == MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT.location_wgs84
+    )
+
+
+@pytest.mark.django_db
+@patch(
+    "project.npda.general_functions.csv.csv_upload.validate_patient_async",
+    mock_patient_external_validation_result(
+        location_bng=None,
+        location_wgs84=None,
+    ),
+)
+def test_missing_location_from_postcode(test_user, single_row_valid_df):
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
+
+    patient = Patient.objects.first()
+    assert patient.location_bng is None
+    assert patient.location_wgs84 is None
+
+
+@pytest.mark.django_db
 def test_strip_first_spaces_in_column_name(test_user, dummy_sheet_csv):
     csv = dummy_sheet_csv.replace("NHS Number", "  NHS Number")
     df = read_csv_from_str(csv).df
@@ -915,3 +946,26 @@ def test_cleaned_fields_are_stored_when_other_fields_are_invalid(
 
     assert visit.weight == round(Decimal("7.89"), 1)  # cleaned version saved
     assert visit.height == 38  # saved but invalid
+
+
+@pytest.mark.django_db
+def test_async_visit_fields_are_saved(test_user, single_row_valid_df):
+    csv_upload_sync(test_user, single_row_valid_df, None, ALDER_HEY_PZ_CODE, 2024)
+    visit = Visit.objects.first()
+
+    assert (
+        visit.height_centile
+        == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.height_result.centile
+    )
+    assert visit.height_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.height_result.sds
+
+    assert (
+        visit.weight_centile
+        == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.weight_result.centile
+    )
+    assert visit.weight_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.weight_result.sds
+
+    assert visit.bmi == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi
+
+    assert visit.bmi_centile == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi_result.centile
+    assert visit.bmi_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi_result.sds

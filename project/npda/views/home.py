@@ -117,7 +117,7 @@ async def home(request):
                     request=request,
                     message="Submission completed. There were no errors.",
                 )
-            return redirect("submissions")
+            return redirect("patients")
         else:
             # If the user does not have permission to upload csvs, redirect them to the dashboard page
             messages.error(
@@ -170,47 +170,13 @@ def view_preference(request):
         new_session_fields = get_new_session_fields(
             request.user, pz_code
         )  # includes a validation step
-
+    
     request.session.update(new_session_fields)
-    context = {
-        "view_preference": view_preference,
-        "chosen_pdu": pz_code,
-        "pdu_choices": request.session["pdu_choices"],
-    }
 
-    response = render(
-        request, template_name="partials/view_preference.html", context=context
-    )
-
-    patients_list_view_url = reverse("patients")
-    submissions_list_view_url = reverse("submissions")
-    npdauser_list_view_url = reverse("npda_users")
-    dashboard_url = reverse("dashboard")
-
-    trigger_client_event(
-        response=response,
-        name="npda_users",
-        params={"method": "GET", "url": npdauser_list_view_url},
-    )  # reloads the npdauser table
-
-    trigger_client_event(
-        response=response,
-        name="submissions",
-        params={"method": "GET", "url": submissions_list_view_url},
-    )  # reloads the submissions table
-
-    trigger_client_event(
-        response=response,
-        name="patients",
-        params={"method": "GET", "url": patients_list_view_url},
-    )  # reloads the patients table
-
-    trigger_client_event(
-        response=response,
-        name="dashboard",
-        params={"method": "GET", "url": dashboard_url},
-    )  # reloads the dashboard
-    return response
+    # Reload the page to apply the new view preference
+    return HttpResponse(status=204, headers={
+        "HX-Refresh": "true"
+    })
 
 
 @login_and_otp_required()
@@ -222,6 +188,11 @@ def audit_year(request):
         audit_year = request.POST.get("audit_year_select_name", None)
         refresh_audit_years_in_session(request, audit_year)
 
+        # Reload the page to apply the new view preference
+        return HttpResponse(status=204, headers={
+            "HX-Refresh": "true"
+        })
+
     context = {
         "audit_years": request.session.get("audit_years"),
         "selected_audit_year": request.session.get("selected_audit_year"),
@@ -230,34 +201,3 @@ def audit_year(request):
     response = render(
         request, template_name="partials/audit_year_select.html", context=context
     )
-
-    patients_list_view_url = reverse("patients")
-    submissions_list_view_url = reverse("submissions")
-    npdauser_list_view_url = reverse("npda_users")
-    dashboard_url = reverse("dashboard")
-
-    trigger_client_event(
-        response=response,
-        name="npda_users",
-        params={"method": "GET", "url": npdauser_list_view_url},
-    )  # reloads the npdauser table
-
-    trigger_client_event(
-        response=response,
-        name="submissions",
-        params={"method": "GET", "url": submissions_list_view_url},
-    )  # reloads the submissions table
-
-    trigger_client_event(
-        response=response,
-        name="patients",
-        params={"method": "GET", "url": patients_list_view_url},
-    )  # reloads the patients table
-
-    trigger_client_event(
-        response=response,
-        name="dashboard",
-        params={"method": "GET", "url": dashboard_url},
-    )  # reloads the dashboard
-
-    return response

@@ -14,7 +14,7 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 # RCPCH imports
 from ..forms.visit_form import VisitForm
-from ..general_functions import get_visit_categories
+from ..general_functions import get_visit_categories, get_visit_tabs
 from ..kpi_class.kpis import CalculateKPIS
 from ..models import Patient, Transfer, Visit
 from .mixins import (
@@ -58,7 +58,7 @@ class PatientVisitsListView(
         visits = Visit.objects.filter(patient=patient).order_by("is_valid", "id")
         calculated_visits = []
         for visit in visits:
-            visit_categories = get_visit_categories(visit)
+            visit_categories = get_visit_categories(instance=visit, form=None)
             calculated_visits.append({"visit": visit, "categories": visit_categories})
         context["visits"] = calculated_visits
         context["patient"] = patient
@@ -110,6 +110,7 @@ class VisitCreateView(
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
         context["button_title"] = "Add New Visit"
+        context["visit_tabs"] = get_visit_tabs(form=None)
         return context
 
     def get_success_url(self):
@@ -149,17 +150,18 @@ class VisitUpdateView(
     form_class = VisitForm
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        visit_instance = Visit.objects.get(pk=self.kwargs["pk"])
-        visit_categories = get_visit_categories(visit_instance)
-        context["visit_instance"] = visit_instance
-        context["visit_errors"] = [visit_instance.errors]
+        context = super().get_context_data(**kwargs) 
         context["patient_id"] = self.kwargs["patient_id"]
+<<<<<<< HEAD
         context["patient"] = visit_instance.patient
+=======
+        context["nhs_number"] = context["form"].patient.nhs_number
+>>>>>>> origin/live
         context["visit_id"] = self.kwargs["pk"]
         context["title"] = "Edit Visit Details"
         context["button_title"] = "Edit Visit Details"
         context["form_method"] = "update"
+<<<<<<< HEAD
         context["visit_categories"] = visit_categories
         context["routine_measurements_categories"] = [
             "Measurements",
@@ -186,6 +188,9 @@ class VisitUpdateView(
             for category in visit_categories
             if category["has_error"]
         ]
+=======
+        context["visit_tabs"] = get_visit_tabs(form=context["form"])
+>>>>>>> origin/live
 
         return context
 

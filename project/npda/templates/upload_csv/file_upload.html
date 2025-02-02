@@ -8,7 +8,7 @@
           <div>
             <h3 class="font-bold">Template - Audit Template (.csv)</h3>
             <div class="text-xs">
-              Our upload facility is built for .csv files with a specific structure. It is heavily encouraged to use our .csv file as a template.
+              Our upload facility is built for .csv files with a specific structure.
             </div>
           </div>
           <div class="tooltip"
@@ -18,57 +18,50 @@
             </button>
           </div>
         </div>
-        {% if pz_code == 'PZ248' %}
-          <a href="{% url 'download_template' region="jersey" %}"
-             download="npda_base.csv"
-             class="bg-rcpch_light_blue border-rcpch_light_blue btn w-full text-lg text-white focus:bg-rcpch_pink hover:bg-rcpch_dark_blue"><i class="fa-file-arrow-down fa-solid"></i> Download Jersey NPDA CSV template</a>
-        {% else %}
-          <a href="{% url 'download_template' region="england_wales" %}"
-             download="npda_base.csv"
-             class="bg-rcpch_light_blue border-rcpch_light_blue btn w-full text-lg text-white focus:bg-rcpch_pink hover:bg-rcpch_dark_blue"><i class="fa-file-arrow-down fa-solid"></i> Download England/Wales NPDA CSV template</a>
+        <a href="{% url 'download_template' %}"
+           download="npda_base.csv"
+           class="bg-rcpch_light_blue border-rcpch_light_blue btn w-full text-lg text-white focus:bg-rcpch_pink hover:bg-rcpch_dark_blue"><i class="fa-file-arrow-down fa-solid"></i> Download NPDA CSV template</a>
+      </div>
+      <form method="post"
+            enctype="multipart/form-data"
+            action="home"
+            class="w-6/12 p-8 border-4 border-gray-400 border-dashed"
+            _="on dragover or dragenter halt the event then add .bg-rcpch_light_grey on dragleave or drop remove .bg-rcpch_light_grey on drop halt the event then get event.dataTransfer.files then put it into #upload_input.files then call updateFilename(#upload_input)">
+        <p class="font-montserrat text-rcpch_dark_blue mb-4 text-xl font-semibold text-center">
+          Drag &amp; drop your NPDA CSV file here, or
+        </p>
+        <div class="bg-rcpch_dark_blue flex justify-center items-center px-6 py-4 mb-4">
+          <label class="font-montserrat px-4 py-2 mr-4 text-white bg-gray-600 cursor-pointer">
+            Choose file
+            <input id="upload_input"
+                   type="file"
+                   name="csv_upload"
+                   class="hidden"
+                   onchange="updateFilename(this)"
+                   accept=".csv" />
+          </label>
+          <span id="file-name-display" class="font-montserrat text-white">No file chosen</span>
         </div>
-      {% endif %}
+        {% csrf_token %}
+        <div class="relative">
+          <button id="submit-button"
+                  class="font-montserrat tooltip-trigger w-full px-4 py-2 text-white bg-gray-400"
+                  type="submit"
+                  disabled
+                  _="on click remove .hidden from #upload-spinner">
+            Submit data
+            <span class="loading loading-lg loading-spinner text-rcpch_pink hidden"
+                  id="upload-spinner"></span>
+          </button>
+          <div class="-translate-x-1/2 bg-rcpch_pink tooltip-content transform w-48 absolute left-1/2 p-2 mt-2 text-center text-white rounded opacity-0 transition-opacity duration-300 pointer-events-none"
+               _=" on mouseenter from #submit-button if the #submit-button's disabled add .opacity-100 end on mouseleave from #submit-button if the #submit-button's disabled remove .opacity-100 end ">
+            Upload your NPDA CSV file to submit data!
+          </div>
+        </div>
+      </form>
     </div>
-    <form method="post"
-          enctype="multipart/form-data"
-          action="home"
-          class="w-6/12 p-8 border-4 border-gray-400 border-dashed"
-          _="on dragover or dragenter halt the event then add .bg-rcpch_light_grey on dragleave or drop remove .bg-rcpch_light_grey on drop halt the event then get event.dataTransfer.files then put it into #upload_input.files then call updateFilename(#upload_input)">
-      <p class="font-montserrat text-rcpch_dark_blue mb-4 text-xl font-semibold text-center">
-        Drag &amp; drop your NPDA CSV file here, or
-      </p>
-      <div class="bg-rcpch_dark_blue flex justify-center items-center px-6 py-4 mb-4">
-        <label class="font-montserrat px-4 py-2 mr-4 text-white bg-gray-600 cursor-pointer">
-          Choose file
-          <input id="upload_input"
-                 type="file"
-                 name="csv_upload"
-                 class="hidden"
-                 onchange="updateFilename(this)"
-                 accept=".csv" />
-        </label>
-        <span id="file-name-display" class="font-montserrat text-white">No file chosen</span>
-      </div>
-      {% csrf_token %}
-      <div class="relative">
-        <button id="submit-button"
-                class="font-montserrat tooltip-trigger w-full px-4 py-2 text-white bg-gray-400"
-                type="submit"
-                disabled
-                _="on click remove .hidden from #upload-spinner">
-          Submit data
-          <span class="loading loading-lg loading-spinner text-rcpch_pink hidden"
-                id="upload-spinner"></span>
-        </button>
-        <div class="-translate-x-1/2 bg-rcpch_pink tooltip-content transform w-48 absolute left-1/2 p-2 mt-2 text-center text-white rounded opacity-0 transition-opacity duration-300 pointer-events-none"
-             _=" on mouseenter from #submit-button if the #submit-button's disabled add .opacity-100 end on mouseleave from #submit-button if the #submit-button's disabled remove .opacity-100 end ">
-          Upload your NPDA CSV file to submit data!
-        </div>
-      </div>
-    </form>
   </div>
-</div>
-<script>
+  <script>
   function updateFilename(input) {
     const fileNameDisplay = document.getElementById('file-name-display')
     const submitButton = document.getElementById('submit-button')
@@ -93,5 +86,5 @@
       submitButton.setAttribute('disabled', 'disabled')
     }
   }
-</script>
+  </script>
 {% endblock content %}

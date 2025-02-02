@@ -128,11 +128,6 @@ def join_with_comma(value):
     return value
 
 
-@register.filter
-def split_by_comma(value):
-    return value.split(",")
-
-
 @register.simple_tag
 def site_contact_email():
     return settings.SITE_CONTACT_EMAIL
@@ -173,91 +168,11 @@ def error_for_field(errors_by_field, field):
 
     concatenated_fields = ""
 
-    if field in VISIT_FIELD_FLAT_LIST:
-        return "There are errors associated with one or more of this child's visits."
-
     errors = errors_by_field[field] if field in errors_by_field else []
 
     error_messages = [error["message"] for error in errors]
 
     return "\n".join(error_messages)
-
-
-@register.filter
-def errors_for_form_field(errors_by_field, field):
-    if field.errors:
-        return field.errors
-
-    if errors_by_field and field.name in errors_by_field:
-        return [error["message"] for error in errors_by_field[field.name]]
-
-    return []
-
-
-@register.filter
-def errors_for_category(selected_category, errors_by_field):
-    """
-    Returns all error messages for a given category
-    """
-
-    # VISIT_FIELDS: (VisitCategory -> [string])
-    # Get the first or default to the empty list
-    fields_in_category = next(
-        (
-            fields
-            for (category, fields) in VISIT_FIELDS
-            if category.value == selected_category
-        ),
-        [],
-    )
-
-    # errors_by_field: { [string] -> [{ message: string }]}
-    errors = [
-        errors
-        for (field, errors) in errors_by_field.items()
-        if field in fields_in_category
-    ]
-
-    # flatten
-    errors = itertools.chain(*errors)
-
-    error_messages = [error["message"] for error in errors]
-    return "\n".join(error_messages)
-
-
-@register.filter
-def category_has_errors(category, form):
-    category_fields = []
-
-    for visit_category, fields in VISIT_FIELDS:
-        if visit_category.value == category:
-            category_fields += fields
-
-    # Errors can be either:
-    #  - On the bound form field after submitting the questionnaire
-    for field in form:
-        if field.name in category_fields and field.errors:
-            return True
-
-    #  - On the instance itself after a CSV upload
-    if form.instance.errors:
-        for field in form.instance.errors.keys():
-            if field in category_fields:
-                return True
-
-    return False
-
-
-# The alternative of creating a new nested data structure was quite a big refactor
-# so I've gone with this simple but hacky version
-@register.filter
-def categories_have_errors(categories_by_comma, form):
-    return any(
-        [
-            category_has_errors(category, form)
-            for category in categories_by_comma.split(",")
-        ]
-    )
 
 
 @register.simple_tag
@@ -456,6 +371,11 @@ def lowerify(value):
     # replace spaces with underscores and make lowercase
     value = value.replace(" ", "_")
     return value.lower()
+
+
+@register.filter
+def flatten(values):
+    return list(itertools.chain(*values))
 
 
 @register.filter

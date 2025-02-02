@@ -22,34 +22,27 @@
                     <td class="px-6 py-4">{{ visit.visit.visit_date }}</td>
                     <td class="flex flex-wrap py-5">
                       {% for item in visit.categories %}
-                        {% with item.category|colour_for_category as background_colour %}
-                          {% if item.present %}
-                            <span class="bg-{{ background_colour }} px-1 py-0.25 mx-1 my-1 text-sm font-semibold text-white">
-                              <small>
-                                {% if item.has_error %}
-                                  <div class="-mt-20 tooltip tooltip-bottom visible text-center text-white hover:text-white"
-                                       data-tip='{{ item.category|errors_for_category:visit.visit.errors|safe|linebreaksbr }}'>
-                                    {% if not visit.visit.is_valid %}
-                                      <span class="fa-stack text-rcpch_red">
-                                        <i class="fa-circle fa-stack-1x fas"></i>
-                                        <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                                      </span>
-                                    {% endif %}
-                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
-                                      {{ item.category }}
-                                    </a>
-                                  </div>
-                                {% else %}
-                                  <div class="tooltip tooltip-top visible text-center text-white hover:text-white">
-                                    <a href="{% url 'visit-update' patient.pk visit.visit.pk %}?tab={{ item.category|tab_identifier }}#{{ item.category|cut:' ' }}_anchor">
-                                      {{ item.category }}
-                                    </a>
-                                  </div>
+                        {% if item.present %}
+                          <span class="bg-{{ item.colour }} px-1 py-0.25 mx-1 my-1 text-sm font-semibold text-white">
+                            <small>
+                              <div class="tooltip tooltip-top visible text-center text-white hover:text-white"
+                                {% if item.errors %}
+                                  data-tip='{{ item.errors.values|flatten|join:", " }}'
                                 {% endif %}
-                              </small>
-                            </span>
-                          {% endif %}
-                        {% endwith %}
+                              >
+                                {% if item.errors %}
+                                  <span class="fa-stack text-rcpch_red">
+                                    <i class="fa-circle fa-stack-1x fas"></i>
+                                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                                  </span>
+                                {% endif %}
+                                <a href="{% url 'visit-update' patient.pk visit.visit.pk %}#{{ item.anchor }}">
+                                  {{ item.name }}
+                                </a>
+                              </div>
+                            </small>
+                          </span>
+                        {% endif %}
                       {% endfor %}
                     </td>
                     <td>
