@@ -145,7 +145,6 @@ class PatientForm(forms.ModelForm):
         reason_leaving_service = self.cleaned_data["reason_leaving_service"]
         if reason_leaving_service == "":
             return None
-        print(reason_leaving_service)
         return reason_leaving_service
 
     def handle_async_validation_result(self, key):
@@ -163,6 +162,23 @@ class PatientForm(forms.ModelForm):
         death_date = cleaned_data.get("death_date")
         gp_practice_ods_code = cleaned_data.get("gp_practice_ods_code")
         gp_practice_postcode = cleaned_data.get("gp_practice_postcode")
+
+        reason_leaving_service = cleaned_data.get("reason_leaving_service")
+        date_leaving_service = cleaned_data.get("date_leaving_service")
+        if date_leaving_service and not reason_leaving_service:
+            self.add_error(
+                "reason_leaving_service",
+                ValidationError(
+                    "You must provide a reason for leaving the Paediatric Diabetes Unit"
+                ),
+            )
+        if reason_leaving_service and not date_leaving_service:
+            self.add_error(
+                "date_leaving_service",
+                ValidationError(
+                    "You must provide a date for leaving the Paediatric Diabetes Unit"
+                ),
+            )
 
         if diagnosis_date is not None and date_of_birth is not None:
             if diagnosis_date < date_of_birth:
