@@ -214,6 +214,8 @@ class PatientForm(forms.ModelForm):
         ]:
             self.handle_async_validation_result(key)
 
+        return cleaned_data
+
     def save(self, commit=True):
         # We deliberately don't call super.save here as it throws ValueError on validation errors
         # and for CSV uploads we don't want that to stop us. As of Django 5.1.5 it doesn't do anything

@@ -212,9 +212,9 @@ def test_multiple_patients(
     "column,model_field",
     [
         pytest.param("NHS Number", "nhs_number"),
-        # pytest.param("Date of Birth", "date_of_birth"),
-        # pytest.param("Diabetes Type", "diabetes_type"),
-        # pytest.param("Date of Diabetes Diagnosis", "diagnosis_date"),
+        pytest.param("Date of Birth", "date_of_birth"),
+        pytest.param("Diabetes Type", "diabetes_type"),
+        pytest.param("Date of Diabetes Diagnosis", "diagnosis_date"),
     ],
 )
 @pytest.mark.django_db(transaction=True)
@@ -364,13 +364,10 @@ def test_invalid_nhs_number(test_user, single_row_valid_df):
     )
     assert "nhs_number" in errors[0]
 
-    # Not catastrophic - error saved in model and raised back to caller
-    patient = Patient.objects.first()
-
-    assert patient.nhs_number == invalid_nhs_number
+    # Catastrophic - Patient not save
+    assert Patient.objects.count() == 0
 
     # TODO MRB: create a ValidationError model field (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/332)
-    assert "nhs_number" in patient.errors
 
 
 @pytest.mark.django_db

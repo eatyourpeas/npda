@@ -169,6 +169,19 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
             for error in errors:
                 errors_to_return[row_index][field].extend(error.messages)
 
+    def do_not_save_patient_if_no_unique_identifier(patient_form):
+        if (
+            patient_form.cleaned_data.get("nhs_number") is None
+            and patient_form.cleaned_data.get("unique_reference_number") is None
+        ):
+            patient = patient_form.save(commit=False)
+        else:
+            patient = patient_form.save(
+                commit=True
+            )  # save the patient if there is a unique identifier
+
+        return patient
+
     """"
     Create the submission and save the csv file
     """
@@ -287,7 +300,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
 
             try:
                 retain_errors_and_invalid_field_data(patient_form)
-                patient = await sync_to_async(lambda: patient_form.save())()
+                patient = await sync_to_async(
+                    do_not_save_patient_if_no_unique_identifier
+                )(patient_form)
 
                 if patient:
                     # add the patient to a new Transfer instance
