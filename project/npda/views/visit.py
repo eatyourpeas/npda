@@ -150,47 +150,14 @@ class VisitUpdateView(
     form_class = VisitForm
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs) 
+        context = super().get_context_data(**kwargs)
         context["patient_id"] = self.kwargs["patient_id"]
-<<<<<<< HEAD
-        context["patient"] = visit_instance.patient
-=======
         context["nhs_number"] = context["form"].patient.nhs_number
->>>>>>> origin/live
         context["visit_id"] = self.kwargs["pk"]
         context["title"] = "Edit Visit Details"
         context["button_title"] = "Edit Visit Details"
         context["form_method"] = "update"
-<<<<<<< HEAD
-        context["visit_categories"] = visit_categories
-        context["routine_measurements_categories"] = [
-            "Measurements",
-            "HBA1c",
-            "Treatment",
-            "CGM",
-            "BP",
-        ]
-        context["annual_review_categories"] = [
-            "Foot Care",
-            "DECS",
-            "ACR",
-            "Cholesterol",
-            "Thyroid",
-            "Coeliac",
-            "Psychology",
-            "Smoking",
-            "Dietician",
-            "Sick Day Rules",
-            "Immunisation (flu)",
-        ]
-        context["categories_with_errors"] = [
-            category["category"]
-            for category in visit_categories
-            if category["has_error"]
-        ]
-=======
         context["visit_tabs"] = get_visit_tabs(form=context["form"])
->>>>>>> origin/live
 
         return context
 

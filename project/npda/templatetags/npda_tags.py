@@ -4,14 +4,12 @@ import logging
 
 from django import template, forms
 from django.conf import settings
+
 from ...constants import (
-    VisitCategories,
-    VISIT_FIELD_FLAT_LIST,
-    VISIT_FIELDS,
+    # VisitCategories,
     CSV_HEADING_OBJECTS,
     UNIQUE_IDENTIFIER_ENGLAND,
     UNIQUE_IDENTIFIER_JERSEY,
-    VisitCategories,
 )
 
 from django.contrib.gis.measure import D
@@ -19,7 +17,7 @@ from datetime import date
 
 register = template.Library()
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 @register.filter
@@ -39,43 +37,6 @@ def is_in(url_name, args):
 
 
 class_re = re.compile(r'(?<=class=["\'])(.*)(?=["\'])')
-
-
-@register.filter
-def colour_for_category(category):
-    # returns a colour for a given category
-    colours = [
-        {"category": VisitCategories.HBA1, "colour": "rcpch_dark_grey"},
-        {"category": VisitCategories.MEASUREMENT, "colour": "rcpch_yellow"},
-        {
-            "category": VisitCategories.TREATMENT,
-            "colour": "rcpch_strong_green_light_tint1",
-        },
-        {"category": VisitCategories.CGM, "colour": "rcpch_aqua_green_light_tint1"},
-        {"category": VisitCategories.BP, "colour": "rcpch_orange_light_tint1"},
-        {"category": VisitCategories.FOOT, "colour": "rcpch_gold"},
-        {"category": VisitCategories.DECS, "colour": "rcpch_vivid_green"},
-        {"category": VisitCategories.ACR, "colour": "rcpch_red_light_tint2"},
-        {"category": VisitCategories.CHOLESTEROL, "colour": "rcpch_orange_dark_tint"},
-        {
-            "category": VisitCategories.THYROID,
-            "colour": "rcpch_red_dark_tint",
-        },
-        {"category": VisitCategories.COELIAC, "colour": "rcpch_purple_light_tint2"},
-        {"category": VisitCategories.PSYCHOLOGY, "colour": "rcpch_yellow_dark_tint"},
-        {"category": VisitCategories.SMOKING, "colour": "rcpch_strong_green_dark_tint"},
-        {"category": VisitCategories.DIETETIAN, "colour": "rcpch_aqua_green_dark_tint"},
-        {"category": VisitCategories.SICK_DAY, "colour": "rcpch_pink_light_tint2"},
-        {"category": VisitCategories.FLU, "colour": "rcpch_orange"},
-        {
-            "category": VisitCategories.HOSPITAL_ADMISSION,
-            "colour": "rcpch_strong_green_dark_tint",
-        },
-    ]
-    for colour in colours:
-        if colour["category"].value == category:
-            return colour["colour"]
-    return None
 
 
 @register.simple_tag
@@ -235,7 +196,6 @@ def extract_digits(value, underscore_index=0):
 @register.filter
 def get_item(dictionary: dict, key: str):
     """Get a value using a variable from a dictionary"""
-    return dictionary.get(key, "")
 
     try:
         return dictionary.get(key, "")
@@ -336,34 +296,6 @@ def round_distance(value, decimal_places):
     if isinstance(value, D):
         return round(value.km, decimal_places)
     return value
-
-
-@register.filter
-def tab_identifier(value):
-    if value in [
-        VisitCategories.MEASUREMENT.value,
-        VisitCategories.HBA1.value,
-        VisitCategories.TREATMENT.value,
-        VisitCategories.CGM.value,
-        VisitCategories.BP.value,
-    ]:
-        return "Routine Measurements".lower().replace(" ", "_")
-    elif value in [
-        VisitCategories.FOOT.value,
-        VisitCategories.DECS.value,
-        VisitCategories.ACR.value,
-        VisitCategories.CHOLESTEROL.value,
-        VisitCategories.THYROID.value,
-        VisitCategories.COELIAC.value,
-        VisitCategories.PSYCHOLOGY.value,
-        VisitCategories.SMOKING.value,
-        VisitCategories.DIETETIAN.value,
-        VisitCategories.SICK_DAY.value,
-        VisitCategories.FLU.value,
-    ]:
-        return "Annual Review".lower().replace(" ", "_")
-    elif value in [VisitCategories.HOSPITAL_ADMISSION.value]:
-        return "Inpatient Entry".lower().replace(" ", "_")
 
 
 @register.filter

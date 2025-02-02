@@ -29,12 +29,12 @@
                           class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
                     Today
                   </button>
+                  {% for error in field.errors %}
+                    <p>
+                      <strong class="text-gray-700">{{ error|escape }}</strong>
+                    </p>
+                  {% endfor %}
                 {% endif %}
-                {% for error in field.errors %}
-                  <p>
-                    <strong class="text-gray-700">{{ error|escape }}</strong>
-                  </p>
-                {% endfor %}
               </div>
             </div>
           {% endif %}

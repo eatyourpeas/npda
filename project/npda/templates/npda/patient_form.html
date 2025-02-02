@@ -30,11 +30,13 @@
                   {% endfor %}
                 </select>
               {% else %}
-                <input id="{{ field.id_for_label }}"
-                       name="{{ field.html_name }}"
-                       class="input rcpch-input-text {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
-                       {% if field.field.widget|is_dateinput %} type="date" {% else %} type="text" {% endif %}
-                       {% if field.value %}value="{{ field.value|stringformat:'s' }}"{% endif %}>
+                {% if viewable %}
+                  <input id="{{ field.id_for_label }}"
+                         name="{{ field.html_name }}"
+                         class="input rcpch-input-text {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
+                         {% if field.field.widget|is_dateinput %} type="date" {% else %} type="text" {% endif %}
+                         {% if field.value %}value="{{ field.value|stringformat:'s' }}"{% endif %}>
+                {% endif %}
               {% endif %}
               {% for error in field.errors %}
                 <div role="alert" class="alert alert-error py-1 my-0 rounded-none">
