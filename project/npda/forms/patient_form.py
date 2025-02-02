@@ -179,6 +179,23 @@ class PatientForm(forms.ModelForm):
                     "You must provide a date for leaving the Paediatric Diabetes Unit"
                 ),
             )
+        if date_leaving_service is not None and date_of_birth is not None:
+            if date_leaving_service < date_of_birth:
+                self.add_error(
+                    "date_leaving_service",
+                    ValidationError(
+                        "'Date Leaving Service' cannot be before 'Date of Birth'"
+                    ),
+                )
+
+        if date_leaving_service is not None and diagnosis_date is not None:
+            if date_leaving_service < diagnosis_date:
+                self.add_error(
+                    "date_leaving_service",
+                    ValidationError(
+                        "'Date Leaving Service' cannot be before 'Date of Diabetes Diagnosis'"
+                    ),
+                )
 
         if diagnosis_date is not None and date_of_birth is not None:
             if diagnosis_date < date_of_birth:
