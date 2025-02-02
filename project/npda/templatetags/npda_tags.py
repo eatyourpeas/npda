@@ -273,3 +273,14 @@ def centile_for_field(field, centile_sds):
         return sds
     else:
         return ""
+
+
+@register.filter
+def field_is_not_related_to_transfer(field):
+    """
+    Excludes fields from the form that are related to patient transfers
+    """
+    excluded_fields = ["id_date_leaving_service", "id_reason_leaving_service"]
+    if field.id_for_label in excluded_fields:
+        return False
+    return True

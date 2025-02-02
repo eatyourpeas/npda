@@ -13,10 +13,11 @@ from django import forms
 # django imports
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from httpx import HTTPError
+
+from project.constants.leave_pdu_reasons import LEAVE_PDU_REASONS
 
 from ...constants.styles.form_styles import *
-from ..models import Patient
+from ..models import Patient, Transfer
 from ..validators import not_in_the_future_validator
 from .external_patient_validators import validate_patient_sync
 
@@ -49,6 +50,11 @@ class PostcodeField(forms.CharField):
 
 
 class PatientForm(forms.ModelForm):
+
+    date_leaving_service = forms.DateField(required=False, widget=DateInput())
+    reason_leaving_service = forms.ChoiceField(
+        required=False, choices=LEAVE_PDU_REASONS
+    )
 
     class Meta:
         model = Patient
@@ -84,6 +90,22 @@ class PatientForm(forms.ModelForm):
             "gp_practice_postcode": forms.TextInput(attrs={"class": TEXT_INPUT}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            try:
+                patient_transfer = Transfer.objects.filter(
+                    patient=self.instance, date_leaving_service__isnull=False
+                ).get()
+                self.fields["date_leaving_service"].initial = (
+                    patient_transfer.date_leaving_service
+                )
+                self.fields["reason_leaving_service"].initial = (
+                    patient_transfer.reason_leaving_service
+                )
+            except Transfer.DoesNotExist:
+                pass
+
     def clean_date_of_birth(self):
         date_of_birth = self.cleaned_data["date_of_birth"]
 
@@ -112,6 +134,13 @@ class PatientForm(forms.ModelForm):
         not_in_the_future_validator(death_date)
 
         return death_date
+
+    def clean_reason_leaving_service(self):
+        reason_leaving_service = self.cleaned_data["reason_leaving_service"]
+        if reason_leaving_service == "":
+            return None
+        print(reason_leaving_service)
+        return reason_leaving_service
 
     def handle_async_validation_result(self, key):
         value = getattr(self.async_validation_results, key)
@@ -195,5 +224,23 @@ class PatientForm(forms.ModelForm):
 
         if commit:
             self.instance.save()
+            if Transfer.objects.filter(
+                patient=self.instance, date_leaving_service=None
+            ).exists():
+                print("Transfer exists")
+                print(self.cleaned_data["date_leaving_service"])
+                print(self.cleaned_data["reason_leaving_service"])
+                print(self.instance)
+                patient_transfer = Transfer.objects.get(patient=self.instance)
+                patient_transfer.date_leaving_service = self.cleaned_data[
+                    "date_leaving_service"
+                ]
+                patient_transfer.reason_leaving_service = self.cleaned_data[
+                    "reason_leaving_service"
+                ]
+                patient_transfer.previous_pz_code = (
+                    patient_transfer.paediatric_diabetes_unit.pz_code
+                )  # set previous_pz_code to the current PZ code
+                patient_transfer.save()
 
         return self.instance
