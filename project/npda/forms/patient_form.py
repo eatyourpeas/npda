@@ -94,9 +94,7 @@ class PatientForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             try:
-                patient_transfer = Transfer.objects.filter(
-                    patient=self.instance, date_leaving_service__isnull=False
-                ).get()
+                patient_transfer = Transfer.objects.filter(patient=self.instance).get()
                 self.fields["date_leaving_service"].initial = (
                     patient_transfer.date_leaving_service
                 )
@@ -135,6 +133,14 @@ class PatientForm(forms.ModelForm):
 
         return death_date
 
+    def clean_date_leaving_service(self):
+        date_leaving_service = self.cleaned_data["date_leaving_service"]
+        if date_leaving_service == "":
+            return None
+        elif date_leaving_service is not None:
+            not_in_the_future_validator(date_leaving_service)
+        return date_leaving_service
+
     def clean_reason_leaving_service(self):
         reason_leaving_service = self.cleaned_data["reason_leaving_service"]
         if reason_leaving_service == "":
@@ -152,7 +158,6 @@ class PatientForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-
         date_of_birth = cleaned_data.get("date_of_birth")
         diagnosis_date = cleaned_data.get("diagnosis_date")
         death_date = cleaned_data.get("death_date")
@@ -224,10 +229,9 @@ class PatientForm(forms.ModelForm):
 
         if commit:
             self.instance.save()
-            if Transfer.objects.filter(
-                patient=self.instance, date_leaving_service=None
-            ).exists():
+            if Transfer.objects.filter(patient=self.instance).exists():
                 print("Transfer exists")
+                print(self.cleaned_data)
                 print(self.cleaned_data["date_leaving_service"])
                 print(self.cleaned_data["reason_leaving_service"])
                 print(self.instance)

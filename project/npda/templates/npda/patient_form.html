@@ -50,27 +50,27 @@
           {% endif %}
         {% endfor %}
         <div class="collapse collapse-plus bg-base-200 py-2 mb-2">
-          <input type="checkbox" />
+          <input type="checkbox"
+                 {% if form.date_leaving_service.value or form.reason_leaving_service.value %}checked{% endif %} />
           <div class="collapse-title text-xl font-medium">
             Transfer Patient to Another PDU
           </div>
           <div class="collapse-content">
-            <select id="{{ form.reason_leaving_service.field.id_for_label }}"
-                    name="{{ form.reason_leaving_service.field.html_name }}"
+            <select id="{{ form.reason_leaving_service.id_for_label }}"
+                    name="{{ form.reason_leaving_service.html_name }}"
                     class="select rcpch-select mb-2 {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
               <option value="">Select a reason</option>
               {% for choice in form.reason_leaving_service.field.choices %}
-                <option value="{{ choice.0 }}"
-                        {% if field.value|stringformat:'s' == choice.0|stringformat:'s' %} selected="true" {% endif %}>
+                <option value={{ choice.0 }} {% if form.reason_leaving_service.value == choice.0 %} selected="true" {% endif %}>
                   {{ choice.1 }}
                 </option>
               {% endfor %}
             </select>
-            <input id="{{ form.reason_leaving_service.field.id_for_label }}"
-                   name="{{ form.reason_leaving_service.field.html_name }}"
+            <input id="{{ form.date_leaving_service.id_for_label }}"
+                   name="{{ form.date_leaving_service.html_name }}"
                    class="input rcpch-input-text mb-2 {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
                    type="date"
-                   {% if form.reason_leaving_service.field.value %}value="{{ form.reason_leaving_service.field.value|stringformat:'s' }}"{% endif %}>
+                   {% if form.date_leaving_service.value %}value="{{ form.date_leaving_service.value|stringformat:'s' }}"{% endif %}>
           </div>
         </div>
         <div class="flex justify-end">
