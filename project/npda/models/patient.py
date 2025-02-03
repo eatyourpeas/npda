@@ -160,3 +160,20 @@ class Patient(models.Model):
         if today_date is None:
             today_date = self.get_todays_date()
         return stringify_time_elapsed(self.date_of_birth, today_date)
+
+    def is_in_transfer_in_the_last_year(self):
+        """
+        Returns True if the patient is in transfer
+        """
+        current_audit_year = date.today().year
+        if date.today().month < 4:
+            current_audit_year -= 1
+
+        audit_year_start = date(current_audit_year, 4, 1)
+        audit_year_end = date(current_audit_year + 1, 3, 31)
+
+        if self.paediatric_diabetes_units.filter(
+            date_leaving_service__range=(audit_year_start, audit_year_end),
+        ).exists():
+            return True
+        return False

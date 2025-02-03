@@ -50,13 +50,13 @@
               </tr>
             </thead>
           {% endif %}
-          <tr class="{% if forloop.counter|divisibleby:2 %} bg-gray-100 {% endif %} hover:bg-gray-200 {% if patient.transferred_in_the_current_year %}bg-rcpch_yellow hover:bg-rcpch_yellow_dark_tint {% endif %}">
+          <tr class="{% if forloop.counter|divisibleby:2 %} bg-gray-100 {% endif %} hover:bg-gray-200 {% if patient.is_in_transfer_in_the_last_year %}bg-rcpch_yellow hover:bg-rcpch_yellow_dark_tint {% endif %}">
             {% with nhs_number_error=patient.errors|error_for_field:"nhs_number" gp_error=patient.errors|error_for_field:"gp_practice_ods_code" %}
               <td class="whitespace-nowrap">
                 <a class="btn flex p-1 h-full tooltip tooltip-right {% if nhs_number_error or gp_error %} text-rcpch_red {% else %} hover:text-rcpch_pink {% endif %}"
                    target="_blank"
                    href="{% url 'patient-update' patient.pk %}"
-                   data-tip="{% if nhs_number_error or gp_error %} {{ nhs_number_error }} {{ gp_error }} {% else %} {% if patient.transferred_in_the_current_year %}Patient in transfer... {% else %}View patient details (opens new tab){% endif %} {% endif %}">
+                   data-tip="{% if nhs_number_error or gp_error %} {{ nhs_number_error }} {{ gp_error }} {% else %} {% if patient.is_in_transfer_in_the_last_year %}Patient in transfer... {% else %}View patient details (opens new tab){% endif %} {% endif %}">
                   <span class="fa-stack">
                     {% if nhs_number_error or gp_error %}
                       <i class="fa-circle fa-stack-1x fas"></i>
@@ -67,7 +67,7 @@
                   </span>
                   <strong class="font-mono text-xs">
                     {{ patient.nhs_number|format_nhs_number }}
-                    {% if patient.transferred_in_the_current_year %}
+                    {% if patient.is_in_transfer_in_the_last_year %}
                       <i class="fa-solid fa-handshake"></i>
                     {% endif %}
                   </strong>
