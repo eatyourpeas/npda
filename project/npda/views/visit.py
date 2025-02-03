@@ -62,15 +62,25 @@ class PatientVisitsListView(
         context["patient"] = patient
         context["submission"] = submission
 
-        # calculate the KPIs for this patient
-        pdu = (
-            Transfer.objects.filter(patient=patient, date_leaving_service__isnull=True)
-            .first()
-            .paediatric_diabetes_unit
-        )
+        try:
+            pdu = (
+                Transfer.objects.filter(
+                    patient=patient, date_leaving_service__isnull=True
+                )
+                .first()
+                .paediatric_diabetes_unit
+            )
         # get the PDU for this patient - this is the PDU that the patient is currently under.
         # If the patient has left the PDU, the date_leaving_service will be set and it will be possible to view KPIs for the PDU up until transfer,
         # if this happened during the audit period. This is TODO
+        except:
+            #  this patient has been transferred but not yet received at a new PDU
+            pdu = (
+                Transfer.objects.filter(patient=patient)
+                .order_by("-date_leaving_service")
+                .first()
+                .paediatric_diabetes_unit
+            )
 
         calculate_kpis = CalculateKPIS(
             calculation_date=datetime.date.today(), return_pt_querysets=False
@@ -146,7 +156,7 @@ class VisitUpdateView(
     form_class = VisitForm
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs) 
+        context = super().get_context_data(**kwargs)
         context["patient_id"] = self.kwargs["patient_id"]
         context["nhs_number"] = context["form"].patient.nhs_number
         context["visit_id"] = self.kwargs["pk"]

@@ -11,7 +11,7 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import Count, Case, When, Max, Q, F
+from django.db.models import Count, Case, When, Max, Q, F, OuterRef, Exists
 from django.forms import BaseForm
 from django.http.response import HttpResponse
 from django.shortcuts import render
@@ -116,8 +116,21 @@ class PatientListView(
 
         patient_queryset = patient_queryset.filter(filtered_patients)
 
+        Transfer = apps.get_model("npda", "Transfer")
+        selected_audit_year = self.request.session.get("selected_audit_year")
+        selected_audit_year_start = datetime.date(selected_audit_year, 4, 1)
+        selected_audit_year_end = datetime.date(selected_audit_year + 1, 3, 31)
+        transfer_exists = Transfer.objects.filter(
+            patient=OuterRef("pk"),
+            date_leaving_service__range=(
+                selected_audit_year_start,
+                selected_audit_year_end,
+            ),
+        )
+
         patient_queryset = patient_queryset.annotate(
             audit_year=F("submissions__audit_year"),
+            transferred_in_the_current_year=Exists(transfer_exists),
             visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
             last_upload_date=Max("submissions__submission_date"),
             most_recent_visit_date=Max("visit__visit_date"),
