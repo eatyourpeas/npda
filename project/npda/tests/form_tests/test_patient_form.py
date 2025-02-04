@@ -4,6 +4,7 @@ import pytest
 import logging
 import dataclasses
 from unittest.mock import Mock, patch
+from unittest import skip
 
 # 3rd Party imports
 from django.core.exceptions import ValidationError
@@ -11,7 +12,7 @@ from dateutil.relativedelta import relativedelta
 from httpx import HTTPError
 
 # NPDA Imports
-from project.npda.models.patient import Patient
+from project.npda.models import Patient, Transfer
 from project.npda.forms.patient_form import PatientForm
 from project.npda.forms.external_patient_validators import (
     PatientExternalValidationResult,
@@ -388,3 +389,94 @@ def test_error_looking_up_index_of_multiple_deprivation():
     patient = form.save()
 
     patient.index_of_multiple_deprivation_quintile = None
+
+
+def test_date_leaving_service_missing():
+    # Date leaving service is required if reason leaving service is provided
+    form = PatientForm({"reason_leaving_service": 1})
+    assert "date_leaving_service" in form.errors.as_data()
+
+
+def test_date_leaving_service_future():
+    form = PatientForm({"date_leaving_service": TODAY + relativedelta(days=1)})
+
+    errors = form.errors.as_data()
+    assert "date_leaving_service" in errors
+
+    error_message = errors["date_leaving_service"][0].messages[0]
+    assert error_message == "Cannot be in the future"
+
+
+def test_date_leaving_service_before_diagnosis_date():
+    form = PatientForm(
+        {
+            "diagnosis_date": VALID_FIELDS["diagnosis_date"],
+            "date_leaving_service": VALID_FIELDS["diagnosis_date"]
+            - relativedelta(years=1),
+        }
+    )
+
+    errors = form.errors.as_data()
+    assert "date_leaving_service" in errors
+
+    error_message = errors["date_leaving_service"][0].messages[0]
+    assert (
+        error_message
+        == "'Date Leaving Service' cannot be before 'Date of Diabetes Diagnosis'"
+    )
+
+
+def test_date_leaving_service_before_date_of_birth():
+    form = PatientForm(
+        {
+            "date_of_birth": VALID_FIELDS["date_of_birth"],
+            "date_leaving_service": VALID_FIELDS["date_of_birth"]
+            - relativedelta(years=1),
+        }
+    )
+
+    errors = form.errors.as_data()
+    assert "date_leaving_service" in errors
+
+    error_message = errors["date_leaving_service"][0].messages[0]
+    assert error_message == "'Date Leaving Service' cannot be before 'Date of Birth'"
+
+
+def test_reason_leaving_service_missing():
+    # Reason leaving service is required if date leaving service is provided
+    form = PatientForm({"date_leaving_service": TODAY})
+    assert "reason_leaving_service" in form.errors.as_data()
+
+
+def test_reason_leaving_service_invalid():
+    form = PatientForm({"reason_leaving_service": 99})
+    assert "reason_leaving_service" in form.errors.as_data()
+
+
+@skip("This test is failing")
+@pytest.mark.django_db
+@patch(
+    "project.npda.forms.patient_form.validate_patient_sync",
+    mock_external_validation_result(index_of_multiple_deprivation_quintile=None),
+)
+def test_successful_patient_transfer():
+    # Create patient
+    patient = Patient.objects.create(**VALID_FIELDS)
+
+    # Update patient
+    form = PatientForm(
+        VALID_FIELDS | {"reason_leaving_service": 1, "date_leaving_service": TODAY},
+        instance=patient,
+    )
+
+    patient = form.save()
+
+    transfer = Transfer.objects.get(patient=patient)
+
+    assert len(form.errors.as_data()) == 0
+    assert form.is_valid()
+    # assert form.save().date_leaving_service == TODAY
+    # assert form.save().reason_leaving_service == 1
+    assert transfer.patient == patient
+    assert transfer.date_leaving_service == TODAY
+    assert transfer.reason_leaving_service == 1

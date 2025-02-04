@@ -1,6 +1,7 @@
 # python imports
 import logging
 import json
+import datetime
 
 # Django imports
 from django.apps import apps
@@ -10,7 +11,7 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import Count, Case, When, Max, Q, F
+from django.db.models import Count, Case, When, Max, Q, F, OuterRef, Exists
 from django.forms import BaseForm
 from django.http.response import HttpResponse
 from django.shortcuts import render
@@ -23,6 +24,7 @@ from django.urls import reverse_lazy
 # Third party imports
 import nhs_number
 
+from project.constants.leave_pdu_reasons import LEAVE_PDU_REASONS
 from project.npda.general_functions import (
     organisations_adapter,
     fetch_organisation_by_ods_code,
@@ -155,10 +157,14 @@ class PatientListView(
         # TODO MRB: this should probably be a method on the Submission model?
         #           https://github.com/rcpch/national-paediatric-diabetes-audit/issues/533
         if pz_code and selected_audit_year:
-            submission = Submission.objects.filter(
-                paediatric_diabetes_unit__pz_code=pz_code,
-                audit_year=selected_audit_year
-            ).order_by("-submission_date").first()
+            submission = (
+                Submission.objects.filter(
+                    paediatric_diabetes_unit__pz_code=pz_code,
+                    audit_year=selected_audit_year,
+                )
+                .order_by("-submission_date")
+                .first()
+            )
 
             if submission and submission.errors:
                 submission_errors = json.loads(submission.errors)
@@ -169,7 +175,9 @@ class PatientListView(
                         submission_error_count += len(errors_for_field)
 
         context["submission"] = submission
-        context["submission_valid_count"] = context["paginator"].count - submission_error_count
+        context["submission_valid_count"] = (
+            context["paginator"].count - submission_error_count
+        )
         context["submission_error_count"] = submission_error_count
 
         context["pz_code"] = pz_code
