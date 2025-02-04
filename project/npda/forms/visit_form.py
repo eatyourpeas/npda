@@ -131,6 +131,7 @@ class VisitForm(forms.ModelForm):
         super(VisitForm, self).__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             model_field = Visit._meta.get_field(field_name)
+
             if hasattr(model_field, "category"):
                 field.category = model_field.category
 

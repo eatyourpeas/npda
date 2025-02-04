@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.forms import BaseModelForm
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
@@ -63,24 +64,21 @@ class PatientVisitsListView(
         context["patient"] = patient
         context["submission"] = submission
 
-        try:
-            if patient.is_in_transfer_in_the_last_year():
-                pz_code = (
-                    Transfer.objects.filter(
-                        patient=patient,
-                    )
-                    .order_by("-date_leaving_service")
-                    .first()
-                    .previous_pz_code
+        if patient.is_in_transfer_in_the_last_year():
+            pz_code = (
+                Transfer.objects.filter(
+                    patient=patient,
                 )
-                PaediatricDiabetesUnit = apps.get_model(
-                    "npda", "PaediatricDiabetesUnit"
-                )
-                pdu = PaediatricDiabetesUnit.objects.get(pz_code=pz_code)
+                .order_by("-date_leaving_service")
+                .first()
+                .previous_pz_code
+            )
+            PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+            pdu = PaediatricDiabetesUnit.objects.get(pz_code=pz_code)
         # get the PDU for this patient - this is the PDU that the patient is currently under.
         # If the patient has left the PDU, the date_leaving_service will be set and it will be possible to view KPIs for the PDU up until transfer,
         # if this happened during the audit period. This is TODO
-        except:
+        else:
             #  this patient has been transferred but not yet received at a new PDU
             pdu = (
                 Transfer.objects.filter(
@@ -144,8 +142,11 @@ class VisitCreateView(
         return initial
 
     def form_valid(self, form, **kwargs):
+        patient = get_object_or_404(Patient, pk=self.kwargs["patient_id"])
+        print("patient", patient)
         self.object = form.save(commit=False)
-        self.object.patient_id = self.kwargs["patient_id"]
+        self.object.patient = patient
+        self.object.save()
         super(VisitCreateView, self).form_valid(form)
         return HttpResponseRedirect(self.get_success_url())
 
