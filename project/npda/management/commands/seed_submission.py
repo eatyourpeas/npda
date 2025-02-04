@@ -6,7 +6,7 @@ Example use:
     python manage.py seed_submission \
         --pts=50 \
         --visits="CDCD DHPC ACDC CDCD" \
-        --hb_target=T
+        --hb_target=T \
         --user_pk=1 \
         --submission_date="2024-10-18" \
 
@@ -56,11 +56,6 @@ Options:
     --submission_date (str, optional):
         The submission date in YYYY-MM-DD format. Defaults to today. This
         date is used to set the audit period's start and end dates.
-
-
-Notes:
-    - Submission requires an associated `csv_file`. A dummy value is set to
-      project/npda/dummy_sheets/dummy_sheet.csv.
 """
 
 from datetime import datetime
@@ -227,22 +222,12 @@ class Command(BaseCommand):
             visit_kwargs={"is_valid": True},
         )
 
-        
-
-        # Need a mock csv
-        with open("project/npda/dummy_sheets/dummy_sheet.csv", "rb") as f:
-            mock_csv = SimpleUploadedFile(
-                name="dummy_sheet.csv",
-                content=f.read(),
-                content_type="text/csv",
-            )
         new_submission = Submission.objects.create(
             paediatric_diabetes_unit=primary_pdu_for_user,
             audit_year=audit_start_date.year,
             submission_date=submission_date,
             submission_by=submission_by,
-            submission_active=True,
-            csv_file=mock_csv,
+            submission_active=True
         )
 
         # Add patients to submission
