@@ -3,6 +3,7 @@ from asgiref.sync import sync_to_async
 import datetime
 import logging
 import json
+import io
 
 from datetime import date
 
@@ -49,12 +50,16 @@ async def home(request):
     if request.method == "POST":
         form = UploadFileForm(request.POST, request.FILES)
         user_csv = request.FILES["csv_upload"]
+        user_csv_filename = user_csv.name
+        # We are eventually storing the CSV file as a BinaryField so have to hold it in memory
+        user_csv_bytes = user_csv.read()
+
         pz_code = request.session.get("pz_code")
         is_jersey = pz_code == "PZ248"
         if request.session.get("can_upload_csv") is True:
             # check to see if the CSV is valid - cannot accept CSVs with no header. All other header errors are non-lethal but are reported back to the user
             try:
-                parsed_csv = csv_parse(user_csv, is_jersey=is_jersey)
+                parsed_csv = csv_parse(io.BytesIO(user_csv_bytes), is_jersey=is_jersey)
             except ValueError as e:
                 messages.error(
                     request=request,
@@ -88,7 +93,8 @@ async def home(request):
             errors_by_row_index = await csv_upload(
                 user=request.user,
                 dataframe=parsed_csv.df,
-                csv_file=user_csv,
+                csv_file_name=user_csv_filename,
+                csv_file_bytes=user_csv_bytes,
                 pdu_pz_code=pz_code,
                 audit_year=audit_year,
             )
@@ -170,13 +176,11 @@ def view_preference(request):
         new_session_fields = get_new_session_fields(
             request.user, pz_code
         )  # includes a validation step
-    
+
     request.session.update(new_session_fields)
 
     # Reload the page to apply the new view preference
-    return HttpResponse(status=204, headers={
-        "HX-Refresh": "true"
-    })
+    return HttpResponse(status=204, headers={"HX-Refresh": "true"})
 
 
 @login_and_otp_required()
@@ -189,9 +193,7 @@ def audit_year(request):
         refresh_audit_years_in_session(request, audit_year)
 
         # Reload the page to apply the new view preference
-        return HttpResponse(status=204, headers={
-            "HX-Refresh": "true"
-        })
+        return HttpResponse(status=204, headers={"HX-Refresh": "true"})
 
     context = {
         "audit_years": request.session.get("audit_years"),

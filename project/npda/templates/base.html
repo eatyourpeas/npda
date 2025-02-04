@@ -40,6 +40,9 @@
     {% block toasts %}
       {% include 'toasts.html' %}
     {% endblock %}
+
+    <!-- ADDS AUTO LOGOUT REDIRECT TO LOGIN PAGE SCRIPT -->
+    {{ redirect_to_login_immediately }}
   </body>
 </html>
 <script>

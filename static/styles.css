@@ -12,6 +12,9 @@
   .rcpch-btn {
     @apply text-white font-semibold hover:text-white py-2.5 px-3 border border-rcpch_yellow_light_tint1 hover:bg-rcpch_yellow hover:border-rcpch_yellow rounded-none;
   }
+  .rcpch-danger-btn {
+    @apply bg-rcpch_red text-white font-semibold hover:text-white py-2.5 px-3 mt-20 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint;
+  }
   .rcpch-input-text {
     @apply shadow appearance-none border border-rcpch_light_grey border-4 focus:border-rcpch_pink hover:border-rcpch_pink w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none rounded-none bg-white;
   }

@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("npda", "0022_alter_patient_nhs_number_and_more"),
+        ("npda", "0023_alter_patient_nhs_number_and_more"),
     ]
 
     operations = [

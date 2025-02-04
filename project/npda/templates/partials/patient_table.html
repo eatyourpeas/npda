@@ -24,17 +24,15 @@
           <th scope="col" class="px-2 py-3 text-center">Diagnosis Date</th>
           <th scope="col" class="px-2 py-3 text-center">Postcode</th>
           <th scope="col" class="px-2 py-3 text-center">
-            <span
-              class="tooltip tooltip-bottom"
-              data-tip="The 'Index of Multiple Deprivation' quintile for the patients postcode.">
+            <span class="tooltip tooltip-bottom"
+                  data-tip="The 'Index of Multiple Deprivation' quintile for the patients postcode.">
               {% include 'partials/page_elements/sort_icon.html' with field="index_of_multiple_deprivation_quintile" %}
               IMD <i class="fa-question-circle fas"></i>
             </span>
           </th>
           <th scope="col" class="px-2 py-3 text-center">
-            <span
-              class="tooltip tooltip-bottom"
-              data-tip="The distance 'as the crow flies' from the patients postcode to this PDU.">
+            <span class="tooltip tooltip-bottom"
+                  data-tip="The distance 'as the crow flies' from the patients postcode to this PDU.">
               {% include 'partials/page_elements/sort_icon.html' with field="distance_from_lead_organisation" %}
               Distance to PDU <i class="fa-question-circle fas"></i>
             </span>
@@ -57,15 +55,14 @@
               </tr>
             </thead>
           {% endif %}
-          <tr class="{% if forloop.counter|divisibleby:2 %} bg-gray-100 {% endif %} hover:bg-gray-200">
+          <tr class="{% if forloop.counter|divisibleby:2 %} bg-gray-100 {% endif %} hover:bg-gray-200 {% if patient.is_in_transfer_in_the_last_year %}bg-rcpch_yellow hover:bg-rcpch_yellow_dark_tint {% endif %}">
             {% with nhs_number_error=patient.errors|error_for_field:"nhs_number" unique_reference_number_error=patient_errors|error_for_field:"unique_reference_number" gp_error=patient.errors|error_for_field:"gp_practice_ods_code" %}
               {% jersify_errors_for_unique_patient_identifier pz_code nhs_number_error unique_reference_number_error as unique_identifier_error %}
               <td class="whitespace-nowrap">
                 <a class="btn flex p-1 h-full tooltip tooltip-right {% if nhs_number_error or gp_error %} text-rcpch_red {% else %} hover:text-rcpch_pink {% endif %}"
                    target="_blank"
                    href="{% url 'patient-update' patient.pk %}"
-                   HEAD
-                   data-tip="{% if unique_identifier_error or gp_error %} {{ unique_identifier_error }} {{ gp_error }} {% else %} View patient details (opens new tab) {% endif %}">
+                   data-tip="{% if unique_identifier_error or gp_error %} {{ unique_identifier_error }} {{ gp_error }} {% else %} {% if patient.is_in_transfer_in_the_last_year %}Patient in transfer... {% else %}View patient details (opens new tab){% endif %} {% endif %}">
                   <span class="fa-stack">
                     {% if unique_identifier_error or gp_error %}
                       <i class="fa-circle fa-stack-1x fas"></i>
@@ -76,141 +73,145 @@
                   </span>
                   <strong class="font-mono text-xs">
                     {% nhs_number_vs_urn pz_code patient %}
-                  </span>
-                </a>
-              </td>
-            {% endwith %}
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'date_of_birth' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"date_of_birth" %}
-                <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'date_of_birth' }}">
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  {{ patient.date_of_birth }}
-                </div>
-              {% else %}
-                {{ patient.date_of_birth }}
-              {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'sex' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"sex" %}
-                <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'sex' }}">
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  {{ patient.get_sex_display }}
-                </div>
-              {% else %}
-                {{ patient.get_sex_display }}
-              {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'diabetes_type' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"diabetes_type" %}
-                <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'diabetes_type' }}">
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  {{ patient.get_diabetes_type_display }}
-                </div>
-              {% else %}
-                {{ patient.get_diabetes_type_display }}
-              {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'diagnosis_date' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"diagnosis_date" %}
-                <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'diagnosis_date' }}">
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  {{ patient.diagnosis_date }}
-                </div>
-              {% else %}
-                {{ patient.diagnosis_date }}
-              {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'postcode' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"postcode" %}
-                <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'postcode' }}">
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  {{ patient.postcode }}
-                </div>
-              {% else %}
-                {{ patient.postcode }}
-              {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'index_of_multiple_deprivation_quintile' %}text-rcpch_red{% endif %}">
-              {% if patient.errors|error_for_field:"index_of_multiple_deprivation_quintile" %}
-                <div class="inline-flex tooltip tooltip-top"
-                     data-tip="{{ patient.errors|error_for_field:'index_of_multiple_deprivation_quintile' }}">
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  {{ patient.index_of_multiple_deprivation_quintile }}
-                </div>
-              {% else %}
-                {{ patient.index_of_multiple_deprivation_quintile }}
-              {% endif %}
-            </td>
-            <td class="px-6 py-4 text-center">
-              {{ patient.distance_from_lead_organisation|round_distance:1 }} km
-            </td>
-            <td class="text-right whitespace-nowrap">
-              <a href="{% url 'patient_visits' patient.pk %}"
-                 class="align-center flex tooltip tooltip-left {% if patient.visit_error_count < 1 %} text-rcpch_pink {% else %} text-rcpch_red {% endif %}"
-                 data-tip="{% if patient.visit_error_count > 0 %} {{ patient.visit_error_count }} visit{{ patient.visit_error_count|pluralize }} {{ patient.visit_error_count|pluralize:'has, have' }} errors that need addressing. Items have been saved but will not be included until rectified. {% else %} View patient visits {% endif %}">
-                {% if patient.visit_error_count > 0 %}
-                  <span class="fa-stack">
-                    <i class="fa-circle fa-stack-1x fas"></i>
-                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                  </span>
-                  <strong class="text-rcpch_red self-center px-2">Visits ({{ patient.visit_set.all.count }})</strong>
-                {% else %}
-                  <strong class="text-rcpch_pink self-center">Visits ({{ patient.visit_set.all.count }})</strong>
-                {% endif %}
-                <!-- caret -->
-                <svg class="w-8 h-8 self-center"
-                     width="24"
-                     height="24"
-                     viewBox="0 0 24 24"
-                     stroke-width="2"
-                     stroke="currentColor"
-                     fill="none"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
-                  <path stroke="none" d="M0 0h24v24H0z" />
-                  <polyline points="9 6 15 12 9 18" />
-                </svg>
+                    {% if patient.is_in_transfer_in_the_last_year %}
+                      <i class="fa-solid fa-handshake"></i>
+                    {% endif %}
+                  </strong>
+                </span>
               </a>
             </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-      <tfoot>
-        {% include 'partials/page_elements/patient_table_page_controls.html' %}
-      </tfoot>
-    </table>
-  </div>
+          {% endwith %}
+          <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'date_of_birth' %}text-rcpch_red{% endif %}">
+            {% if patient.errors|error_for_field:"date_of_birth" %}
+              <div class="inline-flex tooltip tooltip-top"
+                   data-tip="{{ patient.errors|error_for_field:'date_of_birth' }}">
+                <span class="fa-stack">
+                  <i class="fa-circle fa-stack-1x fas"></i>
+                  <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                </span>
+                {{ patient.date_of_birth }}
+              </div>
+            {% else %}
+              {{ patient.date_of_birth }}
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'sex' %}text-rcpch_red{% endif %}">
+            {% if patient.errors|error_for_field:"sex" %}
+              <div class="inline-flex tooltip tooltip-top"
+                   data-tip="{{ patient.errors|error_for_field:'sex' }}">
+                <span class="fa-stack">
+                  <i class="fa-circle fa-stack-1x fas"></i>
+                  <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                </span>
+                {{ patient.get_sex_display }}
+              </div>
+            {% else %}
+              {{ patient.get_sex_display }}
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'diabetes_type' %}text-rcpch_red{% endif %}">
+            {% if patient.errors|error_for_field:"diabetes_type" %}
+              <div class="inline-flex tooltip tooltip-top"
+                   data-tip="{{ patient.errors|error_for_field:'diabetes_type' }}">
+                <span class="fa-stack">
+                  <i class="fa-circle fa-stack-1x fas"></i>
+                  <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                </span>
+                {{ patient.get_diabetes_type_display }}
+              </div>
+            {% else %}
+              {{ patient.get_diabetes_type_display }}
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'diagnosis_date' %}text-rcpch_red{% endif %}">
+            {% if patient.errors|error_for_field:"diagnosis_date" %}
+              <div class="inline-flex tooltip tooltip-top"
+                   data-tip="{{ patient.errors|error_for_field:'diagnosis_date' }}">
+                <span class="fa-stack">
+                  <i class="fa-circle fa-stack-1x fas"></i>
+                  <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                </span>
+                {{ patient.diagnosis_date }}
+              </div>
+            {% else %}
+              {{ patient.diagnosis_date }}
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'postcode' %}text-rcpch_red{% endif %}">
+            {% if patient.errors|error_for_field:"postcode" %}
+              <div class="inline-flex tooltip tooltip-top"
+                   data-tip="{{ patient.errors|error_for_field:'postcode' }}">
+                <span class="fa-stack">
+                  <i class="fa-circle fa-stack-1x fas"></i>
+                  <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                </span>
+                {{ patient.postcode }}
+              </div>
+            {% else %}
+              {{ patient.postcode }}
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'index_of_multiple_deprivation_quintile' %}text-rcpch_red{% endif %}">
+            {% if patient.errors|error_for_field:"index_of_multiple_deprivation_quintile" %}
+              <div class="inline-flex tooltip tooltip-top"
+                   data-tip="{{ patient.errors|error_for_field:'index_of_multiple_deprivation_quintile' }}">
+                <span class="fa-stack">
+                  <i class="fa-circle fa-stack-1x fas"></i>
+                  <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                </span>
+                {{ patient.index_of_multiple_deprivation_quintile }}
+              </div>
+            {% else %}
+              {{ patient.index_of_multiple_deprivation_quintile }}
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-center">
+            {{ patient.distance_from_lead_organisation|round_distance:1 }} km
+          </td>
+          <td class="text-right whitespace-nowrap">
+            <a href="{% url 'patient_visits' patient.pk %}"
+               class="align-center flex tooltip tooltip-left {% if patient.visit_error_count < 1 %} text-rcpch_pink {% else %} text-rcpch_red {% endif %}"
+               data-tip="{% if patient.visit_error_count > 0 %} {{ patient.visit_error_count }} visit{{ patient.visit_error_count|pluralize }} {{ patient.visit_error_count|pluralize:'has, have' }} errors that need addressing. Items have been saved but will not be included until rectified. {% else %} View patient visits {% endif %}">
+              {% if patient.visit_error_count > 0 %}
+                <span class="fa-stack">
+                  <i class="fa-circle fa-stack-1x fas"></i>
+                  <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                </span>
+                <strong class="text-rcpch_red self-center px-2">Visits ({{ patient.visit_set.all.count }})</strong>
+              {% else %}
+                <strong class="text-rcpch_pink self-center">Visits ({{ patient.visit_set.all.count }})</strong>
+              {% endif %}
+              <!-- caret -->
+              <svg class="w-8 h-8 self-center"
+                   width="24"
+                   height="24"
+                   viewBox="0 0 24 24"
+                   stroke-width="2"
+                   stroke="currentColor"
+                   fill="none"
+                   stroke-linecap="round"
+                   stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" />
+                <polyline points="9 6 15 12 9 18" />
+              </svg>
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      {% include 'partials/page_elements/patient_table_page_controls.html' %}
+    </tfoot>
+  </table>
+</div>
 {% else %}
-  <div role="alert" class="alert mt-2">
-    <svg xmlns="http://www.w3.org/2000/svg"
-         class="w-6 h-6 shrink-0 stroke-current"
-         fill="none"
-         viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-    </svg>
-    <span>No patients found.</span>
-  </div>
+<div role="alert" class="alert mt-2">
+  <svg xmlns="http://www.w3.org/2000/svg"
+       class="w-6 h-6 shrink-0 stroke-current"
+       fill="none"
+       viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+  <span>No patients found.</span>
+</div>
 {% endif %}

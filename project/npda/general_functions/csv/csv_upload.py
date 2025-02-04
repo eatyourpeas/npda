@@ -33,7 +33,9 @@ from project.npda.forms.external_patient_validators import validate_patient_asyn
 from project.npda.forms.external_visit_validators import validate_visit_async
 
 
-async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
+async def csv_upload(
+    user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code, audit_year
+):
     """
     Processes standardised NPDA csv file and persists results in NPDA tables
     Returns the empty dict if successful, otherwise ValidationErrors indexed by the row they occurred at
@@ -213,17 +215,9 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
             submission_date=timezone.now(),
             submission_by=user,  # user is the user who is logged in. Passed in as a parameter
             submission_active=True,
+            csv_file=csv_file_bytes,
+            csv_file_name=csv_file_name,
         )
-
-        if csv_file:
-            # save the csv file with a custom name
-            new_filename = (
-                f"{pdu.pz_code}_{timezone.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            )
-
-            # save=False so it doesn't try to save the parent, which would cause an error in an async context
-            # we save immediately after this anyway
-            new_submission.csv_file.save(new_filename, csv_file, save=False)
 
         await new_submission.asave()
 
@@ -313,7 +307,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
                     await new_submission.patients.aadd(patient)
             except Exception as error:
                 logger.exception(
-                    f"Error saving patient for {pdu_pz_code} from {csv_file}[{patient_row_index}]: {error}"
+                    f"Error saving patient for {pdu_pz_code} from {csv_file_name}[{patient_row_index}]: {error}"
                 )
 
                 # We don't know what field caused the error so add to __all__
@@ -332,7 +326,7 @@ async def csv_upload(user, dataframe, csv_file, pdu_pz_code, audit_year):
                         await sync_to_async(lambda: visit_form.save())()
                     except Exception as error:
                         logger.exception(
-                            f"Error saving visit for {pdu_pz_code} from {csv_file}[{visit_row_index}]: {error}"
+                            f"Error saving visit for {pdu_pz_code} from {csv_file_name}[{visit_row_index}]: {error}"
                         )
                         errors_to_return[visit_row_index]["__all__"].append(str(error))
 

@@ -54,7 +54,7 @@
                 {% if field.field.widget|is_select %}
                   <select id="{{ field.id_for_label }}"
                           name="{{ field.html_name }}"
-                          class="select rcpch-select rounded-none {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+                          class="select rcpch-select rounded-none {% if not can_alter_this_audit_year_submission or not can_use_questionnaire or form.patient.is_in_transfer_in_the_last_year %}opacity-40 pointer-events-none{% endif %}">
                     {% for choice in field.field.choices %}
                       <option value="{{ choice.0 }}"
                               {% if field.value|stringformat:'s' == choice.0|stringformat:'s' %} selected="{{ field.value }}" {% endif %}>
@@ -63,21 +63,21 @@
                     {% endfor %}
                   </select>
                 {% elif field.field.widget|is_dateinput %}
-                  <input type="date" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text flex-grow basis-2/3 {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}" {% if field.value %}value={{ field.value|stringformat:'s' }}{% endif %}>
+                  <input type="date" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text flex-grow basis-2/3 {% if not can_alter_this_audit_year_submission or not can_use_questionnaire or form.patient.is_in_transfer_in_the_last_year %}opacity-40 pointer-events-none{% endif %}" {% if field.value %}value={{ field.value|stringformat:'s' }}{% endif %}>
                   <div class="basis-1/3 flex">
                     <button type='button'
                             _="on click set #{{ field.id_for_label }}'s value to '{% today_date %}'"
-                            class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+                            class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_use_questionnaire or form.patient.is_in_transfer_in_the_last_year %}opacity-40 pointer-events-none{% endif %}">
                       Today
                     </button>
                     <button type='button'
                             _="on click set #{{ field.id_for_label }}'s value to #id_visit_date.value"
-                            class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+                            class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_use_questionnaire or form.patient.is_in_transfer_in_the_last_year %}opacity-40 pointer-events-none{% endif %}">
                       Fill with Visit Date
                     </button>
                   </div>
                 {% else %}
-                  <input type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text rounded-none {% if not can_alter_this_audit_year_submission or not can_use_questionnaire or field.id_for_label == 'id_bmi' %}opacity-40 pointer-events-none{% endif %}" {% if field.field.required %}placeholder="Required"{% endif %} {% if field.value %} value={{ field.value }} {% elif field.value == 0 %} value="0.0" {% endif %}>
+                  <input type="text" id="{{ field.id_for_label }}" name="{{ field.html_name }}" class="input rcpch-input-text rounded-none {% if not can_alter_this_audit_year_submission or not can_use_questionnaire or form.patient.is_in_transfer_in_the_last_year or field.id_for_label == 'id_bmi' %}opacity-40 pointer-events-none{% endif %}" {% if field.field.required %}placeholder="Required"{% endif %} {% if field.value %} value={{ field.value }} {% elif field.value == 0 %} value="0.0" {% endif %}>
                   {% if field.value is not None %}
                     {% with field|centile_for_field:'centile' as centile %}
                       {% if centile %}

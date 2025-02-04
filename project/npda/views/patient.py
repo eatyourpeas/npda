@@ -1,6 +1,7 @@
 # python imports
 import logging
 import json
+import datetime
 
 # Django imports
 from django.apps import apps
@@ -160,10 +161,14 @@ class PatientListView(
         # TODO MRB: this should probably be a method on the Submission model?
         #           https://github.com/rcpch/national-paediatric-diabetes-audit/issues/533
         if pz_code and selected_audit_year:
-            submission = Submission.objects.filter(
-                paediatric_diabetes_unit__pz_code=pz_code,
-                audit_year=selected_audit_year
-            ).order_by("-submission_date").first()
+            submission = (
+                Submission.objects.filter(
+                    paediatric_diabetes_unit__pz_code=pz_code,
+                    audit_year=selected_audit_year,
+                )
+                .order_by("-submission_date")
+                .first()
+            )
 
             if submission and submission.errors:
                 submission_errors = json.loads(submission.errors)
@@ -174,7 +179,9 @@ class PatientListView(
                         submission_error_count += len(errors_for_field)
 
         context["submission"] = submission
-        context["submission_valid_count"] = context["paginator"].count - submission_error_count
+        context["submission_valid_count"] = (
+            context["paginator"].count - submission_error_count
+        )
         context["submission_error_count"] = submission_error_count
 
         context["pz_code"] = pz_code

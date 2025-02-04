@@ -94,22 +94,11 @@ class SubmissionsListView(
             paediatric_diabetes_unit__pz_code=self.request.session.get("pz_code"),
         ).first()  # there can be only one of these
         if requested_active_submission:
-            # If a submission exists and it was created by uploading a csv, summarize the csv data
-            if (
-                self.request.session.get("can_upload_csv")
-                and requested_active_submission.csv_file
-            ):
-                # check if the user has permission to upload csv (not this function is not available in this brance but is in live)
-
-                parsed_csv = csv_parse(
-                    csv_file=requested_active_submission.csv_file, is_jersey=is_jersey
-                )
-                if requested_active_submission.errors:
-                    deserialized_errors = json.loads(requested_active_submission.errors)
-                    context["submission_errors"] = deserialized_errors
-                else:
-                    context["submission_errors"] = None
-
+            if requested_active_submission.errors:
+                deserialized_errors = json.loads(requested_active_submission.errors)
+                context["submission_errors"] = deserialized_errors
+            else:
+                context["submission_errors"] = None
             # Get some summary data about the patients in the submission...
             context["patients"] = Patient.objects.filter(
                 submissions=requested_active_submission

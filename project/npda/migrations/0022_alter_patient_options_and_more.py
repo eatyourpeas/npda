@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("npda", "0020_patient_location_bng_patient_location_wgs_and_more"),
+        ("npda", "0021_submission_csv_file_name_alter_submission_csv_file"),
     ]
 
     operations = [
