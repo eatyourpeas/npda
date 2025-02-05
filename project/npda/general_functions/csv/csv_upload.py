@@ -17,7 +17,6 @@ import numpy as np
 import httpx
 
 # RCPCH imports
-from project.npda.general_functions.write_errors_to_xlsx import write_errors_to_xlsx
 from project.constants import (
     CSV_HEADING_OBJECTS,
     UNIQUE_IDENTIFIER_ENGLAND,
@@ -329,10 +328,6 @@ async def csv_upload(
                             f"Error saving visit for {pdu_pz_code} from {csv_file_name}[{visit_row_index}]: {error}"
                         )
                         errors_to_return[visit_row_index]["__all__"].append(str(error))
-
-    # Only create xlsx file if the csv file was created.
-    if new_submission.csv_file:
-        _ = write_errors_to_xlsx(errors_to_return, new_submission)
 
     # Store the errors to report back to the user in the Data Quality Report
     if errors_to_return:
