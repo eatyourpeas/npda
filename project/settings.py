@@ -271,6 +271,7 @@ OTP_EMAIL_TOKEN_VALIDITY = 60 * 5  # default N(seconds) email token valid for
 
 # EMAIL SETTINGS (SMTP)
 DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_DEFAULT_FROM_EMAIL")
+SERVER_EMAIL = os.environ.get("EMAIL_DEFAULT_FROM_EMAIL")
 SMTP_EMAIL_ENABLED = os.getenv("SMTP_EMAIL_ENABLED", "False") == "True"
 logger.info("SMTP_EMAIL_ENABLED: %s", SMTP_EMAIL_ENABLED)
 if SMTP_EMAIL_ENABLED is True:
@@ -290,6 +291,10 @@ PASSWORD_RESET_TIMEOUT = os.environ.get(
 )  # Default: 259200 (3 days, in seconds)
 
 SITE_CONTACT_EMAIL = os.environ.get("SITE_CONTACT_EMAIL")
+
+ADMINS = os.environ.get("ADMINS", '')
+if ADMINS:
+    ADMINS = [e.split(":") for e in  ADMINS.split(",")]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
