@@ -26,27 +26,23 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.django_db
-def test__seed_test_db(
-):
+def test__seed_test_db():
     assert Group.objects.all().exists()
     assert OrganisationEmployer.objects.all().exists()
     assert NPDAUser.objects.all().exists()
 
 
 @pytest.mark.django_db
-def test_patient_creation(
-):
+def test_patient_creation():
     """Test Patient Factory creation."""
 
     new_patient = PatientFactory()
-    print_instance_field_attrs(new_patient)
 
     assert new_patient is not None
 
 
 @pytest.mark.django_db
-def test__multiple_PaediatricsDiabetesUnitFactory_instances_not_created(
-):
+def test__multiple_PaediatricsDiabetesUnitFactory_instances_not_created():
     """
     Both Patient and NPDAUser factories eventually create and are associated with a PaediatricsDiabetesUnit instance.
 

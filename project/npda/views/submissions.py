@@ -71,7 +71,7 @@ class SubmissionsListView(
             "-submission_active",
             "-submission_date",
         )
-        
+
         return final
 
     def get_context_data(self, **kwargs: Any) -> dict:
@@ -79,6 +79,10 @@ class SubmissionsListView(
         Add data to the context.
         Includes the patient data for the active submission and the csv summary data.
         """
+        if self.request.session.get("pz_code") == "PZ248":
+            is_jersey = True
+        else:
+            is_jersey = False
         context = super().get_context_data(**kwargs)
         context["pz_code"] = self.request.session.get("pz_code")
         context["selected_audit_year"] = self.request.session.get("selected_audit_year")
@@ -95,7 +99,6 @@ class SubmissionsListView(
                 context["submission_errors"] = deserialized_errors
             else:
                 context["submission_errors"] = None
-            
             # Get some summary data about the patients in the submission...
             context["patients"] = Patient.objects.filter(
                 submissions=requested_active_submission
@@ -185,6 +188,7 @@ class SubmissionsListView(
         :return: The response
         """
         return super().render_to_response(context)
+
 
 @login_and_otp_required()
 def upload_csv(request):

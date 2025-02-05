@@ -1,5 +1,6 @@
 from typing import Iterable
 from django.db import models
+from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.conf import settings
 
@@ -35,7 +36,12 @@ def save(self, *args, **kwargs):
     # Check for existing submissions for the same patient and audit year
     if (
         PatientSubmission.objects.filter(
-            patient__nhs_number=self.patient__nhs_number,
+            (
+                Q(patient__nhs_number=self.patient__nhs_number)
+                | Q(
+                    patient__unique_reference_number=self.patient__unique_reference_number
+                )
+            ),
             submission__audit_year=self.submission.audit_year,
         )
         .exclude(pk=self.pk)

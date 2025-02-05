@@ -11,7 +11,8 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.db.models import Count, Case, When, Max, Q, F, OuterRef, Exists
+from django.db.models import Count, Case, When, Max, Q, F
+from django.forms import BaseForm
 from django.forms import BaseForm
 from django.http.response import HttpResponse
 from django.shortcuts import render
@@ -24,12 +25,10 @@ from django.urls import reverse_lazy
 # Third party imports
 import nhs_number
 
-from project.constants.leave_pdu_reasons import LEAVE_PDU_REASONS
+# Project imports
 from project.npda.general_functions import (
     organisations_adapter,
     fetch_organisation_by_ods_code,
-)
-from project.npda.general_functions.quarter_for_date import (
     retrieve_quarter_for_date,
 )
 from project.npda.models import (
@@ -74,6 +73,7 @@ class PatientListView(
         # Check we are sorting by a fixed set of fields rather than the full Django __ notation
         if sort_by_param in [
             "nhs_number",
+            "unique_reference_number",
             "index_of_multiple_deprivation_quintile",
             "distance_from_lead_organisation",
         ]:
@@ -104,7 +104,11 @@ class PatientListView(
         if search:
             search = nhs_number.standardise_format(search) or search
             filtered_patients &= Q(
-                Q(nhs_number__icontains=search) | Q(pk__icontains=search)
+                (
+                    Q(nhs_number__icontains=search)
+                    | Q(unique_reference_number__icontains=search)
+                )
+                | Q(pk__icontains=search)
             )
 
         # filter patients to the view preference of the user

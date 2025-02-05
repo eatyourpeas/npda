@@ -1,5 +1,6 @@
 # python imports
 import datetime
+import logging
 
 # Django imports
 from django.apps import apps
@@ -27,6 +28,7 @@ from .mixins import (
 )
 
 # Third party imports
+logger = logging.getLogger(__name__)
 
 
 class PatientVisitsListView(
@@ -120,7 +122,7 @@ class VisitCreateView(
         context = super().get_context_data(**kwargs)
         context["patient_id"] = self.kwargs["patient_id"]
         patient = Patient.objects.get(pk=self.kwargs["patient_id"])
-        context["nhs_number"] = patient.nhs_number
+        context["patient"] = patient
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
         context["button_title"] = "Add New Visit"
@@ -143,10 +145,10 @@ class VisitCreateView(
 
     def form_valid(self, form, **kwargs):
         patient = get_object_or_404(Patient, pk=self.kwargs["patient_id"])
-        print("patient", patient)
         self.object = form.save(commit=False)
         self.object.patient = patient
         self.object.save()
+
         super(VisitCreateView, self).form_valid(form)
         return HttpResponseRedirect(self.get_success_url())
 

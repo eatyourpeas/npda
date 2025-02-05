@@ -10,10 +10,14 @@ from django.contrib.gis.db.models import (
     PositiveSmallIntegerField,
     PointField,
 )
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 
-from project.npda.models.custom_validators import validate_nhs_number
+from project.npda.models.custom_validators import (
+    validate_nhs_number,
+    validate_unique_reference_number,
+)
 
 # npda imports
 from ...constants import (
@@ -41,7 +45,22 @@ class Patient(models.Model):
     """
 
     nhs_number = CharField(  # the NHS number for England and Wales
-        "NHS Number", unique=False, validators=[validate_nhs_number]
+        "NHS Number",
+        unique=False,
+        validators=[validate_nhs_number],
+        null=True,
+        blank=True,
+        help_text="This is the NHS number for England and Wales. It is used to identify the patient in the audit.",
+    )
+
+    unique_reference_number = CharField(
+        "Unique Reference Number",
+        max_length=50,
+        unique=False,
+        validators=[validate_unique_reference_number],
+        blank=True,
+        null=True,
+        help_text="This is a unique reference number for Jersey patients. It is used to identify the patient in the audit.",
     )
 
     sex = models.IntegerField("Stated gender", choices=SEX_TYPE, blank=True, null=True)
@@ -121,6 +140,7 @@ class Patient(models.Model):
         ordering = (
             "pk",
             "nhs_number",
+            "unique_reference_number",
         )
         permissions = [
             CAN_LOCK_CHILD_PATIENT_DATA_FROM_EDITING,
@@ -128,7 +148,20 @@ class Patient(models.Model):
             CAN_OPT_OUT_CHILD_FROM_INCLUSION_IN_AUDIT,
         ]
 
+    def clean(self):
+        super().clean()
+        if not self.nhs_number and not self.unique_reference_number:
+            raise ValidationError(
+                "Either NHS Number or Unique Reference Number must be provided."
+            )
+        if self.nhs_number and self.unique_reference_number:
+            raise ValidationError(
+                "Only one of NHS Number or Unique Reference Number should be provided."
+            )
+
     def __str__(self) -> str:
+        if self.unique_reference_number:
+            return f"ID: {self.pk}, {self.unique_reference_number}"
         return f"ID: {self.pk}, {self.nhs_number}"
 
     def get_absolute_url(self):

@@ -17,7 +17,11 @@ import numpy as np
 import httpx
 
 # RCPCH imports
-from project.constants import CSV_HEADINGS
+from project.constants import (
+    CSV_HEADING_OBJECTS,
+    UNIQUE_IDENTIFIER_ENGLAND,
+    UNIQUE_IDENTIFIER_JERSEY,
+)
 
 # Logging setup
 logger = logging.getLogger(__name__)
@@ -28,7 +32,9 @@ from project.npda.forms.external_patient_validators import validate_patient_asyn
 from project.npda.forms.external_visit_validators import validate_visit_async
 
 
-async def csv_upload(user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code, audit_year):
+async def csv_upload(
+    user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code, audit_year
+):
     """
     Processes standardised NPDA csv file and persists results in NPDA tables
     Returns the empty dict if successful, otherwise ValidationErrors indexed by the row they occurred at
@@ -40,6 +46,11 @@ async def csv_upload(user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code
     Visit = apps.get_model("npda", "Visit")
     Submission = apps.get_model("npda", "Submission")
     PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+
+    if pdu_pz_code == "PZ248":
+        CSV_HEADINGS = UNIQUE_IDENTIFIER_JERSEY + CSV_HEADING_OBJECTS
+    else:
+        CSV_HEADINGS = UNIQUE_IDENTIFIER_ENGLAND + CSV_HEADING_OBJECTS
 
     # Helper functions
     def csv_value_to_model_value(model_field, value):
@@ -134,7 +145,7 @@ async def csv_upload(user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code
         # Use the field value from cleaned_data, falling back to data if it's not there
         for key, value in form.cleaned_data.items():
             setattr(form.instance, key, value)
-        
+
         for key, value in form.data.items():
             if key not in form.cleaned_data:
                 setattr(form.instance, key, value)
@@ -153,11 +164,24 @@ async def csv_upload(user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code
                 tasks.append(task)
 
         return [task.result() for task in tasks]
-    
+
     def record_errors_from_form(errors_to_return, row_index, form):
         for field, errors in form.errors.as_data().items():
             for error in errors:
                 errors_to_return[row_index][field].extend(error.messages)
+
+    def do_not_save_patient_if_no_unique_identifier(patient_form):
+        if (
+            patient_form.cleaned_data.get("nhs_number") is None
+            and patient_form.cleaned_data.get("unique_reference_number") is None
+        ):
+            patient = patient_form.save(commit=False)
+        else:
+            patient = patient_form.save(
+                commit=True
+            )  # save the patient if there is a unique identifier
+
+        return patient
 
     """"
     Create the submission and save the csv file
@@ -191,7 +215,7 @@ async def csv_upload(user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code
             submission_by=user,  # user is the user who is logged in. Passed in as a parameter
             submission_active=True,
             csv_file=csv_file_bytes,
-            csv_file_name=csv_file_name
+            csv_file_name=csv_file_name,
         )
 
         await new_submission.asave()
@@ -239,8 +263,13 @@ async def csv_upload(user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code
     # Remember the original row number to help users find where the problem was in the CSV
     dataframe = dataframe.assign(row_index=np.arange(dataframe.shape[0]))
 
-    # We only one to create one patient per NHS number and we can't create their visits if we fail to save the patient model
-    visits_by_patient = dataframe.groupby("NHS Number", sort=False, dropna=False)
+    # We only one to create one patient per NHS number (or URN if in Jersey) and we can't create their visits if we fail to save the patient model
+    if new_submission.paediatric_diabetes_unit.pz_code == "PZ248":
+        visits_by_patient = dataframe.groupby(
+            "Unique Reference Number", sort=False, dropna=False
+        )
+    else:
+        visits_by_patient = dataframe.groupby("NHS Number", sort=False, dropna=False)
 
     # Gather all error messages indexed by row number and the field that caused them (__all__ if we don't know which one)
     # dict[number, dict[str, list[str]]]
@@ -259,12 +288,14 @@ async def csv_upload(user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code
             parsed_visits,
         ) in validation_results_by_patient:
             record_errors_from_form(errors_to_return, patient_row_index, patient_form)
-            
+
             patient = None
 
             try:
                 retain_errors_and_invalid_field_data(patient_form)
-                patient = await sync_to_async(lambda: patient_form.save())()
+                patient = await sync_to_async(
+                    do_not_save_patient_if_no_unique_identifier
+                )(patient_form)
 
                 if patient:
                     # add the patient to a new Transfer instance
@@ -274,14 +305,18 @@ async def csv_upload(user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code
 
                     await new_submission.patients.aadd(patient)
             except Exception as error:
-                logger.exception(f"Error saving patient for {pdu_pz_code} from {csv_file_name}[{patient_row_index}]: {error}")
+                logger.exception(
+                    f"Error saving patient for {pdu_pz_code} from {csv_file_name}[{patient_row_index}]: {error}"
+                )
 
                 # We don't know what field caused the error so add to __all__
                 errors_to_return[patient_row_index]["__all__"].append(str(error))
 
             if patient:
                 for visit_form, visit_row_index in parsed_visits:
-                    record_errors_from_form(errors_to_return, visit_row_index, visit_form)
+                    record_errors_from_form(
+                        errors_to_return, visit_row_index, visit_form
+                    )
 
                     try:
                         retain_errors_and_invalid_field_data(visit_form)
@@ -289,9 +324,11 @@ async def csv_upload(user, dataframe, csv_file_name, csv_file_bytes, pdu_pz_code
 
                         await sync_to_async(lambda: visit_form.save())()
                     except Exception as error:
-                        logger.exception(f"Error saving visit for {pdu_pz_code} from {csv_file_name}[{visit_row_index}]: {error}")
+                        logger.exception(
+                            f"Error saving visit for {pdu_pz_code} from {csv_file_name}[{visit_row_index}]: {error}"
+                        )
                         errors_to_return[visit_row_index]["__all__"].append(str(error))
-    
+
     # Store the errors to report back to the user in the Data Quality Report
     if errors_to_return:
         new_submission.errors = json.dumps(errors_to_return)

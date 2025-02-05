@@ -4,7 +4,9 @@
 {% block content %}
   <div class="flex justify-center bg-white py-8">
     <div class="max-w-full lg:max-w-[75%] px-2 bg-white font-montserrat">
-      <strong>{{ title }} - NHS Number {{ nhs_number }}</strong>
+      <strong>
+        {{ title }} - {% nhs_number_vs_urn pz_code %} {% nhs_number_vs_urn pz_code patient %}
+      </strong>
       <form id="update-form"
             method="post"
             {% if form_method == "create" %} action="{% url 'visit-create' patient_id %}" {% else %} action="{% url 'visit-update' patient_id=patient_id pk=visit.pk %}" {% endif %}>
@@ -27,12 +29,12 @@
                           class="btn rcpch-btn bg-rcpch_light_blue border border-rcpch_light_blue hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue {% if not can_alter_this_audit_year_submission or not can_use_questionnaire  or form.patient.is_in_transfer_in_the_last_year %}opacity-40 pointer-events-none{% endif %}">
                     Today
                   </button>
+                  {% for error in field.errors %}
+                    <p>
+                      <strong class="text-gray-700">{{ error|escape }}</strong>
+                    </p>
+                  {% endfor %}
                 {% endif %}
-                {% for error in field.errors %}
-                  <p>
-                    <strong class="text-gray-700">{{ error|escape }}</strong>
-                  </p>
-                {% endfor %}
               </div>
             </div>
           {% endif %}

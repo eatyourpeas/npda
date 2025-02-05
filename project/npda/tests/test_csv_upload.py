@@ -27,7 +27,7 @@ from project.npda.forms.external_patient_validators import (
 )
 from project.npda.forms.external_visit_validators import (
     VisitExternalValidationResult,
-    CentileAndSDS
+    CentileAndSDS,
 )
 
 
@@ -44,7 +44,7 @@ MOCK_VISIT_EXTERNAL_VALIDATION_RESULT = VisitExternalValidationResult(
     height_result=CentileAndSDS(centile=Decimal(0.5), sds=Decimal(0.5)),
     weight_result=CentileAndSDS(centile=Decimal(0.5), sds=Decimal(0.5)),
     bmi=Decimal(0.5),
-    bmi_result=CentileAndSDS(centile=Decimal(0.5), sds=Decimal(0.5))
+    bmi_result=CentileAndSDS(centile=Decimal(0.5), sds=Decimal(0.5)),
 )
 
 
@@ -83,7 +83,6 @@ def valid_df(dummy_sheets_folder):
 def single_row_valid_df(dummy_sheets_folder):
     file = dummy_sheets_folder / "dummy_sheet.csv"
     df = csv_parse(file).df
-
     df = df.head(1)
 
     return df
@@ -143,7 +142,7 @@ async def csv_upload_sync(user, dataframe):
         csv_file_name=None,
         csv_file_bytes=None,
         pdu_pz_code=ALDER_HEY_PZ_CODE,
-        audit_year=2024
+        audit_year=2024,
     )
 
 
@@ -226,13 +225,26 @@ def test_multiple_patients(
     ],
 )
 @pytest.mark.django_db(transaction=True)
-def test_missing_mandatory_field(seed_groups_per_function_fixture, seed_users_per_function_fixture, single_row_valid_df, column, model_field):
+def test_missing_mandatory_field(
+    seed_groups_per_function_fixture,
+    seed_users_per_function_fixture,
+    single_row_valid_df,
+    column,
+    model_field,
+):
     # As these tests need full transaction support we can't use our session fixtures
     test_user = NPDAUser.objects.filter(
         organisation_employers__pz_code=ALDER_HEY_PZ_CODE
     ).first()
 
+    # Delete all patients to ensure we're starting from a clean slate
+    Patient.objects.all().delete()
+
     single_row_valid_df.loc[0, column] = None
+
+    assert (
+        Patient.objects.count() == 0
+    ), "There should be no patients in the database before the test"
 
     errors = csv_upload_sync(test_user, single_row_valid_df)
 
@@ -353,13 +365,10 @@ def test_invalid_nhs_number(test_user, single_row_valid_df):
     errors = csv_upload_sync(test_user, single_row_valid_df)
     assert "nhs_number" in errors[0]
 
-    # Not catastrophic - error saved in model and raised back to caller
-    patient = Patient.objects.first()
-
-    assert patient.nhs_number == invalid_nhs_number
+    # Catastrophic - Patient not save
+    assert Patient.objects.count() == 0
 
     # TODO MRB: create a ValidationError model field (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/332)
-    assert "nhs_number" in patient.errors
 
 
 @pytest.mark.django_db
@@ -634,7 +643,9 @@ def test_save_location_from_postcode(test_user, single_row_valid_df):
 
     patient = Patient.objects.first()
     assert patient.location_bng == MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT.location_bng
-    assert patient.location_wgs84 == MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT.location_wgs84
+    assert (
+        patient.location_wgs84 == MOCK_PATIENT_EXTERNAL_VALIDATION_RESULT.location_wgs84
+    )
 
 
 @pytest.mark.django_db
@@ -876,7 +887,9 @@ def test_height_is_rounded_to_one_decimal(test_user, single_row_valid_df):
         postcode=ValidationError("Invalid postcode")
     ),
 )
-def test_cleaned_fields_are_stored_when_other_fields_are_invalid(test_user, single_row_valid_df):
+def test_cleaned_fields_are_stored_when_other_fields_are_invalid(
+    test_user, single_row_valid_df
+):
     # PATIENT
     # - Valid, cleaning should remove the spaces
     single_row_valid_df["NHS Number"] = "719 573 0220"
@@ -896,11 +909,11 @@ def test_cleaned_fields_are_stored_when_other_fields_are_invalid(test_user, sing
     patient = Patient.objects.first()
     visit = Visit.objects.first()
 
-    assert(patient.nhs_number == "7195730220") # cleaned version saved
-    assert(patient.postcode == "not a real postcode") # saved but invalid
+    assert patient.nhs_number == "7195730220"  # cleaned version saved
+    assert patient.postcode == "not a real postcode"  # saved but invalid
 
-    assert(visit.weight == round(Decimal("7.89"), 1)) # cleaned version saved
-    assert(visit.height == 38) # saved but invalid
+    assert visit.weight == round(Decimal("7.89"), 1)  # cleaned version saved
+    assert visit.height == 38  # saved but invalid
 
 
 @pytest.mark.django_db
@@ -908,13 +921,19 @@ def test_async_visit_fields_are_saved(test_user, single_row_valid_df):
     csv_upload_sync(test_user, single_row_valid_df)
     visit = Visit.objects.first()
 
-    assert(visit.height_centile == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.height_result.centile)
-    assert(visit.height_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.height_result.sds)
+    assert (
+        visit.height_centile
+        == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.height_result.centile
+    )
+    assert visit.height_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.height_result.sds
 
-    assert(visit.weight_centile == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.weight_result.centile)
-    assert(visit.weight_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.weight_result.sds)
+    assert (
+        visit.weight_centile
+        == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.weight_result.centile
+    )
+    assert visit.weight_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.weight_result.sds
 
-    assert(visit.bmi == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi)
+    assert visit.bmi == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi
 
-    assert(visit.bmi_centile == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi_result.centile)
-    assert(visit.bmi_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi_result.sds)
+    assert visit.bmi_centile == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi_result.centile
+    assert visit.bmi_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi_result.sds

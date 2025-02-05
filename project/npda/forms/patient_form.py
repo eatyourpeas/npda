@@ -14,9 +14,8 @@ from django import forms
 from django.apps import apps
 from django.core.exceptions import ValidationError
 
-from project.constants.leave_pdu_reasons import LEAVE_PDU_REASONS
-
 from ...constants.styles.form_styles import *
+from ...constants import LEAVE_PDU_REASONS
 from ..models import Patient, Transfer
 from ..validators import not_in_the_future_validator
 from .external_patient_validators import validate_patient_sync
@@ -30,6 +29,8 @@ class DateInput(forms.DateInput):
 
 class NHSNumberField(forms.CharField):
     def to_python(self, value):
+        if not value:
+            return value
         number = super().to_python(value)
         normalised = nhs_number.standardise_format(number)
 
@@ -39,6 +40,18 @@ class NHSNumberField(forms.CharField):
     def validate(self, value):
         if value and not nhs_number.is_valid(value):
             raise ValidationError("Invalid NHS number")
+
+
+class UniqueReferenceNumberField(forms.CharField):
+    def to_python(self, value):
+        if not value:
+            return value
+        number = super().to_python(value)
+        return number
+
+    def validate(self, value):
+        if value and not value.isdigit():
+            raise ValidationError("Invalid Unique Reference Number")
 
 
 class PostcodeField(forms.CharField):
@@ -60,6 +73,7 @@ class PatientForm(forms.ModelForm):
         model = Patient
         fields = [
             "nhs_number",
+            "unique_reference_number",
             "sex",
             "date_of_birth",
             "postcode",
@@ -72,11 +86,15 @@ class PatientForm(forms.ModelForm):
         ]
         field_classes = {
             "nhs_number": NHSNumberField,
+            "unique_reference_number": UniqueReferenceNumberField,
             "postcode": PostcodeField,
             "gp_practice_postcode": PostcodeField,
         }
         widgets = {
             "nhs_number": forms.TextInput(
+                attrs={"class": TEXT_INPUT},
+            ),
+            "unique_reference_number": forms.TextInput(
                 attrs={"class": TEXT_INPUT},
             ),
             "sex": forms.Select(),
@@ -163,6 +181,23 @@ class PatientForm(forms.ModelForm):
         gp_practice_ods_code = cleaned_data.get("gp_practice_ods_code")
         gp_practice_postcode = cleaned_data.get("gp_practice_postcode")
 
+        nhs_number = cleaned_data.get("nhs_number")
+        unique_reference_number = cleaned_data.get("unique_reference_number")
+
+        if not nhs_number and not unique_reference_number:
+            self.add_error(
+                "nhs_number",
+                ValidationError(
+                    "Either NHS Number or Unique Reference Number must be provided."
+                ),
+            )
+            self.add_error(
+                "unique_reference_number",
+                ValidationError(
+                    "Either NHS Number or Unique Reference Number must be provided."
+                ),
+            )
+
         reason_leaving_service = cleaned_data.get("reason_leaving_service")
         date_leaving_service = cleaned_data.get("date_leaving_service")
         if date_leaving_service and not reason_leaving_service:
@@ -245,6 +280,8 @@ class PatientForm(forms.ModelForm):
             "gp_practice_postcode",
         ]:
             self.handle_async_validation_result(key)
+
+        return cleaned_data
 
     def save(self, commit=True):
         # We deliberately don't call super.save here as it throws ValueError on validation errors
