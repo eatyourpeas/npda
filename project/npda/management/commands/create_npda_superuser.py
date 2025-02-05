@@ -30,7 +30,7 @@ class Command(BaseCommand):
         if not admin_user_model.objects.filter(email=LOCAL_DEV_ADMIN_EMAIL).exists():
             admin_user_model.objects.create_superuser(
                 first_name="SuperuserAda",
-                last_name="Lovelace",
+                surname="Lovelace",
                 email=LOCAL_DEV_ADMIN_EMAIL,
                 password=LOCAL_DEV_ADMIN_PASSWORD
             )

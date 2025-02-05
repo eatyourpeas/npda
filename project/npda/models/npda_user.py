@@ -66,7 +66,7 @@ class NPDAUserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, first_name, last_name, email, password):
+    def create_superuser(self, first_name, surname, email, password, is_rcpch_audit_team_member=True, role=RCPCH_AUDIT_TEAM):
         """
         Create and save a SuperUser with the given email and password.
         """
@@ -77,12 +77,12 @@ class NPDAUserManager(BaseUserManager):
             email=email.lower(),
             password=password,
             first_name=first_name,
-            last_name=last_name,
-            role=RCPCH_AUDIT_TEAM,
+            last_name=surname,
+            role=role,
             is_superuser=True,
             is_active=True,
             is_staff=True,
-            is_rcpch_audit_team_member=True,
+            is_rcpch_audit_team_member=is_rcpch_audit_team_member,
             is_rcpch_staff=True,
             email_confirmed=True,
             view_preference=1
