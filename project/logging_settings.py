@@ -47,11 +47,6 @@ LOGGING = {
         "file": {
             "format": "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
         },
-        "mail_admins": {
-            "level": "ERROR",
-            "filters": ["require_debug_false"],
-            "class": "django.utils.log.AdminEmailHandler",
-        },
         "verbose": {
             "()": "colorlog.ColoredFormatter",
             "format": "%(log_color)s[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(bold_white)s%(message)s",
@@ -108,6 +103,11 @@ LOGGING = {
             "maxBytes": 15728640,  # 1024 * 1024 * 15B = 15MB
             "backupCount": 10,
             "formatter": "file",
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "filters": ["require_debug_false"],
+            "class": "django.utils.log.AdminEmailHandler",
         },
     },
     "loggers": {
