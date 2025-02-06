@@ -7,19 +7,29 @@ from unittest.mock import Mock, patch
 from django.core.exceptions import ValidationError
 
 from project.npda.forms.visit_form import VisitForm
-from project.npda.forms.external_visit_validators import VisitExternalValidationResult, CentileAndSDS
+from project.npda.forms.external_visit_validators import (
+    VisitExternalValidationResult,
+    CentileAndSDS,
+)
 from project.npda.tests.factories.patient_factory import PatientFactory
 
 
 MOCK_EXTERNAL_VALIDATION_RESULT = VisitExternalValidationResult(None, None, None, None)
 
+
 def mock_external_validation_result(**kwargs):
-    return Mock(return_value=dataclasses.replace(MOCK_EXTERNAL_VALIDATION_RESULT, **kwargs))
+    return Mock(
+        return_value=dataclasses.replace(MOCK_EXTERNAL_VALIDATION_RESULT, **kwargs)
+    )
+
 
 # We don't want to call remote services in unit tests
 @pytest.fixture(autouse=True)
 def mock_remote_calls():
-    with patch("project.npda.forms.visit_form.validate_visit_sync", Mock(return_value=MOCK_EXTERNAL_VALIDATION_RESULT)):
+    with patch(
+        "project.npda.forms.visit_form.validate_visit_sync",
+        Mock(return_value=MOCK_EXTERNAL_VALIDATION_RESULT),
+    ):
         yield None
 
 
@@ -32,10 +42,9 @@ def test_height_and_weight_set_correctly():
         data={
             "height": "60",
             "weight": "50",
+            "height_weight_observation_date": "2025-01-01",
         },
-        initial = {
-            "patient": patient
-        }
+        initial={"patient": patient},
     )
 
     # Not passing all the data so it will have errors, just trigger the cleaners
@@ -46,12 +55,51 @@ def test_height_and_weight_set_correctly():
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.visit_form.validate_visit_sync", mock_external_validation_result(
-    height_result=CentileAndSDS(centile=Decimal("0.1"), sds=Decimal("0.2")),
-    weight_result=CentileAndSDS(centile=Decimal("0.3"), sds=Decimal("0.4")),
-    bmi=Decimal("0.5"),
-    bmi_result=CentileAndSDS(centile=Decimal("0.6"), sds=Decimal("0.7")),
-))
+def test_height_and_weight_missing_values():
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "height": None,
+            "weight": None,
+            "height_weight_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Not passing all the data so it will have errors, just trigger the cleaners
+    assert form.is_valid() == False, f"Height/Weight not supplied but date supplied"
+
+
+@pytest.mark.django_db
+def test_height_and_weight_missing_date():
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "height": "60",
+            "weight": None,
+            "height_weight_observation_date": None,
+        },
+        initial={"patient": patient},
+    )
+
+    # Not passing all the data so it will have errors, just trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Height/Weight observation date not supplied but height/weight supplied"
+
+
+@pytest.mark.django_db
+@patch(
+    "project.npda.forms.visit_form.validate_visit_sync",
+    mock_external_validation_result(
+        height_result=CentileAndSDS(centile=Decimal("0.1"), sds=Decimal("0.2")),
+        weight_result=CentileAndSDS(centile=Decimal("0.3"), sds=Decimal("0.4")),
+        bmi=Decimal("0.5"),
+        bmi_result=CentileAndSDS(centile=Decimal("0.6"), sds=Decimal("0.7")),
+    ),
+)
 def test_dgc_results_saved():
     patient = PatientFactory()
 
@@ -59,10 +107,9 @@ def test_dgc_results_saved():
         data={
             "height": "60",
             "weight": "50",
+            "height_weight_observation_date": "2025-01-01",
         },
-        initial = {
-            "patient": patient
-        }
+        initial={"patient": patient},
     )
 
     # Trigger the cleaners
@@ -80,10 +127,14 @@ def test_dgc_results_saved():
     assert visit.bmi_centile == Decimal("0.6")
     assert visit.bmi_sds == Decimal("0.7")
 
+
 @pytest.mark.django_db
-@patch("project.npda.forms.visit_form.validate_visit_sync", mock_external_validation_result(
-    height_result=CentileAndSDS(centile=Decimal("0.1"), sds=Decimal("0.2")),
-))
+@patch(
+    "project.npda.forms.visit_form.validate_visit_sync",
+    mock_external_validation_result(
+        height_result=CentileAndSDS(centile=Decimal("0.1"), sds=Decimal("0.2")),
+    ),
+)
 def test_partial_dgc_results_saved():
     patient = PatientFactory()
 
@@ -91,10 +142,9 @@ def test_partial_dgc_results_saved():
         data={
             "height": "60",
             "weight": "50",
+            "height_weight_observation_date": "2025-01-01",
         },
-        initial = {
-            "patient": patient
-        }
+        initial={"patient": patient},
     )
 
     # Trigger the cleaners
@@ -114,9 +164,10 @@ def test_partial_dgc_results_saved():
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.visit_form.validate_visit_sync", mock_external_validation_result(
-    height_result=ValidationError("oh noes!")
-))
+@patch(
+    "project.npda.forms.visit_form.validate_visit_sync",
+    mock_external_validation_result(height_result=ValidationError("oh noes!")),
+)
 def test_dgc_height_validation_error():
     patient = PatientFactory()
 
@@ -124,10 +175,9 @@ def test_dgc_height_validation_error():
         data={
             "height": "60",
             "weight": "50",
+            "height_weight_observation_date": "2025-01-01",
         },
-        initial = {
-            "patient": patient
-        }
+        initial={"patient": patient},
     )
 
     # Trigger the cleaners
@@ -137,9 +187,10 @@ def test_dgc_height_validation_error():
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.visit_form.validate_visit_sync", mock_external_validation_result(
-    weight_result=ValidationError("oh noes!")
-))
+@patch(
+    "project.npda.forms.visit_form.validate_visit_sync",
+    mock_external_validation_result(weight_result=ValidationError("oh noes!")),
+)
 def test_dgc_weight_validation_error():
     patient = PatientFactory()
 
@@ -147,10 +198,9 @@ def test_dgc_weight_validation_error():
         data={
             "height": "60",
             "weight": "50",
+            "height_weight_observation_date": "2025-01-01",
         },
-        initial = {
-            "patient": patient
-        }
+        initial={"patient": patient},
     )
 
     # Trigger the cleaners
@@ -160,9 +210,10 @@ def test_dgc_weight_validation_error():
 
 
 @pytest.mark.django_db
-@patch("project.npda.forms.visit_form.validate_visit_sync", mock_external_validation_result(
-    bmi_result=ValidationError("oh noes!")
-))
+@patch(
+    "project.npda.forms.visit_form.validate_visit_sync",
+    mock_external_validation_result(bmi_result=ValidationError("oh noes!")),
+)
 def test_dgc_bmi_validation_error():
     patient = PatientFactory()
 
@@ -170,10 +221,9 @@ def test_dgc_bmi_validation_error():
         data={
             "height": "60",
             "weight": "50",
+            "height_weight_observation_date": "2025-01-01",
         },
-        initial = {
-            "patient": patient
-        }
+        initial={"patient": patient},
     )
 
     # Trigger the cleaners

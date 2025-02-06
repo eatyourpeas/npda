@@ -257,8 +257,13 @@ def test_missing_mandatory_field(
 @pytest.mark.django_db
 def test_error_in_single_visit(test_user, single_row_valid_df):
     single_row_valid_df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
+    single_row_valid_df.loc[
+        0,
+        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
+    ] = 3
 
     errors = csv_upload_sync(test_user, single_row_valid_df)
+
     assert "treatment" in errors[0]
 
     visit = Visit.objects.first()
@@ -271,6 +276,14 @@ def test_error_in_single_visit(test_user, single_row_valid_df):
 def test_error_in_multiple_visits(test_user, one_patient_two_visits):
     df = one_patient_two_visits
     df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
+    df.loc[
+        0,
+        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
+    ] = 3
+    df.loc[
+        1,
+        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
+    ] = 3
 
     errors = csv_upload_sync(test_user, df)
     assert "treatment" in errors[0]
@@ -286,6 +299,7 @@ def test_error_in_multiple_visits(test_user, one_patient_two_visits):
         second_visit.treatment
         == df["Diabetes Treatment at time of Hba1c measurement"][1]
     )
+
     assert second_visit.errors is None
 
 
@@ -299,6 +313,10 @@ def test_multiple_patients_where_one_has_visit_errors_and_the_other_does_not(
     assert df["NHS Number"][0] != df["NHS Number"][2]
 
     df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
+    df.loc[
+        0,
+        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
+    ] = 3
 
     errors = csv_upload_sync(test_user, df)
     assert "treatment" in errors[0]
@@ -336,7 +354,15 @@ def test_multiple_patients_with_visit_errors(
     df = two_patients_with_one_visit_each
 
     df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 45
+    df.loc[
+        0,
+        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
+    ] = 3
     df.loc[1, "Diabetes Treatment at time of Hba1c measurement"] = 45
+    df.loc[
+        1,
+        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
+    ] = 3
 
     errors = csv_upload_sync(test_user, df)
 
@@ -570,8 +596,8 @@ def test_invalid_postcode(test_user, single_row_valid_df):
 )
 def test_error_validating_postcode(test_user, single_row_valid_df):
     single_row_valid_df["Postcode of usual address"] = "WC1X 8SH"
-
     errors = csv_upload_sync(test_user, single_row_valid_df)
+
     assert len(errors) == 0
 
     patient = Patient.objects.first()
@@ -767,7 +793,8 @@ def test_case_insensitive_column_headers(test_user, dummy_sheet_csv):
     df = read_csv_from_str(csv).df
 
     errors = csv_upload_sync(test_user, df)
-    assert len(errors) == 0
+
+    assert len(errors) == 0  #
 
 
 @pytest.mark.django_db

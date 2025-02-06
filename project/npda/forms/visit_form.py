@@ -751,10 +751,20 @@ class VisitForm(forms.ModelForm):
         height = cleaned_data.get("height")
         if height is not None:
             cleaned_data["height"] = height = round_to_one_decimal_place(height)
+            # Validate all fields in a measure are present
+            measure_must_have_date_and_value(observation_date, [{"Height": height}])
 
         weight = cleaned_data.get("weight")
         if weight is not None:
             cleaned_data["weight"] = weight = round_to_one_decimal_place(weight)
+            # Validate all fields in a measure are present
+            measure_must_have_date_and_value(observation_date, [{"Weight": height}])
+
+        if observation_date is not None:
+            if height is None and weight is None:
+                raise ValidationError(
+                    "Height and Weight cannot both be empty if Observation Date is filled in"
+                )
 
         if not getattr(self, "async_validation_results", None):
             self.async_validation_results = validate_visit_sync(
@@ -792,6 +802,179 @@ class VisitForm(forms.ModelForm):
                     raise ValidationError(
                         "Hba1c Value out of range (%). Cannot be above 20"
                     )
+            measure_must_have_date_and_value(
+                "hba1c_date",
+                [{"Hba1c Value": hba1c_value}, {"Hba1c Format": hba1c_format}],
+            )
+
+        treatment = cleaned_data.get("treatment")
+        closed_loop_system = cleaned_data.get("closed_loop_system")
+        if any([treatment, closed_loop_system]):
+            all_items_must_be_filled_in(
+                [{"treatment": treatment}, {"closed_loop_system": closed_loop_system}]
+            )
+
+        blood_pressure_observation_date = cleaned_data.get(
+            "blood_pressure_observation_date"
+        )
+        systolic_blood_pressure = cleaned_data.get("systolic_blood_pressure")
+        diastolic_blood_pressure = cleaned_data.get("diastolic_blood_pressure")
+        if any(
+            [
+                systolic_blood_pressure,
+                diastolic_blood_pressure,
+                blood_pressure_observation_date,
+            ]
+        ):
+            measure_must_have_date_and_value(
+                blood_pressure_observation_date,
+                [
+                    {"Systolic blood pressure": systolic_blood_pressure},
+                    {"Diastolic blood pressure": diastolic_blood_pressure},
+                ],
+            )
+
+        retinal_screening_date = cleaned_data.get("retinal_screening_observation_date")
+        retinal_screening_result = cleaned_data.get("retinal_screening_result")
+        if any([retinal_screening_date, retinal_screening_result]):
+            measure_must_have_date_and_value(
+                retinal_screening_date,
+                [{"Retinal Screening Result": retinal_screening_result}],
+            )
+
+        albumin_creatinine_ratio_date = cleaned_data.get(
+            "albumin_creatinine_ratio_date"
+        )
+        albumin_creatinine_ratio = cleaned_data.get("albumin_creatinine_ratio")
+        albuminuria_stage = cleaned_data.get("albuminuria_stage")
+        if any(
+            [albumin_creatinine_ratio_date, albumin_creatinine_ratio, albuminuria_stage]
+        ):
+            measure_must_have_date_and_value(
+                albumin_creatinine_ratio_date,
+                [
+                    {"Albumin Creatinine Ratio": albumin_creatinine_ratio},
+                    {"Albuminuria Stage": albuminuria_stage},
+                ],
+            )
+
+        total_cholesterol_date = cleaned_data.get("total_cholesterol_date")
+        total_cholesterol = cleaned_data.get("total_cholesterol")
+        if any([total_cholesterol_date, total_cholesterol]):
+            measure_must_have_date_and_value(
+                total_cholesterol_date, [{"Total Cholesterol": total_cholesterol}]
+            )
+
+        thyroid_function_date = cleaned_data.get("thyroid_function_date")
+        thyroid_treatment_status = cleaned_data.get("thyroid_treatment_status")
+        if any([thyroid_function_date, thyroid_treatment_status]):
+            measure_must_have_date_and_value(
+                thyroid_function_date,
+                [{"Thyroid Treatment Status": thyroid_treatment_status}],
+            )
+
+        coeliac_screen_date = cleaned_data.get("coeliac_screen_date")
+        gluten_free_diet = cleaned_data.get("gluten_free_diet")
+        if any([coeliac_screen_date, gluten_free_diet]):
+            measure_must_have_date_and_value(
+                coeliac_screen_date, [{"Gluten Free Diet": gluten_free_diet}]
+            )
+
+        psychological_screening_assessment_date = cleaned_data.get(
+            "psychological_screening_assessment_date"
+        )
+        psychological_additional_support_status = cleaned_data.get(
+            "psychological_additional_support_status"
+        )
+        if any(
+            [
+                psychological_screening_assessment_date,
+                psychological_additional_support_status,
+            ]
+        ):
+            measure_must_have_date_and_value(
+                psychological_screening_assessment_date,
+                [
+                    {
+                        "Psychological Additional Support Status": psychological_additional_support_status
+                    }
+                ],
+            )
+
+        smoking_cessation_referral_date = cleaned_data.get(
+            "smoking_cessation_referral_date"
+        )
+        smoking_status = cleaned_data.get("smoking_status")
+        if smoking_status:
+            if smoking_status == 2:  # Current  smoking status: must supply a date
+                measure_must_have_date_and_value(
+                    smoking_cessation_referral_date,
+                    [{"Smoking Status": smoking_status}],
+                )
+
+        dietician_additional_appointment_offered = cleaned_data.get(
+            "dietician_additional_appointment_offered"
+        )
+        dietician_additional_appointment_date = cleaned_data.get(
+            "dietician_additional_appointment_date"
+        )
+        if dietician_additional_appointment_offered is not None:
+            if dietician_additional_appointment_offered == 1:
+                measure_must_have_date_and_value(
+                    dietician_additional_appointment_date,
+                    [
+                        {
+                            "Dietician Additional Appointment Offered": dietician_additional_appointment_offered
+                        }
+                    ],
+                )
+
+        if (
+            dietician_additional_appointment_date is not None
+            and dietician_additional_appointment_offered is None
+        ):
+            raise ValidationError(
+                "Dietician Additional Appointment Offered must be filled in if Dietician Additional Appointment Date is filled in"
+            )
+
+        sick_day_rules_training_date = cleaned_data.get("sick_day_rules_training_date")
+        ketone_meter_training = cleaned_data.get("ketone_meter_training")
+
+        if ketone_meter_training is not None:
+            if ketone_meter_training == 1:
+                measure_must_have_date_and_value(
+                    sick_day_rules_training_date,
+                    [{"Ketone Meter Training": ketone_meter_training}],
+                )
+
+        if sick_day_rules_training_date is not None and ketone_meter_training is None:
+            raise ValidationError(
+                "Ketone Meter Training must be filled in if Sick Day Rules Training Date is filled in"
+            )
+
+        hospital_admission_date = cleaned_data.get("hospital_admission_date")
+        hospital_discharge_date = cleaned_data.get("hospital_discharge_date")
+        hospital_admission_reason = cleaned_data.get("hospital_admission_reason")
+        dka_additional_therapies = cleaned_data.get("dka_additional_therapies")
+        hospital_admission_other = cleaned_data.get("hospital_admission_other")
+        if any(
+            [
+                hospital_admission_date,
+                hospital_discharge_date,
+                hospital_admission_reason,
+                dka_additional_therapies,
+                hospital_admission_other,
+            ]
+        ):
+            all_items_must_be_filled_in(
+                [
+                    {"hospital_admission_date": hospital_admission_date},
+                    {"hospital_discharge_date": hospital_discharge_date},
+                    {"hospital_admission_reason": hospital_admission_reason},
+                    {"dka_additional_therapies": dka_additional_therapies},
+                    {"hospital_admission_other": hospital_admission_other},
+                ]
+            )
 
         return cleaned_data
 
@@ -818,3 +1001,36 @@ class VisitForm(forms.ModelForm):
             self.instance.save()
 
         return self.instance
+
+
+def measure_must_have_date_and_value(date_field, field_list):
+    """
+    Validate that a measure has a date and a value
+    The date_field is the date the measure was taken
+    The kwargs is a variable number of key value pairs where the key is the name of the measure and the value is value of the measure
+    """
+
+    if (
+        any(value is None for field in field_list for key, value in field.items())
+        or date_field is None
+    ):
+        fields = ", ".join(
+            [key for field in field_list for key, value in field.items()]
+        )
+        raise ValidationError(
+            f"{fields} and the associated date must all be filled in."
+        )
+
+
+def all_items_must_be_filled_in(field_list):
+    """
+    Validate that all items in a list are filled in
+    """
+    if (
+        any([value is None for field in field_list for key, value in field.items()])
+        is None
+    ):
+        fields = ", ".join(
+            [key for field in field_list for key, value in field.items()]
+        )
+        raise ValidationError(f"All items ({fields}) must be filled in.")
