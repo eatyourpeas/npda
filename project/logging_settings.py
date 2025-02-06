@@ -14,7 +14,7 @@ FILE_LOG_LEVEL = os.getenv("FILE_LOG_LEVEL", "INFO")
 # Define the default django logger settings
 django_loggers = {
     logger_name: {
-        "handlers": ["django_console", "npda_logfile"],
+        "handlers": ["django_console", "npda_logfile", "mail_admins"],
         "level": CONSOLE_DJANGO_LOG_LEVEL,
         "propagate": False,
         "formatter": "simple_django",
@@ -32,7 +32,11 @@ django_loggers = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "filters": {},
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
+        },
+    },
     "formatters": {
         "django.server": {
             "()": "django.utils.log.ServerFormatter",
@@ -100,20 +104,25 @@ LOGGING = {
             "backupCount": 10,
             "formatter": "file",
         },
+        "mail_admins": {
+            "level": "ERROR",
+            "filters": ["require_debug_false"],
+            "class": "django.utils.log.AdminEmailHandler",
+        },
     },
     "loggers": {
         "django": {
-            "handlers": ["django_console", "npda_logfile"],
+            "handlers": ["django_console", "npda_logfile", "mail_admins"],
             "level": CONSOLE_DJANGO_LOG_LEVEL,
         },
         **django_loggers,  # this injects the default django logger settings defined above
         "project": {
-            "handlers": ["npda_console", "npda_logfile"],
+            "handlers": ["npda_console", "npda_logfile", "mail_admins"],
             "propagate": False,
             "level": CONSOLE_LOG_LEVEL,
         },
         "two_factor": {
-            "handlers": ["npda_console", "npda_logfile"],
+            "handlers": ["npda_console", "npda_logfile", "mail_admins"],
         },
     },
 }
