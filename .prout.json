@@ -1,5 +1,6 @@
 {
     "checkpoints": {
-      "STAGING": { "url": "https://npda-staging.rcpch.tech", "overdue": "15M" }
+      "STAGING": { "url": "https://npda-staging.rcpch.tech", "overdue": "15M" },
+      "LIVE": { "url": "https://npda.rcpch.ac.uk", "overdue": "15M" }
     }
   }
