@@ -1424,3 +1424,214 @@ def test_decs_date_none_form_fails_validation(test_user, single_row_valid_df):
     assert (
         visit.retinal_screening_result == 1
     ), f"Saved Retinal screening result should be 1 (Normal), but was {visit.retinal_screening_result}"
+
+
+"""
+Urine albumin tests
+"""
+
+
+@pytest.mark.django_db
+def test_urine_albumin_value_form_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that urine albumin value is accepted
+    """
+    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = 30
+    single_row_valid_df.loc[0, "Albuminuria Stage"] = 1  # Normal
+    single_row_valid_df.loc[0, "Observation Date: Urinary Albumin Level"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.albumin_creatinine_ratio == 30
+    ), f"Saved urine albumin should be 30, but was {visit.albumin_creatinine_ratio}"
+    assert (
+        visit.albuminuria_stage == 1
+    ), f"Saved urine albumin stage should be 1 (Normal), but was {visit.albuminuria_stage}"
+    assert visit.albumin_creatinine_ratio_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved urine albumin observation date should be 1/1/2022, but was {visit.albumin_creatinine_ratio_date}"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_impossible_value_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that urine albumin stage is rejected if impossible
+    """
+    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = 30
+    single_row_valid_df.loc[0, "Albuminuria Stage"] = 94  # Impossible value
+    single_row_valid_df.loc[0, "Observation Date: Urinary Albumin Level"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "albuminuria_stage" in errors[0]
+    ), f"Urine albumin stage should fail validation as impossible, but passed."
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.albumin_creatinine_ratio == 30
+    ), f"Saved urine albumin should be 30, but was {visit.albumin_creatinine_ratio}"
+    assert (
+        visit.albuminuria_stage == 94
+    ), f"Saved urine albumin stage should be 94 (Impossible), but was {visit.albuminuria_stage}"
+    assert visit.albumin_creatinine_ratio_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved urine albumin observation date should be 1/1/2022, but was {visit.albumin_creatinine_ratio_date}"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_value_below_range_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that urine albumin value is rejected if below range
+    """
+    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = 0.1
+    single_row_valid_df.loc[0, "Albuminuria Stage"] = 1  # Normal
+    single_row_valid_df.loc[0, "Observation Date: Urinary Albumin Level"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "albumin_creatinine_ratio" in errors[0]
+    ), f"Urine albumin creatinine ratio should fail validation as < 3, but passed."
+
+    visit = Visit.objects.first()
+
+    assert visit.albumin_creatinine_ratio == Decimal(
+        "0.1"
+    ), f"Saved urine albumin should be 0.1, but was {visit.albumin_creatinine_ratio}"
+    assert (
+        visit.albuminuria_stage == 1
+    ), f"Saved urine albumin stage should be 1 (Normal), but was {visit.albuminuria_stage}"
+    assert visit.albumin_creatinine_ratio_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved urine albumin observation date should be 1/1/2022, but was {visit.albumin_creatinine_ratio_date}"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_value_above_range_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that urine albumin value is rejected if above range
+    """
+    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = 100
+    single_row_valid_df.loc[0, "Albuminuria Stage"] = 1  # Normal
+    single_row_valid_df.loc[0, "Observation Date: Urinary Albumin Level"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "albumin_creatinine_ratio" in errors[0]
+    ), f"Urine albumin creatinine ratio should fail validation as > 50, but passed."
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.albumin_creatinine_ratio == 100
+    ), f"Saved urine albumin should be 100, but was {visit.albumin_creatinine_ratio}"
+    assert (
+        visit.albuminuria_stage == 1
+    ), f"Saved urine albumin stage should be 1 (Normal), but was {visit.albuminuria_stage}"
+    assert visit.albumin_creatinine_ratio_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved urine albumin observation date should be 1/1/2022, but was {visit.albumin_creatinine_ratio_date}"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_value_missing_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that urine albumin value missing  is rejected
+    """
+    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = None
+    single_row_valid_df.loc[0, "Albuminuria Stage"] = 1  # Normal
+    single_row_valid_df.loc[0, "Observation Date: Urinary Albumin Level"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "albumin_creatinine_ratio" in errors[0]
+    ), f"Urine albumin creatinine level should fail validation as None, but passed."
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.albumin_creatinine_ratio is None
+    ), f"Saved urine albumin should be None, but was {visit.albumin_creatinine_ratio}"
+    assert (
+        visit.albuminuria_stage == 1
+    ), f"Saved urine albumin stage should be 1 (Normal), but was {visit.albuminuria_stage}"
+    assert visit.albumin_creatinine_ratio_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved urine albumin observation date should be 1/1/2022, but was {visit.albumin_creatinine_ratio_date}"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_stage_missing_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that urine albumin value missing  is rejected
+    """
+    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = 10
+    single_row_valid_df.loc[0, "Albuminuria Stage"] = None
+    single_row_valid_df.loc[0, "Observation Date: Urinary Albumin Level"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "albuminuria_stage" in errors[0]
+    ), f"Urine albumin creatinine stage should fail validation as None, but passed."
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.albumin_creatinine_ratio == 10
+    ), f"Saved urine albumin should be 10, but was {visit.albumin_creatinine_ratio}"
+    assert (
+        visit.albuminuria_stage == None
+    ), f"Saved urine albumin stage should be None, but was {visit.albuminuria_stage}"
+    assert visit.albumin_creatinine_ratio_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved urine albumin observation date should be 1/1/2022, but was {visit.albumin_creatinine_ratio_date}"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_date_missing_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that urine albumin date missing is rejected
+    """
+    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = 10
+    single_row_valid_df.loc[0, "Albuminuria Stage"] = 1  # Normal
+    single_row_valid_df.loc[0, "Observation Date: Urinary Albumin Level"] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "albumin_creatinine_ratio_date" in errors[0]
+    ), f"Urine albumin creatinine date should fail validation as None, but passed."
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.albumin_creatinine_ratio == 10
+    ), f"Saved urine albumin should be 10, but was {visit.albumin_creatinine_ratio}"
+    assert (
+        visit.albuminuria_stage == 1
+    ), f"Saved urine albumin stage should be 1 (Normal), but was {visit.albuminuria_stage}"
+    assert (
+        visit.albumin_creatinine_ratio_date == None
+    ), f"Saved urine albumin observation date should be None, but was {visit.albumin_creatinine_ratio_date}"

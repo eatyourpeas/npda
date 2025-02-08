@@ -723,3 +723,155 @@ def test_decs_date_none_form_fails_validation():
     assert (
         form.is_valid() == False
     ), f"No retinal screening date offered but test passed"
+
+
+"""
+Urine albumin tests
+"""
+
+
+@pytest.mark.django_db
+def test_urine_albumin_value_form_passes_validation():
+    """
+    Test that urine albumin value is accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "albumin_creatinine_ratio": 10,
+            "albumin_creatinine_ratio_date": "2025-01-01",
+            "albuminuria_stage": 1,  # Normal
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_impossible_value_form_fails_validation():
+    """
+    Test that urine albumin staget is rejected if impossible
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "albumin_creatinine_ratio": 10,
+            "albumin_creatinine_ratio_date": "2025-01-01",
+            "albuminuria_stage": 8,  # Impossible
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as albuminuria stage impossible, but got {form.errors}"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_value_below_range_form_fails_validation():
+    """
+    Test that urine albumin value is rejected if below range
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "albumin_creatinine_ratio": 0.1,
+            "albumin_creatinine_ratio_date": "2025-01-01",
+            "albuminuria_stage": 2,  # microalbuminuria
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as albuminuria < 3, passed"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_value_above_range_form_fails_validation():
+    """
+    Test that urine albumin value is rejected if above range
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "albumin_creatinine_ratio": 100,
+            "albumin_creatinine_ratio_date": "2025-01-01",
+            "albuminuria_stage": 3,  # macroalbuminuria
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as albuminuria < 3, passed"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_value_missing_form_fails_validation():
+    """
+    Test that urine albumin value missing  is rejected
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "albumin_creatinine_ratio": None,
+            "albumin_creatinine_ratio_date": "2025-01-01",
+            "albuminuria_stage": 2,  # micrralbuminuria
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as albuminuria None, passed"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_stage_missing_form_fails_validation():
+    """
+    Test that urine albumin value missing  is rejected
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "albumin_creatinine_ratio": 10,
+            "albumin_creatinine_ratio_date": "2025-01-01",
+            "albuminuria_stage": None,  # microalbuminuria
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as albuminuria None, passed"
+
+
+@pytest.mark.django_db
+def test_urine_albumin_date_missing_form_fails_validation():
+    """
+    Test that urine albumin date missing is rejected
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "albumin_creatinine_ratio": 10,
+            "albumin_creatinine_ratio_date": None,
+            "albuminuria_stage": 1,  # Normal
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as albuminuria date is None, passed"
