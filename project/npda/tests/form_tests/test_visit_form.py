@@ -427,3 +427,66 @@ def test_hba1c_date_and_hba1c_format_hba1c_all_missing_form_passes_validation():
     assert "hba1c_date" not in form.errors
     assert "hba1c_format" not in form.errors
     assert "hba1c" not in form.errors
+
+
+"""
+Diabetes treatment tests
+"""
+
+
+@pytest.mark.django_db
+def test_treatment_closed_loop_form_passes_validation():
+    """
+    Test that both pump and closed loop system are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "treatment": "3",  # Insulin pump
+            "closed_loop_system": "1",  # Closed loop system (licenced)
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+
+
+@pytest.mark.django_db
+def test_treatment_missing_closed_loop_form_fails_validation():
+    """
+    Test that both closed loop system selected but treatment is None fail validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "treatment": None,
+            "closed_loop_system": "1",  # Closed loop system (licenced)
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as closed loop system selected but treatment not selected as 1 or 3 (pump or pump + meds)"
+
+
+@pytest.mark.django_db
+def test_treatment_mdi_but_closed_loop_selected_form_fails_validation():
+    """
+    Test that MDI selected but closed loop system is also selected
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "treatment": 2,  # MDI
+            "closed_loop_system": "1",  # Closed loop system (licenced)
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as closed loop system selected but treatment not selected as 1 or 3 (pump or pump + meds)"

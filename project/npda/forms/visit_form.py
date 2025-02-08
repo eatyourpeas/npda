@@ -760,7 +760,7 @@ class VisitForm(forms.ModelForm):
             measure_must_have_date_and_value(
                 height_weight_observation_date,
                 "height_weight_observation_date",
-                [{"Height": height}],
+                [{"height": height}],
             )
 
         weight = cleaned_data.get("weight")
@@ -770,7 +770,7 @@ class VisitForm(forms.ModelForm):
             measure_must_have_date_and_value(
                 height_weight_observation_date,
                 "height_weight_observation_date",
-                [{"Weight": height}],
+                [{"weight": height}],
             )
 
         if height_weight_observation_date is not None:
@@ -840,9 +840,32 @@ class VisitForm(forms.ModelForm):
         treatment = cleaned_data.get("treatment")
         closed_loop_system = cleaned_data.get("closed_loop_system")
         if any([treatment, closed_loop_system]):
-            all_items_must_be_filled_in(
-                [{"treatment": treatment}, {"closed_loop_system": closed_loop_system}]
-            )
+            if treatment:
+                if treatment == 3 or treatment == 6:
+                    # Insulin pump or pump with drugs
+                    all_items_must_be_filled_in(
+                        [
+                            {"treatment": treatment},
+                            {"closed_loop_system": closed_loop_system},
+                        ]
+                    )
+                else:
+                    if closed_loop_system:  # No is not selected
+                        raise ValidationError(
+                            {
+                                "closed_loop_system": [
+                                    "Closed Loop System must be left empty if selected treatment is not an Insulin Pump or insulin pump therapy with other glucose lowering medications."
+                                ]
+                            }
+                        )
+            else:
+                raise ValidationError(
+                    {
+                        "treatment": [
+                            "Treatment must be filled in if Closed Loop System is filled in"
+                        ]
+                    }
+                )
 
         blood_pressure_observation_date = cleaned_data.get(
             "blood_pressure_observation_date"
@@ -860,8 +883,8 @@ class VisitForm(forms.ModelForm):
                 blood_pressure_observation_date,
                 "blood_pressure_observation_date",
                 [
-                    {"Systolic blood pressure": systolic_blood_pressure},
-                    {"Diastolic blood pressure": diastolic_blood_pressure},
+                    {"systolic_blood_pressure": systolic_blood_pressure},
+                    {"diastolic_blood_pressure": diastolic_blood_pressure},
                 ],
             )
 
@@ -871,7 +894,7 @@ class VisitForm(forms.ModelForm):
             measure_must_have_date_and_value(
                 retinal_screening_date,
                 "retinal_screening_date",
-                [{"Retinal Screening Result": retinal_screening_result}],
+                [{"retinal_screening_result": retinal_screening_result}],
             )
 
         albumin_creatinine_ratio_date = cleaned_data.get(
@@ -887,7 +910,7 @@ class VisitForm(forms.ModelForm):
                 "albumin_creatinine_ratio_date",
                 [
                     {"albumin_creatinine_ratio": albumin_creatinine_ratio},
-                    {"albumiuria_stage": albuminuria_stage},
+                    {"albuminuria_stage": albuminuria_stage},
                 ],
             )
 
@@ -935,7 +958,7 @@ class VisitForm(forms.ModelForm):
                 "psychological_screening_assessment_date",
                 [
                     {
-                        "Psychological Additional Support Status": psychological_additional_support_status
+                        "psychological_additional_support_status": psychological_additional_support_status
                     }
                 ],
             )
@@ -1087,14 +1110,19 @@ def all_items_must_be_filled_in(field_list):
     """
     Validate that all items in a list are filled in
     """
-    if (
-        any([value is None for field in field_list for key, value in field.items()])
-        is None
-    ):
-        fields = ", ".join(
-            [key for field in field_list for key, value in field.items()]
-        )
-        raise ValidationError(f"All items ({fields}) must be filled in.")
+    errors = {}
+    field_name_list = []
+    for field in field_list:
+        for key, value in field.items():
+            heading = return_heading_model_field(key)
+            field_name_list.append(heading)
+            if value is None:
+                errors.update(
+                    {f"{key}": [f"Missing item. {heading} must also be completed."]}
+                )
+    field_name_list = ", ".join(field_name_list)
+    if errors:
+        raise ValidationError(errors)
 
 
 def return_heading_model_field(field):

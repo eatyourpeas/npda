@@ -1054,3 +1054,72 @@ def test_hba1c_missing(test_user, single_row_valid_df):
     # This would be rejected in the questionnaire but saved if it was a csv upload
     assert visit.hba1c == None
     assert "hba1c" in visit.errors
+
+
+"""
+Diabetes treatment tests
+"""
+
+
+@pytest.mark.django_db
+def test_treatment_closed_loop_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that both pump and closed loop system are accepted
+    """
+    single_row_valid_df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = 3
+    single_row_valid_df.loc[
+        0,
+        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
+    ] = 1
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+    assert visit.treatment == 3
+    assert visit.closed_loop_system == 1
+
+
+@pytest.mark.django_db
+def test_treatment_missing_closed_loop_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that both closed loop system selected but treatment is None fail validation
+    """
+    single_row_valid_df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = None
+    single_row_valid_df.loc[
+        0,
+        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
+    ] = 1
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert "treatment" in errors[0]
+
+    visit = Visit.objects.first()
+    assert visit.treatment is None
+    assert visit.closed_loop_system == 1
+
+
+@pytest.mark.django_db
+def test_treatment_mdi_but_closed_loop_selected_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that MDI selected but closed loop system is also selected
+    """
+    single_row_valid_df.loc[0, "Diabetes Treatment at time of Hba1c measurement"] = (
+        2  # MDI
+    )
+    single_row_valid_df.loc[
+        0,
+        "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
+    ] = 2  # Closed loop system (licensed)
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert "closed_loop_system" in errors[0]
+
+    visit = Visit.objects.first()
+    assert visit.treatment == 2
+    assert visit.closed_loop_system == 2
+    assert "closed_loop_system" in visit.errors
