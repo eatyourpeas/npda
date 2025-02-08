@@ -285,7 +285,10 @@ class VisitForm(forms.ModelForm):
         else:
             options = str(YES_NO_UNKNOWN).strip("[]").replace(")", "").replace("(", "")
             raise ValidationError(
-                f"'{data}' is not a value for 'Gluten Free Diet'. Please select one of {options}."
+                "gluten_free_diet",
+                [
+                    f"'{data}' is not a value for 'Gluten Free Diet'. Please select one of {options}."
+                ],
             )
 
     def clean_hba1c_format(self):
@@ -746,21 +749,31 @@ class VisitForm(forms.ModelForm):
         birth_date = self.patient.date_of_birth
         sex = self.patient.sex
 
-        observation_date = cleaned_data.get("height_weight_observation_date")
+        height_weight_observation_date = cleaned_data.get(
+            "height_weight_observation_date"
+        )
 
         height = cleaned_data.get("height")
         if height is not None:
             cleaned_data["height"] = height = round_to_one_decimal_place(height)
             # Validate all fields in a measure are present
-            measure_must_have_date_and_value(observation_date, [{"Height": height}])
+            measure_must_have_date_and_value(
+                height_weight_observation_date,
+                "height_weight_observation_date",
+                [{"Height": height}],
+            )
 
         weight = cleaned_data.get("weight")
         if weight is not None:
             cleaned_data["weight"] = weight = round_to_one_decimal_place(weight)
             # Validate all fields in a measure are present
-            measure_must_have_date_and_value(observation_date, [{"Weight": height}])
+            measure_must_have_date_and_value(
+                height_weight_observation_date,
+                "height_weight_observation_date",
+                [{"Weight": height}],
+            )
 
-        if observation_date is not None:
+        if height_weight_observation_date is not None:
             if height is None and weight is None:
                 raise ValidationError(
                     "Height and Weight cannot both be empty if Observation Date is filled in"
@@ -770,7 +783,7 @@ class VisitForm(forms.ModelForm):
         if not getattr(self, "async_validation_results", None):
             self.async_validation_results = validate_visit_sync(
                 birth_date=birth_date,
-                observation_date=observation_date,
+                observation_date=height_weight_observation_date,
                 height=height,
                 weight=weight,
                 sex=sex,
@@ -873,8 +886,8 @@ class VisitForm(forms.ModelForm):
                 albumin_creatinine_ratio_date,
                 "albumin_creatinine_ratio_date",
                 [
-                    {"Albumin Creatinine Ratio": albumin_creatinine_ratio},
-                    {"Albuminuria Stage": albuminuria_stage},
+                    {"albumin_creatinine_ratio": albumin_creatinine_ratio},
+                    {"albumiuria_stage": albuminuria_stage},
                 ],
             )
 
@@ -884,7 +897,7 @@ class VisitForm(forms.ModelForm):
             measure_must_have_date_and_value(
                 total_cholesterol_date,
                 "total_cholesterol_date",
-                [{"Total Cholesterol": total_cholesterol}],
+                [{"total_cholesterol": total_cholesterol}],
             )
 
         thyroid_function_date = cleaned_data.get("thyroid_function_date")
@@ -893,7 +906,7 @@ class VisitForm(forms.ModelForm):
             measure_must_have_date_and_value(
                 thyroid_function_date,
                 "thyroid_function_date",
-                [{"Thyroid Treatment Status": thyroid_treatment_status}],
+                [{"thyroid_treatment_status": thyroid_treatment_status}],
             )
 
         coeliac_screen_date = cleaned_data.get("coeliac_screen_date")
@@ -902,7 +915,7 @@ class VisitForm(forms.ModelForm):
             measure_must_have_date_and_value(
                 coeliac_screen_date,
                 "coeliac_screen_date",
-                [{"Gluten Free Diet": gluten_free_diet}],
+                [{"gluten_free_diet": gluten_free_diet}],
             )
 
         psychological_screening_assessment_date = cleaned_data.get(
@@ -1068,8 +1081,6 @@ def measure_must_have_date_and_value(date_field, date_field_name, field_list):
             }
         )
     if errors:
-        print(errors)
-        print("raise ValidationError")
         raise ValidationError(errors[0])
 
 
@@ -1077,7 +1088,6 @@ def all_items_must_be_filled_in(field_list):
     """
     Validate that all items in a list are filled in
     """
-    print(field_list)
     if (
         any([value is None for field in field_list for key, value in field.items()])
         is None
