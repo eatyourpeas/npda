@@ -1146,3 +1146,84 @@ def test_coeliac_screen_date_none_form_fails_validation():
     )
     # Trigger the cleaners
     assert form.is_valid() == False, f"No coeliac function date offered but test passed"
+
+
+"""
+Psychological tests
+"""
+
+
+@pytest.mark.django_db
+def test_psychological_status_form_passes_validation():
+    """
+    Test that psychological status and date are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "psychological_additional_support_status": 1,  # Normal
+            "psychological_screening_assessment_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "psychological_additional_support_status" not in form.errors
+    assert "psychological_screening_assessment_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_psychological_status_unrecognized_form_fails_validation():
+    """
+    Test that an impossible psychological status is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "psychological_additional_support_status": 94,  # invalid
+            "psychological_screening_assessment_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Invalid psychological status offered but test passed"
+
+
+@pytest.mark.django_db
+def test_psychological_status_none_form_fails_validation():
+    """
+    Test that missing psychological status is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "psychological_additional_support_status": None,  # invalid
+            "psychological_screening_assessment_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"No psychological status offered but test passed"
+
+
+@pytest.mark.django_db
+def test_psychological_screen_date_none_form_fails_validation():
+    """
+    Test that missing psychological date is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "psychological_additional_support_status": 1,  # Normal
+            "psychological_screening_assessment_date": None,
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"No psychological date offered but test passed"

@@ -1962,3 +1962,104 @@ def test_coeliac_screening_date_missing_fails_validation(
 
     assert visit.coeliac_screen_date is None
     assert visit.gluten_free_diet == 1
+
+
+"""
+Psychological support tests
+"""
+
+
+@pytest.mark.django_db
+def test_psychological_support_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that psychological support is accepted
+    """
+    single_row_valid_df.loc[
+        0, "Observation Date - Psychological Screening Assessment"
+    ] = "01/01/2022"
+    single_row_valid_df.loc[
+        0,
+        "Was the patient assessed as requiring additional psychological/CAMHS support outside of MDT clinics?",
+    ] = 1
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.psychological_screening_assessment_date == datetime.date(2022, 1, 1)
+    assert visit.psychological_additional_support_status == 1
+
+
+@pytest.mark.django_db
+def test_psychological_support_impossible_value_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that an impossible psychological support value is rejected
+    """
+    single_row_valid_df.loc[
+        0, "Observation Date - Psychological Screening Assessment"
+    ] = "01/01/2022"
+    single_row_valid_df.loc[
+        0,
+        "Was the patient assessed as requiring additional psychological/CAMHS support outside of MDT clinics?",
+    ] = 94  # Impossible value
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "psychological_additional_support_status" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.psychological_screening_assessment_date == datetime.date(2022, 1, 1)
+    assert visit.psychological_additional_support_status == 94
+
+
+@pytest.mark.django_db
+def test_psychological_support_missing_fails_validation(test_user, single_row_valid_df):
+    """
+    Test that a missing psychological support value is rejected
+    """
+    single_row_valid_df.loc[
+        0, "Observation Date - Psychological Screening Assessment"
+    ] = "01/01/2022"
+    single_row_valid_df.loc[
+        0,
+        "Was the patient assessed as requiring additional psychological/CAMHS support outside of MDT clinics?",
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "psychological_additional_support_status" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.psychological_screening_assessment_date == datetime.date(2022, 1, 1)
+    assert visit.psychological_additional_support_status is None
+
+
+@pytest.mark.django_db
+def test_psychological_support_date_missing_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that a missing psychological support date is rejected
+    """
+    single_row_valid_df.loc[
+        0, "Observation Date - Psychological Screening Assessment"
+    ] = None
+    single_row_valid_df.loc[
+        0,
+        "Was the patient assessed as requiring additional psychological/CAMHS support outside of MDT clinics?",
+    ] = 1
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "psychological_screening_assessment_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.psychological_screening_assessment_date is None
+    assert visit.psychological_additional_support_status == 1
