@@ -875,3 +875,108 @@ def test_urine_albumin_date_missing_form_fails_validation():
     assert (
         form.is_valid() == False
     ), f"Form should be invalid as albuminuria date is None, passed"
+
+
+"""
+Cholesterol tests
+"""
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_value_form_passes_validation():
+    """
+    Test that total cholesterol value is accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "total_cholesterol": 4,
+            "total_cholesterol_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "total_cholesterol" not in form.errors
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_value_below_range_form_fails_validation():
+    """
+    Test that total cholesterol value is rejected if below range
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "total_cholesterol": 1,
+            "total_cholesterol_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as total cholesterol < 2, passed"
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_value_above_range_form_fails_validation():
+    """
+    Test that total cholesterol value is rejected if above range
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "total_cholesterol": 20,
+            "total_cholesterol_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as total cholesterol > 12 mmol/L, passed"
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_value_missing_form_fails_validation():
+    """
+    Test that total cholesterol value missing  is rejected
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "total_cholesterol": None,
+            "total_cholesterol_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as total cholesterol None, passed"
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_date_missing_form_fails_validation():
+    """
+    Test that total cholesterol date missing is rejected
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "total_cholesterol": 4,
+            "total_cholesterol_date": None,
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as total cholesterol date is None, passed"

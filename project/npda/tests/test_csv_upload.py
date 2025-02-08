@@ -1635,3 +1635,142 @@ def test_urine_albumin_date_missing_form_fails_validation(
     assert (
         visit.albumin_creatinine_ratio_date == None
     ), f"Saved urine albumin observation date should be None, but was {visit.albumin_creatinine_ratio_date}"
+
+
+"""
+Total cholesterol tests
+"""
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_value_form_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that total cholesterol value is accepted
+    """
+    single_row_valid_df.loc[0, "Total Cholesterol Level (mmol/l)"] = 5
+    single_row_valid_df.loc[0, "Observation Date: Total Cholesterol Level"] = (
+        "01/01/2022"
+    )
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.total_cholesterol == 5
+    ), f"Saved total cholesterol should be 5, but was {visit.total_cholesterol}"
+    assert visit.total_cholesterol_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved total cholesterol observation date should be 1/1/2022, but was {visit.total_cholesterol_date}"
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_value_above_reference_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that total cholesterol value is rejected if impossible
+    """
+    single_row_valid_df.loc[0, "Total Cholesterol Level (mmol/l)"] = 20
+    single_row_valid_df.loc[0, "Observation Date: Total Cholesterol Level"] = (
+        "01/01/2022"
+    )
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "total_cholesterol" in errors[0]
+    ), f"Total cholesterol should fail validation as above reference range, but passed."
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.total_cholesterol == 20
+    ), f"Saved total cholesterol should be 1000, but was {visit.total_cholesterol}"
+    assert visit.total_cholesterol_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved total cholesterol observation date should be 1/1/2022, but was {visit.total_cholesterol_date}"
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_value_below_reference_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that total cholesterol value is rejected if impossible
+    """
+    single_row_valid_df.loc[0, "Total Cholesterol Level (mmol/l)"] = 0
+    single_row_valid_df.loc[0, "Observation Date: Total Cholesterol Level"] = (
+        "01/01/2022"
+    )
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "total_cholesterol" in errors[0]
+    ), f"Total cholesterol should fail validation as impossible, but passed."
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.total_cholesterol == 0
+    ), f"Saved total cholesterol should be 0, but was {visit.total_cholesterol}"
+    assert visit.total_cholesterol_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved total cholesterol observation date should be 1/1/2022, but was {visit.total_cholesterol_date}"
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_value_missing_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that total cholesterol value missing  is rejected
+    """
+    single_row_valid_df.loc[0, "Total Cholesterol Level (mmol/l)"] = None
+    single_row_valid_df.loc[0, "Observation Date: Total Cholesterol Level"] = (
+        "01/01/2022"
+    )
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "total_cholesterol" in errors[0]
+    ), f"Total cholesterol should fail validation as None, but passed."
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.total_cholesterol is None
+    ), f"Saved total cholesterol should be None, but was {visit.total_cholesterol}"
+    assert visit.total_cholesterol_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved total cholesterol observation date should be 1/1/2022, but was {visit.total_cholesterol_date}"
+
+
+@pytest.mark.django_db
+def test_total_cholesterol_date_missing_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that total cholesterol date missing is rejected
+    """
+    single_row_valid_df.loc[0, "Total Cholesterol Level (mmol/l)"] = 5
+    single_row_valid_df.loc[0, "Observation Date: Total Cholesterol Level"] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "total_cholesterol_date" in errors[0]
+    ), f"Total cholesterol date should fail validation as None, but passed."
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.total_cholesterol == 5
+    ), f"Saved total cholesterol should be 5, but was {visit.total_cholesterol}"
+    assert (
+        visit.total_cholesterol_date == None
+    ), f"Saved total cholesterol observation date should be None, but was {visit.total_cholesterol_date}"
