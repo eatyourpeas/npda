@@ -976,6 +976,24 @@ class VisitForm(forms.ModelForm):
                     "smoking_cessation_referral_date",
                     [{"smoking_status": smoking_status}],
                 )
+            else:
+                if smoking_cessation_referral_date is not None:
+                    raise ValidationError(
+                        {
+                            "smoking_cessation_referral_date": [
+                                "Smoking Cessation Referral Date must be left empty if patient is not a current smoker or status is unknown."
+                            ]
+                        }
+                    )
+        else:
+            if smoking_cessation_referral_date is not None:
+                raise ValidationError(
+                    {
+                        "smoking_cessation_referral_date": [
+                            "Smoking Cessation Referral Date must be left empty if Smoking Status is not filled in"
+                        ]
+                    }
+                )
 
         dietician_additional_appointment_offered = cleaned_data.get(
             "dietician_additional_appointment_offered"

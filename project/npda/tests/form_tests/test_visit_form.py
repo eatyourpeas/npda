@@ -1227,3 +1227,96 @@ def test_psychological_screen_date_none_form_fails_validation():
     )
     # Trigger the cleaners
     assert form.is_valid() == False, f"No psychological date offered but test passed"
+
+
+"""
+Smoking tests
+"""
+
+
+@pytest.mark.django_db
+def test_smoking_status_smoker_form_passes_validation():
+    """
+    Test that smoking status and date are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "smoking_status": 2,  # current smoker
+            "smoking_cessation_referral_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "smoking_status" not in form.errors
+    assert "smoking_cessation_referral_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_smoking_status_non_smoker_form_passes_validation():
+    """
+    Test that smoking status and date are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "smoking_status": 1,  # non smoker
+            "smoking_cessation_referral_date": None,
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "smoking_status" not in form.errors
+    assert "smoking_cessation_referral_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_smoking_status_unrecognized_form_fails_validation():
+    """
+    Test that an impossible smoking status is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "smoking_status": 94,  # invalid
+            "smoking_cessation_referral_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"Invalid smoking status offered but test passed"
+    assert (
+        "smoking_status" in form.errors
+    ), "Invalid smoking status offered but test passed"
+    assert (
+        "smoking_cessation_referral_date" in form.errors
+    ), "Smoking cessation referral date in context of invalid smoking status offered but test passed"
+
+
+@pytest.mark.django_db
+def test_smoking_status_date_when_non_smoker_form_fails_validation():
+    """
+    Test that smoking cessation referral date exist if the patient is a non-smoker should fail
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "smoking_status": 1,  # Non-smoker
+            "smoking_cessation_referral_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Smoking cessation referral date offered but test passed"
+    assert "smoking_status" not in form.errors
+    assert "smoking_cessation_referral_date" in form.errors

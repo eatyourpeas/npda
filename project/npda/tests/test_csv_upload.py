@@ -2063,3 +2063,138 @@ def test_psychological_support_date_missing_fails_validation(
 
     assert visit.psychological_screening_assessment_date is None
     assert visit.psychological_additional_support_status == 1
+
+
+"""
+Smoking status tests
+"""
+
+
+@pytest.mark.django_db
+def test_smoking_status_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that smoking status is accepted
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of offer of referral to smoking cessation service (if patient is a current smoker)",
+    ] = "01/01/2022"
+    single_row_valid_df.loc[0, "Does the patient smoke?"] = 2  # Current smoker
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.smoking_cessation_referral_date == datetime.date(2022, 1, 1)
+    assert visit.smoking_status == 2
+
+
+@pytest.mark.django_db
+def test_smoking_status_non_smoker_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that smoking status is accepted
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of offer of referral to smoking cessation service (if patient is a current smoker)",
+    ] = None
+    single_row_valid_df.loc[0, "Does the patient smoke?"] = 1  # Non-smoker
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.smoking_cessation_referral_date is None
+    assert visit.smoking_status == 1
+
+
+@pytest.mark.django_db
+def test_smoking_status_impossible_value_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that an impossible smoking status value is rejected
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of offer of referral to smoking cessation service (if patient is a current smoker)",
+    ] = "01/01/2022"
+    single_row_valid_df.loc[0, "Does the patient smoke?"] = 94  # Impossible value
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "smoking_status" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.smoking_cessation_referral_date == datetime.date(2022, 1, 1)
+    assert visit.smoking_status == 94
+
+
+@pytest.mark.django_db
+def test_smoking_status_non_smoker_referral_date_provided_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that a non-smoker with a referral date is rejected
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of offer of referral to smoking cessation service (if patient is a current smoker)",
+    ] = "01/01/2022"
+    single_row_valid_df.loc[0, "Does the patient smoke?"] = 1  # Non-smoker
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "smoking_cessation_referral_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.smoking_cessation_referral_date == datetime.date(2022, 1, 1)
+    assert visit.smoking_status == 1
+
+
+@pytest.mark.django_db
+def test_smoking_status_missing_fails_validation(test_user, single_row_valid_df):
+    """
+    Test that a missing smoking status value is rejected
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of offer of referral to smoking cessation service (if patient is a current smoker)",
+    ] = "01/01/2022"
+    single_row_valid_df.loc[0, "Does the patient smoke?"] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "smoking_cessation_referral_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.smoking_cessation_referral_date == datetime.date(2022, 1, 1)
+    assert visit.smoking_status is None
+
+
+@pytest.mark.django_db
+def test_smoking_status_date_missing_fails_validation(test_user, single_row_valid_df):
+    """
+    Test that a missing smoking status date is rejected
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of offer of referral to smoking cessation service (if patient is a current smoker)",
+    ] = None
+    single_row_valid_df.loc[0, "Does the patient smoke?"] = 2  # Current smoker
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "smoking_cessation_referral_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.smoking_status is 2
+    assert visit.smoking_cessation_referral_date is None
