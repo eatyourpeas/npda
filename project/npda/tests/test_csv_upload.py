@@ -1327,3 +1327,100 @@ def test_diastolic_blood_pressure_below_20_form_fails_validation(
     assert visit.blood_pressure_observation_date == datetime.date(
         2022, 1, 1
     ), f"Blood pressure observation date should be 1/1/2022 but is {visit.blood_pressure_observation_date}"
+
+
+"""
+Retinal screening tests
+"""
+
+
+@pytest.mark.django_db
+def test_decs_value_form_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that DECS value is accepted
+    """
+    single_row_valid_df.loc[0, "Retinal Screening date"] = "01/01/2022"
+    single_row_valid_df.loc[0, "Retinal Screening Result"] = 1  # Normal
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        len(errors) == 0
+    ), f"Retinal screening date and result should pass validation, but failed with errors: {errors}"
+
+    visit = Visit.objects.first()
+    assert visit.retinal_screening_observation_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved Retinal screening date should be 1/1/2022, but was {visit.retinal_screening_observation_date}"
+    assert (
+        visit.retinal_screening_result == 1
+    ), f"Saved Retinal screening result should be 1 (Normal), but was {visit.retinal_screening_result}"
+
+
+@pytest.mark.django_db
+def test_decs_value_unrecognized_form_fails_validation(test_user, single_row_valid_df):
+    """
+    Test that an impossible DECS value is invalid
+    """
+    single_row_valid_df.loc[0, "Retinal Screening date"] = "01/01/2022"
+    single_row_valid_df.loc[0, "Retinal Screening Result"] = 94  # Impossible value
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "retinal_screening_result" in errors[0]
+    ), f"Retinal screening result should fail validation, but passed."
+
+    visit = Visit.objects.first()
+    assert visit.retinal_screening_observation_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved Retinal screening date should be 1/1/2022, but was {visit.retinal_screening_observation_date}"
+    assert (
+        visit.retinal_screening_result == 94
+    ), f"Saved Retinal screening result should be 94 (impossible value), but was {visit.retinal_screening_result}"
+
+
+@pytest.mark.django_db
+def test_decs_value_none_form_fails_validation(test_user, single_row_valid_df):
+    """
+    Test that a missing DECS value is invalid
+    """
+    single_row_valid_df.loc[0, "Retinal Screening date"] = "01/01/2022"
+    single_row_valid_df.loc[0, "Retinal Screening Result"] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "retinal_screening_result" in errors[0]
+    ), f"Retinal screening result should fail validation due to missing result, but passed."
+
+    visit = Visit.objects.first()
+    assert visit.retinal_screening_observation_date == datetime.date(
+        2022, 1, 1
+    ), f"Saved Retinal screening date should be 1/1/2022, but was {visit.retinal_screening_observation_date}"
+    assert (
+        visit.retinal_screening_result == None
+    ), f"Saved Retinal screening result should be None, but was {visit.retinal_screening_result}"
+
+
+@pytest.mark.django_db
+def test_decs_date_none_form_fails_validation(test_user, single_row_valid_df):
+    """
+    Test that a missing DECS date is invalid
+    """
+    single_row_valid_df.loc[0, "Retinal Screening date"] = None
+    single_row_valid_df.loc[0, "Retinal Screening Result"] = 1  # Normal
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "retinal_screening_observation_date" in errors[0]
+    ), f"Retinal screening date should fail validation due to missing date, but passed."
+
+    visit = Visit.objects.first()
+    assert (
+        visit.retinal_screening_observation_date == None
+    ), f"Saved Retinal screening date should be None, but was {visit.retinal_screening_observation_date}"
+    assert (
+        visit.retinal_screening_result == 1
+    ), f"Saved Retinal screening result should be 1 (Normal), but was {visit.retinal_screening_result}"

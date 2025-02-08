@@ -640,3 +640,86 @@ def test_diastolic_blood_pressure_below_20_form_fails_validation():
     assert (
         form.is_valid() == False
     ), f"Form should be invalid as diastolic blood pressure < 20, but passed measure."
+
+
+"""
+DECS tests
+"""
+
+
+@pytest.mark.django_db
+def test_decs_value_form_passes_validation():
+    """
+    Test that DECS value is accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "retinal_screening_result": 1,  # Normal
+            "retinal_screening_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+
+
+@pytest.mark.django_db
+def test_decs_value_unrecognized_form_fails_validation():
+    """
+    Test that an impossible DECS value is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "retinal_screening_result": 94,  # invalid
+            "retinal_screening_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Invalid retinal screening result offered but test passed"
+
+
+@pytest.mark.django_db
+def test_decs_value_none_form_fails_validation():
+    """
+    Test that a missing DECS value is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "retinal_screening_result": None,  # invalid
+            "retinal_screening_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"No retinal screening result offered but test passed"
+
+
+@pytest.mark.django_db
+def test_decs_date_none_form_fails_validation():
+    """
+    Test that a missing DECS date is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "retinal_screening_result": 1,  # Normal
+            "retinal_screening_observation_date": None,
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"No retinal screening date offered but test passed"

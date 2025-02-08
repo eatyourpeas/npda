@@ -888,12 +888,14 @@ class VisitForm(forms.ModelForm):
                 ],
             )
 
-        retinal_screening_date = cleaned_data.get("retinal_screening_observation_date")
+        retinal_screening_observation_date = cleaned_data.get(
+            "retinal_screening_observation_date"
+        )
         retinal_screening_result = cleaned_data.get("retinal_screening_result")
-        if any([retinal_screening_date, retinal_screening_result]):
+        if any([retinal_screening_observation_date, retinal_screening_result]):
             measure_must_have_date_and_value(
-                retinal_screening_date,
-                "retinal_screening_date",
+                retinal_screening_observation_date,
+                "retinal_screening_observation_date",
                 [{"retinal_screening_result": retinal_screening_result}],
             )
 
