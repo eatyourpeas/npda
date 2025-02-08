@@ -766,6 +766,7 @@ class VisitForm(forms.ModelForm):
                     "Height and Weight cannot both be empty if Observation Date is filled in"
                 )
 
+        # Get centiles for height and weight and bmi if they are present as well as date and sex
         if not getattr(self, "async_validation_results", None):
             self.async_validation_results = validate_visit_sync(
                 birth_date=birth_date,
@@ -778,33 +779,49 @@ class VisitForm(forms.ModelForm):
         self.handle_async_validation_errors()
 
         # Check that the hba1c value is within the correct range
-        hba1c_value = cleaned_data["hba1c"]
-        hba1c_format = cleaned_data["hba1c_format"]
+        hba1c = cleaned_data.get("hba1c")
+        hba1c_format = cleaned_data.get("hba1c_format")
+        hba1c_date = cleaned_data.get("hba1c_date")
 
-        if hba1c_value is not None:
+        if hba1c is not None:
             if hba1c_format == 1:
                 # mmol/mol
-                if hba1c_value < 20:
+                if hba1c < 20:
                     raise ValidationError(
-                        "Hba1c Value out of range (mmol/mol). Cannot be below 20"
+                        {
+                            "hba1c": [
+                                "Hba1c Value out of range (mmol/mol). Cannot be below 20. Did you mean to enter a DCCT (%) value?"
+                            ]
+                        }
                     )
-                elif hba1c_value > 195:
+                elif hba1c > 195:
                     raise ValidationError(
-                        "Hba1c Value out of range (mmol/mol). Cannot be above 195"
+                        {
+                            "hba1c": [
+                                "Hba1c Value out of range (mmol/mol). Cannot be above 195"
+                            ]
+                        }
                     )
             elif hba1c_format == 2:
                 # %
-                if hba1c_value < 3:
+                if hba1c < 3:
                     raise ValidationError(
-                        "Hba1c Value out of range (%). Cannot be below 3"
+                        {"hba1c": ["Hba1c Value out of range (%). Cannot be below 3"]}
                     )
-                elif hba1c_value > 20:
+                elif hba1c > 20:
                     raise ValidationError(
-                        "Hba1c Value out of range (%). Cannot be above 20"
+                        {
+                            "hba1c": [
+                                "Hba1c Value out of range (%). Cannot be above 20. Did you mean to enter an IFCC (mmol/mol) value?"
+                            ]
+                        }
                     )
+        if any([hba1c, hba1c_format, hba1c_date]):
+            # Validate all fields in a measure are present if any are present
             measure_must_have_date_and_value(
+                hba1c_date,
                 "hba1c_date",
-                [{"Hba1c Value": hba1c_value}, {"Hba1c Format": hba1c_format}],
+                [{"hba1c": hba1c}, {"hba1c_format": hba1c_format}],
             )
 
         treatment = cleaned_data.get("treatment")
@@ -828,6 +845,7 @@ class VisitForm(forms.ModelForm):
         ):
             measure_must_have_date_and_value(
                 blood_pressure_observation_date,
+                "blood_pressure_observation_date",
                 [
                     {"Systolic blood pressure": systolic_blood_pressure},
                     {"Diastolic blood pressure": diastolic_blood_pressure},
@@ -839,6 +857,7 @@ class VisitForm(forms.ModelForm):
         if any([retinal_screening_date, retinal_screening_result]):
             measure_must_have_date_and_value(
                 retinal_screening_date,
+                "retinal_screening_date",
                 [{"Retinal Screening Result": retinal_screening_result}],
             )
 
@@ -852,6 +871,7 @@ class VisitForm(forms.ModelForm):
         ):
             measure_must_have_date_and_value(
                 albumin_creatinine_ratio_date,
+                "albumin_creatinine_ratio_date",
                 [
                     {"Albumin Creatinine Ratio": albumin_creatinine_ratio},
                     {"Albuminuria Stage": albuminuria_stage},
@@ -862,7 +882,9 @@ class VisitForm(forms.ModelForm):
         total_cholesterol = cleaned_data.get("total_cholesterol")
         if any([total_cholesterol_date, total_cholesterol]):
             measure_must_have_date_and_value(
-                total_cholesterol_date, [{"Total Cholesterol": total_cholesterol}]
+                total_cholesterol_date,
+                "total_cholesterol_date",
+                [{"Total Cholesterol": total_cholesterol}],
             )
 
         thyroid_function_date = cleaned_data.get("thyroid_function_date")
@@ -870,6 +892,7 @@ class VisitForm(forms.ModelForm):
         if any([thyroid_function_date, thyroid_treatment_status]):
             measure_must_have_date_and_value(
                 thyroid_function_date,
+                "thyroid_function_date",
                 [{"Thyroid Treatment Status": thyroid_treatment_status}],
             )
 
@@ -877,7 +900,9 @@ class VisitForm(forms.ModelForm):
         gluten_free_diet = cleaned_data.get("gluten_free_diet")
         if any([coeliac_screen_date, gluten_free_diet]):
             measure_must_have_date_and_value(
-                coeliac_screen_date, [{"Gluten Free Diet": gluten_free_diet}]
+                coeliac_screen_date,
+                "coeliac_screen_date",
+                [{"Gluten Free Diet": gluten_free_diet}],
             )
 
         psychological_screening_assessment_date = cleaned_data.get(
@@ -894,6 +919,7 @@ class VisitForm(forms.ModelForm):
         ):
             measure_must_have_date_and_value(
                 psychological_screening_assessment_date,
+                "psychological_screening_assessment_date",
                 [
                     {
                         "Psychological Additional Support Status": psychological_additional_support_status
@@ -909,7 +935,8 @@ class VisitForm(forms.ModelForm):
             if smoking_status == 2:  # Current  smoking status: must supply a date
                 measure_must_have_date_and_value(
                     smoking_cessation_referral_date,
-                    [{"Smoking Status": smoking_status}],
+                    "smoking_cessation_referral_date",
+                    [{"smoking_status": smoking_status}],
                 )
 
         dietician_additional_appointment_offered = cleaned_data.get(
@@ -922,9 +949,10 @@ class VisitForm(forms.ModelForm):
             if dietician_additional_appointment_offered == 1:
                 measure_must_have_date_and_value(
                     dietician_additional_appointment_date,
+                    "dietician_additional_appointment_date",
                     [
                         {
-                            "Dietician Additional Appointment Offered": dietician_additional_appointment_offered
+                            "dietician_additional_appointment_offered": dietician_additional_appointment_offered
                         }
                     ],
                 )
@@ -944,12 +972,18 @@ class VisitForm(forms.ModelForm):
             if ketone_meter_training == 1:
                 measure_must_have_date_and_value(
                     sick_day_rules_training_date,
-                    [{"Ketone Meter Training": ketone_meter_training}],
+                    "sick_day_rules_training_date",
+                    [{"ketone_meter_training": ketone_meter_training}],
                 )
 
         if sick_day_rules_training_date is not None and ketone_meter_training is None:
             raise ValidationError(
-                "Ketone Meter Training must be filled in if Sick Day Rules Training Date is filled in"
+                {
+                    "ketone_meter_training",
+                    [
+                        "Ketone Meter Training must be filled in if Sick Day Rules Training Date is filled in"
+                    ],
+                }
             )
 
         hospital_admission_date = cleaned_data.get("hospital_admission_date")
@@ -1003,29 +1037,47 @@ class VisitForm(forms.ModelForm):
         return self.instance
 
 
-def measure_must_have_date_and_value(date_field, field_list):
+def measure_must_have_date_and_value(date_field, date_field_name, field_list):
     """
     Validate that a measure has a date and a value
     The date_field is the date the measure was taken
     The kwargs is a variable number of key value pairs where the key is the name of the measure and the value is value of the measure
     """
-
-    if (
-        any(value is None for field in field_list for key, value in field.items())
-        or date_field is None
-    ):
-        fields = ", ".join(
-            [key for field in field_list for key, value in field.items()]
+    errors = []
+    field_name_list = []
+    for field in field_list:
+        for key, value in field.items():
+            for heading in CSV_HEADING_OBJECTS:
+                if heading["model_field"] == key:
+                    field_name_list.append(heading["heading"])
+            if value is None:
+                errors.append(
+                    {
+                        f"{key}": [
+                            f"Missing item. {key} and the associated date must all be completed."
+                        ]
+                    }
+                )
+    field_name_list = ", ".join(field_name_list)
+    if date_field is None:
+        errors.append(
+            {
+                date_field_name: [
+                    f"Missing date. {field_name_list} and the associated date must all be completed."
+                ]
+            }
         )
-        raise ValidationError(
-            f"{fields} and the associated date must all be filled in."
-        )
+    if errors:
+        print(errors)
+        print("raise ValidationError")
+        raise ValidationError(errors[0])
 
 
 def all_items_must_be_filled_in(field_list):
     """
     Validate that all items in a list are filled in
     """
+    print(field_list)
     if (
         any([value is None for field in field_list for key, value in field.items()])
         is None

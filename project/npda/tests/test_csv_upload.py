@@ -964,3 +964,71 @@ def test_async_visit_fields_are_saved(test_user, single_row_valid_df):
 
     assert visit.bmi_centile == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi_result.centile
     assert visit.bmi_sds == MOCK_VISIT_EXTERNAL_VALIDATION_RESULT.bmi_result.sds
+
+
+@pytest.mark.django_db
+def test_hba1c_value_ifcc_less_than_20(test_user, single_row_valid_df):
+    single_row_valid_df.loc[0, "Hba1c Value"] = 18
+    single_row_valid_df.loc[0, "HbA1c result format"] = 1  # IFCC (mmol/mol)
+    single_row_valid_df.loc[0, "Observation Date: Hba1c Value"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hba1c" in errors[0]
+
+    visit = Visit.objects.first()
+
+    # This would be rejected in the questionnaire but saved if it was a csv upload
+    assert visit.hba1c == 18
+    assert "hba1c" in visit.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_value_ifcc_more_than_195(test_user, single_row_valid_df):
+    single_row_valid_df.loc[0, "Hba1c Value"] = 196
+    single_row_valid_df.loc[0, "HbA1c result format"] = 1  # IFCC (mmol/mol)
+    single_row_valid_df.loc[0, "Observation Date: Hba1c Value"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hba1c" in errors[0]
+
+    visit = Visit.objects.first()
+
+    # This would be rejected in the questionnaire but saved if it was a csv upload
+    assert visit.hba1c == 196
+    assert "hba1c" in visit.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_value_dcct_more_than_20(test_user, single_row_valid_df):
+    single_row_valid_df.loc[0, "Hba1c Value"] = 21
+    single_row_valid_df.loc[0, "HbA1c result format"] = 2  # DCCT (%)
+    single_row_valid_df.loc[0, "Observation Date: Hba1c Value"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hba1c" in errors[0]
+
+    visit = Visit.objects.first()
+
+    # This would be rejected in the questionnaire but saved if it was a csv upload
+    assert visit.hba1c == 21
+    assert "hba1c" in visit.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_value_dcct_less_than_3(test_user, single_row_valid_df):
+    single_row_valid_df.loc[0, "Hba1c Value"] = 2
+    single_row_valid_df.loc[0, "HbA1c result format"] = 2  # DCCT (%)
+    single_row_valid_df.loc[0, "Observation Date: Hba1c Value"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hba1c" in errors[0]
+
+    visit = Visit.objects.first()
+
+    # This would be rejected in the questionnaire but saved if it was a csv upload
+    assert visit.hba1c == 2
+    assert "hba1c" in visit.errors
