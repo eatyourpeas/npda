@@ -1063,3 +1063,86 @@ def test_thyroid_function_date_none_form_fails_validation():
     )
     # Trigger the cleaners
     assert form.is_valid() == False, f"No thyroid function date offered but test passed"
+
+
+"""
+Coeliac tests
+"""
+
+
+@pytest.mark.django_db
+def test_coeliac_treatment_status_form_passes_validation():
+    """
+    Test that coeliac function status and date are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "gluten_free_diet": 1,  # Normal
+            "coeliac_screen_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "gluten_free_diet" not in form.errors
+    assert "coeliac_screen_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_coeliac_treatment_status_unrecognized_form_fails_validation():
+    """
+    Test that an impossible coeliac function status is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "gluten_free_diet": 94,  # invalid
+            "coeliac_screen_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Invalid coeliac function status offered but test passed"
+
+
+@pytest.mark.django_db
+def test_coeliac_treatment_status_none_form_fails_validation():
+    """
+    Test that missing coeliac function status is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "gluten_free_diet": None,  # invalid
+            "coeliac_screen_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"No coeliac function status offered but test passed"
+
+
+@pytest.mark.django_db
+def test_coeliac_screen_date_none_form_fails_validation():
+    """
+    Test that missing coeliac function date is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "gluten_free_diet": 1,  # Normal
+            "coeliac_screen_date": None,
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"No coeliac function date offered but test passed"
