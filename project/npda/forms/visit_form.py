@@ -1036,15 +1036,42 @@ class VisitForm(forms.ModelForm):
                 hospital_admission_other,
             ]
         ):
-            all_items_must_be_filled_in(
-                [
-                    {"hospital_admission_date": hospital_admission_date},
-                    {"hospital_discharge_date": hospital_discharge_date},
-                    {"hospital_admission_reason": hospital_admission_reason},
-                    {"dka_additional_therapies": dka_additional_therapies},
-                    {"hospital_admission_other": hospital_admission_other},
-                ]
-            )
+            if hospital_admission_reason is not None:
+                if hospital_admission_reason == 2:  # DKA
+                    all_items_must_be_filled_in(
+                        [
+                            {"hospital_admission_date": hospital_admission_date},
+                            {"hospital_discharge_date": hospital_discharge_date},
+                            {"hospital_admission_reason": hospital_admission_reason},
+                            {"dka_additional_therapies": dka_additional_therapies},
+                        ]
+                    )
+                elif hospital_admission_reason == 5:  # Other
+                    all_items_must_be_filled_in(
+                        [
+                            {"hospital_admission_date": hospital_admission_date},
+                            {"hospital_discharge_date": hospital_discharge_date},
+                            {"hospital_admission_reason": hospital_admission_reason},
+                            {"hospital_admission_other": hospital_admission_other},
+                        ]
+                    )
+                else:
+                    all_items_must_be_filled_in(
+                        [
+                            {"hospital_admission_date": hospital_admission_date},
+                            {"hospital_discharge_date": hospital_discharge_date},
+                            {"hospital_admission_reason": hospital_admission_reason},
+                        ]
+                    )
+            else:
+                # No hospital admission reason selected
+                all_items_must_be_filled_in(
+                    [
+                        {"hospital_admission_date": hospital_admission_date},
+                        {"hospital_discharge_date": hospital_discharge_date},
+                        {"hospital_admission_reason": hospital_admission_reason},
+                    ]
+                )
 
         return cleaned_data
 
@@ -1104,6 +1131,11 @@ def measure_must_have_date_and_value(date_field, date_field_name, field_list):
         )
     if errors:
         raise ValidationError(errors)
+
+
+"""
+Helper functions for validation in the clean method
+"""
 
 
 def all_items_must_be_filled_in(field_list):

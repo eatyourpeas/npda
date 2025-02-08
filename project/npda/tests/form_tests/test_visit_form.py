@@ -490,3 +490,153 @@ def test_treatment_mdi_but_closed_loop_selected_form_fails_validation():
     assert (
         form.is_valid() == False
     ), f"Form should be invalid as closed loop system selected but treatment not selected as 1 or 3 (pump or pump + meds)"
+
+
+"""
+Blood pressure tests
+"""
+
+
+@pytest.mark.django_db
+def test_blood_pressure_values_form_passes_validation():
+    """
+    Test that both systolic and diastolic blood pressure values are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "systolic_blood_pressure": "120",
+            "diastolic_blood_pressure": "80",
+            "blood_pressure_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+
+
+@pytest.mark.django_db
+def test_blood_pressure_missing_values_form_fails_validation():
+    """
+    Test that one missing systolic blood pressure value fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "systolic_blood_pressure": None,
+            "diastolic_blood_pressure": "80",
+            "blood_pressure_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as missing systolic blood pressure but passed measure."
+
+
+@pytest.mark.django_db
+def test_blood_pressure_missing_date_form_fails_validation():
+    """
+    Test that missing blood pressure observation date fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "systolic_blood_pressure": "120",
+            "diastolic_blood_pressure": "80",
+            "blood_pressure_observation_date": None,
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as missing blood pressure date but passed measure."
+
+
+@pytest.mark.django_db
+def test_systolic_blood_pressure_over_240_form_fails_validation():
+    """
+    Test that systolic blood pressure value > 240 fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "systolic_blood_pressure": "250",
+            "diastolic_blood_pressure": "80",
+            "blood_pressure_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as systolic blood pressure > 240 and is a medical emergency, but passed measure."
+
+
+@pytest.mark.django_db
+def test_systolic_blood_pressure_below_80_form_fails_validation():
+    """
+    Test that systolic blood pressure value < 80 fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "systolic_blood_pressure": "60",
+            "diastolic_blood_pressure": "80",
+            "blood_pressure_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as systolic blood pressure < 80 and tbh not really compatible with life, but passed measure."
+
+
+@pytest.mark.django_db
+def test_diastolic_blood_pressure_over_120_form_fails_validation():
+    """
+    Test that diastolic blood pressure value > 120 fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "systolic_blood_pressure": "120",
+            "diastolic_blood_pressure": "125",
+            "blood_pressure_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as diastolic blood pressure > 120 and is a medical emergency, but passed measure."
+
+
+@pytest.mark.django_db
+def test_diastolic_blood_pressure_below_20_form_fails_validation():
+    """
+    Test that diastolic blood pressure value < 20 fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "systolic_blood_pressure": "120",
+            "diastolic_blood_pressure": "15",
+            "blood_pressure_observation_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should be invalid as diastolic blood pressure < 20, but passed measure."

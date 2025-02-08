@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 import tempfile
 from decimal import Decimal
 from unittest.mock import AsyncMock, patch
@@ -280,6 +281,7 @@ def test_error_in_multiple_visits(test_user, one_patient_two_visits):
         0,
         "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
     ] = 3
+    df.loc[1, "Diabetes Treatment at time of Hba1c measurement"] = 3
     df.loc[
         1,
         "If treatment included insulin pump therapy (i.e. option 3 or 6 selected), was this part of a closed loop system?",
@@ -291,6 +293,8 @@ def test_error_in_multiple_visits(test_user, one_patient_two_visits):
     assert Visit.objects.count() == 2
 
     [first_visit, second_visit] = Visit.objects.all().order_by("visit_date")
+
+    print(second_visit.patient.nhs_number)
 
     assert first_visit.treatment == 45
     assert "treatment" in first_visit.errors
@@ -1123,3 +1127,203 @@ def test_treatment_mdi_but_closed_loop_selected_form_fails_validation(
     assert visit.treatment == 2
     assert visit.closed_loop_system == 2
     assert "closed_loop_system" in visit.errors
+
+
+"""
+Blood pressure tests
+"""
+
+
+@pytest.mark.django_db
+def test_blood_pressure_values_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that both systolic and diastolic blood pressure values are accepted
+    """
+    single_row_valid_df.loc[0, "Systolic Blood Pressure"] = 120
+    single_row_valid_df.loc[0, "Diastolic Blood pressure"] = (
+        80  # Note that pressure has a lower case 'p'
+    )
+    single_row_valid_df.loc[0, "Observation Date (Blood Pressure)"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+    assert visit.systolic_blood_pressure == 120
+    assert visit.diastolic_blood_pressure == 80
+
+
+@pytest.mark.django_db
+def test_blood_pressure_missing_values_fails_validation(test_user, single_row_valid_df):
+    """
+    Test that one missing systolic blood pressure value fails validation
+    """
+    single_row_valid_df.loc[0, "Systolic Blood Pressure"] = None
+    single_row_valid_df.loc[0, "Diastolic Blood pressure"] = (
+        80  # Note that pressure has a lower case 'p'
+    )
+    single_row_valid_df.loc[0, "Observation Date (Blood Pressure)"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert (
+        "systolic_blood_pressure" in errors[0]
+    ), "Systolic Blood Pressure is None but passes validation."
+
+    visit = Visit.objects.first()
+    assert visit.systolic_blood_pressure == None
+    assert visit.diastolic_blood_pressure == 80
+
+
+@pytest.mark.django_db
+def test_blood_pressure_missing_date_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that one missing blood pressure observation date fails validation
+    """
+
+    single_row_valid_df.loc[0, "Systolic Blood Pressure"] = 120
+    single_row_valid_df.loc[0, "Diastolic Blood pressure"] = (
+        80  # Note that pressure has a lower case 'p'
+    )
+    single_row_valid_df.loc[0, "Observation Date (Blood Pressure)"] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert (
+        "blood_pressure_observation_date" in errors[0]
+    ), "Blood Pressure observation date is None but passes validation."
+
+    visit = Visit.objects.first()
+    assert (
+        visit.systolic_blood_pressure == 120
+    ), f"Systolic blood pressure should be 120 but was {visit.systolic_blood_pressure}"
+    assert (
+        visit.diastolic_blood_pressure == 80
+    ), f"Diastolic blood pressure should be 80 but was {visit.diastolic_blood_pressure}"
+    assert (
+        visit.blood_pressure_observation_date is None
+    ), f"Blood pressure observation date should be empty but is {visit.blood_pressure_observation_date}"
+
+
+@pytest.mark.django_db
+def test_systolic_blood_pressure_over_240_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that systolic blood pressure value > 240 fails validation
+    """
+
+    single_row_valid_df.loc[0, "Systolic Blood Pressure"] = 250
+    single_row_valid_df.loc[0, "Diastolic Blood pressure"] = (
+        80  # Note that pressure has a lower case 'p'
+    )
+    single_row_valid_df.loc[0, "Observation Date (Blood Pressure)"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert (
+        "systolic_blood_pressure" in errors[0]
+    ), "Systolic Blood Pressure is >240 (so really dangerously high!) but passes validation."
+
+    visit = Visit.objects.first()
+    assert (
+        visit.systolic_blood_pressure == 250
+    ), f"Systolic blood pressure should be 250 (and really the child should be in hospital) but was {visit.systolic_blood_pressure}"
+    assert (
+        visit.diastolic_blood_pressure == 80
+    ), f"Diastolic blood pressure should be 80 but was {visit.diastolic_blood_pressure}"
+    assert visit.blood_pressure_observation_date == datetime.date(
+        2022, 1, 1
+    ), f"Blood pressure observation date should be 1/1/2022 but is {visit.blood_pressure_observation_date}"
+
+
+@pytest.mark.django_db
+def test_systolic_blood_pressure_below_80_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that systolic blood pressure value < 80 fails validation
+    """
+
+    single_row_valid_df.loc[0, "Systolic Blood Pressure"] = 60
+    single_row_valid_df.loc[0, "Diastolic Blood pressure"] = (
+        40  # Note that pressure has a lower case 'p'
+    )
+    single_row_valid_df.loc[0, "Observation Date (Blood Pressure)"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert (
+        "systolic_blood_pressure" in errors[0]
+    ), "Systolic Blood Pressure is < 80 (so really dangerously low!) but passes validation."
+
+    visit = Visit.objects.first()
+    assert (
+        visit.systolic_blood_pressure == 60
+    ), f"Systolic blood pressure should be 60 (and really the child should be in hospital) but was {visit.systolic_blood_pressure}"
+    assert (
+        visit.diastolic_blood_pressure == 40
+    ), f"Diastolic blood pressure should be 40 but was {visit.diastolic_blood_pressure}"
+    assert visit.blood_pressure_observation_date == datetime.date(
+        2022, 1, 1
+    ), f"Blood pressure observation date should be 1/1/2022 but is {visit.blood_pressure_observation_date}"
+
+
+@pytest.mark.django_db
+def test_diastolic_blood_pressure_over_120_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that diastolic blood pressure value > 120 fails validation
+    """
+
+    single_row_valid_df.loc[0, "Systolic Blood Pressure"] = 120
+    single_row_valid_df.loc[0, "Diastolic Blood pressure"] = (
+        125  # Note that pressure has a lower case 'p'
+    )
+    single_row_valid_df.loc[0, "Observation Date (Blood Pressure)"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert (
+        "diastolic_blood_pressure" in errors[0]
+    ), "Diastolic Blood Pressure is >120 (so really dangerously high!) but passes validation."
+
+    visit = Visit.objects.first()
+    assert (
+        visit.systolic_blood_pressure == 120
+    ), f"Systolic blood pressure should be 120 but was {visit.systolic_blood_pressure}"
+    assert (
+        visit.diastolic_blood_pressure == 125
+    ), f"Diastolic blood pressure should be 125 (and really the child should be in hospital) but was {visit.diastolic_blood_pressure}"
+    assert visit.blood_pressure_observation_date == datetime.date(
+        2022, 1, 1
+    ), f"Blood pressure observation date should be 1/1/2022 but is {visit.blood_pressure_observation_date}"
+
+
+@pytest.mark.django_db
+def test_diastolic_blood_pressure_below_20_form_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that diastolic blood pressure value < 20 fails validation
+    """
+
+    single_row_valid_df.loc[0, "Systolic Blood Pressure"] = 120
+    single_row_valid_df.loc[0, "Diastolic Blood pressure"] = (
+        15  # Note that pressure has a lower case 'p'
+    )
+    single_row_valid_df.loc[0, "Observation Date (Blood Pressure)"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+    assert (
+        "diastolic_blood_pressure" in errors[0]
+    ), "Diastolic Blood Pressure is < 20 (so really dangerously low!) but passes validation."
+
+    visit = Visit.objects.first()
+    assert (
+        visit.systolic_blood_pressure == 120
+    ), f"Systolic blood pressure should be 120 but was {visit.systolic_blood_pressure}"
+    assert (
+        visit.diastolic_blood_pressure == 15
+    ), f"Diastolic blood pressure should be 15 (and really the child should be in hospital) but was {visit.diastolic_blood_pressure}"
+    assert visit.blood_pressure_observation_date == datetime.date(
+        2022, 1, 1
+    ), f"Blood pressure observation date should be 1/1/2022 but is {visit.blood_pressure_observation_date}"
