@@ -1056,24 +1056,23 @@ def measure_must_have_date_and_value(date_field, date_field_name, field_list):
     The date_field is the date the measure was taken
     The kwargs is a variable number of key value pairs where the key is the name of the measure and the value is value of the measure
     """
-    errors = []
+    errors = {}
     field_name_list = []
     for field in field_list:
         for key, value in field.items():
-            for heading in CSV_HEADING_OBJECTS:
-                if heading["model_field"] == key:
-                    field_name_list.append(heading["heading"])
+            heading = return_heading_model_field(key)
+            field_name_list.append(heading)
             if value is None:
-                errors.append(
+                errors.update(
                     {
                         f"{key}": [
-                            f"Missing item. {key} and the associated date must all be completed."
+                            f"Missing item. {heading} and the associated date must all be completed."
                         ]
                     }
                 )
     field_name_list = ", ".join(field_name_list)
     if date_field is None:
-        errors.append(
+        errors.update(
             {
                 date_field_name: [
                     f"Missing date. {field_name_list} and the associated date must all be completed."
@@ -1081,7 +1080,7 @@ def measure_must_have_date_and_value(date_field, date_field_name, field_list):
             }
         )
     if errors:
-        raise ValidationError(errors[0])
+        raise ValidationError(errors)
 
 
 def all_items_must_be_filled_in(field_list):
@@ -1096,3 +1095,14 @@ def all_items_must_be_filled_in(field_list):
             [key for field in field_list for key, value in field.items()]
         )
         raise ValidationError(f"All items ({fields}) must be filled in.")
+
+
+def return_heading_model_field(field):
+    """
+    Return the heading for a given model field
+    """
+
+    for heading in CSV_HEADING_OBJECTS:
+        if heading["model_field"] == field:
+            return heading["heading"]
+    return None

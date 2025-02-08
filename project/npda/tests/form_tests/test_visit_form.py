@@ -231,3 +231,199 @@ def test_dgc_bmi_validation_error():
 
     assert form.errors["height"] == ["oh noes!"]
     assert form.errors["weight"] == ["oh noes!"]
+
+
+"""
+HbA1c tests
+"""
+
+
+@pytest.mark.django_db
+def test_hba1c_value_ifcc_less_than_20_form_fail_validation():
+    """
+    Test that HbA1c value (IFCC mmol/mol) less than 20 % fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hba1c": "2",
+            "hba1c_format": "2",  # IFCC (mmol/mol)
+            "hba1c_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    form.is_valid()
+
+    assert "hba1c" in form.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_value_dcct_less_than_20_form_pass_validation():
+    """
+    Test that HbA1c value (DCCT %) less than 20 % is accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hba1c": "5",
+            "hba1c_format": "2",  # DCCT (%)
+            "hba1c_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+
+
+@pytest.mark.django_db
+def test_hba1c_value_ifcc_more_than_195_form_validation():
+    """
+    Test that HbA1c value (IFCC mmol/mo) > 195 mmol/mol fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hba1c": "200",
+            "hba1c_format": "1",  # IFCC (mmol/mol)
+            "hba1c_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should not be valid when hba1c > 195 mmol/mol"
+    assert "hba1c" in form.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_value_dcct_more_than_20_form_fails_validation():
+    """
+    Test that HbA1c value (DCCT %) more than 20 fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hba1c": "25",
+            "hba1c_format": "2",  # DCCT (%)
+            "hba1c_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"Form should be not valid when hba1c > 20%"
+    assert "hba1c" in form.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_value_dcct_less_than_3_form_fails_validation():
+    """
+    Test that HbA1c value (DCCT %) < 3% fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hba1c": "2",
+            "hba1c_format": "2",  # DCCT (%)
+            "hba1c_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"Form should not be valid when hba1c < 3%"
+    assert "hba1c" in form.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_missing_form_fails_validation():
+    """
+    Test that HbA1c value (DCCT %) < 3% fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hba1c": None,
+            "hba1c_format": "2",  # DCCT (%)
+            "hba1c_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"Form should not be valid when HbA1c is missing"
+    assert "hba1c" in form.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_date_missing_form_fails_validation():
+    """
+    Test that HbA1c value (DCCT %) missing fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hba1c": 5,
+            "hba1c_format": "2",  # DCCT (%)
+            "hba1c_date": None,
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should not be valid when HbA1c date is missing"
+    assert "hba1c_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_date_and_hba1c_format_missing_form_fails_validation():
+    """
+    Test that HbA1c format and date missing fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hba1c": 5,
+            "hba1c_format": None,  # DCCT (%)
+            "hba1c_date": None,
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Form should not be valid when HbA1c date and format are missing"
+    assert "hba1c_date" in form.errors
+    assert "hba1c_format" in form.errors
+
+
+@pytest.mark.django_db
+def test_hba1c_date_and_hba1c_format_hba1c_all_missing_form_passes_validation():
+    """
+    Test that HbA1c format and date missing fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hba1c": None,
+            "hba1c_format": None,  # DCCT (%)
+            "hba1c_date": None,
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == True
+    ), f"Form should  be valid when HbA1c, HbA1c date and format are missing, but got {form.errors}"
+    assert "hba1c_date" not in form.errors
+    assert "hba1c_format" not in form.errors
+    assert "hba1c" not in form.errors
