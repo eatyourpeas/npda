@@ -1701,7 +1701,7 @@ def test_total_cholesterol_value_below_reference_form_fails_validation(
     """
     Test that total cholesterol value is rejected if impossible
     """
-    single_row_valid_df.loc[0, "Total Cholesterol Level (mmol/l)"] = 0
+    single_row_valid_df.loc[0, "Total Cholesterol Level (mmol/l)"] = Decimal("0.1")
     single_row_valid_df.loc[0, "Observation Date: Total Cholesterol Level"] = (
         "01/01/2022"
     )
@@ -1714,8 +1714,8 @@ def test_total_cholesterol_value_below_reference_form_fails_validation(
 
     visit = Visit.objects.first()
 
-    assert (
-        visit.total_cholesterol == 0
+    assert visit.total_cholesterol == Decimal(
+        "0.1"
     ), f"Saved total cholesterol should be 0, but was {visit.total_cholesterol}"
     assert visit.total_cholesterol_date == datetime.date(
         2022, 1, 1
@@ -1774,3 +1774,96 @@ def test_total_cholesterol_date_missing_form_fails_validation(
     assert (
         visit.total_cholesterol_date == None
     ), f"Saved total cholesterol observation date should be None, but was {visit.total_cholesterol_date}"
+
+
+"""
+Thyroid treatment tests
+"""
+
+
+@pytest.mark.django_db
+def test_thyroid_treatment_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that thyroid treatment is accepted
+    """
+    single_row_valid_df.loc[
+        0,
+        "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
+    ] = 1  # Normal
+    single_row_valid_df.loc[0, "Observation Date: Thyroid Function"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.thyroid_treatment_status == 1
+    assert visit.thyroid_function_date == datetime.date(2022, 1, 1)
+
+
+@pytest.mark.django_db
+def test_thyroid_treatment_impossible_value_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that an impossible thyroid treatment value is rejected
+    """
+    single_row_valid_df.loc[
+        0,
+        "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
+    ] = 94  # Impossible value
+    single_row_valid_df.loc[0, "Observation Date: Thyroid Function"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "thyroid_treatment_status" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.thyroid_treatment_status == 94
+    assert visit.thyroid_function_date == datetime.date(2022, 1, 1)
+
+
+@pytest.mark.django_db
+def test_thyroid_treatment_missing_fails_validation(test_user, single_row_valid_df):
+    """
+    Test that a missing thyroid treatment value is rejected
+    """
+    single_row_valid_df.loc[
+        0,
+        "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
+    ] = None
+    single_row_valid_df.loc[0, "Observation Date: Thyroid Function"] = "01/01/2022"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "thyroid_treatment_status" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.thyroid_treatment_status is None
+    assert visit.thyroid_function_date == datetime.date(2022, 1, 1)
+
+
+@pytest.mark.django_db
+def test_thyroid_treatment_date_missing_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that a missing thyroid treatment date is rejected
+    """
+    single_row_valid_df.loc[
+        0,
+        "At time of, or following measurement of thyroid function, was the patient prescribed any thyroid treatment?",
+    ] = 1
+    single_row_valid_df.loc[0, "Observation Date: Thyroid Function"] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "thyroid_function_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.thyroid_treatment_status == 1
+    assert visit.thyroid_function_date is None

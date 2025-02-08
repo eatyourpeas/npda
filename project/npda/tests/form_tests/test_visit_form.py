@@ -980,3 +980,86 @@ def test_total_cholesterol_date_missing_form_fails_validation():
     assert (
         form.is_valid() == False
     ), f"Form should be invalid as total cholesterol date is None, passed"
+
+
+"""
+thyroid tests
+"""
+
+
+@pytest.mark.django_db
+def test_thyroid_treatment_status_form_passes_validation():
+    """
+    Test that thyroid function status and date are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "thyroid_treatment_status": 1,  # Normal
+            "thyroid_function_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "thyroid_treatment_status" not in form.errors
+    assert "thyroid_function_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_thyroid_treatment_status_unrecognized_form_fails_validation():
+    """
+    Test that an impossible thyroid function status is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "thyroid_treatment_status": 94,  # invalid
+            "thyroid_function_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Invalid thyroid function status offered but test passed"
+
+
+@pytest.mark.django_db
+def test_thyroid_treatment_status_none_form_fails_validation():
+    """
+    Test that missing thyroid function status is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "thyroid_treatment_status": None,  # invalid
+            "thyroid_function_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"No thyroid function status offered but test passed"
+
+
+@pytest.mark.django_db
+def test_thyroid_function_date_none_form_fails_validation():
+    """
+    Test that missing thyroid function date is invalid
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "thyroid_treatment_status": 1,  # Normal
+            "thyroid_function_date": None,
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"No thyroid function date offered but test passed"
