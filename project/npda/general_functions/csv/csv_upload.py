@@ -241,6 +241,8 @@ async def csv_upload(
     errors_to_return = collections.defaultdict(lambda: collections.defaultdict(list))
 
     async def process_rows_for_patient(rows, async_client):
+        patient = None
+
         first_row = rows.iloc[0]
         patient_row_index = int(first_row["row_index"])
 
@@ -317,7 +319,7 @@ async def csv_upload(
             counter = 1
 
             for _, rows in visits_by_patient:
-                async def task(ix):
+                async def task(ix, rows):
                     if(throttle_semaphore.locked()):
                         print(f"!! [PATIENT {ix} waiting to start")
 
@@ -326,11 +328,11 @@ async def csv_upload(
                         await process_rows_for_patient(rows, async_client)
                         print(f"!! [PATIENT] {ix} complete")
                 
-                tg.create_task(task(counter))
+                tg.create_task(task(counter, rows))
                 counter += 1
 
     # TODO MRB: why is it saying 1 rows worth of errors? I must have broke the error reporting somehow
-    
+
     # Store the errors to report back to the user in the Data Quality Report
     if errors_to_return:
         new_submission.errors = json.dumps(errors_to_return)
