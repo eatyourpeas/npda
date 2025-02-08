@@ -44,7 +44,7 @@ async def _validate_postcode(
                 )
             return normalised_postcode
         except HTTPError as err:
-            logger.warning(f"Error validating postcode {err}")
+            logger.warning(f"Error validating postcode {postcode} {err}", exc_info=True)
 
 
 async def _imd_for_postcode(
@@ -56,7 +56,7 @@ async def _imd_for_postcode(
 
             return imd
         except HTTPError as err:
-            logger.warning(f"Cannot calculate deprivation score for {postcode} {err}")
+            logger.warning(f"Cannot calculate deprivation score for {postcode} {err}", exc_info=True)
 
 
 async def _location_for_postcode(
@@ -70,7 +70,7 @@ async def _location_for_postcode(
 
             return location_wgs84, location_bng
         except HTTPError as err:
-            logger.warning(f"Cannot calculate location for {postcode} {err}")
+            logger.warning(f"Cannot calculate location for {postcode} {err}", exc_info=True)
 
 
 async def _gp_details_from_ods_code(
@@ -88,7 +88,7 @@ async def _gp_details_from_ods_code(
             postcode = result["GeoLoc"]["Location"]["PostCode"]
             return [ods_code, postcode]
     except HTTPError as err:
-        logger.warning(f"Error looking up GP practice by ODS code {err}")
+        logger.warning(f"Error looking up GP practice by ODS code {ods_code} {err}", exc_info=True)
 
 
 async def _gp_details_from_postcode(
@@ -108,7 +108,7 @@ async def _gp_details_from_postcode(
         else:
             return [ods_code, normalised_postcode]
     except HTTPError as err:
-        logger.warning(f"Error looking up GP practice by postcode {err}")
+        logger.warning(f"Error looking up GP practice by postcode {normalised_postcode} {err}", exc_info=True)
 
 
 # Run lookups to external APIs asynchronously to speed up CSV upload by processing patients in parallel
