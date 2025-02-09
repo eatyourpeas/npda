@@ -421,13 +421,13 @@ class VisitForm(forms.ModelForm):
         albumin_creatinine_ratio = self.cleaned_data["albumin_creatinine_ratio"]
 
         if albumin_creatinine_ratio:
-            if albumin_creatinine_ratio < 3:
+            if albumin_creatinine_ratio < 0:
                 raise ValidationError(
-                    "Urinary Albumin Level (ACR) out of range. Cannot be below 3"
+                    "Urinary Albumin Level (ACR) out of range. Cannot be negative"
                 )
-            elif albumin_creatinine_ratio > 50:
+            elif albumin_creatinine_ratio > 999:
                 raise ValidationError(
-                    "Urinary Albumin Level (ACR) out of range. Cannot be above 50"
+                    "Urinary Albumin Level (ACR) out of range. Cannot be above 999 mg/mmol"
                 )
 
         return albumin_creatinine_ratio
