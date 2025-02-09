@@ -584,9 +584,9 @@ class Visit(models.Model, HelpTextMixin):
     )
 
     hospital_admission_reason = CategorisedPositiveSmallIntegerField(
-        verbose_name="Use option 1: Stabilisation of diabetes for new patients admitted without DKA or other admissions where the purpose was to stabilise blood glucose such as recurrent hyperglycaemia without acidosis.",
+        verbose_name="Reason for admission",
         help_text={
-            "label": "",
+            "label": "Use option 1: Stabilisation of diabetes for new patients admitted without DKA or other admissions where the purpose was to stabilise blood glucose such as recurrent hyperglycaemia without acidosis.",
             "reference": "Important to know why a child is admitted to hospital for reasons of having diabetes but not related to DKA or hypoglycaemia. Also to record incidence of DKA and hypoglycaemia complications. With Best Practice Tariff it is envisaged that this type of admission will decrease and this is of interest to commissioners. Please only record diabetes-related admissions.",
         },
         choices=HOSPITAL_ADMISSION_REASONS,

@@ -1079,7 +1079,7 @@ class VisitForm(forms.ModelForm):
                             {"dka_additional_therapies": dka_additional_therapies},
                         ]
                     )
-                elif hospital_admission_reason == 5:  # Other
+                elif hospital_admission_reason == 6:  # Other
                     all_items_must_be_filled_in(
                         [
                             {"hospital_admission_date": hospital_admission_date},
@@ -1096,6 +1096,22 @@ class VisitForm(forms.ModelForm):
                             {"hospital_admission_reason": hospital_admission_reason},
                         ]
                     )
+                    if hospital_admission_other is not None:
+                        raise ValidationError(
+                            {
+                                "hospital_admission_other": [
+                                    "Hospital Admission Reason must be 'Other' if 'Other' has been completed."
+                                ]
+                            }
+                        )
+                    if dka_additional_therapies is not None:
+                        raise ValidationError(
+                            {
+                                "dka_additional_therapies": [
+                                    "Hospital Admission Reason must be 'DKA' if 'DKA Additional Therapies' has been completed."
+                                ]
+                            }
+                        )
             else:
                 # No hospital admission reason selected
                 all_items_must_be_filled_in(
@@ -1105,6 +1121,28 @@ class VisitForm(forms.ModelForm):
                         {"hospital_admission_reason": hospital_admission_reason},
                     ]
                 )
+
+            if hospital_admission_other is not None and hospital_admission_reason != 6:
+                raise ValidationError(
+                    {
+                        "hospital_admission_other": [
+                            "Hospital Admission Reason must be 'Other' if 'Other' is filled in"
+                        ]
+                    }
+                )
+
+            if (
+                hospital_admission_date is not None
+                and hospital_discharge_date is not None
+            ):
+                if hospital_admission_date > hospital_discharge_date:
+                    raise ValidationError(
+                        {
+                            "hospital_admission_date": [
+                                "Hospital Admission Date cannot be after Hospital Discharge Date"
+                            ]
+                        }
+                    )
 
         return cleaned_data
 

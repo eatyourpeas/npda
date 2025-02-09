@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 from decimal import Decimal
 
 import pytest
@@ -1550,3 +1551,319 @@ def test_sick_day_rules_provided_but_no_date_provided_fails_validation():
     # Trigger the cleaners
     assert form.is_valid() == False, f"Sick day rules provided but no date should fail"
     assert "sick_day_rules_training_date" in form.errors
+
+
+"""
+inpatient tests
+"""
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_passes_validation():
+    """
+    Test that inpatient admission for stabilisation is accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 1,  # patient stabilisation
+            # dka_additional_therapies
+            # hospital_admission_other
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "hospital_admission_date" not in form.errors
+    assert "hospital_discharge_date" not in form.errors
+    assert "hospital_admission_reason" not in form.errors
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_missing_date_fails_validation():
+    """
+    Test that inpatient admission for stabilisation is rejected if date missing
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": None,
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 1,  # patient stabilisation
+            # dka_additional_therapies
+            # hospital_admission_other
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Inpatient admission for stabilisation missing date should fail"
+    assert "hospital_admission_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_discharge_date_before_admission_date_fails_validation():
+    """
+    Test that inpatient admission for stabilisation is rejected if discharge date before admission date
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-10",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 1,  # patient stabilisation
+            # dka_additional_therapies
+            # hospital_admission_other
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Inpatient admission for stabilisation admission date before discharge date should fail"
+    assert "hospital_admission_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_discharge_date_before_diagnosis_date_fails_validation():
+    """
+    Test that inpatient admission for stabilisation is rejected if discharge date before admission date
+    """
+    patient = PatientFactory()
+    patient.diagnosis_date = datetime.date(2025, 1, 10)
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 1,  # patient stabilisation
+            # dka_additional_therapies
+            # hospital_admission_other
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Inpatient admission for stabilisation admission date before discharge date should fail"
+    assert "hospital_admission_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_discharge_date_after_date_of_death_fails_validation():
+    """
+    Test that inpatient admission for stabilisation is rejected if discharge date before admission date
+    """
+    patient = PatientFactory()
+    patient.death_date = datetime.date(2025, 1, 1)
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 1,  # patient stabilisation
+            # dka_additional_therapies
+            # hospital_admission_other
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Inpatient admission for stabilisation admission date before discharge date should fail"
+    assert "hospital_discharge_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_dka_additional_therapies_provided_fails_validation():
+    """
+    Test that inpatient admission for stabilisation is rejected if DKA additional therapies provided
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 1,  # patient stabilisation
+            "dka_additional_therapies": 1,  # hypertonic saline
+            # hospital_admission_other
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Inpatient admission for stabilisation with DKA additional therapies should fail"
+    assert (
+        "dka_additional_therapies" in form.errors
+    ), "DKA additional therapies should be in errors as hospital admission for stabilisation"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_hospital_admission_other_provided_fails_validation():
+    """
+    Test that inpatient admission for stabilisation is rejected if DKA additional therapies provided
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 1,  # patient stabilisation
+            "hospital_admission_other": "Other reason",
+            "dka_additional_therapies": None,
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Inpatient admission for stabilisation with hospital admission other should fail"
+    assert (
+        "hospital_admission_other" in form.errors
+    ), "Hospital admission other should be in errors as hospital admission for stabilisation"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_dka_passes_validation():
+    """
+    Test that inpatient admission for DKA with additional therapies is accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 2,  # DKA
+            "dka_additional_therapies": 1,  # hypertonic saline
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "hospital_admission_date" not in form.errors
+    assert "hospital_discharge_date" not in form.errors
+    assert "hospital_admission_reason" not in form.errors
+    assert "dka_additional_therapies" not in form.errors
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_dka_additional_therapies_missing_fails_validation():
+    """
+    Test that inpatient admission for DKA without additional therapies is rejected
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 2,  # DKA
+            "dka_additional_therapies": None,
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Inpatient admission for DKA without additional therapies should fail"
+    assert (
+        "dka_additional_therapies" in form.errors
+    ), "DKA additional therapies should be in errors as hospital admission for DKA"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_dka_additional_therapies_hospital_admission_also_provided_fails_validation():
+    """
+    Tests that a hospital admission for DKA with additional therapies is rejected if hospital admission other is provided
+    """
+
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 2,  # DKA
+            "dka_additional_therapies": 1,  # hypertonic saline
+            "hospital_admission_other": "Other reason",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Inpatient admission for DKA with additional therapies and hospital_admission_other should fail"
+    assert (
+        "hospital_admission_other" in form.errors
+    ), "hospital_admission_other should be in errors as hospital admission for DKA"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_other_passes_validation():
+    """
+    Test that inpatient admission for other reason is accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 6,  # Other
+            "hospital_admission_other": "Other reason",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "hospital_admission_date" not in form.errors
+    assert "hospital_discharge_date" not in form.errors
+    assert "hospital_admission_reason" not in form.errors
+    assert "hospital_admission_other" not in form.errors
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_other_missing_fails_validation():
+    """
+    Test that inpatient admission for other reason is rejected if reason missing
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "hospital_admission_date": "2025-01-01",
+            "hospital_discharge_date": "2025-01-08",
+            "hospital_admission_reason": 6,  # Other
+            "hospital_admission_other": None,
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Inpatient admission for other reason without reason should fail"
+    assert (
+        "hospital_admission_other" in form.errors
+    ), "hospital_admission_other should be in errors as hospital admission for other reason"
