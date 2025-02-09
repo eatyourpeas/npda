@@ -269,6 +269,7 @@ def test_hba1c_value_dcct_less_than_20_form_pass_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "hba1c": "5",
             "hba1c_format": "2",  # DCCT (%)
             "hba1c_date": "2025-01-01",
@@ -415,6 +416,7 @@ def test_hba1c_date_and_hba1c_format_hba1c_all_missing_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "hba1c": None,
             "hba1c_format": None,  # DCCT (%)
             "hba1c_date": None,
@@ -444,6 +446,7 @@ def test_treatment_closed_loop_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "treatment": "3",  # Insulin pump
             "closed_loop_system": "1",  # Closed loop system (licenced)
         },
@@ -507,6 +510,7 @@ def test_blood_pressure_values_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "systolic_blood_pressure": "120",
             "diastolic_blood_pressure": "80",
             "blood_pressure_observation_date": "2025-01-01",
@@ -657,6 +661,7 @@ def test_decs_value_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "retinal_screening_result": 1,  # Normal
             "retinal_screening_observation_date": "2025-01-01",
         },
@@ -740,6 +745,7 @@ def test_urine_albumin_value_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "albumin_creatinine_ratio": 10,
             "albumin_creatinine_ratio_date": "2025-01-01",
             "albuminuria_stage": 1,  # Normal
@@ -892,6 +898,7 @@ def test_total_cholesterol_value_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "total_cholesterol": 4,
             "total_cholesterol_date": "2025-01-01",
         },
@@ -997,6 +1004,7 @@ def test_thyroid_treatment_status_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "thyroid_treatment_status": 1,  # Normal
             "thyroid_function_date": "2025-01-01",
         },
@@ -1080,6 +1088,7 @@ def test_coeliac_treatment_status_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "gluten_free_diet": 1,  # Normal
             "coeliac_screen_date": "2025-01-01",
         },
@@ -1163,6 +1172,7 @@ def test_psychological_status_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "psychological_additional_support_status": 1,  # Normal
             "psychological_screening_assessment_date": "2025-01-01",
         },
@@ -1244,6 +1254,7 @@ def test_smoking_status_smoker_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "smoking_status": 2,  # current smoker
             "smoking_cessation_referral_date": "2025-01-01",
         },
@@ -1264,6 +1275,7 @@ def test_smoking_status_non_smoker_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "smoking_status": 1,  # non smoker
             "smoking_cessation_referral_date": None,
         },
@@ -1337,6 +1349,7 @@ def test_dietician_referral_status_additional_offered_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "dietician_additional_appointment_offered": 1,  # Yes
             "dietician_additional_appointment_date": "2025-01-01",
             "carbohydrate_counting_level_three_education_date": "2025-01-01",
@@ -1358,6 +1371,7 @@ def test_dietician_no_additional_offered_form_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "dietician_additional_appointment_offered": 2,  # No
             "dietician_additional_appointment_date": None,
             "carbohydrate_counting_level_three_education_date": "2025-01-01",
@@ -1456,6 +1470,7 @@ def test_sick_day_rules_provided_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "ketone_meter_training": 1,  # Yes
             "sick_day_rules_training_date": "2025-01-01",
         },
@@ -1477,6 +1492,7 @@ def test_sick_day_rules_not_provided_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "ketone_meter_training": 2,  # No
             "sick_day_rules_training_date": None,
         },
@@ -1567,6 +1583,7 @@ def test_inpatient_admission_stabilisation_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "hospital_admission_date": "2025-01-01",
             "hospital_discharge_date": "2025-01-08",
             "hospital_admission_reason": 1,  # patient stabilisation
@@ -1748,6 +1765,7 @@ def test_inpatient_admission_dka_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "hospital_admission_date": "2025-01-01",
             "hospital_discharge_date": "2025-01-08",
             "hospital_admission_reason": 2,  # DKA
@@ -1827,6 +1845,7 @@ def test_inpatient_admission_other_passes_validation():
 
     form = VisitForm(
         data={
+            "visit_date": "2025-01-01",  # Required for validation
             "hospital_admission_date": "2025-01-01",
             "hospital_discharge_date": "2025-01-08",
             "hospital_admission_reason": 6,  # Other
@@ -1867,3 +1886,150 @@ def test_inpatient_admission_other_missing_fails_validation():
     assert (
         "hospital_admission_other" in form.errors
     ), "hospital_admission_other should be in errors as hospital admission for other reason"
+
+
+"""
+Visit date tests
+"""
+
+
+@pytest.mark.django_db
+def test_visit_date_provided_passes_validation():
+    """
+    Test that visit date is accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "visit_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "visit_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_visit_date_missing_fails_validation():
+    """
+    Test that visit date is rejected if missing
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "visit_date": None,
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"Visit date missing should fail"
+    assert "visit_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_visit_date_after_diagnosis_date_passes_validation():
+    """
+    Test that visit date after diagnosis date is accepted
+    """
+    patient = PatientFactory()
+    patient.diagnosis_date = datetime.date(2025, 1, 1)
+
+    form = VisitForm(
+        data={
+            "visit_date": "2025-01-10",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid()
+    ), f"Visit date after diagnosis date should pass but got {form.errors}"
+    assert "visit_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_visit_date_before_diagnosis_date_fails_validation():
+    """
+    Test that visit date before diagnosis date is rejected
+    """
+    patient = PatientFactory()
+    patient.diagnosis_date = datetime.date(2025, 1, 10)
+
+    form = VisitForm(
+        data={
+            "visit_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"Visit date before diagnosis date should fail"
+    assert "visit_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_visit_date_after_death_date_fails_validation():
+    """
+    Test that visit date after death date is rejected
+    """
+    patient = PatientFactory()
+    patient.death_date = datetime.date(2025, 1, 1)
+
+    form = VisitForm(
+        data={
+            "visit_date": "2025-01-10",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"Visit date after death date should fail"
+    assert "visit_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_visit_date_before_death_date_passes_validation():
+    """
+    Test that visit date before death date is accepted
+    """
+    patient = PatientFactory()
+    patient.death_date = datetime.date(2025, 1, 10)
+
+    form = VisitForm(
+        data={
+            "visit_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid()
+    ), f"Visit date before death date should pass but got {form.errors}"
+    assert "visit_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_visit_date_before_birth_date_fails_validation():
+    """
+    Test that visit date before birth date is rejected
+    """
+    patient = PatientFactory()
+    patient.date_of_birth = datetime.date(2025, 1, 10)
+
+    form = VisitForm(
+        data={
+            "visit_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"Visit date before birth date should fail"
+    assert "visit_date" in form.errors

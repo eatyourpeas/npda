@@ -2987,3 +2987,112 @@ def test_inpatient_admission_other_missing_fails_validation(
     assert (
         visit.hospital_admission_other == None
     ), f"Admission other should be None, but was {visit.hospital_admission_other}"
+
+
+"""
+Visit date tests
+"""
+
+
+@pytest.mark.django_db
+def test_visit_date_provided_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that a visit date is accepted
+    """
+    single_row_valid_df.loc[0, "Visit/Appointment Date"] = "01/01/2025"  # mm/dd/yyyy
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.visit_date == datetime.date(
+        2025, 1, 1
+    ), f"Visit/Appointment Date should be 1/1/2025, but was {visit.visit_date}"
+
+
+@pytest.mark.django_db
+def test_visit_date_missing_fails_validation(test_user, single_row_valid_df):
+    """
+    Test that a missing Visit/Appointment Date is rejected
+    """
+    single_row_valid_df.loc[0, "Visit/Appointment Date"] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "visit_date" in errors[0], f"Expected error in visit_date, but got None"
+
+    visit = Visit.objects.first()
+
+    assert (
+        visit.visit_date == None
+    ), f"Visit/Appointment Date should be None, but was {visit.visit_date}"
+
+
+@pytest.mark.django_db
+def test_visit_date_not_before_date_of_birth(test_user, single_row_valid_df):
+    """
+    Test that a Visit/Appointment Date before the date of birth is rejected
+    """
+    single_row_valid_df.loc[0, "Date of Birth"] = "01/01/2022"
+    single_row_valid_df.loc[0, "Visit/Appointment Date"] = "01/01/2021"  # mm/dd/yyyy
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "visit_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.visit_date == datetime.date(
+        2021, 1, 1
+    ), f"Visit date should be 1/1/2021, but was {visit.visit_date}"
+    assert visit.patient.date_of_birth == datetime.date(
+        2022, 1, 1
+    ), f"Date of birth should be 1/1/2022, but was {visit.patient.date_of_birth}"
+
+
+@pytest.mark.django_db
+def test_visit_date_not_after_date_of_death(test_user, single_row_valid_df):
+    """
+    Test that a Visit/Appointment Date after the date of death is rejected
+    """
+    single_row_valid_df.loc[0, "Death Date"] = "01/01/2022"  # mm/dd/yyyy
+    single_row_valid_df.loc[0, "Visit/Appointment Date"] = "01/01/2023"  # mm/dd/yyyy
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "visit_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.visit_date == datetime.date(
+        2023, 1, 1
+    ), f"Visit date should be 1/1/2023, but was {visit.visit_date}"
+    assert visit.patient.death_date == datetime.date(
+        2022, 1, 1
+    ), f"Death date should be 1/1/2022, but was {visit.patient.death_date}"
+
+
+@pytest.mark.django_db
+def test_visit_date_not_before_diagnosis_date(test_user, single_row_valid_df):
+    """
+    Test that a Visit/Appointment Date before the date of diagnosis is rejected
+    """
+    single_row_valid_df.loc[0, "Date of Diabetes Diagnosis"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Visit/Appointment Date"] = "01/01/2021"  # mm/dd/yyyy
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "visit_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.visit_date == datetime.date(
+        year=2021, month=1, day=1
+    ), f"Visit date should be 1/1/2021, but was {visit.visit_date}"
+    assert visit.patient.diagnosis_date == datetime.date(
+        year=2022, month=1, day=1
+    ), f"Diagnosis date should be 1/1/2022, but was {visit.patient.diagnosis_date}"

@@ -454,6 +454,9 @@ class VisitForm(forms.ModelForm):
     def clean_visit_date(self):
         data = self.cleaned_data["visit_date"]
 
+        if data is None:
+            raise ValidationError("Visit/Appointment Date must be provided.")
+
         valid, error = validate_date(
             date_under_examination_field_name="visit_date",
             date_under_examination_label_name="Visit/Appointment Date",
