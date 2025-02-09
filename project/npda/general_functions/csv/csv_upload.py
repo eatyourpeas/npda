@@ -115,31 +115,6 @@ async def csv_upload(
 
         return form
 
-    async def validate_rows(rows, async_client):
-        first_row = rows.iloc[0]
-        patient_row_index = int(first_row["row_index"])
-
-        transfer_fields = validate_transfer(first_row)
-
-        patient_form = await validate_patient_using_form(first_row, async_client)
-        # Pull through cleaned_data so we can use it in the async visit validators
-
-        patient_form.is_valid()
-
-        visit_forms = []
-        for _, row in rows.iterrows():
-            visit_form = await validate_visit_using_form(
-                patient_form, row, async_client
-            )
-            visit_forms.append((visit_form, int(row["row_index"])))
-
-        return (
-            patient_form,
-            transfer_fields,
-            patient_row_index,
-            visit_forms,
-        )
-
     def retain_errors_and_invalid_field_data(form):
         # We want to retain fields even if they're invalid so that we can return them to the user
         # Use the field value from cleaned_data, falling back to data if it's not there
@@ -155,33 +130,10 @@ async def csv_upload(
             None if form.is_valid() else form.errors.get_json_data(escape_html=True)
         )
 
-    async def validate_rows_in_parallel(rows_by_patient, async_client):
-        tasks = []
-
-        async with asyncio.TaskGroup() as tg:
-            for _, rows in rows_by_patient:
-                task = tg.create_task(validate_rows(rows, async_client))
-                tasks.append(task)
-
-        return [task.result() for task in tasks]
-
     def record_errors_from_form(errors_to_return, row_index, form):
         for field, errors in form.errors.as_data().items():
             for error in errors:
                 errors_to_return[row_index][field].extend(error.messages)
-
-    def do_not_save_patient_if_no_unique_identifier(patient_form):
-        if (
-            patient_form.cleaned_data.get("nhs_number") is None
-            and patient_form.cleaned_data.get("unique_reference_number") is None
-        ):
-            patient = patient_form.save(commit=False)
-        else:
-            patient = patient_form.save(
-                commit=True
-            )  # save the patient if there is a unique identifier
-
-        return patient
 
     """"
     Create the submission and save the csv file
@@ -275,59 +227,104 @@ async def csv_upload(
     # dict[number, dict[str, list[str]]]
     errors_to_return = collections.defaultdict(lambda: collections.defaultdict(list))
 
-    async with httpx.AsyncClient() as async_client:
-        validation_results_by_patient = await validate_rows_in_parallel(
-            rows_by_patient=visits_by_patient, async_client=async_client
-        )
+    async def save_patient_and_transfer(patient_form, transfer_fields, patient_row_index):
+        try:
+            retain_errors_and_invalid_field_data(patient_form)
 
-        for (
-            patient_form,
-            transfer_fields,
-            patient_row_index,
-            # first_row_field_errors,
-            parsed_visits,
-        ) in validation_results_by_patient:
-            record_errors_from_form(errors_to_return, patient_row_index, patient_form)
-
-            patient = None
-
-            try:
-                retain_errors_and_invalid_field_data(patient_form)
-                patient = await sync_to_async(
-                    do_not_save_patient_if_no_unique_identifier
-                )(patient_form)
-
-                if patient:
-                    # add the patient to a new Transfer instance
-                    transfer_fields["paediatric_diabetes_unit"] = pdu
-                    transfer_fields["patient"] = patient
-                    await Transfer.objects.acreate(**transfer_fields)
-
-                    await new_submission.patients.aadd(patient)
-            except Exception as error:
-                logger.exception(
-                    f"Error saving patient for {pdu_pz_code} from {csv_file_name}[{patient_row_index}]: {error}"
-                )
-
-                # We don't know what field caused the error so add to __all__
-                errors_to_return[patient_row_index]["__all__"].append(str(error))
+            patient = await sync_to_async(lambda: patient_form.save())()
 
             if patient:
-                for visit_form, visit_row_index in parsed_visits:
-                    record_errors_from_form(
-                        errors_to_return, visit_row_index, visit_form
-                    )
+                # add the patient to a new Transfer instance
+                transfer_fields["paediatric_diabetes_unit"] = pdu
+                transfer_fields["patient"] = patient
+                await Transfer.objects.acreate(**transfer_fields)
 
-                    try:
-                        retain_errors_and_invalid_field_data(visit_form)
-                        visit_form.instance.patient = patient
+                await new_submission.patients.aadd(patient)
+            
+            return patient
+        except Exception as error:
+            logger.exception(
+                f"Error saving patient for {pdu_pz_code} from {csv_file_name}[{patient_row_index}]: {error}"
+            )
 
-                        await sync_to_async(lambda: visit_form.save())()
-                    except Exception as error:
-                        logger.exception(
-                            f"Error saving visit for {pdu_pz_code} from {csv_file_name}[{visit_row_index}]: {error}"
-                        )
-                        errors_to_return[visit_row_index]["__all__"].append(str(error))
+            # We don't know what field caused the error so add to __all__
+            errors_to_return[patient_row_index]["__all__"].append(str(error))
+    
+    async def save_visits(patient, visit_forms):
+        for visit_form, visit_row_index in visit_forms:
+            record_errors_from_form(
+                errors_to_return, visit_row_index, visit_form
+            )
+
+            try:
+                retain_errors_and_invalid_field_data(visit_form)
+                visit_form.instance.patient = patient
+
+                await sync_to_async(lambda: visit_form.save())()
+            except Exception as error:
+                logger.exception(
+                    f"Error saving visit for {pdu_pz_code} from {csv_file_name}[{visit_row_index}]: {error}"
+                )
+                errors_to_return[visit_row_index]["__all__"].append(str(error))
+
+    async def process_rows_for_patient(rows, async_client):
+        patient = None
+
+        first_row = rows.iloc[0]
+        patient_row_index = int(first_row["row_index"])
+
+        transfer_fields = validate_transfer(first_row)
+
+        patient_form = await validate_patient_using_form(first_row, async_client)
+
+        # Pull through cleaned_data so we can use it in the async visit validators
+        patient_form.is_valid()
+
+        record_errors_from_form(errors_to_return, patient_row_index, patient_form)
+
+        visit_forms = []
+        for _, row in rows.iterrows():
+            visit_form = await validate_visit_using_form(
+                patient_form, row, async_client
+            )
+            visit_forms.append((visit_form, int(row["row_index"])))
+        
+        nhs_number = patient_form.cleaned_data.get("nhs_number")
+        unique_reference_number = patient_form.cleaned_data.get("unique_reference_number")
+
+        if nhs_number is None and unique_reference_number is None:
+            errors_to_return[patient_row_index]["__all__"].append(
+                "Either NHS Number or Unique Reference Number must be provided."
+            )
+        else:
+            patient = await save_patient_and_transfer(patient_form, transfer_fields, patient_row_index)
+
+            if patient:
+                await save_visits(patient, visit_forms)
+
+    async with httpx.AsyncClient() as async_client:
+        async with asyncio.TaskGroup() as tg:
+            # The maximum number of patients we will process in parallel
+            # NB: each patient has a variable number of visits
+            #
+            # I tried 20, 10, 5 and 3 with 200 patients (16 visits each)
+            # 20: 59s.
+            # 10: 44s.
+            # 5: 42s
+            # 3: 45s
+            #
+            # I also tried no task group at all, just doing each patient in sequence
+            # That took 1m 1s.
+            #
+            # So I went with 5. Seems a reasonable balance between an actual speed up and not hammering third party APIs.
+            throttle_semaphore = asyncio.Semaphore(5)
+
+            for _, rows in visits_by_patient:
+                async def task(rows):
+                    async with throttle_semaphore:
+                        await process_rows_for_patient(rows, async_client)
+                
+                tg.create_task(task(rows))
 
     # Store the errors to report back to the user in the Data Quality Report
     if errors_to_return:
