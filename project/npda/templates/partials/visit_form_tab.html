@@ -47,6 +47,16 @@
                       </span>
                     {% endif %}
                     {{ field.label }}
+                    {% if field.help_text.label %}
+                      <div class="tooltip" data-tip="{{ field.help_text.label }}">
+                        <i class="fa-solid fa-circle-question text-rcpch_pink"></i>
+                      </div>
+                    {% endif %}
+                    {% if field.help_text.reference %}
+                      <div class="tooltip" data-tip="{{ field.help_text.reference }}">
+                        <i class="fa fa-book text-rcpch_pink"></i>
+                      </div>
+                    {% endif %}
                   </small>
                 </label>
               </div>

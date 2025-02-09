@@ -1,7 +1,6 @@
 # python imports
 import logging
 import json
-import datetime
 
 # Django imports
 from django.apps import apps
@@ -15,7 +14,7 @@ from django.db.models import Count, Case, When, Max, Q, F
 from django.forms import BaseForm
 from django.forms import BaseForm
 from django.http.response import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect, reverse
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView
 from django.http import HttpResponse
@@ -386,6 +385,8 @@ class PatientUpdateView(
         return context
 
     def form_valid(self, form: BaseForm) -> HttpResponse:
+        if "delete" in self.request.POST:
+            return redirect(reverse("patient-delete", kwargs={"pk": self.kwargs["pk"]}))
         patient = form.save(commit=False)
         patient.is_valid = True
         patient.errors = None
