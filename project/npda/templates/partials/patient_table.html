@@ -42,18 +42,28 @@
       </thead>
       <tbody>
         {% for patient in page_obj %}
-          {% if patient.is_first_valid or patient.is_first_error %}
+          {% if patient.is_first_incomplete_full_year %}
             <thead class="bg-rcpch_strong_blue text-xs text-white text-gray-700 uppercase bg-gray-50">
               <tr>
                 <th colspan="13" class="px-6 py-3">
-                  {% if patient.is_first_valid %}
-                    Patients where all records have been validated
-                  {% else %}
-                    Patients with records failing validation
-                  {% endif %}
+                  Patients who have not completed a full year of care
                 </th>
               </tr>
             </thead>
+          {% else %}
+            {% if patient.is_first_valid or patient.is_first_error %}
+              <thead class="bg-rcpch_strong_blue text-xs text-white text-gray-700 uppercase bg-gray-50">
+                <tr>
+                  <th colspan="13" class="px-6 py-3">
+                    {% if patient.is_first_valid %}
+                      Patients where all records have been validated
+                    {% else %}
+                      Patients with records failing validation
+                    {% endif %}
+                  </th>
+                </tr>
+              </thead>
+            {% endif %}
           {% endif %}
           <tr class="{% if forloop.counter|divisibleby:2 %} bg-gray-100 {% endif %} hover:bg-gray-200 {% if patient.is_in_transfer_in_the_last_year %}bg-rcpch_yellow hover:bg-rcpch_yellow_dark_tint {% endif %}">
             {% with nhs_number_error=patient.errors|error_for_field:"nhs_number" unique_reference_number_error=patient_errors|error_for_field:"unique_reference_number" gp_error=patient.errors|error_for_field:"gp_practice_ods_code" %}
@@ -89,10 +99,18 @@
                   <i class="fa-circle fa-stack-1x fas"></i>
                   <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
                 </span>
-                {{ patient.date_of_birth }}
+                {% if patient.death_date is not None %}
+                  {{ patient.diagnosis_date }} - {{ patient.death_date }}
+                {% else %}
+                  {{ patient.date_of_birth }}
+                {% endif %}
               </div>
             {% else %}
-              {{ patient.date_of_birth }}
+              {% if patient.death_date is not None %}
+                {{ patient.diagnosis_date }} - {{ patient.death_date }}
+              {% else %}
+                {{ patient.date_of_birth }}
+              {% endif %}
             {% endif %}
           </td>
           <td class="px-6 py-4 text-center {% if patient.errors|error_for_field:'sex' %}text-rcpch_red{% endif %}">

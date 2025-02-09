@@ -200,6 +200,8 @@ class VisitUpdateView(
         visit.is_valid = True
         visit.save(update_fields=["errors", "is_valid"])
         context = {"patient_id": self.kwargs["patient_id"]}
+        print(visit.is_valid)
+        print(visit.errors)
         messages.add_message(
             self.request, messages.SUCCESS, "Visit edited successfully"
         )

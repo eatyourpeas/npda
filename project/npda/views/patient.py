@@ -198,6 +198,7 @@ class PatientListView(
         # Add extra fields to the patient that we can't add to the query. This is ok because the queryset will be max the page size.
         error_count_in_page = 0
         valid_count_in_page = 0
+        first_incomplete_year_count_in_page = 0
 
         for patient in context["page_obj"]:
             # Signpost the latest quarter
@@ -221,8 +222,19 @@ class PatientListView(
 
                     valid_count_in_page += 1
 
+                if not patient.has_completed_a_full_year_of_care():
+                    if first_incomplete_year_count_in_page == 0:
+                        patient.is_first_incomplete_full_year = True
+                    else:
+                        patient.is_first_incomplete_full_year = False
+
+                    first_incomplete_year_count_in_page += 1
+
         context["error_count_in_page"] = error_count_in_page
         context["valid_count_in_page"] = valid_count_in_page
+        context["first_incomplete_year_count_in_page"] = (
+            first_incomplete_year_count_in_page
+        )
 
         return context
 
@@ -279,6 +291,8 @@ class PatientCreateView(
             patient.is_valid = True
             patient.errors = None
             patient.save()
+
+            print("patient", patient.is_valid)
 
             # add the PDU to the patient record
             # get or create the paediatric diabetes unit object
