@@ -230,8 +230,7 @@ def test_missing_mandatory_field(
     seed_users_per_function_fixture,
     single_row_valid_df,
     column,
-    model_field,
-    pdu_pz_code
+    model_field
 ):
     # As these tests need full transaction support we can't use our session fixtures
     test_user = NPDAUser.objects.filter(

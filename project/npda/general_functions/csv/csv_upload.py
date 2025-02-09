@@ -227,6 +227,46 @@ async def csv_upload(
     # dict[number, dict[str, list[str]]]
     errors_to_return = collections.defaultdict(lambda: collections.defaultdict(list))
 
+    async def save_patient_and_transfer(patient_form, transfer_fields, patient_row_index):
+        try:
+            retain_errors_and_invalid_field_data(patient_form)
+
+            patient = await sync_to_async(lambda: patient_form.save())()
+
+            if patient:
+                # add the patient to a new Transfer instance
+                transfer_fields["paediatric_diabetes_unit"] = pdu
+                transfer_fields["patient"] = patient
+                await Transfer.objects.acreate(**transfer_fields)
+
+                await new_submission.patients.aadd(patient)
+            
+            return patient
+        except Exception as error:
+            logger.exception(
+                f"Error saving patient for {pdu_pz_code} from {csv_file_name}[{patient_row_index}]: {error}"
+            )
+
+            # We don't know what field caused the error so add to __all__
+            errors_to_return[patient_row_index]["__all__"].append(str(error))
+    
+    async def save_visits(patient, visit_forms):
+        for visit_form, visit_row_index in visit_forms:
+            record_errors_from_form(
+                errors_to_return, visit_row_index, visit_form
+            )
+
+            try:
+                retain_errors_and_invalid_field_data(visit_form)
+                visit_form.instance.patient = patient
+
+                await sync_to_async(lambda: visit_form.save())()
+            except Exception as error:
+                logger.exception(
+                    f"Error saving visit for {pdu_pz_code} from {csv_file_name}[{visit_row_index}]: {error}"
+                )
+                errors_to_return[visit_row_index]["__all__"].append(str(error))
+
     async def process_rows_for_patient(rows, async_client):
         patient = None
 
@@ -249,42 +289,18 @@ async def csv_upload(
             )
             visit_forms.append((visit_form, int(row["row_index"])))
         
-        try:
-            retain_errors_and_invalid_field_data(patient_form)
+        nhs_number = patient_form.cleaned_data.get("nhs_number")
+        unique_reference_number = patient_form.cleaned_data.get("unique_reference_number")
 
-            patient = await sync_to_async(lambda: patient_form.save())()
+        if nhs_number is None and unique_reference_number is None:
+            errors_to_return[patient_row_index]["__all__"].append(
+                "Either NHS Number or Unique Reference Number must be provided."
+            )
+        else:
+            patient = await save_patient_and_transfer(patient_form, transfer_fields, patient_row_index)
 
             if patient:
-                # add the patient to a new Transfer instance
-                transfer_fields["paediatric_diabetes_unit"] = pdu
-                transfer_fields["patient"] = patient
-                await Transfer.objects.acreate(**transfer_fields)
-
-                await new_submission.patients.aadd(patient)
-        except Exception as error:
-            logger.exception(
-                f"Error saving patient for {pdu_pz_code} from {csv_file_name}[{patient_row_index}]: {error}"
-            )
-
-            # We don't know what field caused the error so add to __all__
-            errors_to_return[patient_row_index]["__all__"].append(str(error))
-
-        if patient:
-            for visit_form, visit_row_index in visit_forms:
-                record_errors_from_form(
-                    errors_to_return, visit_row_index, visit_form
-                )
-
-                try:
-                    retain_errors_and_invalid_field_data(visit_form)
-                    visit_form.instance.patient = patient
-
-                    await sync_to_async(lambda: visit_form.save())()
-                except Exception as error:
-                    logger.exception(
-                        f"Error saving visit for {pdu_pz_code} from {csv_file_name}[{visit_row_index}]: {error}"
-                    )
-                    errors_to_return[visit_row_index]["__all__"].append(str(error))
+                await save_visits(patient, visit_forms)
 
     async with httpx.AsyncClient() as async_client:
         async with asyncio.TaskGroup() as tg:

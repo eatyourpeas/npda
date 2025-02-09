@@ -147,7 +147,9 @@ class Patient(models.Model):
             CAN_OPT_OUT_CHILD_FROM_INCLUSION_IN_AUDIT,
         ]
 
-    def save(self, **kwargs):
+    def clean(self):
+        super().clean()
+
         if not self.nhs_number and not self.unique_reference_number:
             raise ValidationError(
                 "Either NHS Number or Unique Reference Number must be provided."
@@ -156,8 +158,6 @@ class Patient(models.Model):
             raise ValidationError(
                 "Only one of NHS Number or Unique Reference Number should be provided."
             )
-
-        super().save(**kwargs)
 
     def __str__(self) -> str:
         if self.unique_reference_number:
