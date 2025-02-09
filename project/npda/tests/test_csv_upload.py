@@ -2461,3 +2461,529 @@ def test_sick_day_rules_provided_but_no_date_provided_fails_validation(
 
     assert visit.sick_day_rules_training_date == None
     assert visit.ketone_meter_training == 1
+
+
+"""
+Inpatient admission tests
+"""
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_passes_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that inpatient admission for stabilisation is accepted
+    """
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/02/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 1  # Stabilisation
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = None
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 2
+    ), f"Discharge date should be 2/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 1
+    ), f"Admission reason should be 1 (stabilisation), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == None
+    ), f"DKA additional therapies should be None, but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == None
+    ), f"Admission other should be None, but was {visit.hospital_admission_other}"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_missing_date_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that inpatient admission for stabilisation is rejected if date missing
+    """
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = None
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/02/2024"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 1
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = None
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hospital_admission_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == None
+    assert visit.hospital_discharge_date == datetime.date(year=2024, month=1, day=2)
+    assert visit.hospital_admission_reason == 1
+    assert visit.dka_additional_therapies == None
+    assert visit.hospital_admission_other == None
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_discharge_date_before_admission_date_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that inpatient admission for stabilisation is rejected if discharge date before admission date
+    """
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 1
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = None
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hospital_admission_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == datetime.date(year=2022, month=1, day=8)
+    assert visit.hospital_discharge_date == datetime.date(year=2022, month=1, day=1)
+    assert visit.hospital_admission_reason == 1
+    assert visit.dka_additional_therapies == None
+    assert visit.hospital_admission_other == None
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_discharge_date_before_diagnosis_date_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that inpatient admission for stabilisation is rejected if discharge date before admission date
+    """
+    single_row_valid_df.loc[0, "Date of Diabetes Diagnosis"] = "1/10/2022"  # mm/dd/yyyy
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 1
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = None
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hospital_discharge_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.patient.diagnosis_date == datetime.date(
+        2022, 1, 10
+    ), f"Diagnosis date should be 1/1/2022, but was {visit.patient.diagnosis_date}"
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 8
+    ), f"Discharge date should be 8/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 1
+    ), f"Admission reason should be 1 (stabilisation), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == None
+    ), f"DKA additional therapies should be None, but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == None
+    ), f"Admission other should be None, but was {visit.hospital_admission_other}"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_discharge_date_after_date_of_death_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that inpatient admission for stabilisation is rejected if discharge date before admission date
+    """
+    single_row_valid_df.loc[0, "Death Date"] = "01/01/2022"
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = "01/01/2022"
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 1
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = None
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hospital_discharge_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.patient.death_date == datetime.date(
+        2022, 1, 1
+    ), f"Date of death should be 1/1/2022, but was {visit.patient.date_of_death}"
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 8
+    ), f"Discharge date should be 8/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 1
+    ), f"Admission reason should be 1 (stabilisation), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == None
+    ), f"DKA additional therapies should be None, but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == None
+    ), f"Admission other should be None, but was {visit.hospital_admission_other}"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_dka_additional_therapies_provided_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that inpatient admission for stabilisation is rejected if DKA additional therapies provided
+    """
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 1  # Stabilisation
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = 1  # Hypertonic saline
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "dka_additional_therapies" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 8
+    ), f"Discharge date should be 8/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 1
+    ), f"Admission reason should be 1 (stabilisation), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == 1
+    ), f"DKA additional therapies should be 1 (hypertonic saline), but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == None
+    ), f"Admission other should be None, but was {visit.hospital_admission_other}"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_stabilisation_hospital_admission_other_provided_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that inpatient admission for stabilisation is rejected if DKA additional therapies provided
+    """
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 1  # Stabilisation
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = 1  # Hypertonic saline
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "dka_additional_therapies" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 8
+    ), f"Discharge date should be 8/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 1
+    ), f"Admission reason should be 1 (stabilisation), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == 1
+    ), f"DKA additional therapies should be 1 (hypertonic saline), but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == None
+    ), f"Admission other should be None, but was {visit.hospital_admission_other}"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_dka_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that inpatient admission for DKA with additional therapies is accepted
+    """
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 2  # DKA
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = 1  # Hypertonic saline
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 8
+    ), f"Discharge date should be 8/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 2
+    ), f"Admission reason should be 2 (DKA), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == 1
+    ), f"DKA additional therapies should be 1 (hypertonic saline), but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == None
+    ), f"Admission other should be None, but was {visit.hospital_admission_other}"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_dka_additional_therapies_missing_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that inpatient admission for DKA without additional therapies is rejected
+    """
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 2  # DKA
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = None
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "dka_additional_therapies" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 8
+    ), f"Discharge date should be 8/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 2
+    ), f"Admission reason should be 2 (DKA), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == None
+    ), f"DKA additional therapies should be None, but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == None
+    ), f"Admission other should be None, but was {visit.hospital_admission_other}"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_dka_additional_therapies_hospital_admission_also_provided_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Tests that a hospital admission for DKA with additional therapies is rejected if hospital admission other is provided
+    """
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 2  # DKA
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = 1  # Hypertonic saline
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = "Other reason"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hospital_admission_other" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 8
+    ), f"Discharge date should be 8/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 2
+    ), f"Admission reason should be 2 (DKA), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == 1
+    ), f"DKA additional therapies should be 1 (hypertonic saline), but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == "Other reason"
+    ), f"Admission other should be 'Other reason', but was {visit.hospital_admission_other}"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_other_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that inpatient admission for other reason is accepted
+    """
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 6  # Other
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = None
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = "Other reason"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 8
+    ), f"Discharge date should be 8/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 6
+    ), f"Admission reason should be 6 (other), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == None
+    ), f"DKA additional therapies should be None, but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == "Other reason"
+    ), f"Admission other should be 'Other reason', but was {visit.hospital_admission_other}"
+
+
+@pytest.mark.django_db
+def test_inpatient_admission_other_missing_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that inpatient admission for other reason is rejected if reason missing
+    """
+
+    single_row_valid_df.loc[0, "Start date (Hospital Provider Spell)"] = (
+        "01/01/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Discharge date (Hospital provider spell)"] = (
+        "01/08/2022"  # mm/dd/yyyy
+    )
+    single_row_valid_df.loc[0, "Reason for admission"] = 6  # Other
+    single_row_valid_df.loc[
+        0,
+        "Only complete if DKA selected in previous question: During this DKA admission did the patient receive any of the following therapies?",
+    ] = None
+    single_row_valid_df.loc[
+        0, "Only complete if OTHER selected: Reason for admission (free text)"
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "hospital_admission_other" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.hospital_admission_date == datetime.date(
+        2022, 1, 1
+    ), f"Admission date should be 1/1/2022, but was {visit.hospital_admission_date}"
+    assert visit.hospital_discharge_date == datetime.date(
+        2022, 1, 8
+    ), f"Discharge date should be 8/1/2022, but was {visit.hospital_discharge_date}"
+    assert (
+        visit.hospital_admission_reason == 6
+    ), f"Admission reason should be 6 (other), but was {visit.hospital_admission_reason}"
+    assert (
+        visit.dka_additional_therapies == None
+    ), f"DKA additional therapies should be None, but was {visit.dka_additional_therapies}"
+    assert (
+        visit.hospital_admission_other == None
+    ), f"Admission other should be None, but was {visit.hospital_admission_other}"
