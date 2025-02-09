@@ -2324,3 +2324,140 @@ def test_dietician_additional_offered_none_but_date_offered_fail_validation(
 
     assert visit.dietician_additional_appointment_offered is None
     assert visit.dietician_additional_appointment_date == datetime.date(2022, 1, 1)
+
+
+"""
+Sick day rules tests
+"""
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_provided_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that sick day rules are accepted
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of provision of advice ('sick-day rules') about managing diabetes during intercurrent illness or episodes of hyperglycaemia",
+    ] = "01/01/2022"
+    single_row_valid_df.loc[
+        0,
+        "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?",
+    ] = 1
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.sick_day_rules_training_date == datetime.date(2022, 1, 1)
+    assert visit.ketone_meter_training == 1
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_not_provided_passes_validation(test_user, single_row_valid_df):
+    """
+    Test that sick day rules are accepted where not provided (date not required)
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of provision of advice ('sick-day rules') about managing diabetes during intercurrent illness or episodes of hyperglycaemia",
+    ] = None
+    single_row_valid_df.loc[
+        0,
+        "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?",
+    ] = 2
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.sick_day_rules_training_date == None
+    assert visit.ketone_meter_training == 2
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_not_provided_but_date_provided_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that sick day rules not provided but date provided fails validation
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of provision of advice ('sick-day rules') about managing diabetes during intercurrent illness or episodes of hyperglycaemia",
+    ] = "01/01/2022"
+    single_row_valid_df.loc[
+        0,
+        "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?",
+    ] = 2
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "ketone_meter_training" in errors[0]
+    ), f"Expected error in sick_day_rules_training_date, but got None"
+
+    visit = Visit.objects.first()
+
+    assert visit.sick_day_rules_training_date == datetime.date(2022, 1, 1)
+    assert visit.ketone_meter_training == 2
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_none_but_date_provided_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that sick day rules not answered but date provided fails validation
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of provision of advice ('sick-day rules') about managing diabetes during intercurrent illness or episodes of hyperglycaemia",
+    ] = "01/01/2022"
+    single_row_valid_df.loc[
+        0,
+        "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?",
+    ] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "ketone_meter_training" in errors[0]
+    ), f"Expected error in sick_day_rules_training_date, but got None"
+
+    visit = Visit.objects.first()
+
+    assert visit.sick_day_rules_training_date == datetime.date(2022, 1, 1)
+    assert visit.ketone_meter_training == None
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_provided_but_no_date_provided_fails_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that sick day rules are provided but no date is rejected
+    """
+    single_row_valid_df.loc[
+        0,
+        "Date of provision of advice ('sick-day rules') about managing diabetes during intercurrent illness or episodes of hyperglycaemia",
+    ] = None
+    single_row_valid_df.loc[
+        0,
+        "Was the patient using (or trained to use) blood ketone testing equipment at time of visit?",
+    ] = 1
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert (
+        "sick_day_rules_training_date" in errors[0]
+    ), f"Expected error in sick_day_rules_training_date, but got None"
+
+    visit = Visit.objects.first()
+
+    assert visit.sick_day_rules_training_date == None
+    assert visit.ketone_meter_training == 1

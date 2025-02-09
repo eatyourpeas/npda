@@ -1439,3 +1439,114 @@ def test_dietician_additional_offered_none_but_date_offered_fail_validation():
         form.is_valid() == False
     ), f"Dietician additional appointment none but date offered should fail"
     assert "dietician_additional_appointment_date" in form.errors
+
+
+"""
+Test sick day rules
+"""
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_provided_passes_validation():
+    """
+    Test that sick day rules are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "ketone_meter_training": 1,  # Yes
+            "sick_day_rules_training_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "ketone_meter_training" not in form.errors
+    assert "sick_day_rules_training_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_not_provided_passes_validation():
+    """
+    Test that sick day rules are accepted where not provided (date not required)
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "ketone_meter_training": 2,  # No
+            "sick_day_rules_training_date": None,
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "ketone_meter_training" not in form.errors
+    assert "sick_day_rules_training_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_not_provided_but_date_provided_fails_validation():
+    """
+    Test that sick day rules not provided but date provided fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "ketone_meter_training": 2,  # No
+            "sick_day_rules_training_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Sick day rules not provided but date provided should fail"
+    assert "ketone_meter_training" in form.errors
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_none_but_date_provided_fails_validation():
+    """
+    Test that sick day rules not answered but date provided fails validation
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "ketone_meter_training": None,  # None
+            "sick_day_rules_training_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Sick day rules not answered but date provided should fail"
+    assert "ketone_meter_training" in form.errors
+
+
+@pytest.mark.django_db
+def test_sick_day_rules_provided_but_no_date_provided_fails_validation():
+    """
+    Test that sick day rules are provided but no date is rejected
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "ketone_meter_training": 1,  # Yes
+            "sick_day_rules_training_date": None,
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert form.is_valid() == False, f"Sick day rules provided but no date should fail"
+    assert "sick_day_rules_training_date" in form.errors
