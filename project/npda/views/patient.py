@@ -119,9 +119,16 @@ class PatientListView(
 
         patient_queryset = patient_queryset.filter(filtered_patients)
 
+        a_year_ago = timezone.now() - timezone.timedelta(days=365)
+
+        has_completed_a_full_year = Q(
+            diagnosis_date__gt=a_year_ago,
+        )
+
         patient_queryset = patient_queryset.annotate(
             audit_year=F("submissions__audit_year"),
             visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
+            full_year_of_care=has_completed_a_full_year,
             last_upload_date=Max("submissions__submission_date"),
             most_recent_visit_date=Max("visit__visit_date"),
             distance_from_lead_organisation=Distance(
@@ -140,7 +147,7 @@ class PatientListView(
             patient_queryset = patient_queryset.order_by(sort_by)
         else:
             patient_queryset = patient_queryset.order_by(
-                "is_valid", "-visit_error_count"
+                "is_valid", "-visit_error_count", "full_year_of_care"
             )
 
         return patient_queryset
@@ -201,6 +208,11 @@ class PatientListView(
         first_incomplete_year_count_in_page = 0
 
         for patient in context["page_obj"]:
+
+            patient.is_first_error = False
+            patient.is_first_valid = False
+            patient.is_first_incomplete_full_year = False
+
             # Signpost the latest quarter
             if patient.most_recent_visit_date is not None:
                 patient.latest_quarter = retrieve_quarter_for_date(
@@ -210,19 +222,28 @@ class PatientListView(
             # Highlight the separation between patients with errors and those without
             # unless we are sorting by a particular field in which case errors appear mixed
             if not context["sort_by"]:
-                if not patient.is_valid or patient.visit_error_count > 0:
+                if (
+                    (not patient.is_valid or patient.visit_error_count > 0)
+                    and patient.full_year_of_care
+                    and patient.death_date is None
+                ):
                     if error_count_in_page == 0:
                         patient.is_first_error = True
 
                     error_count_in_page += 1
 
-                if patient.is_valid and patient.visit_error_count == 0:
+                if (
+                    patient.is_valid
+                    and patient.visit_error_count == 0
+                    and patient.full_year_of_care
+                    and patient.death_date is None
+                ):
                     if valid_count_in_page == 0:
                         patient.is_first_valid = True
 
                     valid_count_in_page += 1
 
-                if not patient.has_completed_a_full_year_of_care():
+                if patient.full_year_of_care is False or patient.death_date is not None:
                     if first_incomplete_year_count_in_page == 0:
                         patient.is_first_incomplete_full_year = True
                     else:
