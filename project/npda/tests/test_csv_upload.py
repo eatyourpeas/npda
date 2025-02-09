@@ -15,6 +15,7 @@ from django.contrib.gis.geos import Point
 from httpx import HTTPError
 
 from project.npda.general_functions.csv import csv_upload, csv_parse
+from project.constants import ALL_DATES
 from project.npda.models import NPDAUser, Patient, Visit
 from project.npda.tests.factories.patient_factory import (
     INDEX_OF_MULTIPLE_DEPRIVATION_QUINTILE,
@@ -845,6 +846,21 @@ def test_upload_without_headers(test_user, one_patient_two_visits):
     # No patients or associated visits should be saved
     assert Patient.objects.count() == 0
     assert Visit.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_dates_with_short_year(one_patient_two_visits):
+    csv = one_patient_two_visits.to_csv(index=False, date_format="%d/%m/%y")
+    df = read_csv_from_str(csv).df
+
+    assert(df.equals(one_patient_two_visits))
+
+
+@pytest.mark.django_db
+def test_bad_date_format(one_patient_two_visits):
+    csv = one_patient_two_visits.to_csv(index=False, date_format="%d/%m")
+    with pytest.raises(ValueError):
+        read_csv_from_str(csv)
 
 
 @pytest.mark.django_db
