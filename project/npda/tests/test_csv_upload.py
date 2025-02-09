@@ -2198,3 +2198,129 @@ def test_smoking_status_date_missing_fails_validation(test_user, single_row_vali
 
     assert visit.smoking_status is 2
     assert visit.smoking_cessation_referral_date is None
+
+
+"""
+Dietitian referral tests
+"""
+
+
+@pytest.mark.django_db
+def test_dietician_referral_status_additional_offered_form_passes_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that dietician referral status and date are accepted
+    """
+    single_row_valid_df.loc[
+        0,
+        "Was the patient offered an additional appointment with a paediatric dietitian?",
+    ] = 1
+    single_row_valid_df.loc[0, "Date of additional appointment with dietitian"] = (
+        "01/01/2022"
+    )
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.dietician_additional_appointment_offered == 1
+    assert visit.dietician_additional_appointment_date == datetime.date(2022, 1, 1)
+
+
+@pytest.mark.django_db
+def test_dietician_no_additional_offered_form_passes_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that dietician referral status and date are accepted
+    """
+    single_row_valid_df.loc[
+        0,
+        "Was the patient offered an additional appointment with a paediatric dietitian?",
+    ] = 2
+    single_row_valid_df.loc[0, "Date of additional appointment with dietitian"] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert len(errors) == 0
+
+    visit = Visit.objects.first()
+
+    assert visit.dietician_additional_appointment_offered == 2
+    assert visit.dietician_additional_appointment_date is None
+
+
+@pytest.mark.django_db
+def test_dietician_no_additional_offered_date_provided_fail_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that dietician extra appointment not offered but date provided should fail
+    """
+    single_row_valid_df.loc[
+        0,
+        "Was the patient offered an additional appointment with a paediatric dietitian?",
+    ] = 2
+    single_row_valid_df.loc[0, "Date of additional appointment with dietitian"] = (
+        "01/01/2022"
+    )
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "dietician_additional_appointment_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.dietician_additional_appointment_offered == 2
+    assert visit.dietician_additional_appointment_date == datetime.date(2022, 1, 1)
+
+
+@pytest.mark.django_db
+def test_dietician_additional_offered_date_missing_fail_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that dietician extra appointment offered but date missing should fail
+    """
+    single_row_valid_df.loc[
+        0,
+        "Was the patient offered an additional appointment with a paediatric dietitian?",
+    ] = 1
+    single_row_valid_df.loc[0, "Date of additional appointment with dietitian"] = None
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "dietician_additional_appointment_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.dietician_additional_appointment_offered == 1
+    assert visit.dietician_additional_appointment_date is None
+
+
+@pytest.mark.django_db
+def test_dietician_additional_offered_none_but_date_offered_fail_validation(
+    test_user, single_row_valid_df
+):
+    """
+    Test that dietician additional appointment none but date offered should fail
+    """
+    single_row_valid_df.loc[
+        0,
+        "Was the patient offered an additional appointment with a paediatric dietitian?",
+    ] = None
+    single_row_valid_df.loc[0, "Date of additional appointment with dietitian"] = (
+        "01/01/2022"
+    )
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "dietician_additional_appointment_date" in errors[0]
+
+    visit = Visit.objects.first()
+
+    assert visit.dietician_additional_appointment_offered is None
+    assert visit.dietician_additional_appointment_date == datetime.date(2022, 1, 1)

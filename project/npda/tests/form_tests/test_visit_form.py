@@ -1320,3 +1320,122 @@ def test_smoking_status_date_when_non_smoker_form_fails_validation():
     ), f"Smoking cessation referral date offered but test passed"
     assert "smoking_status" not in form.errors
     assert "smoking_cessation_referral_date" in form.errors
+
+
+"""
+Dietician tests
+"""
+
+
+@pytest.mark.django_db
+def test_dietician_referral_status_additional_offered_form_passes_validation():
+    """
+    Test that dietician referral status and date are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "dietician_additional_appointment_offered": 1,  # Yes
+            "dietician_additional_appointment_date": "2025-01-01",
+            "carbohydrate_counting_level_three_education_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "dietician_referral_status" not in form.errors
+    assert "dietician_referral_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_dietician_no_additional_offered_form_passes_validation():
+    """
+    Test that dietician referral status and date are accepted
+    """
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "dietician_additional_appointment_offered": 2,  # No
+            "dietician_additional_appointment_date": None,
+            "carbohydrate_counting_level_three_education_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+    # Trigger the cleaners
+    assert form.is_valid(), f"Form should be valid but got {form.errors}"
+    assert "dietician_referral_status" not in form.errors
+    assert "dietician_referral_date" not in form.errors
+
+
+@pytest.mark.django_db
+def test_dietician_no_additional_offered_date_provided_fail_validation():
+    """
+    Test that dietician extra appointment not offered but date provided should fail
+    """
+
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "dietician_additional_appointment_offered": 2,  # No
+            "dietician_additional_appointment_date": "2025-01-01",
+            "carbohydrate_counting_level_three_education_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Dietician extra appointment not offered but date provided should fail"
+    assert "dietician_additional_appointment_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_dietician_additional_offered_date_missing_fail_validation():
+    """
+    Test that dietician extra appointment offered but date missing should fail
+    """
+
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "dietician_additional_appointment_offered": 1,  # Yes
+            "dietician_additional_appointment_date": None,
+            "carbohydrate_counting_level_three_education_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Dietician extra appointment offered but date missing should fail"
+    assert "dietician_additional_appointment_date" in form.errors
+
+
+@pytest.mark.django_db
+def test_dietician_additional_offered_none_but_date_offered_fail_validation():
+    """
+    Test that dietician additional appointment none but date offered should fail
+    """
+
+    patient = PatientFactory()
+
+    form = VisitForm(
+        data={
+            "dietician_additional_appointment_offered": None,  # None
+            "dietician_additional_appointment_date": "2025-01-01",
+            "carbohydrate_counting_level_three_education_date": "2025-01-01",
+        },
+        initial={"patient": patient},
+    )
+
+    # Trigger the cleaners
+    assert (
+        form.is_valid() == False
+    ), f"Dietician additional appointment none but date offered should fail"
+    assert "dietician_additional_appointment_date" in form.errors
