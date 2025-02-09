@@ -121,7 +121,7 @@ def csv_parse(csv_file, is_jersey=False):
     for column in ALL_DATES:
         if column in df.columns:
             # Support DD/MM/YYYY and DD/MM/YY
-            df[column] = pd.to_datetime(df[column], format="mixed", dayfirst=True, errors="raise")
+            df[column] = pd.to_datetime(df[column], format="mixed", dayfirst=True, errors="coerce")
 
     # Apply the dtype to non-date columns
     for column, dtype in CSV_DATA_TYPES_MINUS_DATES.items():

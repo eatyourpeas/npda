@@ -892,11 +892,42 @@ def test_dates_with_short_year(one_patient_two_visits):
     assert(df.equals(one_patient_two_visits))
 
 
+@pytest.mark.parametrize(
+    "column",
+    [
+        pytest.param("Date of Birth"),
+        pytest.param("Date of Diabetes Diagnosis"),
+    ],
+)
 @pytest.mark.django_db
-def test_bad_date_format(one_patient_two_visits):
-    csv = one_patient_two_visits.to_csv(index=False, date_format="%d/%m")
-    with pytest.raises(ValueError):
-        read_csv_from_str(csv)
+def test_bad_date_format_on_mandatory_column(one_patient_two_visits, column):
+    df = one_patient_two_visits
+    
+    df[column] = df[column].astype(str)
+    df[column] = "beep"
+
+    csv = df.to_csv(index=False, date_format="%d/%m/%Y")
+
+    df = read_csv_from_str(csv).df
+    errors = csv_upload_sync(test_user, df)
+
+    print(errors)
+    assert(False == True)
+
+
+@pytest.mark.django_db
+def test_bad_date_format_on_optional_column(one_patient_two_visits):
+    df = one_patient_two_visits
+
+    column = "Date of Level 3 carbohydrate counting education received"
+    
+    df[column] = df[column].astype(str)
+    df[column] = "beep"
+
+    csv = df.to_csv(index=False, date_format="%d/%m/%Y")
+    
+    df = read_csv_from_str(csv).df
+    assert(len(df) == 2)
 
 
 @pytest.mark.django_db
