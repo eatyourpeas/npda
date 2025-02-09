@@ -862,6 +862,13 @@ def test_dates_with_short_year(one_patient_two_visits):
 
 
 @pytest.mark.django_db
+def test_bad_date_format(one_patient_two_visits):
+    csv = one_patient_two_visits.to_csv(index=False, date_format="%d/%m")
+    with pytest.raises(ValueError):
+        read_csv_from_str(csv)
+
+
+@pytest.mark.django_db
 def test_upload_csv_with_bool_values_instead_of_int(test_user, single_row_valid_df):
     single_row_valid_df["Has the patient been recommended a Gluten-free diet?"] = True
 
