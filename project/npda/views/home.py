@@ -28,7 +28,6 @@ from ..general_functions.session import (
     refresh_session_object_asynchronously,
 )
 from ..general_functions.view_preference import get_or_update_view_preference
-from ..general_functions.audit_period import get_current_audit_year
 
 # RCPCH imports
 from .decorators import login_and_otp_required
@@ -87,7 +86,7 @@ async def home(request):
                 )
                 return redirect("home")
 
-            audit_year = get_current_audit_year()
+            audit_year = request.session.get("selected_audit_year")
 
             # CSV is valid, parse any errors and store the data in the tables.
             errors_by_row_index = await csv_upload(
