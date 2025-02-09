@@ -113,9 +113,11 @@
         </div>
         {% if form_method == 'update' and perms.npda.delete_patient %}
           <button type="submit"
-                  name="action"
-                  class="rcpch-danger-btn {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
-                  href="{% url 'patient-delete' patient_id %}">Delete</button>
+                  value="delete"
+                  name="delete"
+                  class="rcpch-danger-btn {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+            Delete
+          </button>
         {% endif %}
       </form>
     </div>

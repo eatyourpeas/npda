@@ -356,3 +356,14 @@ def field_is_not_related_to_transfer(field):
     if field.id_for_label in excluded_fields:
         return False
     return True
+
+
+@register.filter
+def no_categories_present(categories):
+    """
+    Returns true if no categories are present
+    """
+    for category in categories:
+        if category.get("present", False):
+            return False
+    return True
