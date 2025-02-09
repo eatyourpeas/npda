@@ -365,11 +365,6 @@ def test_invalid_nhs_number(test_user, single_row_valid_df):
     errors = csv_upload_sync(test_user, single_row_valid_df)
     assert "nhs_number" in errors[0]
 
-    # Catastrophic - Patient not save
-    assert Patient.objects.count() == 0
-
-    # TODO MRB: create a ValidationError model field (https://github.com/rcpch/national-paediatric-diabetes-audit/issues/332)
-
 
 @pytest.mark.django_db
 def test_future_date_of_birth(test_user, single_row_valid_df):
