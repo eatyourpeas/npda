@@ -106,6 +106,7 @@ def write_errors_to_xlsx(
     ]
 
     # Save the styled sheet.
+    xlsx_file = io.BytesIO()
     wb.save(xlsx_file)
 
     return xlsx_file.getvalue()
