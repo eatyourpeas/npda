@@ -303,22 +303,12 @@ async def csv_upload(
             # So I went with 5. Seems a reasonable balance between an actual speed up and not hammering third party APIs.
             throttle_semaphore = asyncio.Semaphore(5)
 
-            counter = 1
-
             for _, rows in visits_by_patient:
-                async def task(ix, rows):
-                    if(throttle_semaphore.locked()):
-                        print(f"!! [PATIENT {ix} waiting to start")
-
+                async def task(rows):
                     async with throttle_semaphore:
-                        print(f"!! [PATIENT] {ix} starting")
                         await process_rows_for_patient(rows, async_client)
-                        print(f"!! [PATIENT] {ix} complete")
                 
-                tg.create_task(task(counter, rows))
-                counter += 1
-
-    # TODO MRB: why is it saying 1 rows worth of errors? I must have broke the error reporting somehow
+                tg.create_task(task(rows))
 
     # Store the errors to report back to the user in the Data Quality Report
     if errors_to_return:
