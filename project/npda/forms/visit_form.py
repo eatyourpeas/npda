@@ -422,10 +422,12 @@ class VisitForm(forms.ModelForm):
 
         if albumin_creatinine_ratio:
             if albumin_creatinine_ratio < 0:
+                albumin_creatinine_ratio = 0
                 raise ValidationError(
                     "Urinary Albumin Level (ACR) out of range. Cannot be negative"
                 )
             elif albumin_creatinine_ratio > 999:
+                albumin_creatinine_ratio = 999
                 raise ValidationError(
                     "Urinary Albumin Level (ACR) out of range. Cannot be above 999 mg/mmol"
                 )

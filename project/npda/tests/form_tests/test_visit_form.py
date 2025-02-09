@@ -795,7 +795,7 @@ def test_urine_albumin_value_below_range_form_fails_validation():
     # Trigger the cleaners
     assert (
         form.is_valid() == False
-    ), f"Form should be invalid as albuminuria < 3, passed"
+    ), f"Form should be invalid as albuminuria < 0, passed"
 
 
 @pytest.mark.django_db

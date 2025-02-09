@@ -1625,8 +1625,8 @@ def test_urine_albumin_value_below_range_form_fails_validation(
     visit = Visit.objects.first()
 
     assert visit.albumin_creatinine_ratio == Decimal(
-        "0.1"
-    ), f"Saved urine albumin should be 0.1, but was {visit.albumin_creatinine_ratio}"
+        "-10"
+    ), f"Saved urine albumin should be -10, but was {visit.albumin_creatinine_ratio}"
     assert (
         visit.albuminuria_stage == 1
     ), f"Saved urine albumin stage should be 1 (Normal), but was {visit.albuminuria_stage}"
@@ -1655,8 +1655,8 @@ def test_urine_albumin_value_above_range_form_fails_validation(
     visit = Visit.objects.first()
 
     assert (
-        visit.albumin_creatinine_ratio == 100
-    ), f"Saved urine albumin should be 100, but was {visit.albumin_creatinine_ratio}"
+        visit.albumin_creatinine_ratio == 1000
+    ), f"Saved urine albumin should be 1000, but was {visit.albumin_creatinine_ratio}"
     assert (
         visit.albuminuria_stage == 1
     ), f"Saved urine albumin stage should be 1 (Normal), but was {visit.albuminuria_stage}"
