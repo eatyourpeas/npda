@@ -38,8 +38,7 @@ class Patient(models.Model):
     """
     The Patient class.
 
-    The index of multiple deprivation is calculated in the save() method using the postcode supplied and the
-    RCPCH Census Platform
+    The index of multiple deprivation is calculated using the postcode supplied and the RCPCH Census Platform
 
     Custom methods age and age_days, returns the age
     """
@@ -148,8 +147,7 @@ class Patient(models.Model):
             CAN_OPT_OUT_CHILD_FROM_INCLUSION_IN_AUDIT,
         ]
 
-    def clean(self):
-        super().clean()
+    def save(self, **kwargs):
         if not self.nhs_number and not self.unique_reference_number:
             raise ValidationError(
                 "Either NHS Number or Unique Reference Number must be provided."
@@ -158,6 +156,8 @@ class Patient(models.Model):
             raise ValidationError(
                 "Only one of NHS Number or Unique Reference Number should be provided."
             )
+
+        super().save(**kwargs)
 
     def __str__(self) -> str:
         if self.unique_reference_number:

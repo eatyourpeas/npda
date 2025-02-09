@@ -136,13 +136,13 @@ def test_user(seed_groups_fixture, seed_users_fixture):
 # The database is not rolled back if we used the built in async support for pytest
 # https://github.com/pytest-dev/pytest-asyncio/issues/226
 @async_to_sync
-async def csv_upload_sync(user, dataframe):
+async def csv_upload_sync(user, dataframe, pdu_pz_code=ALDER_HEY_PZ_CODE):
     return await csv_upload(
         user,
         dataframe,
         csv_file_name=None,
         csv_file_bytes=None,
-        pdu_pz_code=ALDER_HEY_PZ_CODE,
+        pdu_pz_code=pdu_pz_code,
         audit_year=2024,
     )
 
@@ -219,7 +219,6 @@ def test_multiple_patients(
 @pytest.mark.parametrize(
     "column,model_field",
     [
-        pytest.param("NHS Number", "nhs_number"),
         pytest.param("Date of Birth", "date_of_birth"),
         pytest.param("Diabetes Type", "diabetes_type"),
         pytest.param("Date of Diabetes Diagnosis", "diagnosis_date"),
@@ -232,6 +231,7 @@ def test_missing_mandatory_field(
     single_row_valid_df,
     column,
     model_field,
+    pdu_pz_code
 ):
     # As these tests need full transaction support we can't use our session fixtures
     test_user = NPDAUser.objects.filter(
@@ -251,7 +251,64 @@ def test_missing_mandatory_field(
 
     assert model_field in errors[0]
 
-    # Catastrophic - we can't save this patient at all so we won't save any of the patients in the submission
+    # Catastrophic - we can't save this patient at all
+    assert Patient.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_missing_nhs_number(
+    seed_groups_per_function_fixture,
+    seed_users_per_function_fixture,
+    single_row_valid_df
+):
+    # As these tests need full transaction support we can't use our session fixtures
+    test_user = NPDAUser.objects.filter(
+        organisation_employers__pz_code=ALDER_HEY_PZ_CODE
+    ).first()
+
+    # Delete all patients to ensure we're starting from a clean slate
+    Patient.objects.all().delete()
+
+    single_row_valid_df.loc[0, "NHS Number"] = None
+
+    assert (
+        Patient.objects.count() == 0
+    ), "There should be no patients in the database before the test"
+
+    errors = csv_upload_sync(test_user, single_row_valid_df)
+
+    assert "nhs_number" in errors[0]
+
+    # We shouldn't save this patient (invariant enforced in Patient.save not in the database)
+    assert Patient.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_missing_unique_reference_number(
+    seed_groups_per_function_fixture,
+    seed_users_per_function_fixture,
+    single_row_valid_df
+):
+    # As these tests need full transaction support we can't use our session fixtures
+    test_user = NPDAUser.objects.filter(
+        organisation_employers__pz_code=ALDER_HEY_PZ_CODE
+    ).first()
+
+    # Delete all patients to ensure we're starting from a clean slate
+    Patient.objects.all().delete()
+
+    df = single_row_valid_df.rename(columns={"NHS Number": "Unique Reference Number"})
+    df.loc[0, "Unique Reference Number"] = None
+
+    assert (
+        Patient.objects.count() == 0
+    ), "There should be no patients in the database before the test"
+
+    errors = csv_upload_sync(test_user, df, "PZ248")
+
+    assert "unique_reference_number" in errors[0]
+
+    # We shouldn't save this patient (invariant enforced in Patient.save not in the database)
     assert Patient.objects.count() == 0
 
 
