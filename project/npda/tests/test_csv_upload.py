@@ -899,8 +899,21 @@ def test_dates_with_short_year(one_patient_two_visits):
         pytest.param("Date of Diabetes Diagnosis"),
     ],
 )
-@pytest.mark.django_db
-def test_bad_date_format_on_mandatory_column(one_patient_two_visits, column):
+@pytest.mark.django_db(transaction=True)
+def test_bad_date_format_on_mandatory_column(
+    seed_groups_per_function_fixture,
+    seed_users_per_function_fixture,
+    one_patient_two_visits,
+    column
+):
+    # As these tests need full transaction support we can't use our session fixtures
+    test_user = NPDAUser.objects.filter(
+        organisation_employers__pz_code=ALDER_HEY_PZ_CODE
+    ).first()
+
+    # Delete all patients to ensure we're starting from a clean slate
+    Patient.objects.all().delete()
+
     df = one_patient_two_visits
     
     df[column] = df[column].astype(str)
@@ -908,11 +921,18 @@ def test_bad_date_format_on_mandatory_column(one_patient_two_visits, column):
 
     csv = df.to_csv(index=False, date_format="%d/%m/%Y")
 
+    assert (
+        Patient.objects.count() == 0
+    ), "There should be no patients in the database before the test"
+
     df = read_csv_from_str(csv).df
     errors = csv_upload_sync(test_user, df)
 
-    print(errors)
-    assert(False == True)
+    assert(len(errors) == 1)
+
+    assert (
+        Patient.objects.count() == 0
+    ), "There should be no patients in the database after the test"
 
 
 @pytest.mark.django_db
