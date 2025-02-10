@@ -1,4 +1,5 @@
 # python imports
+import datetime
 import logging
 import json
 
@@ -121,14 +122,14 @@ class PatientListView(
 
         a_year_ago = timezone.now() - timezone.timedelta(days=365)
 
-        has_completed_a_full_year = Q(
-            diagnosis_date__gt=a_year_ago,
-        )
-
         patient_queryset = patient_queryset.annotate(
             audit_year=F("submissions__audit_year"),
             visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
-            full_year_of_care=has_completed_a_full_year,
+            incomplete_full_year_of_care=Case(
+                When(death_date__isnull=False, then=True),
+                When(diagnosis_date__lt=a_year_ago, then=True),
+                default=False,
+            ),
             last_upload_date=Max("submissions__submission_date"),
             most_recent_visit_date=Max("visit__visit_date"),
             distance_from_lead_organisation=Distance(
@@ -142,12 +143,11 @@ class PatientListView(
         )
 
         sort_by = self.get_sort_by()
-
         if sort_by:
             patient_queryset = patient_queryset.order_by(sort_by)
         else:
             patient_queryset = patient_queryset.order_by(
-                "is_valid", "-visit_error_count", "full_year_of_care"
+                "incomplete_full_year_of_care", "is_valid", "-visit_error_count"
             )
 
         return patient_queryset
@@ -223,10 +223,8 @@ class PatientListView(
             # unless we are sorting by a particular field in which case errors appear mixed
             if not context["sort_by"]:
                 if (
-                    (not patient.is_valid or patient.visit_error_count > 0)
-                    and patient.full_year_of_care
-                    and patient.death_date is None
-                ):
+                    not patient.is_valid or patient.visit_error_count > 0
+                ) and not patient.incomplete_full_year_of_care:
                     if error_count_in_page == 0:
                         patient.is_first_error = True
 
@@ -235,15 +233,14 @@ class PatientListView(
                 if (
                     patient.is_valid
                     and patient.visit_error_count == 0
-                    and patient.full_year_of_care
-                    and patient.death_date is None
+                    and not patient.incomplete_full_year_of_care
                 ):
                     if valid_count_in_page == 0:
                         patient.is_first_valid = True
 
                     valid_count_in_page += 1
 
-                if patient.full_year_of_care is False or patient.death_date is not None:
+                if patient.incomplete_full_year_of_care:
                     if first_incomplete_year_count_in_page == 0:
                         patient.is_first_incomplete_full_year = True
                     else:
