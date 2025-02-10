@@ -107,29 +107,29 @@ def generate_distance_from_organisation_scatterplot_figure(
     """
 
     english_colorscale = [
-        [0, RCPCH_PINK_DARK_TINT],  # Very dark pink
-        [0.11, RCPCH_PINK],  # pink
-        [0.22, RCPCH_PINK_LIGHT_TINT1],  # Medium light pink
-        [0.33, RCPCH_PINK_LIGHT_TINT2],  # light pink
-        [0.44, RCPCH_PINK_LIGHT_TINT3],  # very light pink
-        [0.55, RCPCH_LIGHT_BLUE_TINT3],  # Very light blue
-        [0.66, RCPCH_LIGHT_BLUE_TINT2],  # Light blue
-        [0.77, RCPCH_LIGHT_BLUE_TINT1],  # Medium light blue
-        [0.88, RCPCH_LIGHT_BLUE],  # blue
-        [1, RCPCH_LIGHT_BLUE_DARK_TINT],  # Dark blue
+        [0, RCPCH_LIGHT_BLUE_DARK_TINT],  # Dark blue
+        [0.11, RCPCH_LIGHT_BLUE],  # blue
+        [0.22, RCPCH_LIGHT_BLUE_TINT1],  # Medium light blue
+        [0.33, RCPCH_LIGHT_BLUE_TINT2],  # Light blue
+        [0.44, RCPCH_LIGHT_BLUE_TINT3],  # Very light blue
+        [0.55, RCPCH_PINK_LIGHT_TINT3],  # very light pink
+        [0.66, RCPCH_PINK_LIGHT_TINT2],  # light pink
+        [0.77, RCPCH_PINK_LIGHT_TINT1],  # Medium light pink
+        [0.88, RCPCH_PINK],  # pink
+        [1, RCPCH_PINK_DARK_TINT],  # Very dark pink
     ]
 
     welsh_colorscale = [
-        [0, RCPCH_RED_DARK_TINT],
-        [0.11, RCPCH_RED],
-        [0.22, RCPCH_RED_LIGHT_TINT1],
-        [0.33, RCPCH_RED_LIGHT_TINT2],
-        [0.44, RCPCH_RED_LIGHT_TINT3],
-        [0.55, RCPCH_STRONG_GREEN_LIGHT_TINT3],
-        [0.66, RCPCH_STRONG_GREEN_LIGHT_TINT2],
-        [0.77, RCPCH_STRONG_GREEN_LIGHT_TINT1],
-        [0.88, RCPCH_STRONG_GREEN],
-        [1, RCPCH_STRONG_GREEN_DARK_TINT],
+        [0, RCPCH_STRONG_GREEN_DARK_TINT],
+        [0.11, RCPCH_STRONG_GREEN],
+        [0.22, RCPCH_STRONG_GREEN_LIGHT_TINT1],
+        [0.33, RCPCH_STRONG_GREEN_LIGHT_TINT2],
+        [0.44, RCPCH_STRONG_GREEN_LIGHT_TINT3],
+        [0.55, RCPCH_RED_LIGHT_TINT3],
+        [0.66, RCPCH_RED_LIGHT_TINT2],
+        [0.77, RCPCH_RED_LIGHT_TINT1],
+        [0.88, RCPCH_RED],
+        [1, RCPCH_RED_DARK_TINT],
     ]
 
     # # Load the IMD data (there are two files of merged data, one with IMD ranks merged with english LSOA shapes,

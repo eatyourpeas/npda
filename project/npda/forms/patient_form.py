@@ -198,6 +198,31 @@ class PatientForm(forms.ModelForm):
                 ),
             )
 
+        if nhs_number:
+            if (
+                Patient.objects.filter(nhs_number=nhs_number)
+                .exclude(id=self.instance.id)
+                .exists()
+            ):
+                self.add_error(
+                    "nhs_number",
+                    ValidationError(
+                        "A patient with this NHS number already exists in the database."
+                    ),
+                )
+        if unique_reference_number:
+            if (
+                Patient.objects.filter(unique_reference_number=unique_reference_number)
+                .exclude(id=self.instance.id)
+                .exists()
+            ):
+                self.add_error(
+                    "unique_reference_number",
+                    ValidationError(
+                        "A patient with this Unique Reference Number already exists in the database."
+                    ),
+                )
+
         reason_leaving_service = cleaned_data.get("reason_leaving_service")
         date_leaving_service = cleaned_data.get("date_leaving_service")
         if date_leaving_service and not reason_leaving_service:
