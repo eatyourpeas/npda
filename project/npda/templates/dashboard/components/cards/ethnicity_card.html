@@ -1,27 +1,20 @@
 {% extends 'dashboard/components/bases/base_card.html' %}
 {% block card_title %}
   Ethnicity
-{% endblock card_title%}
+{% endblock card_title %}
 {% block card_body %}
-{% if charts.pt_ethnicity_tree_map_data.no_eligible_patients %}
-  <div class="alert alert-info">
-    <i class="fa-solid fa-person-circle-exclamation"></i> No eligible patients.
-  </div>
-{% else %}
-  <div
-  hx-get="{% url 'get_treemap_chart_partial' %}"
-  hx-vals='{{ charts.pt_ethnicity_tree_map_data }}'
-  hx-trigger="load" hx-swap="innerHTML"
-  _="on htmx:afterSwap remove #loading-spinner-ethnicity-card"></div>
-
-  <div id="loading-spinner-ethnicity-card"
-  class="loading loading-spinner text-rcpch_dark_blue flex flex-grow-1 justify-center items-center h-full w-1/5 mx-auto bg-center">
-  </div>
-{% endif %}
+  {% if charts.pt_ethnicity_tree_map_data.no_eligible_patients %}
+    <div class="alert alert-info">
+      <i class="fa-solid fa-person-circle-exclamation"></i> No eligible patients.
+    </div>
+  {% else %}
+    <div hx-get="{% url 'get_treemap_chart_partial' %}"
+         hx-vals='{{ charts.pt_ethnicity_tree_map_data }}'
+         hx-trigger="load"
+         hx-swap="innerHTML"
+         _="on htmx:afterSwap remove #loading-spinner-ethnicity-card"></div>
+    <div id="loading-spinner-ethnicity-card"
+         class="loading loading-spinner text-rcpch_dark_blue flex flex-grow-1 justify-center items-center h-full w-1/5 mx-auto bg-center">
+    </div>
+  {% endif %}
 {% endblock %}
-
-
-
-
-
-
