@@ -1,6 +1,7 @@
 # python imports
 from datetime import date
 import logging
+from datetime import timedelta
 
 # django imports
 from django.contrib.gis.db import models
@@ -209,4 +210,20 @@ class Patient(models.Model):
             date_leaving_service__range=(audit_year_start, audit_year_end),
         ).exists():
             return True
+        return False
+
+    def has_completed_a_full_year_of_care(self):
+        """
+        Returns True if the patient has completed a full year of care
+        This includes:
+        - Patients who have been diagnosed with diabetes for more than a year
+        - Patients who are still alive
+        """
+
+        if self.diagnosis_date:
+            if (
+                self.diagnosis_date + timedelta(days=365) < date.today()
+                and self.death_date is None
+            ):
+                return True
         return False

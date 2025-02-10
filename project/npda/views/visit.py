@@ -147,6 +147,8 @@ class VisitCreateView(
         patient = get_object_or_404(Patient, pk=self.kwargs["patient_id"])
         self.object = form.save(commit=False)
         self.object.patient = patient
+        self.object.errors = None
+        self.object.is_valid = True
         self.object.save()
 
         super(VisitCreateView, self).form_valid(form)
@@ -193,6 +195,7 @@ class VisitUpdateView(
         return initial
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
+        print("form_valid is called int he view")
         if "delete" in self.request.POST:
             return redirect(reverse("visit-delete", kwargs={"pk": self.kwargs["pk"]}))
         visit = form.save(commit=True)
