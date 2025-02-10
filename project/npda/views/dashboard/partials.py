@@ -767,13 +767,10 @@ def get_treemap_chart_partial(request):
                 labels=all_labels,  # Labels including parents
                 parents=all_parents,  # Hierarchical structure
                 values=all_values,  # Sizes
-                textinfo="label+percent parent",  # Show labels and percentages
+                hoverinfo="label+percent parent",  # Show labels and percentages
                 marker=dict(
                     # Apply parent colors to subcategories
                     colors=[all_colors[label] for label in all_labels],
-                ),
-                hovertemplate=(
-                    "<b>%{label}</b><br>" "N=%{value} (%{percentRoot:.0%})<br><extra></extra>"
                 ),
             )
         )
