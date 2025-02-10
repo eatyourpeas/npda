@@ -325,6 +325,7 @@ def dashboard(request):
             },
             "pt_ethnicity_tree_map_data": json.dumps(
                 {
+                    "no_eligible_patients": not pt_ethnicity_value_counts,
                     "data": pt_ethnicity_value_counts,
                     "parent_color_map": constants.ethnicities.ETHNICITY_PARENT_COLOR_MAP,
                     "child_parent_map": constants.ethnicities.ETHNICITY_CHILD_PARENT_MAP,
@@ -353,5 +354,7 @@ def dashboard(request):
         # at that point
         "aggregation_level": "pdu",
     }
+
+    print(f"!! {context['charts']['pt_ethnicity_tree_map_data']}")
 
     return render(request, template_name=template, context=context)
