@@ -722,9 +722,9 @@ def get_pt_demographic_value_counts(
         "sex", "ethnicity", "index_of_multiple_deprivation_quintile"
     )
     sex_map = dict(SEX_TYPE)
-    sex_counts = Counter(sex_map.get(item["sex"]) for item in all_values)
+    sex_counts = Counter(sex_map[item["sex"]] for item in all_values if item["sex"] in sex_map)
     ethnicity_map = dict(ETHNICITIES)
-    ethnicity_counts = Counter(ethnicity_map.get(item["ethnicity"]) for item in all_values)
+    ethnicity_counts = Counter(ethnicity_map[item["ethnicity"]] for item in all_values if item["ethnicity"] in ethnicity_map)
     imd_map = {
         1: "1st Quintile",
         2: "2nd Quintile",
