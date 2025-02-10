@@ -786,7 +786,7 @@ def test_urine_albumin_value_below_range_form_fails_validation():
 
     form = VisitForm(
         data={
-            "albumin_creatinine_ratio": 0.1,
+            "albumin_creatinine_ratio": -5,
             "albumin_creatinine_ratio_date": "2025-01-01",
             "albuminuria_stage": 2,  # microalbuminuria
         },
@@ -795,7 +795,7 @@ def test_urine_albumin_value_below_range_form_fails_validation():
     # Trigger the cleaners
     assert (
         form.is_valid() == False
-    ), f"Form should be invalid as albuminuria < 3, passed"
+    ), f"Form should be invalid as albuminuria < 0, passed"
 
 
 @pytest.mark.django_db
@@ -807,7 +807,7 @@ def test_urine_albumin_value_above_range_form_fails_validation():
 
     form = VisitForm(
         data={
-            "albumin_creatinine_ratio": 100,
+            "albumin_creatinine_ratio": 1000,
             "albumin_creatinine_ratio_date": "2025-01-01",
             "albuminuria_stage": 3,  # macroalbuminuria
         },

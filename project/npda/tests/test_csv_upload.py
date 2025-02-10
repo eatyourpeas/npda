@@ -231,7 +231,7 @@ def test_missing_mandatory_field(
     seed_users_per_function_fixture,
     single_row_valid_df,
     column,
-    model_field
+    model_field,
 ):
     # As these tests need full transaction support we can't use our session fixtures
     test_user = NPDAUser.objects.filter(
@@ -259,7 +259,7 @@ def test_missing_mandatory_field(
 def test_missing_nhs_number(
     seed_groups_per_function_fixture,
     seed_users_per_function_fixture,
-    single_row_valid_df
+    single_row_valid_df,
 ):
     # As these tests need full transaction support we can't use our session fixtures
     test_user = NPDAUser.objects.filter(
@@ -287,7 +287,7 @@ def test_missing_nhs_number(
 def test_missing_unique_reference_number(
     seed_groups_per_function_fixture,
     seed_users_per_function_fixture,
-    single_row_valid_df
+    single_row_valid_df,
 ):
     # As these tests need full transaction support we can't use our session fixtures
     test_user = NPDAUser.objects.filter(
@@ -940,7 +940,7 @@ def test_dates_with_short_year(one_patient_two_visits):
     csv = one_patient_two_visits.to_csv(index=False, date_format="%d/%m/%y")
     df = read_csv_from_str(csv).df
 
-    assert(df.equals(one_patient_two_visits))
+    assert df.equals(one_patient_two_visits)
 
 
 @pytest.mark.parametrize(
@@ -955,7 +955,7 @@ def test_bad_date_format_on_mandatory_column(
     seed_groups_per_function_fixture,
     seed_users_per_function_fixture,
     one_patient_two_visits,
-    column
+    column,
 ):
     # As these tests need full transaction support we can't use our session fixtures
     test_user = NPDAUser.objects.filter(
@@ -966,7 +966,7 @@ def test_bad_date_format_on_mandatory_column(
     Patient.objects.all().delete()
 
     df = one_patient_two_visits
-    
+
     df[column] = df[column].astype(str)
     df[column] = "beep"
 
@@ -979,7 +979,7 @@ def test_bad_date_format_on_mandatory_column(
     df = read_csv_from_str(csv).df
     errors = csv_upload_sync(test_user, df)
 
-    assert(len(errors) == 1)
+    assert len(errors) == 1
 
     assert (
         Patient.objects.count() == 0
@@ -991,14 +991,14 @@ def test_bad_date_format_on_optional_column(one_patient_two_visits):
     df = one_patient_two_visits
 
     column = "Date of Level 3 carbohydrate counting education received"
-    
+
     df[column] = df[column].astype(str)
     df[column] = "beep"
 
     csv = df.to_csv(index=False, date_format="%d/%m/%Y")
-    
+
     df = read_csv_from_str(csv).df
-    assert(len(df) == 2)
+    assert len(df) == 2
 
 
 @pytest.mark.django_db
@@ -1612,7 +1612,7 @@ def test_urine_albumin_value_below_range_form_fails_validation(
     """
     Test that urine albumin value is rejected if below range
     """
-    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = 0.1
+    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = -10
     single_row_valid_df.loc[0, "Albuminuria Stage"] = 1  # Normal
     single_row_valid_df.loc[0, "Observation Date: Urinary Albumin Level"] = "01/01/2022"
 
@@ -1625,8 +1625,8 @@ def test_urine_albumin_value_below_range_form_fails_validation(
     visit = Visit.objects.first()
 
     assert visit.albumin_creatinine_ratio == Decimal(
-        "0.1"
-    ), f"Saved urine albumin should be 0.1, but was {visit.albumin_creatinine_ratio}"
+        "-10"
+    ), f"Saved urine albumin should be -10, but was {visit.albumin_creatinine_ratio}"
     assert (
         visit.albuminuria_stage == 1
     ), f"Saved urine albumin stage should be 1 (Normal), but was {visit.albuminuria_stage}"
@@ -1642,7 +1642,7 @@ def test_urine_albumin_value_above_range_form_fails_validation(
     """
     Test that urine albumin value is rejected if above range
     """
-    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = 100
+    single_row_valid_df.loc[0, "Urinary Albumin Level (ACR)"] = 1000
     single_row_valid_df.loc[0, "Albuminuria Stage"] = 1  # Normal
     single_row_valid_df.loc[0, "Observation Date: Urinary Albumin Level"] = "01/01/2022"
 
@@ -1655,8 +1655,8 @@ def test_urine_albumin_value_above_range_form_fails_validation(
     visit = Visit.objects.first()
 
     assert (
-        visit.albumin_creatinine_ratio == 100
-    ), f"Saved urine albumin should be 100, but was {visit.albumin_creatinine_ratio}"
+        visit.albumin_creatinine_ratio == 1000
+    ), f"Saved urine albumin should be 1000, but was {visit.albumin_creatinine_ratio}"
     assert (
         visit.albuminuria_stage == 1
     ), f"Saved urine albumin stage should be 1 (Normal), but was {visit.albuminuria_stage}"
