@@ -323,14 +323,12 @@ def dashboard(request):
             "pt_sex_value_counts_pct": {
                 "data": json.dumps(pt_sex_value_counts_pct),
             },
-            "pt_ethnicity_tree_map_data": json.dumps(
-                {
-                    "no_eligible_patients": not pt_ethnicity_value_counts,
-                    "data": pt_ethnicity_value_counts,
-                    "parent_color_map": constants.ethnicities.ETHNICITY_PARENT_COLOR_MAP,
-                    "child_parent_map": constants.ethnicities.ETHNICITY_CHILD_PARENT_MAP,
-                }
-            ),
+            "pt_ethnicity_tree_map_data": {
+                "no_eligible_patients": not pt_ethnicity_value_counts,
+                "data": json.dumps(pt_ethnicity_value_counts),
+                "parent_color_map": json.dumps(constants.ethnicities.ETHNICITY_PARENT_COLOR_MAP),
+                "child_parent_map": json.dumps(constants.ethnicities.ETHNICITY_CHILD_PARENT_MAP),
+            },
             "pt_imd_value_counts_pct": {
                 "data": json.dumps(pt_imd_value_counts_pct),
             },
