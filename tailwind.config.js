@@ -21,6 +21,8 @@ module.exports = {
         custom: "33.7rem", // Replace '30rem' with the exact width you want
       },
       colors: {
+        success: "#11a7f2",
+        error: "#ff8000",
         rcpch_lightest_grey: "#f3f3f3",
 
         rcpch_dark_blue: "#0d0d58",
@@ -111,7 +113,8 @@ module.exports = {
   plugins: [require("daisyui")],
   // darkMode: ['selector', '[data-theme="dark"]'], # To reinstate dark mode, uncomment this line
   daisyui: {
-    themes: ["light",
+    themes: [
+      "light",
       // "dark"  # To reinstate dark mode, uncomment this line
     ], // Example themes
     // Add any other DaisyUI-specific configurations here
@@ -234,13 +237,13 @@ module.exports = {
     "border-rcpch_dark_red",
     'border-"bg-rcpch_lightest_grey",',
     'border-"bg-rcpch_dark_blue",',
-    'btn-info',
-    'btn-success',
-    'btn-warning',
-    'btn-error',
-    'alert-info',
-    'alert-success',
-    'alert-warning',
-    'alert-error',
+    "btn-info",
+    "btn-success",
+    "btn-warning",
+    "btn-error",
+    "alert-info",
+    "alert-success",
+    "alert-warning",
+    "alert-error",
   ],
 };
