@@ -401,12 +401,12 @@ def generate_dataframe_and_aggregated_distance_data_from_cases(filtered_cases):
                 lambda d: d.mi
             )
 
-            max_distance_travelled_km = geo_df["distance_km"].min()
+            max_distance_travelled_km = geo_df["distance_km"].max()
             mean_distance_travelled_km = geo_df["distance_km"].mean()
             median_distance_travelled_km = geo_df["distance_km"].median()
             std_distance_travelled_km = geo_df["distance_km"].std()
 
-            max_distance_travelled_mi = geo_df["distance_mi"].min()
+            max_distance_travelled_mi = geo_df["distance_mi"].max()
             mean_distance_travelled_mi = geo_df["distance_mi"].mean()
             median_distance_travelled_mi = geo_df["distance_mi"].median()
             std_distance_travelled_mi = geo_df["distance_mi"].std()
