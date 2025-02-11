@@ -49,29 +49,25 @@ def write_errors_to_xlsx(
     df.to_excel(xlsx_file, sheet_name="Uploaded data (raw)", index=False)
 
     # If the csv file is from Jersey, add the Jersey unique identifier to the CSV headings, otherwise add the England unique identifier
-    if is_jersey:
-        CSV_HEADINGS = UNIQUE_IDENTIFIER_JERSEY + CSV_HEADING_OBJECTS
+    df_errors = flatten_errors(
+        errors=errors,
+        original_data=df,
+        identifier_field="Unique Reference Number" if is_jersey else "NHS Number",
+        csv_headings=(UNIQUE_IDENTIFIER_JERSEY if is_jersey else UNIQUE_IDENTIFIER_ENGLAND) + CSV_HEADING_OBJECTS
+    )
 
-        flattened_errors = flatten_errors(
-            errors, df["Unique Reference Number"], CSV_HEADINGS
-        )
-    else:
-        CSV_HEADINGS = UNIQUE_IDENTIFIER_ENGLAND + CSV_HEADING_OBJECTS
-        flattened_errors = flatten_errors(errors, df["NHS Number"], CSV_HEADINGS)
+    print(df_errors.to_string())
 
     # Add sheet that lists the errors.
     with pd.ExcelWriter(xlsx_file, mode="a", engine="openpyxl") as writer:
-        df_new = pd.DataFrame(
-            flattened_errors
-        )  # Example DataFrame; replace with your actual data
-        df_new.to_excel(writer, sheet_name="Errors - Overview", index=False)
+        df_errors.to_excel(writer, sheet_name="Errors - Overview", index=False)
 
     # Load the workbook in openpyxl
     wb: Workbook = load_workbook(xlsx_file)
 
     # Set text to red
     overview_sheet = wb["Errors - Overview"]
-    for row in overview_sheet.iter_rows(min_row=2, min_col=3):
+    for row in overview_sheet.iter_rows(min_row=2, min_col=4):
         for cell in row:
             cell.font = Font(color="FF0000")
 
@@ -83,20 +79,23 @@ def write_errors_to_xlsx(
 
     # Style the openpyxl worksheet to highlight in red erroneous/invalid cells.
     # Also add comments to annotate the actual error.
-    for patient_errors in flattened_errors:
-        row_index = patient_errors["metadata_patient_row"] + 1
-        for field_name, field_error in patient_errors.items():
-            column_index = find_column_index_by_name(field_name, styled_sheet)
-            if column_index:
-                styled_sheet.cell(row=row_index, column=column_index).fill = (
-                    PatternFill(patternType="solid", fgColor="FFC9C9")
-                )  # Change color to red.
-                styled_sheet.cell(row=row_index, column=column_index).comment = Comment(
-                    field_error,
-                    "Data Validator [Automated: RCPCH]",
-                    height=300,
-                    width=300,
-                )
+    for _, patient_errors in df_errors.iterrows():
+        row_index = patient_errors["Original CSV Row"] + 1
+
+        field_name = patient_errors["Column"]
+        field_errors = patient_errors["Errors"]
+
+        column_index = find_column_index_by_name(field_name, styled_sheet)
+        if column_index:
+            styled_sheet.cell(row=row_index, column=column_index).fill = (
+                PatternFill(patternType="solid", fgColor="FFC9C9")
+            )  # Change color to red.
+            styled_sheet.cell(row=row_index, column=column_index).comment = Comment(
+                field_errors,
+                "Data Validator [Automated: RCPCH]",
+                height=300,
+                width=300,
+            )
 
     # Specify the desired order by reordering the `workbook.worksheets` list
     wb._sheets = [
@@ -123,52 +122,42 @@ def find_column_index_by_name(column_name: str, ws: Worksheet) -> int | None:
     return column_index
 
 
-def flatten_errors(
-    errors: defaultdict[int, defaultdict[Any, list]],
-    uploaded_unique_national_identifiers: "pd.Series[str]",
-    csv_heading_list: "List[Dict[str, str]]",
-) -> "List[Dict[str, Union[int, str]]]":
-    """
-    Flatten a nested dictionary of errors into a list of dictionaries, where each dictionary represents a row with
-    its errors.
-
-    Args:
-        errors (defaultdict[int, defaultdict[Any, list]]): A nested dictionary containing
-            errors grouped by row number and field name. The structure is:
-            {row_number: {field_name: [error_messages]}}
-        uploaded_unique_national_identifiers (pd.Series[str]): A pandas Series containing the unique national identifiers (NHS Numbers or Unique Reference Numbers) of the uploaded data.
-        csv_heading_list (List[Dict[str, str]]): A list of dictionaries containing the CSV headings. (e.g. [{'heading': 'Date of Birth', 'model_field': 'date_of_birth', 'model': 'patient'}]) They differ depending on whether NHS Numbers or Unique Reference Numbers are used.
-
-    Returns:
-        list: A list of dictionaries, where each dictionary contains:
-            - 'row': The row number (as an integer)
-            - Field names as keys and concatenated error messages as values
-
-    """
-
-    flattened_data: "List[Dict[str, Union[int, str]]]" = []
-
-    for row_num, errors in errors.items():
-        # Add patient_row and NHS Number to the row dictionary.
-        row_dict = {"metadata_patient_row": int(row_num) + 1}
-        row_dict["metadata_unique_national_identifiers"] = (
-            uploaded_unique_national_identifiers.tolist()[int(row_num)]
-        )
-
-        for field, error_list in errors.items():
-            # Flatten nested error messages into a single string
-            error_messages = "; ".join(error_list)
-            # Map field name to human-readable string ("date_of_birth" -> "Date of Birth")
-            field: dict[str, str] = next(
-                (item for item in csv_heading_list if item["model_field"] == field),
-                {
-                    "heading": "Unable to get header",
-                    "model_field": "error",
-                    "model": "error",
-                },
+def model_field_to_csv_heading(model_field: str) -> str:
+    match model_field:
+        case 'nhs_number':
+            return 'NHS Number'
+        case 'unique_reference_number':
+            return 'Unique Reference Number'
+        case _:
+            return next(
+                (item["heading"] for item in CSV_HEADING_OBJECTS if item["model_field"] == model_field),
+                model_field
             )
-            field_heading = field.get("heading", "Heading not found")
-            row_dict[f"{field_heading}"] = error_messages
 
-        flattened_data.append(row_dict)
-    return flattened_data
+
+def flatten_errors(
+    #  {row_number: {field_name: [error_messages]}}
+    errors: dict[int, dict[str, list[str]]],
+    original_data: pd.DataFrame,
+    identifier_field: str,
+    csv_headings: List[Dict[str, str]],
+) -> pd.DataFrame:
+    identifier_column = model_field_to_csv_heading(identifier_field)
+
+    rows = []
+
+    for row_ix, row_errors in errors.items():
+        for field, errors in row_errors.items():
+            rows.append({
+                "Original CSV Row": int(row_ix) + 1,
+                identifier_field: original_data.loc[int(row_ix), identifier_column],
+                "Column": model_field_to_csv_heading(field),
+                "Errors": "; ".join(errors),
+            })
+
+    return pd.DataFrame(rows, columns=[
+        "Original CSV Row",
+        model_field_to_csv_heading(identifier_field),
+        "Column",
+        "Errors"
+    ])
