@@ -4,14 +4,20 @@ import logging
 
 from django import template, forms
 from django.conf import settings
-from ...constants import CSV_HEADINGS
+
+from ...constants import (
+    # VisitCategories,
+    CSV_HEADING_OBJECTS,
+    UNIQUE_IDENTIFIER_ENGLAND,
+    UNIQUE_IDENTIFIER_JERSEY,
+)
 
 from django.contrib.gis.measure import D
 from datetime import date
 
 register = template.Library()
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 
 @register.filter
@@ -33,11 +39,19 @@ def is_in(url_name, args):
 class_re = re.compile(r'(?<=class=["\'])(.*)(?=["\'])')
 
 
-@register.filter
-def heading_for_field(field):
+@register.simple_tag
+def heading_for_field(pz_code, field):
     """
     Returns the heading for a given field
     """
+    if pz_code == "PZ248":
+        # Jersey
+        CSV_HEADINGS = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_JERSEY
+    else:
+        # England
+        CSV_HEADINGS = CSV_HEADING_OBJECTS + UNIQUE_IDENTIFIER_ENGLAND
+
+    CSV_HEADINGS = [item["heading"] for item in CSV_HEADINGS]
     for item in CSV_HEADINGS:
         if field == item["model_field"]:
             return item["heading"]
@@ -182,6 +196,7 @@ def extract_digits(value, underscore_index=0):
 @register.filter
 def get_item(dictionary: dict, key: str):
     """Get a value using a variable from a dictionary"""
+
     try:
         return dictionary.get(key, "")
     except Exception:
@@ -215,6 +230,63 @@ def get_key_where_true(dictionary: dict) -> str:
         if value:
             return key
     return ""
+
+
+@register.simple_tag
+def jersify(pz_code, field):
+    """
+    Tests to see if this field is rendered in a form with patients from Jersey
+    If so will return unique reference number otherwise will return nhs number
+    """
+    if pz_code == "PZ248":
+        # Jersey
+        if (
+            field.id_for_label == "id_unique_reference_number"
+            or field.id_for_label != "id_nhs_number"
+        ):
+            return True
+        else:
+            return False
+    else:
+        if (
+            field.id_for_label == "id_nhs_number"
+            or field.id_for_label != "id_unique_reference_number"
+        ):
+            return True
+        else:
+            return False
+
+
+@register.simple_tag
+def nhs_number_vs_urn(pz_code, patient=None):
+    """
+    Tests to see if this field is rendered in a form with patients from Jersey
+    If so will return unique reference number otherwise will return a formatted nhs number
+    """
+    if pz_code == "PZ248":
+        if patient and patient.unique_reference_number:
+            return patient.unique_reference_number
+        # Jersey
+        return "Unique Reference Number"
+    else:
+        if patient and patient.nhs_number:
+            if len(patient.nhs_number) >= 10:
+                return f"{patient.nhs_number[:3]} {patient.nhs_number[3:6]} {patient.nhs_number[6:]}"
+            return patient.nhs_number
+        return "NHS Number"
+
+
+@register.simple_tag
+def jersify_errors_for_unique_patient_identifier(
+    pz_code, nhs_number_errors, unique_reference_number_errors
+):
+    """
+    Visit errors depending on whether the patient is from Jersey or not
+    """
+    if pz_code == "PZ248":
+        return unique_reference_number_errors
+    else:
+        return nhs_number_errors
 
 
 @register.filter
@@ -273,3 +345,25 @@ def centile_for_field(field, centile_sds):
         return sds
     else:
         return ""
+
+
+@register.filter
+def field_is_not_related_to_transfer(field):
+    """
+    Excludes fields from the form that are related to patient transfers
+    """
+    excluded_fields = ["id_date_leaving_service", "id_reason_leaving_service"]
+    if field.id_for_label in excluded_fields:
+        return False
+    return True
+
+
+@register.filter
+def no_categories_present(categories):
+    """
+    Returns true if no categories are present
+    """
+    for category in categories:
+        if category.get("present", False):
+            return False
+    return True

@@ -15,7 +15,6 @@ from django.contrib.sessions.models import Session
 PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
 
 
-
 @admin.register(OrganisationEmployer)
 class OrganisationEmployerAdmin(admin.ModelAdmin):
     search_fields = ("name", "pk", "lead_organisation_ods_code", "pz_code")
@@ -28,7 +27,7 @@ class NPDAUserAdmin(admin.ModelAdmin):
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    search_fields = ("nhs_number_icontains", "pk")
+    search_fields = ("nhs_number_icontains", "pk", "unique_reference_number_icontains")
 
 
 @admin.register(PaediatricDiabetesUnit)

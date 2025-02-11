@@ -1,12 +1,15 @@
 # python imports
 import datetime
+import logging
 
 # Django imports
+from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.forms import BaseModelForm
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
@@ -25,6 +28,7 @@ from .mixins import (
 )
 
 # Third party imports
+logger = logging.getLogger(__name__)
 
 
 class PatientVisitsListView(
@@ -62,15 +66,29 @@ class PatientVisitsListView(
         context["patient"] = patient
         context["submission"] = submission
 
-        # calculate the KPIs for this patient
-        pdu = (
-            Transfer.objects.filter(patient=patient, date_leaving_service__isnull=True)
-            .first()
-            .paediatric_diabetes_unit
-        )
+        if patient.is_in_transfer_in_the_last_year():
+            pz_code = (
+                Transfer.objects.filter(
+                    patient=patient,
+                )
+                .order_by("-date_leaving_service")
+                .first()
+                .previous_pz_code
+            )
+            PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+            pdu = PaediatricDiabetesUnit.objects.get(pz_code=pz_code)
         # get the PDU for this patient - this is the PDU that the patient is currently under.
         # If the patient has left the PDU, the date_leaving_service will be set and it will be possible to view KPIs for the PDU up until transfer,
         # if this happened during the audit period. This is TODO
+        else:
+            #  this patient has been transferred but not yet received at a new PDU
+            pdu = (
+                Transfer.objects.filter(
+                    patient=patient, date_leaving_service__isnull=True
+                )
+                .first()
+                .paediatric_diabetes_unit
+            )
 
         calculate_kpis = CalculateKPIS(
             calculation_date=datetime.date.today(), return_pt_querysets=False
@@ -104,7 +122,7 @@ class VisitCreateView(
         context = super().get_context_data(**kwargs)
         context["patient_id"] = self.kwargs["patient_id"]
         patient = Patient.objects.get(pk=self.kwargs["patient_id"])
-        context["nhs_number"] = patient.nhs_number
+        context["patient"] = patient
         context["title"] = "Add New Visit"
         context["form_method"] = "create"
         context["button_title"] = "Add New Visit"
@@ -126,8 +144,13 @@ class VisitCreateView(
         return initial
 
     def form_valid(self, form, **kwargs):
+        patient = get_object_or_404(Patient, pk=self.kwargs["patient_id"])
         self.object = form.save(commit=False)
-        self.object.patient_id = self.kwargs["patient_id"]
+        self.object.patient = patient
+        self.object.errors = None
+        self.object.is_valid = True
+        self.object.save()
+
         super(VisitCreateView, self).form_valid(form)
         return HttpResponseRedirect(self.get_success_url())
 
@@ -146,7 +169,7 @@ class VisitUpdateView(
     form_class = VisitForm
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs) 
+        context = super().get_context_data(**kwargs)
         context["patient_id"] = self.kwargs["patient_id"]
         context["nhs_number"] = context["form"].patient.nhs_number
         context["visit_id"] = self.kwargs["pk"]
@@ -172,6 +195,9 @@ class VisitUpdateView(
         return initial
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
+        print("form_valid is called int he view")
+        if "delete" in self.request.POST:
+            return redirect(reverse("visit-delete", kwargs={"pk": self.kwargs["pk"]}))
         visit = form.save(commit=True)
         visit.errors = None
         visit.is_valid = True

@@ -14,8 +14,9 @@ import numpy as np
 from project.constants import (
     ALL_DATES,
     CSV_DATA_TYPES_MINUS_DATES,
-    CSV_HEADINGS,
-    HEADINGS_LIST,
+    UNIQUE_IDENTIFIER_ENGLAND,
+    UNIQUE_IDENTIFIER_JERSEY,
+    CSV_HEADING_OBJECTS,
 )
 
 # Logging setup
@@ -31,7 +32,7 @@ class ParsedCSVFile:
     parse_type_error_columns: list[str]
 
 
-def csv_parse(csv_file):
+def csv_parse(csv_file, is_jersey=False):
     """
     Read the csv file and return a pandas dataframe
     Assigns the correct data types to the columns
@@ -43,6 +44,14 @@ def csv_parse(csv_file):
     # If it does not, we will use the predefined column names
     # If it does, we will use the column names in the csv file
     # The exception is if the first row of the csv file does not match any of the predefined column names, in which case we will reject the csv
+
+    # Define the column names to be used in the csv file: the unique identifier in Jersy is different from the one in England
+    if is_jersey:
+        HEADINGS_LIST = UNIQUE_IDENTIFIER_JERSEY + CSV_HEADING_OBJECTS
+    else:
+        HEADINGS_LIST = UNIQUE_IDENTIFIER_ENGLAND + CSV_HEADING_OBJECTS
+
+    HEADINGS_LIST = [item["heading"] for item in HEADINGS_LIST]
 
     # Convert the predefined column names to lowercase
     lowercase_headings_list = [heading.lower() for heading in HEADINGS_LIST]
@@ -111,7 +120,8 @@ def csv_parse(csv_file):
 
     for column in ALL_DATES:
         if column in df.columns:
-            df[column] = pd.to_datetime(df[column], format="%d/%m/%Y", errors="coerce")
+            # Support DD/MM/YYYY and DD/MM/YY
+            df[column] = pd.to_datetime(df[column], format="mixed", dayfirst=True, errors="coerce")
 
     # Apply the dtype to non-date columns
     for column, dtype in CSV_DATA_TYPES_MINUS_DATES.items():
@@ -138,6 +148,33 @@ def csv_parse(csv_file):
                 df[column] = df[column].round(1)
             else:
                 parse_type_error_columns.append(column)
+
+    # Rows where the unique identifier is missing will be removed - count the number of rows before and after: placed here to ensure all columns have been processed
+    total_row_count = df.shape[0]
+    if is_jersey:
+        unique_reference_number_nonnull_row_count = df[
+            "Unique Reference Number"
+        ].count()
+        if unique_reference_number_nonnull_row_count == 0:
+            raise ValueError(
+                "No Unique Reference Numbers found in the file. Please ensure all rows have a unique identifier and upload the file again."
+            )
+        discrepancy = total_row_count - unique_reference_number_nonnull_row_count
+    else:
+        nhs_number_nonnull_row_count = df["NHS Number"].count()
+        if nhs_number_nonnull_row_count == 0:
+            raise ValueError(
+                "No NHS Numbers found in the file. Please ensure all rows have a unique identifier and upload the file again."
+            )
+        discrepancy = total_row_count - nhs_number_nonnull_row_count
+    if discrepancy > 0:
+        if discrepancy == 1:
+            raise ValueError(
+                f"{discrepancy} row has no unique identifier. Please ensure all rows have a unique identifier and upload the file again."
+            )
+        raise ValueError(
+            f"{discrepancy} rows have no unique identifier. Please ensure all rows have a unique identifier and upload the file again."
+        )
 
     return ParsedCSVFile(
         df,

@@ -18,7 +18,7 @@ done
 
 function connect_to_azure_db() {
     local host="npda-$1.postgres.database.azure.com"
-    local user="NPDA\ Database\ Owners"
+    local user="$3"
     local dbname="$2"
     
     local access_token=$(az account get-access-token --resource-type oss-rdbms --query 'accessToken' --output tsv)
@@ -32,11 +32,11 @@ case ${ENVIRONMENT} in
         ;;
 
     'staging')
-        connect_to_azure_db 'staging' 'npda_staging'
+        connect_to_azure_db 'staging' 'npda_staging' "NPDA\ Database\ Owners"
         ;;
     
     'live')
-        connect_to_azure_db 'live' 'npda_live'
+        connect_to_azure_db 'live' 'npda_live' "NPDA\ Live\ Database\ Owners"
         ;;
 
     *)

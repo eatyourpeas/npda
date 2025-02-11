@@ -71,7 +71,7 @@ class SubmissionsListView(
             "-submission_active",
             "-submission_date",
         )
-        
+
         return final
 
     def get_context_data(self, **kwargs: Any) -> dict:
@@ -79,6 +79,10 @@ class SubmissionsListView(
         Add data to the context.
         Includes the patient data for the active submission and the csv summary data.
         """
+        if self.request.session.get("pz_code") == "PZ248":
+            is_jersey = True
+        else:
+            is_jersey = False
         context = super().get_context_data(**kwargs)
         context["pz_code"] = self.request.session.get("pz_code")
         context["selected_audit_year"] = self.request.session.get("selected_audit_year")
@@ -90,16 +94,11 @@ class SubmissionsListView(
             paediatric_diabetes_unit__pz_code=self.request.session.get("pz_code"),
         ).first()  # there can be only one of these
         if requested_active_submission:
-            # If a submission exists and it was created by uploading a csv, summarize the csv data
-            if self.request.session.get("can_upload_csv"):
-                # check if the user has permission to upload csv (not this function is not available in this brance but is in live)
-                parsed_csv = csv_parse(requested_active_submission.csv_file)
-                if requested_active_submission.errors:
-                    deserialized_errors = json.loads(requested_active_submission.errors)
-                    context["submission_errors"] = deserialized_errors
-                else:
-                    context["submission_errors"] = None
-
+            if requested_active_submission.errors:
+                deserialized_errors = json.loads(requested_active_submission.errors)
+                context["submission_errors"] = deserialized_errors
+            else:
+                context["submission_errors"] = None
             # Get some summary data about the patients in the submission...
             context["patients"] = Patient.objects.filter(
                 submissions=requested_active_submission
@@ -189,6 +188,7 @@ class SubmissionsListView(
         :return: The response
         """
         return super().render_to_response(context)
+
 
 @login_and_otp_required()
 def upload_csv(request):

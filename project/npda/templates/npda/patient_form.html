@@ -7,59 +7,117 @@
       <form id="update-form" method="post" action="">
         {% csrf_token %}
         {% for field in form %}
-          <div class="md:flex md:items-center mb-6">
-            <div class="md:w-1/3">
-              <label for="{{ field.id_for_label }}"
-                     class="block text-gray-700 font-bold md:text-center mb-1 md:mb-0 pr-4">
-                <small>{{ field.label }}</small>
-              </label>
+          {% if field|field_is_not_related_to_transfer %}
+            <div class="md:flex md:items-center mb-6">
+              <div class="md:w-1/3">
+                {% jersify pz_code field as viewable %}
+                {% if viewable %}
+                  <label for="{{ field.id_for_label }}"
+                         class="block text-gray-700 font-bold md:text-right mb-1 md:mb-0 pr-4">
+                    <small>{{ field.label }}</small>
+                  </label>
+                {% endif %}
+              </div>
+              <div class="md:w-2/3">
+                {% if field.field.widget|is_select and field.id_for_label != 'id_reason_leaving_service' %}
+                  <select id="{{ field.id_for_label }}"
+                          name="{{ field.html_name }}"
+                          class="select rcpch-select {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+                    {% for choice in field.field.choices %}
+                      <option value="{{ choice.0 }}"
+                              {% if field.value|stringformat:'s' == choice.0|stringformat:'s' %} selected="true" {% endif %}>
+                        {{ choice.1 }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                {% else %}
+                  {% if viewable %}
+                    <input id="{{ field.id_for_label }}"
+                           name="{{ field.html_name }}"
+                           class="input rcpch-input-text {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
+                           {% if field.field.widget|is_dateinput %} type="date" {% else %} type="text" {% endif %}
+                           {% if field.value %}value="{{ field.value|stringformat:'s' }}"{% endif %}>
+                  {% endif %}
+                {% endif %}
+                {% for error in field.errors %}
+                  <div role="alert" class="alert alert-error py-1 my-0 rounded-none">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="stroke-current shrink-0 h-6 w-6"
+                         fill="none"
+                         viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{{ error|escape }}</span>
+                  </div>
+                {% endfor %}
+              </div>
             </div>
-            <div class="md:w-2/3">
-              {% if field.field.widget|is_select %}
-                <select id="{{ field.id_for_label }}"
-                        name="{{ field.html_name }}"
-                        class="select rcpch-select {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
-                  {% for choice in field.field.choices %}
-                    <option value="{{ choice.0 }}"
-                            {% if field.value|stringformat:'s' == choice.0|stringformat:'s' %} selected="true" {% endif %}>
-                      {{ choice.1 }}
-                    </option>
-                  {% endfor %}
-                </select>
-              {% else %}
-                <input id="{{ field.id_for_label }}"
-                       name="{{ field.html_name }}"
-                       class="input rcpch-input-text {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
-                       {% if field.field.widget|is_dateinput %} type="date" {% else %} type="text" {% endif %}
-                       {% if field.value %}value="{{ field.value|stringformat:'s' }}"{% endif %}>
-              {% endif %}
-              {% for error in field.errors %}
-                <div role="alert" class="alert alert-error py-1 my-0 rounded-none">
-                  <svg xmlns="http://www.w3.org/2000/svg"
-                       class="stroke-current shrink-0 h-6 w-6"
-                       fill="none"
-                       viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{{ error|escape }}</span>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
+          {% endif %}
         {% endfor %}
+        <div class="collapse collapse-plus bg-base-200 py-2 mb-2">
+          <input type="checkbox"
+                 {% if form.date_leaving_service.value or form.reason_leaving_service.value %}checked{% endif %} />
+          <div class="collapse-title text-xl font-medium">
+            Transfer Patient to Another PDU
+          </div>
+          <div class="collapse-content">
+            <select id="{{ form.reason_leaving_service.id_for_label }}"
+                    name="{{ form.reason_leaving_service.html_name }}"
+                    class="select rcpch-select mb-2 {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+              <option value="">Select a reason</option>
+              {% for choice in form.reason_leaving_service.field.choices %}
+                <option value={{ choice.0 }} {% if form.reason_leaving_service.value == choice.0 %} selected="true" {% endif %}>
+                  {{ choice.1 }}
+                </option>
+              {% endfor %}
+            </select>
+            {% for error in form.reason_leaving_service.errors %}
+              <div role="alert" class="alert alert-error py-1 my-0 rounded-none">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="stroke-current shrink-0 h-6 w-6"
+                     fill="none"
+                     viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ error|escape }}</span>
+              </div>
+            {% endfor %}
+            <input id="{{ form.date_leaving_service.id_for_label }}"
+                   name="{{ form.date_leaving_service.html_name }}"
+                   class="input rcpch-input-text mb-2 {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
+                   type="date"
+                   {% if form.date_leaving_service.value %}value="{{ form.date_leaving_service.value|stringformat:'s' }}"{% endif %}>
+            {% for error in form.date_leaving_service.errors %}
+              <div role="alert" class="alert alert-error py-1 my-0 rounded-none">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="stroke-current shrink-0 h-6 w-6"
+                     fill="none"
+                     viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{{ error|escape }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
         <div class="flex justify-end">
           <a role="button"
              class="btn rcpch-light-blue-btn"
              href='{% url 'patients' %}'>Back to list</a>
           <button type="submit"
-                  value="Submit"
+                  value="submit"
+                  name="action"
                   class="btn rcpch-light-blue-btn {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
             {{ button_title }}
           </button>
         </div>
         {% if form_method == 'update' and perms.npda.delete_patient %}
-          <a class="bg-rcpch_red text-white font-semibold hover:text-white py-2.5 px-3 mt-20 border border-rcpch_red hover:bg-rcpch_red_dark_tint hover:border-rcpch_red_dark_tint {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}"
-             href="{% url 'patient-delete' patient_id %}">Delete</a>
+          <button type="submit"
+                  value="delete"
+                  name="delete"
+                  class="rcpch-danger-btn {% if not can_alter_this_audit_year_submission or not can_use_questionnaire %}opacity-40 pointer-events-none{% endif %}">
+            Delete
+          </button>
         {% endif %}
       </form>
     </div>

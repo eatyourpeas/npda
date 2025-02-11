@@ -1,12 +1,11 @@
+import json
+
 from django.apps import apps
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
-def download_file(file_path, file_name):
-    with open(file_path, "rb") as f:
-        response = HttpResponse(f.read(), content_type="text/csv")
-        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
-        return response
+from ..write_errors_to_xlsx import write_errors_to_xlsx
+
 
 def download_csv(request, submission_id):
     """
@@ -14,10 +13,13 @@ def download_csv(request, submission_id):
     """
     Submission = apps.get_model(app_label="npda", model_name="Submission")
     submission = get_object_or_404(Submission, id=submission_id)
-    file_path = submission.csv_file.path
-    file_name = submission.csv_file.name.split("/")[-1]
 
-    return download_file(file_path, file_name)
+    response = HttpResponse(submission.csv_file, content_type="text/csv")
+    response["Content-Disposition"] = (
+        f'attachment; filename="{submission.csv_file_name}"'
+    )
+    return response
+
 
 def download_xlsx(request, submission_id):
     """
@@ -26,7 +28,18 @@ def download_xlsx(request, submission_id):
     """
     Submission = apps.get_model(app_label="npda", model_name="Submission")
     submission = get_object_or_404(Submission, id=submission_id)
-    file_path = submission.csv_file.path.replace('.csv','.xlsx')
-    file_name = submission.csv_file.name.split("/")[-1].replace('.csv','.xlsx')
 
-    return download_file(file_path, file_name)
+    filename_without_extension = ".".join(submission.csv_file_name.split(".")[:-1])
+    xlsx_file_name = f"{filename_without_extension}_data_quality_report.xlsx"
+
+    errors = {}
+    if submission.errors:
+        errors = json.loads(submission.errors)
+
+    is_jersey = submission.paediatric_diabetes_unit.pz_code == "PZ248"
+
+    xlsx_file = write_errors_to_xlsx(errors or {}, submission.csv_file, is_jersey)
+
+    response = HttpResponse(xlsx_file, content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="{xlsx_file_name}"'
+    return response

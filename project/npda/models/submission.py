@@ -35,11 +35,17 @@ class Submission(models.Model):
         to="npda.NPDAUser",
     )
 
-    csv_file = models.FileField(
-        upload_to=f"submissions/csv/",
+    csv_file = models.BinaryField(
         help_text="CSV file containing the audit data for this submission",
         null=True,  # submissions that are not active will have their csv file deleted
     )
+
+    csv_file_name = models.CharField(
+        "CSV file name",
+        help_text="Name of the uploaded CSV file",
+        null=True,
+    )
+
     errors = models.JSONField(
         "Errors",
         help_text="Errors that have been found in the uploaded CSV file",
@@ -72,11 +78,7 @@ class Submission(models.Model):
 
     def save(self, *args, **kwargs):
         if self.submission_active == False:
-            self.csv_file.delete(
-                save=True
-            )  # delete the csv file if the submission is not active
-            self.csv_file = (
-                None  # set the csv file to None if the submission is not active
-            )
+            self.csv_file = None
+            # keep filename for our records
 
         super().save(*args, **kwargs)

@@ -11,6 +11,8 @@
     <div class="bg-white border border-gray-300 rounded-lg shadow text-rcpch_dark_blue h-full p-2">
       <!-- CURRENT SELECTION DESCRIPTION -->
       <div class="flex flex-col">
+        <p class="font-bold text-rcpch_dark_blue">Description</p>
+        <p>{{ text.description }}</p>
         <div class="flex items-center">
           <p class="font-bold text-rcpch_dark_blue">Description</p>
           {% comment %} LINK TO KPI DEFINITIONS {% endcomment %}
@@ -81,7 +83,7 @@
                   <td class="px-6 py-4">
                     {% with result=results|get_item:kpi_attr_name %}
                       <p class="{{ kpi_attr_name }}">
-                        {% if kpi_attr_name == "nhs_number" %}
+                        {% if kpi_attr_name == "nhs_number" or kpi_attr_name == "unique_reference_number" %}
                           <span class="tooltip tooltip-right block" data-tip="View patient's visits">
                             <a href="{% url 'patient_visits' pt_pk %}" class="block w-full h-full">
                               {{ result }}

@@ -8,14 +8,12 @@
     <div class="flex flex-col justify-center px-1 mt-5">
       {% if submission %}
         {% include 'partials/page_elements/patient_table_actions.html' %}
-        <div id="patient_table">
-          {% include 'partials/patient_table.html' %}
-        </div>
+        <div id="patient_table">{% include 'partials/patient_table.html' %}</div>
       {% else %}
         <div class="flex w-full justify-center mt-5 mb-5">
           <div class="alert alert-info w-2/5 text-white" role="alert">
             <i class="fa-solid fa-info"></i>
-            We don't have any data from {{pdu.lead_organisation_name}} for {{selected_audit_year}}.
+            We don't have any data from {{ pdu.lead_organisation_name }} for {{ selected_audit_year }}.
             <br />
             Choose from the input methods below. You can't change after you add data.
           </div>
@@ -24,14 +22,12 @@
           <div class="card bg-base-100 w-96 shadow-xl">
             <div class="card-body">
               <h2 class="card-title">Upload CSV file</h2>
-              <p>
-                Upload CSV files generated from your electronic patient record.
-              </p>
+              <p>Upload CSV files generated from your electronic patient record.</p>
               <p>
                 NPDA CSV files have a specific format.
-                <a class="link" href="https://www.rcpch.ac.uk/resources/national-paediatric-diabetes-audit-data-submission" target="_blank">
-                  See our website for details.
-                </a>
+                <a class="link"
+                   href="https://www.rcpch.ac.uk/resources/national-paediatric-diabetes-audit-data-submission"
+                   target="_blank">See our website for details.</a>
               </p>
               <p>
                 We recommend this method if you already have a system that can export in that format or are building one.
@@ -45,9 +41,7 @@
           <div class="card bg-base-100 w-96 shadow-xl">
             <div class="card-body">
               <h2 class="card-title">Patient Questionnaire</h2>
-              <p>
-                Use our online form to submit data for each patient.
-              </p>
+              <p>Use our online form to submit data for each patient.</p>
               <p>
                 Use this method if you don't have an electronic patient record or you can't export from it in our CSV format.
               </p>

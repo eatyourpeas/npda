@@ -51,9 +51,10 @@ def _seed_users_fixture(django_db_setup, django_db_blocker):
 
         GOSH_PZ_CODE = "PZ196"
         ALDER_HEY_PZ_CODE = "PZ074"
+        JERSEY_PZ_CODE = "PZ248"
 
-        logger.info(f"Seeding test users at {GOSH_PZ_CODE=} and {ALDER_HEY_PZ_CODE=}.")
-        # Seed a user of each type at GOSH
+        logger.info(f"Seeding test users at {GOSH_PZ_CODE=}, {ALDER_HEY_PZ_CODE=} and {JERSEY_PZ_CODE=}.")
+        # Seed a user of each type
         for user in users:
             first_name = user.role_str
 
@@ -95,9 +96,22 @@ def _seed_users_fixture(django_db_setup, django_db_blocker):
                 organisation_employers=[ALDER_HEY_PZ_CODE],
             )
 
+            # Jersey user
+            new_user_jersey = NPDAUserFactory(
+                first_name=first_name,
+                role=user.role,
+                # Assign flags based on user role
+                is_active=is_active,
+                is_staff=is_staff,
+                is_rcpch_audit_team_member=is_rcpch_audit_team_member,
+                is_rcpch_staff=is_rcpch_staff,
+                groups=[user.group_name],
+                organisation_employers=[JERSEY_PZ_CODE],
+            )
+
             logger.info(f"Seeded users: \n{new_user_gosh=} and \n{new_user_alder_hey=}")
 
-        assert NPDAUser.objects.count() == len(users) * 2
+        assert NPDAUser.objects.count() == len(users) * 3
 
 @pytest.fixture(scope="session")
 def seed_users_fixture(django_db_setup, django_db_blocker):

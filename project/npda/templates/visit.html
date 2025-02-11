@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load npda_tags %}
 {% load static %}
 {% block content %}
   <div class="flex flex-row min-h-screen justify-center">
     <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
         <h1 class="bg-rcpch_light_blue text-white px-2">
-          <strong>NHS Number: {{ patient.nhs_number }}</strong>
+          <strong>{% nhs_number_vs_urn pz_code %}: {% nhs_number_vs_urn pz_code visit.patient %}</strong>
         </h1>
         {% if visits %}
           {% for visit in visits %}

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 import os
 import logging
@@ -81,9 +82,7 @@ if DEBUG is True:
     LOCAL_DEV_ADMIN_EMAIL = os.getenv("LOCAL_DEV_ADMIN_EMAIL")
     LOCAL_DEV_ADMIN_PASSWORD = os.getenv("LOCAL_DEV_ADMIN_PASSWORD")
 
-    if (
-        os.environ.get("RUN_MAIN") == "true"
-    ):  # Prevent double execution during reloading
+    if os.environ.get("RUN_MAIN") == "true":  # Prevent double execution during reloading
         import debugpy
 
         DEBUGPY_PORT = os.getenv("DEBUGPY_PORT", None)
@@ -92,16 +91,12 @@ if DEBUG is True:
         else:
             try:
                 DEBUGPY_PORT = int(DEBUGPY_PORT)  # Convert to integer
-                debugpy.listen(
-                    ("0.0.0.0", DEBUGPY_PORT)
-                )  # Ensure port matches in VSCode config
+                debugpy.listen(("0.0.0.0", DEBUGPY_PORT))  # Ensure port matches in VSCode config
                 logger.debug(
                     f"Debugging is enabled on port {DEBUGPY_PORT}, waiting for debugger to attach..."
                 )
             except ValueError:
-                logger.error(
-                    f"Invalid DEBUGPY_PORT value: {DEBUGPY_PORT}. Must be an integer."
-                )
+                logger.error(f"Invalid DEBUGPY_PORT value: {DEBUGPY_PORT}. Must be an integer.")
 
 
 # GENERAL CAPTCHA SETTINGS
@@ -152,6 +147,8 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     #  2 factor authentication
     "django_otp.middleware.OTPMiddleware",
+    # autologout
+    "django_auto_logout.middleware.auto_logout",
 ]
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
@@ -177,6 +174,8 @@ TEMPLATES = [
                 "project.npda.context_processors.session_data",
                 "project.npda.context_processors.can_alter_this_audit_year_submission",
                 "project.npda.context_processors.can_use_questionnaire",
+                # Autologout
+                "django_auto_logout.context_processors.auto_logout_client",
             ],
         },
     },
@@ -190,6 +189,21 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True  # cannot access session cookie on client-side using JS
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # session expires on browser close
 
+# Auto-logout
+if not (env_auto_logout_idle_time_seconds := os.environ.get("AUTO_LOGOUT_IDLE_TIME_SECONDS")):
+    env_auto_logout_idle_time_seconds = 60 * 30  # Default: 30 minutes
+    logger.warning(
+        "ENV VAR AUTO_LOGOUT_IDLE_TIME_SECONDS MISSING: SETTING DEFAULT TIME: "
+        f"{env_auto_logout_idle_time_seconds=}"
+    )
+AUTO_LOGOUT_IDLE_TIME_SECONDS = int(env_auto_logout_idle_time_seconds)
+logger.info(f"AUTO_LOGOUT_IDLE_TIME_SECONDS: {AUTO_LOGOUT_IDLE_TIME_SECONDS}")
+AUTO_LOGOUT = {
+    "IDLE_TIME": timedelta(seconds=AUTO_LOGOUT_IDLE_TIME_SECONDS),
+    "REDIRECT_TO_LOGIN_IMMEDIATELY": True,
+    "MESSAGE": "You have been automatically logged out as there was no activity for "
+    f"{AUTO_LOGOUT_IDLE_TIME_SECONDS / 60} minutes. Please login again to continue.",
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -211,9 +225,7 @@ else:
 
 DATABASES = {"default": database_config}
 
-AUTHENTICATION_BACKENDS = (
-    "django.contrib.auth.backends.ModelBackend",  # this is default
-)
+AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)  # this is default
 
 
 # Password validation
@@ -259,6 +271,7 @@ OTP_EMAIL_TOKEN_VALIDITY = 60 * 5  # default N(seconds) email token valid for
 
 # EMAIL SETTINGS (SMTP)
 DEFAULT_FROM_EMAIL = os.environ.get("EMAIL_DEFAULT_FROM_EMAIL")
+SERVER_EMAIL = os.environ.get("EMAIL_DEFAULT_FROM_EMAIL")
 SMTP_EMAIL_ENABLED = os.getenv("SMTP_EMAIL_ENABLED", "False") == "True"
 logger.info("SMTP_EMAIL_ENABLED: %s", SMTP_EMAIL_ENABLED)
 if SMTP_EMAIL_ENABLED is True:
@@ -278,6 +291,10 @@ PASSWORD_RESET_TIMEOUT = os.environ.get(
 )  # Default: 259200 (3 days, in seconds)
 
 SITE_CONTACT_EMAIL = os.environ.get("SITE_CONTACT_EMAIL")
+
+ADMINS = os.environ.get("ADMINS", '')
+if ADMINS:
+    ADMINS = [e.split(":") for e in  ADMINS.split(",")]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/

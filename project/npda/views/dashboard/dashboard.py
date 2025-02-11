@@ -97,13 +97,12 @@ def dashboard(request):
         return render(request, "dashboard.html")
 
     selected_audit_year = int(request.session.get("selected_audit_year"))
-    # TODO: remove min clamp once available audit year from preference filter sorted
-    today = date.today()
+    
     if selected_audit_year <= 2024:
-        calculation_month = max(today.month, 4)
-        calculation_day = 1
-        calculation_date = date(2024, calculation_month, calculation_day)
+        # The day after the audit year end date
+        calculation_date = date(selected_audit_year, 4, 1)
     else:
+        today = date.today()
         calculation_date = date(selected_audit_year, today.month, today.day)
 
     calculate_kpis = CalculateKPIS(calculation_date=calculation_date, return_pt_querysets=True)
@@ -326,6 +325,7 @@ def dashboard(request):
             },
             "pt_ethnicity_tree_map_data": json.dumps(
                 {
+                    "no_eligible_patients": not pt_ethnicity_value_counts,
                     "data": pt_ethnicity_value_counts,
                     "parent_color_map": constants.ethnicities.ETHNICITY_PARENT_COLOR_MAP,
                     "child_parent_map": constants.ethnicities.ETHNICITY_CHILD_PARENT_MAP,
@@ -354,5 +354,7 @@ def dashboard(request):
         # at that point
         "aggregation_level": "pdu",
     }
+
+    print(f"!! {context['charts']['pt_ethnicity_tree_map_data']}")
 
     return render(request, template_name=template, context=context)

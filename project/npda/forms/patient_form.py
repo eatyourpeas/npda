@@ -13,10 +13,10 @@ from django import forms
 # django imports
 from django.apps import apps
 from django.core.exceptions import ValidationError
-from httpx import HTTPError
 
 from ...constants.styles.form_styles import *
-from ..models import Patient
+from ...constants import LEAVE_PDU_REASONS
+from ..models import Patient, Transfer
 from ..validators import not_in_the_future_validator
 from .external_patient_validators import validate_patient_sync
 
@@ -29,6 +29,8 @@ class DateInput(forms.DateInput):
 
 class NHSNumberField(forms.CharField):
     def to_python(self, value):
+        if not value:
+            return value
         number = super().to_python(value)
         normalised = nhs_number.standardise_format(number)
 
@@ -38,6 +40,18 @@ class NHSNumberField(forms.CharField):
     def validate(self, value):
         if value and not nhs_number.is_valid(value):
             raise ValidationError("Invalid NHS number")
+
+
+class UniqueReferenceNumberField(forms.CharField):
+    def to_python(self, value):
+        if not value:
+            return value
+        number = super().to_python(value)
+        return number
+
+    def validate(self, value):
+        if value and not value.isdigit():
+            raise ValidationError("Invalid Unique Reference Number")
 
 
 class PostcodeField(forms.CharField):
@@ -50,10 +64,16 @@ class PostcodeField(forms.CharField):
 
 class PatientForm(forms.ModelForm):
 
+    date_leaving_service = forms.DateField(required=False, widget=DateInput())
+    reason_leaving_service = forms.ChoiceField(
+        required=False, choices=LEAVE_PDU_REASONS
+    )
+
     class Meta:
         model = Patient
         fields = [
             "nhs_number",
+            "unique_reference_number",
             "sex",
             "date_of_birth",
             "postcode",
@@ -66,11 +86,15 @@ class PatientForm(forms.ModelForm):
         ]
         field_classes = {
             "nhs_number": NHSNumberField,
+            "unique_reference_number": UniqueReferenceNumberField,
             "postcode": PostcodeField,
             "gp_practice_postcode": PostcodeField,
         }
         widgets = {
             "nhs_number": forms.TextInput(
+                attrs={"class": TEXT_INPUT},
+            ),
+            "unique_reference_number": forms.TextInput(
                 attrs={"class": TEXT_INPUT},
             ),
             "sex": forms.Select(),
@@ -83,6 +107,20 @@ class PatientForm(forms.ModelForm):
             "gp_practice_ods_code": forms.TextInput(attrs={"class": TEXT_INPUT}),
             "gp_practice_postcode": forms.TextInput(attrs={"class": TEXT_INPUT}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            try:
+                patient_transfer = Transfer.objects.filter(patient=self.instance).get()
+                self.fields["date_leaving_service"].initial = (
+                    patient_transfer.date_leaving_service
+                )
+                self.fields["reason_leaving_service"].initial = (
+                    patient_transfer.reason_leaving_service
+                )
+            except Transfer.DoesNotExist:
+                pass
 
     def clean_date_of_birth(self):
         date_of_birth = self.cleaned_data["date_of_birth"]
@@ -113,6 +151,20 @@ class PatientForm(forms.ModelForm):
 
         return death_date
 
+    def clean_date_leaving_service(self):
+        date_leaving_service = self.cleaned_data["date_leaving_service"]
+        if date_leaving_service == "":
+            return None
+        elif date_leaving_service is not None:
+            not_in_the_future_validator(date_leaving_service)
+        return date_leaving_service
+
+    def clean_reason_leaving_service(self):
+        reason_leaving_service = self.cleaned_data["reason_leaving_service"]
+        if reason_leaving_service == "":
+            return None
+        return reason_leaving_service
+
     def handle_async_validation_result(self, key):
         value = getattr(self.async_validation_results, key)
 
@@ -123,12 +175,62 @@ class PatientForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-
         date_of_birth = cleaned_data.get("date_of_birth")
         diagnosis_date = cleaned_data.get("diagnosis_date")
         death_date = cleaned_data.get("death_date")
         gp_practice_ods_code = cleaned_data.get("gp_practice_ods_code")
         gp_practice_postcode = cleaned_data.get("gp_practice_postcode")
+
+        nhs_number = cleaned_data.get("nhs_number")
+        unique_reference_number = cleaned_data.get("unique_reference_number")
+
+        if not nhs_number and not unique_reference_number:
+            self.add_error(
+                "nhs_number",
+                ValidationError(
+                    "Either NHS Number or Unique Reference Number must be provided."
+                ),
+            )
+            self.add_error(
+                "unique_reference_number",
+                ValidationError(
+                    "Either NHS Number or Unique Reference Number must be provided."
+                ),
+            )
+
+        reason_leaving_service = cleaned_data.get("reason_leaving_service")
+        date_leaving_service = cleaned_data.get("date_leaving_service")
+        if date_leaving_service and not reason_leaving_service:
+            self.add_error(
+                "reason_leaving_service",
+                ValidationError(
+                    "You must provide a reason for leaving the Paediatric Diabetes Unit"
+                ),
+            )
+        if reason_leaving_service and not date_leaving_service:
+            self.add_error(
+                "date_leaving_service",
+                ValidationError(
+                    "You must provide a date for leaving the Paediatric Diabetes Unit"
+                ),
+            )
+        if date_leaving_service is not None and date_of_birth is not None:
+            if date_leaving_service < date_of_birth:
+                self.add_error(
+                    "date_leaving_service",
+                    ValidationError(
+                        "'Date Leaving Service' cannot be before 'Date of Birth'"
+                    ),
+                )
+
+        if date_leaving_service is not None and diagnosis_date is not None:
+            if date_leaving_service < diagnosis_date:
+                self.add_error(
+                    "date_leaving_service",
+                    ValidationError(
+                        "'Date Leaving Service' cannot be before 'Date of Diabetes Diagnosis'"
+                    ),
+                )
 
         if diagnosis_date is not None and date_of_birth is not None:
             if diagnosis_date < date_of_birth:
@@ -179,6 +281,8 @@ class PatientForm(forms.ModelForm):
         ]:
             self.handle_async_validation_result(key)
 
+        return cleaned_data
+
     def save(self, commit=True):
         # We deliberately don't call super.save here as it throws ValueError on validation errors
         # and for CSV uploads we don't want that to stop us. As of Django 5.1.5 it doesn't do anything
@@ -195,5 +299,17 @@ class PatientForm(forms.ModelForm):
 
         if commit:
             self.instance.save()
+            if Transfer.objects.filter(patient=self.instance).exists():
+                patient_transfer = Transfer.objects.get(patient=self.instance)
+                patient_transfer.date_leaving_service = self.cleaned_data[
+                    "date_leaving_service"
+                ]
+                patient_transfer.reason_leaving_service = self.cleaned_data[
+                    "reason_leaving_service"
+                ]
+                patient_transfer.previous_pz_code = (
+                    patient_transfer.paediatric_diabetes_unit.pz_code
+                )  # set previous_pz_code to the current PZ code
+                patient_transfer.save()
 
         return self.instance

@@ -6,7 +6,7 @@
     <div class="overflow-x-auto">
       <div class="min-w-full inline-block px-10 py-2">
         <div class="w-full overflow-x-auto relative">
-          <strong>All {{ submission.audit_year }} Audit Visits for {{ patient.nhs_number }} (NPDA ID-{{ patient.pk }})</strong>
+          <strong>All {{ submission.audit_year }} Audit Visits for {% nhs_number_vs_urn pz_code %} {% nhs_number_vs_urn pz_code patient %} (NPDA ID-{{ patient.pk }})</strong>
           {% if visits %}
             <table class="font-montserrat table-md w-full table mb-5 text-sm text-left text-gray-400 text-gray-500 rtl:text-right">
               <thead class="bg-rcpch_dark_blue text-xs text-white text-gray-700 uppercase bg-gray-50">
@@ -21,97 +21,99 @@
                   <tr class="text-black bg-white border-b border-gray-100 hover:bg-gray-200">
                     <td class="px-6 py-4">{{ visit.visit.visit_date }}</td>
                     <td class="flex flex-wrap py-5">
-                      {% for item in visit.categories %}
-                        {% if item.present %}
-                          <span class="bg-{{ item.colour }} px-1 py-0.25 mx-1 my-1 text-sm font-semibold text-white">
-                            <small>
-                              <div class="tooltip tooltip-top visible text-center text-white hover:text-white"
-                                {% if item.errors %}
-                                  data-tip='{{ item.errors.values|flatten|join:", " }}'
-                                {% endif %}
-                              >
-                                {% if item.errors %}
-                                  <span class="fa-stack text-rcpch_red">
-                                    <i class="fa-circle fa-stack-1x fas"></i>
-                                    <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
-                                  </span>
-                                {% endif %}
-                                <a href="{% url 'visit-update' patient.pk visit.visit.pk %}#{{ item.anchor }}">
-                                  {{ item.name }}
-                                </a>
-                              </div>
-                            </small>
-                          </span>
+                      {% if visit.categories|no_categories_present %}
+                        <span class="bg-rcpch_light_blue px-1 py-0.25 mx-1 my-1 text-sm font-semibold text-white">
+                          <small>No categories addressed in this visit so far</small>
                         {% endif %}
-                      {% endfor %}
-                    </td>
-                    <td>
-                      {% if perms.npda.change_visit %}
-                        <a href="{% url 'visit-update' patient.pk visit.visit.pk %}"
-                           class="text-rcpch_pink flex justify-end items-center px-2">
-                          <span>Visit Details</span>
-                          <svg class="text-rcpch_pink w-8 h-8"
-                               width="24"
-                               height="24"
-                               viewBox="0 0 24 24"
-                               stroke-width="2"
-                               stroke="currentColor"
-                               fill="none"
-                               stroke-linecap="round"
-                               stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" />
-                            <polyline points="9 6 15 12 9 18" />
-                          </svg>
-                        </a>
-                      {% endif %}
-                    </td>
+                        {# Loop through the categories and display them is present #}
+                        {% for item in visit.categories %}
+                          {% if item.present %}
+                            <span class="bg-{{ item.colour }} px-1 py-0.25 mx-1 my-1 text-sm font-semibold text-white">
+                              <small>
+                                <div class="tooltip tooltip-top visible text-center text-white hover:text-white"
+                                     {% if item.errors %} data-tip='{{ item.errors.values|flatten|join:", " }}' {% endif %}>
+                                  {% if item.errors %}
+                                    <span class="fa-stack text-rcpch_red">
+                                      <i class="fa-circle fa-stack-1x fas"></i>
+                                      <i class="fa-exclamation fa-stack-1x fa-inverse fas"></i>
+                                    </span>
+                                  {% endif %}
+                                  <a href="{% url 'visit-update' patient.pk visit.visit.pk %}#{{ item.anchor }}">
+                                    {{ item.name }}
+                                  </a>
+                                </div>
+                              </small>
+                            </span>
+                          {% endif %}
+                        {% endfor %}
+                      </td>
+                      <td>
+                        {% if perms.npda.change_visit %}
+                          <a href="{% url 'visit-update' patient.pk visit.visit.pk %}"
+                             class="text-rcpch_pink flex justify-end items-center px-2">
+                            <span>Visit Details</span>
+                            <svg class="text-rcpch_pink w-8 h-8"
+                                 width="24"
+                                 height="24"
+                                 viewBox="0 0 24 24"
+                                 stroke-width="2"
+                                 stroke="currentColor"
+                                 fill="none"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
+                              <path stroke="none" d="M0 0h24v24H0z" />
+                              <polyline points="9 6 15 12 9 18" />
+                            </svg>
+                          </a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot>
+                  <tr class="bg-rcpch_dark_blue py-5 text-xs text-white text-gray-700 uppercase bg-gray-50">
+                    <th colspan="4" class="px-2">
+                      <strong>
+                        Total: {{ visits|length }} Visit
+                        {% if visits|length > 1 %}s{% endif %}
+                      </strong>
+                    </th>
                   </tr>
-                {% endfor %}
-              </tbody>
-              <tfoot>
-                <tr class="bg-rcpch_dark_blue py-5 text-xs text-white text-gray-700 uppercase bg-gray-50">
-                  <th colspan="4" class="px-2">
-                    <strong>
-                      Total: {{ visits|length }} Visit
-                      {% if visits|length > 1 %}s{% endif %}
-                    </strong>
-                  </th>
-                </tr>
-              </tfoot>
-            </table>
-          {% else %}
-            <div class="py-2">
-              <h5>This child has had no visits yet!</h5>
-            </div>
-          {% endif %}
-          {% if perms.npda.add_visit %}
-            {% if can_alter_this_audit_year_submission %}
-              <a href="{% url 'visit-create' patient_id=patient.pk %}"
-                 class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">Create New Visit</a>
+                </tfoot>
+              </table>
             {% else %}
-              <span class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border opacity-40 pointer-events-none hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">Create New Visit</span>
+              <div class="py-2">
+                <h5>This child has had no visits yet!</h5>
+              </div>
             {% endif %}
-          {% endif %}
-          <a href="{% url 'patients' %}"
-             class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">Back to Patient List</a>
-          <div class="py-20">
-            <div class="bg-rcpch_light_blue border-rcpch_light_blue_tint3 relative px-4 py-3 text-white border"
-                 role="alert">
-              <strong class="font-bold">Guidance:</strong>
-              <span class="block sm:inline">A list of all visits for Patient NPDA-ID {{ patient.pk }}. Categories which have been addressed at each visit are listed.</span>
-              <span class="absolute top-0 right-0 bottom-0 px-4 py-3">
-                <svg class="w-6 h-6 text-red-500 fill-current"
-                     role="button"
-                     xmlns="http://www.w3.org/2000/svg"
-                     viewBox="0 0 20 20">
-                  <title>Close</title>
-                  <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
-                </svg>
-              </span>
+            {% if perms.npda.add_visit %}
+              {% if can_alter_this_audit_year_submission %}
+                <a href="{% url 'visit-create' patient_id=patient.pk %}"
+                   class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">Create New Visit</a>
+              {% else %}
+                <span class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border opacity-40 pointer-events-none hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">Create New Visit</span>
+              {% endif %}
+            {% endif %}
+            <a href="{% url 'patients' %}"
+               class="bg-rcpch_light_blue border-rcpch_light_blue px-3 py-2.5 mt-40 font-semibold text-white border hover:bg-rcpch_strong_blue hover:border-rcpch_strong_blue hover:text-white">Back to Patient List</a>
+            <div class="py-20">
+              <div class="bg-rcpch_light_blue border-rcpch_light_blue_tint3 relative px-4 py-3 text-white border"
+                   role="alert">
+                <strong class="font-bold">Guidance:</strong>
+                <span class="block sm:inline">A list of all visits for Patient NPDA-ID {{ patient.pk }}. Categories which have been addressed at each visit are listed.</span>
+                <span class="absolute top-0 right-0 bottom-0 px-4 py-3">
+                  <svg class="w-6 h-6 text-red-500 fill-current"
+                       role="button"
+                       xmlns="http://www.w3.org/2000/svg"
+                       viewBox="0 0 20 20">
+                    <title>Close</title>
+                    <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
+                  </svg>
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-{% endblock %}
+  {% endblock %}

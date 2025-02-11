@@ -1,6 +1,7 @@
 # python imports
 from datetime import date
 import logging
+from datetime import timedelta
 
 # django imports
 from django.contrib.gis.db import models
@@ -10,10 +11,14 @@ from django.contrib.gis.db.models import (
     PositiveSmallIntegerField,
     PointField,
 )
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 
-from project.npda.models.custom_validators import validate_nhs_number
+from project.npda.models.custom_validators import (
+    validate_nhs_number,
+    validate_unique_reference_number,
+)
 
 # npda imports
 from ...constants import (
@@ -34,14 +39,28 @@ class Patient(models.Model):
     """
     The Patient class.
 
-    The index of multiple deprivation is calculated in the save() method using the postcode supplied and the
-    RCPCH Census Platform
+    The index of multiple deprivation is calculated using the postcode supplied and the RCPCH Census Platform
 
     Custom methods age and age_days, returns the age
     """
 
     nhs_number = CharField(  # the NHS number for England and Wales
-        "NHS Number", unique=False, validators=[validate_nhs_number]
+        "NHS Number",
+        unique=False,
+        validators=[validate_nhs_number],
+        null=True,
+        blank=True,
+        help_text="This is the NHS number for England and Wales. It is used to identify the patient in the audit.",
+    )
+
+    unique_reference_number = CharField(
+        "Unique Reference Number",
+        max_length=50,
+        unique=False,
+        validators=[validate_unique_reference_number],
+        blank=True,
+        null=True,
+        help_text="This is a unique reference number for Jersey patients. It is used to identify the patient in the audit.",
     )
 
     sex = models.IntegerField("Stated gender", choices=SEX_TYPE, blank=True, null=True)
@@ -121,6 +140,7 @@ class Patient(models.Model):
         ordering = (
             "pk",
             "nhs_number",
+            "unique_reference_number",
         )
         permissions = [
             CAN_LOCK_CHILD_PATIENT_DATA_FROM_EDITING,
@@ -128,7 +148,21 @@ class Patient(models.Model):
             CAN_OPT_OUT_CHILD_FROM_INCLUSION_IN_AUDIT,
         ]
 
+    def clean(self):
+        super().clean()
+
+        if not self.nhs_number and not self.unique_reference_number:
+            raise ValidationError(
+                "Either NHS Number or Unique Reference Number must be provided."
+            )
+        if self.nhs_number and self.unique_reference_number:
+            raise ValidationError(
+                "Only one of NHS Number or Unique Reference Number should be provided."
+            )
+
     def __str__(self) -> str:
+        if self.unique_reference_number:
+            return f"ID: {self.pk}, {self.unique_reference_number}"
         return f"ID: {self.pk}, {self.nhs_number}"
 
     def get_absolute_url(self):
@@ -160,3 +194,36 @@ class Patient(models.Model):
         if today_date is None:
             today_date = self.get_todays_date()
         return stringify_time_elapsed(self.date_of_birth, today_date)
+
+    def is_in_transfer_in_the_last_year(self):
+        """
+        Returns True if the patient is in transfer
+        """
+        current_audit_year = date.today().year
+        if date.today().month < 4:
+            current_audit_year -= 1
+
+        audit_year_start = date(current_audit_year, 4, 1)
+        audit_year_end = date(current_audit_year + 1, 3, 31)
+
+        if self.paediatric_diabetes_units.filter(
+            date_leaving_service__range=(audit_year_start, audit_year_end),
+        ).exists():
+            return True
+        return False
+
+    def has_completed_a_full_year_of_care(self):
+        """
+        Returns True if the patient has completed a full year of care
+        This includes:
+        - Patients who have been diagnosed with diabetes for more than a year
+        - Patients who are still alive
+        """
+
+        if self.diagnosis_date:
+            if (
+                self.diagnosis_date + timedelta(days=365) < date.today()
+                and self.death_date is None
+            ):
+                return True
+        return False

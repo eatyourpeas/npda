@@ -10,7 +10,7 @@
       <table class="table table-auto table-pin-cols table-pin-rows border-collapse text-sm text-left text-gray-500 mb-5 font-montserrat">
         <thead class="text-xs uppercase bg-rcpch_dark_blue text-white">
           <tr class="bg-rcpch_dark_blue text-white z-40">
-            <td>NHS Number</td>
+            <td>{% nhs_number_vs_urn pz_code %}</td>
             <td>Total Visits</td>
             <td>Visits with Errors</td>
           </tr>
@@ -18,7 +18,7 @@
         <tbody>
           {% for patient in patients %}
             <tr>
-              <td>{{ patient.nhs_number }}</td>
+              <td>{% nhs_number_vs_urn pz_code patient %}</td>
               <td>{{ patient.visit_count }}</td>
               <td>{{ patient.visit_error_count }}</td>
             </tr>
@@ -49,7 +49,7 @@
             {% for individual_error in error_list %}
               <tr>
                 <td class="px-6 py-4">{{ row_number }}</td>
-                <td class="px-6 py-4">{{ field|heading_for_field }}</td>
+                <td class="px-6 py-4">{% heading_for_field pz_code field %}</td>
                 <td class="px-6 py-4">{{ individual_error|join_with_comma }}</td>
               </tr>
             {% endfor %}

@@ -1,23 +1,17 @@
 {% load npda_tags %}
-
 {% if user.is_authenticated %}
-
   {% comment %} DASHBOARD {% endcomment %}
   <li class="">
     {% include "navbar/components/nav_link.html" with url_name="dashboard" nav_text="Dashboard" %}
   </li>
-
   {% comment %} SUBMISSIONS {% endcomment %}
   <li class="">
     {% include "navbar/components/nav_link.html" with url_name="patients" nav_text="Submissions" %}
   </li>
-
 {% endif %}
-
 <li>
   <a href="{% docs_url %}"
-    class="text-xs font-montserrat font-semibold   text-gray-700  text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent hover:underline underline-offset-8"
-    >
-      User Guide
-    </a>
+     class="text-xs font-montserrat font-semibold   text-gray-700  text-gray-400 hover:text-rcpch_light_blue hover:bg-transparent hover:underline underline-offset-8">
+    User Guide
+  </a>
 </li>

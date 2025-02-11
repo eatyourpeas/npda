@@ -12,8 +12,9 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db.models import Count, Case, When, Max, Q, F
 from django.forms import BaseForm
+from django.forms import BaseForm
 from django.http.response import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect, reverse
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView
 from django.http import HttpResponse
@@ -23,11 +24,10 @@ from django.urls import reverse_lazy
 # Third party imports
 import nhs_number
 
+# Project imports
 from project.npda.general_functions import (
     organisations_adapter,
     fetch_organisation_by_ods_code,
-)
-from project.npda.general_functions.quarter_for_date import (
     retrieve_quarter_for_date,
 )
 from project.npda.models import (
@@ -72,6 +72,7 @@ class PatientListView(
         # Check we are sorting by a fixed set of fields rather than the full Django __ notation
         if sort_by_param in [
             "nhs_number",
+            "unique_reference_number",
             "index_of_multiple_deprivation_quintile",
             "distance_from_lead_organisation",
         ]:
@@ -102,7 +103,11 @@ class PatientListView(
         if search:
             search = nhs_number.standardise_format(search) or search
             filtered_patients &= Q(
-                Q(nhs_number__icontains=search) | Q(pk__icontains=search)
+                (
+                    Q(nhs_number__icontains=search)
+                    | Q(unique_reference_number__icontains=search)
+                )
+                | Q(pk__icontains=search)
             )
 
         # filter patients to the view preference of the user
@@ -114,9 +119,16 @@ class PatientListView(
 
         patient_queryset = patient_queryset.filter(filtered_patients)
 
+        a_year_ago = timezone.now() - timezone.timedelta(days=365)
+
+        has_completed_a_full_year = Q(
+            diagnosis_date__gt=a_year_ago,
+        )
+
         patient_queryset = patient_queryset.annotate(
             audit_year=F("submissions__audit_year"),
             visit_error_count=Count(Case(When(visit__is_valid=False, then=1))),
+            full_year_of_care=has_completed_a_full_year,
             last_upload_date=Max("submissions__submission_date"),
             most_recent_visit_date=Max("visit__visit_date"),
             distance_from_lead_organisation=Distance(
@@ -135,7 +147,7 @@ class PatientListView(
             patient_queryset = patient_queryset.order_by(sort_by)
         else:
             patient_queryset = patient_queryset.order_by(
-                "is_valid", "-visit_error_count"
+                "is_valid", "-visit_error_count", "full_year_of_care"
             )
 
         return patient_queryset
@@ -155,10 +167,14 @@ class PatientListView(
         # TODO MRB: this should probably be a method on the Submission model?
         #           https://github.com/rcpch/national-paediatric-diabetes-audit/issues/533
         if pz_code and selected_audit_year:
-            submission = Submission.objects.filter(
-                paediatric_diabetes_unit__pz_code=pz_code,
-                audit_year=selected_audit_year
-            ).order_by("-submission_date").first()
+            submission = (
+                Submission.objects.filter(
+                    paediatric_diabetes_unit__pz_code=pz_code,
+                    audit_year=selected_audit_year,
+                )
+                .order_by("-submission_date")
+                .first()
+            )
 
             if submission and submission.errors:
                 submission_errors = json.loads(submission.errors)
@@ -169,7 +185,9 @@ class PatientListView(
                         submission_error_count += len(errors_for_field)
 
         context["submission"] = submission
-        context["submission_valid_count"] = context["paginator"].count - submission_error_count
+        context["submission_valid_count"] = (
+            context["paginator"].count - submission_error_count
+        )
         context["submission_error_count"] = submission_error_count
 
         context["pz_code"] = pz_code
@@ -187,8 +205,14 @@ class PatientListView(
         # Add extra fields to the patient that we can't add to the query. This is ok because the queryset will be max the page size.
         error_count_in_page = 0
         valid_count_in_page = 0
+        first_incomplete_year_count_in_page = 0
 
         for patient in context["page_obj"]:
+
+            patient.is_first_error = False
+            patient.is_first_valid = False
+            patient.is_first_incomplete_full_year = False
+
             # Signpost the latest quarter
             if patient.most_recent_visit_date is not None:
                 patient.latest_quarter = retrieve_quarter_for_date(
@@ -198,20 +222,40 @@ class PatientListView(
             # Highlight the separation between patients with errors and those without
             # unless we are sorting by a particular field in which case errors appear mixed
             if not context["sort_by"]:
-                if not patient.is_valid or patient.visit_error_count > 0:
+                if (
+                    (not patient.is_valid or patient.visit_error_count > 0)
+                    and patient.full_year_of_care
+                    and patient.death_date is None
+                ):
                     if error_count_in_page == 0:
                         patient.is_first_error = True
 
                     error_count_in_page += 1
 
-                if patient.is_valid and patient.visit_error_count == 0:
+                if (
+                    patient.is_valid
+                    and patient.visit_error_count == 0
+                    and patient.full_year_of_care
+                    and patient.death_date is None
+                ):
                     if valid_count_in_page == 0:
                         patient.is_first_valid = True
 
                     valid_count_in_page += 1
 
+                if patient.full_year_of_care is False or patient.death_date is not None:
+                    if first_incomplete_year_count_in_page == 0:
+                        patient.is_first_incomplete_full_year = True
+                    else:
+                        patient.is_first_incomplete_full_year = False
+
+                    first_incomplete_year_count_in_page += 1
+
         context["error_count_in_page"] = error_count_in_page
         context["valid_count_in_page"] = valid_count_in_page
+        context["first_incomplete_year_count_in_page"] = (
+            first_incomplete_year_count_in_page
+        )
 
         return context
 
@@ -268,6 +312,8 @@ class PatientCreateView(
             patient.is_valid = True
             patient.errors = None
             patient.save()
+
+            print("patient", patient.is_valid)
 
             # add the PDU to the patient record
             # get or create the paediatric diabetes unit object
@@ -374,6 +420,8 @@ class PatientUpdateView(
         return context
 
     def form_valid(self, form: BaseForm) -> HttpResponse:
+        if "delete" in self.request.POST:
+            return redirect(reverse("patient-delete", kwargs={"pk": self.kwargs["pk"]}))
         patient = form.save(commit=False)
         patient.is_valid = True
         patient.errors = None
