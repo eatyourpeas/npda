@@ -27,4 +27,11 @@
     max-width: 200px;
     font-weight: 300;
   }
+
+  .text-success {
+    @apply text-rcpch_light_blue;
+  }
+  .text-error {
+    @apply text-rcpch_orange;
+  }
 }

@@ -209,8 +209,7 @@
 <div class="px-2">
 {% with n_pts=table_data.row_data|length %}
 {% if n_pts > 0 %}
-Total: <span class="font-bold">{{ table_data.row_data|length }} Patient
-{% if table_data.row_data|length > 1 %}s{% endif %}
+Total: <span class="font-bold">{{ table_data.row_data|length }} Patient{{ table_data.row_data|length|pluralize }}</span>
 </span>
 {% else %}
 No eligible patients

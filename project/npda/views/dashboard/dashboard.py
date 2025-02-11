@@ -352,7 +352,5 @@ def dashboard(request):
         # at that point
         "aggregation_level": "pdu",
     }
-
-    print(f"!! {context['charts']['pt_ethnicity_tree_map_data']}")
-
+    
     return render(request, template_name=template, context=context)
