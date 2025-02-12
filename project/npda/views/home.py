@@ -22,11 +22,7 @@ from django_htmx.http import trigger_client_event
 
 from project.npda.general_functions.csv import csv_upload, csv_parse, csv_header
 from ..forms.upload import UploadFileForm
-from ..general_functions.session import (
-    get_new_session_fields,
-    refresh_audit_years_in_session,
-    refresh_session_object_asynchronously,
-)
+from ..general_functions.session import refresh_session_filters
 from ..general_functions.view_preference import get_or_update_view_preference
 
 # RCPCH imports
@@ -109,9 +105,8 @@ async def home(request):
                 logger.error(f"Failed to log user activity: {e}")
 
             # update the session fields - this stores that the user has uploaded a csv and disables the ability to use the questionnaire
-            await refresh_session_object_asynchronously(
-                request=request, user=request.user, pz_code=pz_code
-            )
+            await sync_to_async(refresh_session_filters)(request)
+
             if errors_by_row_index:
                 messages.error(
                     request=request,
@@ -163,20 +158,10 @@ def view_preference(request):
     view_preference = get_or_update_view_preference(
         request.user, view_preference_selection
     )
-    pz_code = request.POST.get("pz_code_select_name", None)
-
-    if pz_code is not None:
-        new_session_fields = get_new_session_fields(
-            user=request.user, pz_code=pz_code
-        )  # includes a validation step
-    else:
-        new_session = request.session
-        pz_code = new_session["pz_code"]
-        new_session_fields = get_new_session_fields(
-            request.user, pz_code
-        )  # includes a validation step
-
-    request.session.update(new_session_fields)
+    selected_pz_code = request.POST.get("pz_code_select_name", None)
+    
+    # includes a validation step
+    refresh_session_filters(request, pz_code=selected_pz_code)
 
     # Reload the page to apply the new view preference
     return HttpResponse(status=204, headers={"HX-Refresh": "true"})
@@ -189,7 +174,8 @@ def audit_year(request):
     """
     if request.method == "POST":
         audit_year = request.POST.get("audit_year_select_name", None)
-        refresh_audit_years_in_session(request, audit_year)
+        
+        refresh_session_filters(request, audit_year=audit_year)
 
         # Reload the page to apply the new view preference
         return HttpResponse(status=204, headers={"HX-Refresh": "true"})
