@@ -46,7 +46,7 @@ from .mixins import (
     CheckPDUListMixin,
     LoginAndOTPRequiredMixin,
 )
-from ..general_functions.session import refresh_session_object_synchronously
+from ..general_functions.session import refresh_session_filters
 
 logger = logging.getLogger(__name__)
 
@@ -358,8 +358,8 @@ class PatientCreateView(
             )
             submission.patients.add(patient)
             submission.save()
-            # update the session
-            refresh_session_object_synchronously(request)
+            # update the session - this stores that the user has used the questionnaire and disables csv upload
+            refresh_session_filters(request)
 
         else:
             logger.error(

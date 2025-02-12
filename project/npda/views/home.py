@@ -22,7 +22,7 @@ from django_htmx.http import trigger_client_event
 
 from project.npda.general_functions.csv import csv_upload, csv_parse, csv_header
 from ..forms.upload import UploadFileForm
-from ..general_functions.session import refresh_session_object_synchronously
+from ..general_functions.session import refresh_session_filters
 from ..general_functions.view_preference import get_or_update_view_preference
 
 # RCPCH imports
@@ -105,7 +105,7 @@ async def home(request):
                 logger.error(f"Failed to log user activity: {e}")
 
             # update the session fields - this stores that the user has uploaded a csv and disables the ability to use the questionnaire
-            await sync_to_async(refresh_session_object_synchronously)(request)
+            await sync_to_async(refresh_session_filters)(request)
 
             if errors_by_row_index:
                 messages.error(
@@ -161,7 +161,7 @@ def view_preference(request):
     pz_code = request.POST.get("pz_code_select_name", request.session.get("pz_code"))
     
     # includes a validation step
-    refresh_session_object_synchronously(request, pz_code=pz_code)
+    refresh_session_filters(request, pz_code=pz_code)
 
     # Reload the page to apply the new view preference
     return HttpResponse(status=204, headers={"HX-Refresh": "true"})
@@ -175,7 +175,7 @@ def audit_year(request):
     if request.method == "POST":
         audit_year = request.POST.get("audit_year_select_name", None)
         
-        refresh_session_object_synchronously(request, audit_year=audit_year)
+        refresh_session_filters(request, audit_year=audit_year)
 
         # Reload the page to apply the new view preference
         return HttpResponse(status=204, headers={"HX-Refresh": "true"})

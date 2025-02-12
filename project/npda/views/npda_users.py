@@ -35,7 +35,7 @@ from ..general_functions import (
     group_for_role,
     organisations_adapter,
     get_or_update_view_preference,
-    refresh_session_object_synchronously
+    refresh_session_filters
 )
 from .mixins import CheckPDUInstanceMixin, CheckPDUListMixin, LoginAndOTPRequiredMixin
 from project.constants import VIEW_PREFERENCES
@@ -119,7 +119,7 @@ class NPDAUserListView(
             view_preference = request.POST.get("view_preference", None)
             pz_code = request.POST.get("npdauser_pz_code_select_name", None)
 
-            refresh_session_object_synchronously(self.request, pz_code=pz_code)
+            refresh_session_filters(self.request, pz_code=pz_code)
 
             view_preference = get_or_update_view_preference(
                 self.request.user, view_preference

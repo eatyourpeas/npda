@@ -72,7 +72,7 @@ def create_session_object(user):
     return session
 
 
-def refresh_session_object_synchronously(request, pz_code=None, audit_year=None):
+def refresh_session_filters(request, pz_code=None, audit_year=None):
     session = {}
 
     Submission = apps.get_model("npda", "Submission")
