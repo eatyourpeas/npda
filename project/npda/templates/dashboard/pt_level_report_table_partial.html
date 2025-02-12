@@ -65,62 +65,13 @@
       <table class="table-auto w-full text-xs  text-center text-gray-500 mb-5 font-montserrat overflow-x-auto">
         <thead class="uppercase bg-rcpch_dark_blue text-white sticky top-0 z-10">
           <tr>
-            {% comment %} TODO: ONCE ALL DATA ADDED, REMOVE THIS CHECK {% endcomment %}
-            {% if text.headers %}
-              {% for header in text.headers %}
-                <th class="px-6 py-4">{{ header }}</th>
-              {% endfor %}
-            {% else %}
-              <th>Not implemented</th>
-            {% endif %}
+            {% for header in text.headers %}
+              <th class="px-6 py-4">{{ header }}</th>
+            {% endfor %}
           </tr>
         </thead>
         <tbody>
           {% if table_data.row_data %}
-            {% for pt_pk, results in table_data.row_data.items %}
-              <tr class="bg-white border-b hover:bg-gray-100">
-                {% for kpi_attr_name in table_data.headers %}
-                  <td class="px-6 py-4">
-                    {% with result=results|get_item:kpi_attr_name %}
-                      <p>
-                        {% if kpi_attr_name == "nhs_number" or kpi_attr_name == "unique_reference_number" %}
-                          <span class="tooltip tooltip-right block" data-tip="View patient details">
-                            <a href="{% url 'patient-update' pt_pk %}" class="block w-full h-full">
-                              {{ result }}
-                              <i class="fa-solid fa-arrow-up-right-from-square text-rcpch_strong_blue"></i>
-                            </a>
-                          </span>
-                        </div>
-                      {% elif kpi_attr_name == "total" %}
-                        {{ result.0 }} / {{ result.1 }}
-                      {% elif kpi_attr_name == "value" %}
-                        {{ result }}
-                      {% elif result is True %}
-                        <i class="fa-solid fa-circle-check text-success"></i>
-                      {% elif result is False %}
-                        <i class="fa-solid fa-circle-exclamation text-error"></i>
-                      {% else %}
-                        <i class="fa-solid fa-ban text-muted"></i>
-                      {% endif %}
-                    </p>
-                  {% endwith %}
-                </td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
-        {% else %}
-          {% for _ in "12345"|make_list %}
-            <tr class="bg-white border-b hover:bg-gray-100">
-              {% for _ in text.headers %}<td class="px-6 py-4 text-muted">-</td>{% endfor %}
-            </tr>
-          {% endfor %}
-        {% endif %}
-      </tbody>
-    </table>
-  </div>
-  {% comment %} custom styling for disabled loading state {% endcomment %}
-  <style>
-            {% if table_data.row_data %}
               {% for pt_pk, results in table_data.row_data.items %}
 
                 <tr class="bg-white border-b hover:bg-gray-100">
@@ -128,7 +79,7 @@
                     <td class="px-6 py-4">
                       {% with result=results|get_item:kpi_attr_name %}
                       <p class="{{ kpi_attr_name }}">
-                          {% if kpi_attr_name == "nhs_number" %}
+                          {% if kpi_attr_name == "nhs_number" or kpi_attr_name == "unique_reference_number" %}
                               <span class="tooltip tooltip-right block" data-tip="View patient's visits">
                                 <a href="{% url 'patient_visits' pt_pk %}" class="block w-full h-full">
                                 {{ result }}
@@ -145,7 +96,7 @@
                             {{ result }}
 
                           {% comment %} TREATMENT TAB {% endcomment %}
-                          {% elif kpi_attr_name == 'cgm' %}
+                          {% elif kpi_attr_name == 'cgm' and result is not None %}
                             {{ result }}
                           {% elif kpi_attr_name == 'tx_regimen' and result is not None %}
                             {{ result }}
@@ -179,11 +130,10 @@
                 </tr>
               {% endfor %}
             {% endif %}
+      </tbody>
+    </table>
+  </div>
 
-
-        </tbody>
-      </table>
-    </div>
 
     {% comment %} custom styling for disabled loading state {% endcomment %}
     <style>

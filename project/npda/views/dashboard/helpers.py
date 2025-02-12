@@ -28,9 +28,7 @@ def add_number_of_figures_coloured_for_chart(
         dict[Literal["total_eligible", "total_ineligible", "pct"], int],
     ],
     n_figures_total: int = 5,
-) -> dict[
-    Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int
-]:
+) -> dict[Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int]:
     """
     Add number of figures coloured to a value counts dict
     """
@@ -39,9 +37,7 @@ def add_number_of_figures_coloured_for_chart(
 
     for category, vcs in value_counts_dict.items():
         for key, value in vcs.items():
-            value_counts_dict[category][key]["figures_coloured"] = int(
-                value["pct"] / divisor
-            )
+            value_counts_dict[category][key]["figures_coloured"] = int(value["pct"] / divisor)
 
     return dict(value_counts_dict)
 
@@ -53,9 +49,9 @@ def get_total_eligible_pts_diabetes_type_value_counts(
 
     Returns empty dict if no eligible pts."""
 
-    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values(
-        "diabetes_type"
-    ).annotate(count=Count("diabetes_type"))
+    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values("diabetes_type").annotate(
+        count=Count("diabetes_type")
+    )
 
     if not eligible_pts_diabetes_type_counts.exists():
         return {}
@@ -112,9 +108,7 @@ def get_pt_characteristics_value_counts_pct(
     """
     # Get attribute names and labels
     relevant_kpis = [4, 5, 6, 8, 9, 10, 11, 12]
-    kpi_attr_names = [
-        kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis
-    ]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
 
     value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
     # These are all just counts so only total_eligble and total_ineligible have values
@@ -259,9 +253,7 @@ def get_hc_completion_rate_vcs(
 
     # Just need pass and fail
     vcs = {}
-    for ix, kpi_values in enumerate(
-        [kpi_32_1_values, kpi_32_2_values, kpi_32_3_values], start=1
-    ):
+    for ix, kpi_values in enumerate([kpi_32_1_values, kpi_32_2_values, kpi_32_3_values], start=1):
         if ix == 1:
             kpi_label = "< 12 years old"
         elif ix == 2:
@@ -291,9 +283,7 @@ def get_hba1c_value_counts_stratified_by_diabetes_type(
     The KPI class does not stratify by diabetes type so we need to do this here."""
 
     # Get the query sets (the hba1c value)
-    hba1c_vals = (
-        calculate_kpis_instance.calculate_kpi_hba1c_vals_stratified_by_diabetes_type()
-    )
+    hba1c_vals = calculate_kpis_instance.calculate_kpi_hba1c_vals_stratified_by_diabetes_type()
 
     return hba1c_vals
 
@@ -304,9 +294,7 @@ def add_number_of_figures_coloured_for_chart(
         dict[Literal["total_eligible", "total_ineligible", "pct"], int],
     ],
     n_figures_total: int = 5,
-) -> dict[
-    Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int
-]:
+) -> dict[Literal["total_eligible", "total_ineligible", "pct", "figures_coloured"], int]:
     """
     Add number of figures coloured to a value counts dict
     """
@@ -315,9 +303,7 @@ def add_number_of_figures_coloured_for_chart(
 
     for category, vcs in value_counts_dict.items():
         for key, value in vcs.items():
-            value_counts_dict[category][key]["figures_coloured"] = int(
-                value["pct"] / divisor
-            )
+            value_counts_dict[category][key]["figures_coloured"] = int(value["pct"] / divisor)
 
     return dict(value_counts_dict)
 
@@ -327,9 +313,9 @@ def get_total_eligible_pts_diabetes_type_value_counts(
 ) -> dict:
     """Gets value counts dict for total eligible patients stratified by diabetes type"""
 
-    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values(
-        "diabetes_type"
-    ).annotate(count=Count("diabetes_type"))
+    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values("diabetes_type").annotate(
+        count=Count("diabetes_type")
+    )
     eligible_pts_diabetes_type_value_counts = defaultdict(int)
     for item in eligible_pts_diabetes_type_counts:
         diabetes_type = item["diabetes_type"]
@@ -382,9 +368,7 @@ def get_pt_characteristics_value_counts_pct(
     """
     # Get attribute names and labels
     relevant_kpis = [4, 5, 6, 8, 9, 10, 11, 12]
-    kpi_attr_names = [
-        kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis
-    ]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
 
     value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
     # These are all just counts so only total_eligble and total_ineligible have values
@@ -472,9 +456,9 @@ def get_total_eligible_pts_diabetes_type_value_counts(
 ) -> dict:
     """Gets value counts dict for total eligible patients stratified by diabetes type"""
 
-    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values(
-        "diabetes_type"
-    ).annotate(count=Count("diabetes_type"))
+    eligible_pts_diabetes_type_counts = eligible_pts_queryset.values("diabetes_type").annotate(
+        count=Count("diabetes_type")
+    )
     eligible_pts_diabetes_type_value_counts = defaultdict(int)
     for item in eligible_pts_diabetes_type_counts:
         diabetes_type = item["diabetes_type"]
@@ -516,9 +500,7 @@ def get_tx_regimen_value_counts_pcts(
         "Multiple injections per day",
         "Insulin pump",
     ]
-    kpi_attr_names = [
-        kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis
-    ]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
 
     value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
 
@@ -549,9 +531,7 @@ def get_glucose_monitoring_value_counts_pcts(
     """
     # Get attribute names and labels
     relevant_kpis = [21, 22, 23]
-    kpi_attr_names = [
-        kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis
-    ]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
 
     # Labels used for bar chart htmx partial
     labels = [
@@ -605,9 +585,7 @@ def get_pt_characteristics_value_counts_pct(
     """
     # Get attribute names and labels
     relevant_kpis = [4, 5, 6, 8, 9, 10, 11, 12]
-    kpi_attr_names = [
-        kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis
-    ]
+    kpi_attr_names = [kpi_name_registry.get_attribute_name(kpi) for kpi in relevant_kpis]
 
     value_counts = defaultdict(lambda: {"count": 0, "total": 0, "pct": 0})
     # These are all just counts so only total_eligble and total_ineligible have values
@@ -688,9 +666,7 @@ def get_admissions_value_counts_absolute(
 
     absolute_value_counts = {}
     for kpi_attr in admissions_kpi_attr_names:
-        absolute_value_counts[kpi_attr] = kpi_calculations_object[kpi_attr][
-            "total_passed"
-        ]
+        absolute_value_counts[kpi_attr] = kpi_calculations_object[kpi_attr]["total_passed"]
 
     return absolute_value_counts
 
@@ -724,7 +700,11 @@ def get_pt_demographic_value_counts(
     sex_map = dict(SEX_TYPE)
     sex_counts = Counter(sex_map[item["sex"]] for item in all_values if item["sex"] in sex_map)
     ethnicity_map = dict(ETHNICITIES)
-    ethnicity_counts = Counter(ethnicity_map[item["ethnicity"]] for item in all_values if item["ethnicity"] in ethnicity_map)
+    ethnicity_counts = Counter(
+        ethnicity_map[item["ethnicity"]]
+        for item in all_values
+        if item["ethnicity"] in ethnicity_map
+    )
     imd_map = {
         1: "1st Quintile",
         2: "2nd Quintile",
@@ -733,8 +713,7 @@ def get_pt_demographic_value_counts(
         5: "5th Quintile",
     }
     imd_counts = Counter(
-        imd_map.get(item["index_of_multiple_deprivation_quintile"])
-        for item in all_values
+        imd_map.get(item["index_of_multiple_deprivation_quintile"]) for item in all_values
     )
 
     return (
@@ -803,15 +782,9 @@ def get_pt_level_table_data(
             # querysets for each kpi -> if not in either, must mean they are ineligible (therefore None)
             data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
             # Additional values we can calculate now
-            if pt.nhs_number:
-                data[pt.pk]["nhs_number"] = pt.nhs_number
-            if pt.unique_reference_number:
-                data[pt.pk]["nhs_number"] = pt.unique_reference_number
-            else:
-                data[pt.pk]["nhs_number"] = "Unknown"
+            data[pt.pk]["nhs_number"] = pt.nhs_number or pt.unique_reference_number or "Unknown"
             pt_is_gte_12yo = (
-                pt.date_of_birth
-                <= calculate_kpis_object.audit_start_date - relativedelta(years=12)
+                pt.date_of_birth <= calculate_kpis_object.audit_start_date - relativedelta(years=12)
             )
             data[pt.pk]["is_gte_12yo"] = pt_is_gte_12yo
             # total = (passed / total)
@@ -820,9 +793,9 @@ def get_pt_level_table_data(
         # For each kpi, update the data dict with the pts that have passed and failed
         for kpi_attr_name in kpi_attr_names:
 
-            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
-                kpi_attr_name
-            ]["patient_querysets"]
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
 
             for pt in kpi_pt_querysets["passed"]:
                 data[pt.pk]["total"][0] += 1
@@ -840,9 +813,7 @@ def get_pt_level_table_data(
         data = {}
         # Initialise with all eligible pts' pks as the key. Use kpi40 eligible
         # as this is KPI1 (all eligible pts)
-        kpi_40_attr_name = calculate_kpis_object.kpi_name_registry.get_attribute_name(
-            40
-        )
+        kpi_40_attr_name = calculate_kpis_object.kpi_name_registry.get_attribute_name(40)
         for pt in kpi_calculations_object["calculated_kpi_values"][kpi_40_attr_name][
             "patient_querysets"
         ]["eligible"]:
@@ -850,19 +821,14 @@ def get_pt_level_table_data(
             # querysets for each kpi -> if not in either, must mean they are ineligible (therefore None)
             data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
             # Additional values we can calculate now
-            if pt.nhs_number:
-                data[pt.pk]["nhs_number"] = pt.nhs_number
-            if pt.unique_reference_number:
-                data[pt.pk]["nhs_number"] = pt.unique_reference_number
-            else:
-                data[pt.pk]["nhs_number"] = "Unknown"
+            data[pt.pk]["nhs_number"] = pt.nhs_number or pt.unique_reference_number or "Unknown"
 
         # For each kpi, update the data dict with the pts that have passed and failed
         for kpi_attr_name in kpi_attr_names:
 
-            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
-                kpi_attr_name
-            ]["patient_querysets"]
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
 
             for pt in kpi_pt_querysets["passed"]:
                 data[pt.pk][kpi_attr_name] = True
@@ -880,26 +846,26 @@ def get_pt_level_table_data(
 
         for kpi_attr_name in kpi_attr_names:
 
-            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
-                kpi_attr_name
-            ]["patient_querysets"]
+            kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][kpi_attr_name][
+                "patient_querysets"
+            ]
 
             # For each kpi_attribute's eligible pts, add to data dict
             for pt in kpi_pt_querysets["eligible"]:
                 # If pt not already in, initialise with None for all kpi_attr_names
                 if data.get(pt.pk) is None:
-                    data[pt.pk] = {
-                        kpi_attr_name: None for kpi_attr_name in kpi_attr_names
-                    }
-                    data[pt.pk]["nhs_number"] = pt.nhs_number
+                    data[pt.pk] = {kpi_attr_name: None for kpi_attr_name in kpi_attr_names}
+                    data[pt.pk]["nhs_number"] = (
+                        pt.nhs_number or pt.unique_reference_number or "Unknown"
+                    )
 
             for pt in kpi_pt_querysets["passed"]:
                 data[pt.pk] = {kpi_attr_name: True}
-                data[pt.pk]["nhs_number"] = pt.nhs_number
+                data[pt.pk]["nhs_number"] = pt.nhs_number or pt.unique_reference_number or "Unknown"
 
             for pt in kpi_pt_querysets["failed"]:
                 data[pt.pk] = {kpi_attr_name: False}
-                data[pt.pk]["nhs_number"] = pt.nhs_number
+                data[pt.pk]["nhs_number"] = pt.nhs_number or pt.unique_reference_number or "Unknown"
 
         # Finally add the headers. Need to add nhs_number
         headers = ["nhs_number"] + kpi_attr_names
@@ -919,9 +885,9 @@ def get_pt_level_table_data(
 
         # kpi 44 mean hba1c
         # Get the eligible pts
-        kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][
-            get_attribute_name(44)
-        ]["patient_querysets"]
+        kpi_pt_querysets = kpi_calculations_object["calculated_kpi_values"][get_attribute_name(44)][
+            "patient_querysets"
+        ]
 
         # Start with the median hba1c values
         data = get_median_hba1c_values_by_patient(kpi_pt_querysets["eligible"])
@@ -950,16 +916,12 @@ def get_pt_level_table_data(
 
         # Have enough to start constructing the data dict for the table
 
-        kpi_48_passed_pt_pks_queryset: QuerySet = kpi_calculations_object[
-            "calculated_kpi_values"
-        ][get_attribute_name(48)]["patient_querysets"]["passed"].values_list(
-            "pk", flat=True
-        )
-        kpi_49_passed_pt_pks_queryset: QuerySet = kpi_calculations_object[
-            "calculated_kpi_values"
-        ][get_attribute_name(49)]["patient_querysets"]["passed"].values_list(
-            "pk", flat=True
-        )
+        kpi_48_passed_pt_pks_queryset: QuerySet = kpi_calculations_object["calculated_kpi_values"][
+            get_attribute_name(48)
+        ]["patient_querysets"]["passed"].values_list("pk", flat=True)
+        kpi_49_passed_pt_pks_queryset: QuerySet = kpi_calculations_object["calculated_kpi_values"][
+            get_attribute_name(49)
+        ]["patient_querysets"]["passed"].values_list("pk", flat=True)
 
         for pt_pk in data:
 
@@ -1026,16 +988,16 @@ def get_pt_level_table_data(
         }
 
         # Grab eligible patients (KPI 1, same for all)
-        eligible_pts = kpi_calculations_object["calculated_kpi_values"][
-            get_attribute_name(13)
-        ]["patient_querysets"]["eligible"]
+        eligible_pts = kpi_calculations_object["calculated_kpi_values"][get_attribute_name(13)][
+            "patient_querysets"
+        ]["eligible"]
 
         # Start constructing the data dict
 
         for pt in eligible_pts:
 
             # Add nhs number
-            data[pt.pk]["nhs_number"] = pt.nhs_number
+            data[pt.pk]["nhs_number"] = pt.nhs_number or pt.unique_reference_number or "Unknown"
 
             # Tx regimen col -> find the first True value in the tx_vals_attr_map
             data[pt.pk]["tx_regimen"] = None
@@ -1054,9 +1016,9 @@ def get_pt_level_table_data(
             data[pt.pk]["cgm"] = None
             for glucose_monitoring_kpi_attr in cgm_attr_vals_map:
                 if (
-                    kpi_calculations_object["calculated_kpi_values"][
-                        glucose_monitoring_kpi_attr
-                    ]["patient_querysets"]["passed"]
+                    kpi_calculations_object["calculated_kpi_values"][glucose_monitoring_kpi_attr][
+                        "patient_querysets"
+                    ]["passed"]
                     .filter(pk=pt.pk)
                     .exists()
                 ):
@@ -1065,9 +1027,9 @@ def get_pt_level_table_data(
 
             # HCL col -> true or false
             data[pt.pk][get_attribute_name(24)] = (
-                kpi_calculations_object["calculated_kpi_values"][
-                    get_attribute_name(24)
-                ]["patient_querysets"]["passed"]
+                kpi_calculations_object["calculated_kpi_values"][get_attribute_name(24)][
+                    "patient_querysets"
+                ]["passed"]
                 .filter(pk=pt.pk)
                 .exists()
             )
