@@ -158,10 +158,10 @@ def view_preference(request):
     view_preference = get_or_update_view_preference(
         request.user, view_preference_selection
     )
-    pz_code = request.POST.get("pz_code_select_name", request.session.get("pz_code"))
+    selected_pz_code = request.POST.get("pz_code_select_name", None)
     
     # includes a validation step
-    refresh_session_filters(request, pz_code=pz_code)
+    refresh_session_filters(request, pz_code=selected_pz_code)
 
     # Reload the page to apply the new view preference
     return HttpResponse(status=204, headers={"HX-Refresh": "true"})

@@ -117,9 +117,9 @@ class NPDAUserListView(
         """
         if request.htmx:
             view_preference = request.POST.get("view_preference", None)
-            pz_code = request.POST.get("npdauser_pz_code_select_name", None)
+            selected_pz_code = request.POST.get("npdauser_pz_code_select_name", None)
 
-            refresh_session_filters(self.request, pz_code=pz_code)
+            refresh_session_filters(self.request, pz_code=selected_pz_code)
 
             view_preference = get_or_update_view_preference(
                 self.request.user, view_preference
