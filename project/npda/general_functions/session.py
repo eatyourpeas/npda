@@ -72,23 +72,26 @@ def create_session_object(user):
     return session
 
 
-def get_new_session_fields(user, pz_code):
-    """
-    Get the new session fields for the user, based on the PZ code they have selected.
-    If they are a member of the RCPCH audit team, they can see all organisations and they can upload CSVs as well as complete the questionnaire.
-    If they are a member of the organisation, they can see their own organisation and they can either upload CSVs or complete the questionnaire
-    until they have chosen one option or the other, after which they can only do one.
-    """
-    ret = {}
+def refresh_session_object_synchronously(request, pz_code=None, audit_year=None):
+    session = {}
 
     Submission = apps.get_model("npda", "Submission")
     PaediatricDiabetesUnit = apps.get_model("npda", "PaediatricDiabetesUnit")
+
     can_upload_csv = True
     can_complete_questionnaire = True
 
-    audit_year = get_current_audit_year()
+    pz_code = pz_code or request.session.get("pz_code")
+
+    audit_years = SUPPORTED_AUDIT_YEARS
+    audit_year = audit_year or request.session.get("selected_audit_year")
+
+    session["audit_years"] = audit_years
+    session["selected_audit_year"] = audit_year
 
     if pz_code:
+        user = request.user
+
         can_see_organisations = (
             user.is_rcpch_audit_team_member
             or user.organisation_employers.filter(pz_code=pz_code).exists()
@@ -100,44 +103,17 @@ def get_new_session_fields(user, pz_code):
             )
             raise PermissionDenied()
 
-        ret["pz_code"] = pz_code
-        ret["lead_organisation"] = PaediatricDiabetesUnit.objects.get(
+        session["pz_code"] = pz_code
+        session["lead_organisation"] = PaediatricDiabetesUnit.objects.get(
             pz_code=pz_code
         ).lead_organisation_name
-        ret["pdu_choices"] = list(
+        session["pdu_choices"] = list(
             organisations_adapter.paediatric_diabetes_units_to_populate_select_field(
                 requesting_user=user, user_instance=None
             )
         )
 
-        ret |= get_submission_actions(pz_code, audit_year)
+    session |= get_submission_actions(pz_code, audit_year)
 
-    return ret
-
-
-def refresh_audit_years_in_session(request, selected_audit_year):
-    """
-    Refresh the audit years in the session object.
-    """
-    audit_years = SUPPORTED_AUDIT_YEARS
-    request.session["audit_years"] = audit_years
-    request.session["selected_audit_year"] = selected_audit_year
-    request.session.modified = True
-
-
-async def refresh_session_object_asynchronously(request, user, pz_code):
-    """
-    Refresh the session object and save the new fields.
-    """
-    session = await sync_to_async(get_new_session_fields)(user, pz_code)
-    request.session.update(session)
-    request.session.modified = True
-
-
-def refresh_session_object_synchronously(request, user, pz_code):
-    """
-    Refresh the session object and save the new fields.
-    """
-    session = get_new_session_fields(user, pz_code)
     request.session.update(session)
     request.session.modified = True

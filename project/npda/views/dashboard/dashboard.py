@@ -82,7 +82,7 @@ def dashboard(request):
     if request.htmx:
         template = "dashboard/dashboard_base.html"
     pz_code = request.session.get("pz_code")
-    refresh_session_object_synchronously(request=request, user=request.user, pz_code=pz_code)
+    refresh_session_object_synchronously(request=request)
 
     PaediatricDiabetesUnit: PaediatricDiabetesUnitClass = apps.get_model(
         "npda", "PaediatricDiabetesUnit"

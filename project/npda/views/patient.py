@@ -359,11 +359,7 @@ class PatientCreateView(
             submission.patients.add(patient)
             submission.save()
             # update the session
-            refresh_session_object_synchronously(
-                request=self.request,
-                user=self.request.user,
-                pz_code=self.request.session.get("pz_code"),
-            )
+            refresh_session_object_synchronously(request)
 
         else:
             logger.error(

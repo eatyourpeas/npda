@@ -34,8 +34,8 @@ from ..general_functions import (
     send_email_to_recipients,
     group_for_role,
     organisations_adapter,
-    get_new_session_fields,
     get_or_update_view_preference,
+    refresh_session_object_synchronously
 )
 from .mixins import CheckPDUInstanceMixin, CheckPDUListMixin, LoginAndOTPRequiredMixin
 from project.constants import VIEW_PREFERENCES
@@ -113,14 +113,13 @@ class NPDAUserListView(
 
     def post(self, request, *args: str, **kwargs) -> HttpResponse:
         """
-        Override POST method to requery the database for the list of patients if  view preference changes
+        Override POST method to requery the database for the list of users if view preference changes
         """
         if request.htmx:
             view_preference = request.POST.get("view_preference", None)
             pz_code = request.POST.get("npdauser_pz_code_select_name", None)
 
-            new_session_fields = get_new_session_fields(self.request.user, pz_code)
-            self.request.session.update(new_session_fields)
+            refresh_session_object_synchronously(self.request, pz_code=pz_code)
 
             view_preference = get_or_update_view_preference(
                 self.request.user, view_preference
