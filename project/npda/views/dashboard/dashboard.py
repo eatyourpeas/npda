@@ -17,10 +17,6 @@ from project.npda.models.paediatric_diabetes_unit import (
 from project.npda.models.patient import Patient
 from .helpers import *
 
-
-from project.npda.general_functions.session import (
-    refresh_session_object_synchronously,
-)
 from project.npda.kpi_class.kpis import CalculateKPIS
 
 from project.npda.views.decorators import login_and_otp_required
@@ -82,7 +78,6 @@ def dashboard(request):
     if request.htmx:
         template = "dashboard/dashboard_base.html"
     pz_code = request.session.get("pz_code")
-    refresh_session_object_synchronously(request=request)
 
     PaediatricDiabetesUnit: PaediatricDiabetesUnitClass = apps.get_model(
         "npda", "PaediatricDiabetesUnit"
