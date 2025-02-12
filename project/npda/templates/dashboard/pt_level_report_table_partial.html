@@ -65,14 +65,9 @@
       <table class="table-auto w-full text-xs  text-center text-gray-500 mb-5 font-montserrat overflow-x-auto">
         <thead class="uppercase bg-rcpch_dark_blue text-white sticky top-0 z-10">
           <tr>
-            {% comment %} TODO: ONCE ALL DATA ADDED, REMOVE THIS CHECK {% endcomment %}
-            {% if text.headers %}
-              {% for header in text.headers %}
-                <th class="px-6 py-4">{{ header }}</th>
-              {% endfor %}
-            {% else %}
-              <th>Not implemented</th>
-            {% endif %}
+            {% for header in text.headers %}
+              <th class="px-6 py-4">{{ header }}</th>
+            {% endfor %}
           </tr>
         </thead>
         <tbody>
