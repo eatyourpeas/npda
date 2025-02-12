@@ -19,6 +19,13 @@
         }
     }
 
+    # FLOWER monitoring is served from a /flower path
+    # currently commented out until security is established
+    # handle /flower* {
+    #     reverse_proxy http://flower:8888
+    # }
+
+
     log {
         level ERROR # switch to DEBUG for more verbose logging
     }

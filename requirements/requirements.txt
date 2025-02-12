@@ -72,3 +72,10 @@ colorlog==6.8.2
 
 # Vscode debugger
 debugpy==1.8.8
+
+# async
+## scheduled tasks
+celery
+django-celery-beat
+flower
+redis

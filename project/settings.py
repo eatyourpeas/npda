@@ -118,6 +118,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
+    'django_celery_beat',
     # "django.forms",
     # django htmx
     "django_htmx",
@@ -342,3 +343,32 @@ USE_I18N = True
 # USE_L10N = True
 
 USE_TZ = True
+
+"""
+Celery settings
+"""
+# REDIS / Celery
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Europe/London"
+
+# CELERY_BEAT_SCHEDULE = {
+#     "run-daily-at-six-am": {
+#         "task": "epilepsy12.tasks.hello",
+#         "schedule": crontab(hour="6", minute=0),
+#         "options": {
+#             "expires": 15.0,
+#         },
+#     },
+#     "run-ever-10-seconds": {
+#         "task": "epilepsy12.tasks.hello",
+#         "schedule": 10,
+#         "options": {
+#             "expires": 15.0,
+#         },
+#     },
+
+# }

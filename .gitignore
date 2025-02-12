@@ -24,3 +24,6 @@ media/submissions/csv/*
 
 project/npda/dummy_sheets/local_generated_data/*
 !project/npda/dummy_sheets/local_generated_data/.gitkeep
+
+# exclude celerybeat-schedule
+celerybeat-schedule
