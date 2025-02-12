@@ -97,7 +97,7 @@ def dashboard(request):
         return render(request, "dashboard.html")
 
     selected_audit_year = int(request.session.get("selected_audit_year"))
-    
+
     if selected_audit_year <= 2024:
         # The day after the audit year end date
         calculation_date = date(selected_audit_year, 4, 1)
@@ -352,5 +352,5 @@ def dashboard(request):
         # at that point
         "aggregation_level": "pdu",
     }
-    
+
     return render(request, template_name=template, context=context)
