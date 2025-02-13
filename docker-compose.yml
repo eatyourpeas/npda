@@ -43,7 +43,7 @@ services:
   celeryworker:
     <<: *global # this will inherit config from x-global-environment
     image: npda-django:built
-    command: celery -A project.npda worker -l info
+    command: celery -A project worker -l info
     restart: always
 
   # Flower UI for Celery tasks
@@ -54,7 +54,7 @@ services:
       - 8888:8888
     volumes:
       - npda-flower-data:/data
-    command: celery -A project.npda flower --persistent=True -url_prefix=/flower
+    command: celery -A project flower --persistent=True -url_prefix=/flower
     restart: always
     depends_on:
       - redis
@@ -64,7 +64,7 @@ services:
   celerybeat:
     <<: *global # this will inherit config from x-global-environment
     image: npda-django:built
-    command: celery -A project.npda beat -l info
+    command: celery -A project beat -l info
     restart: always
 
   # PostgreSQL with PostGIS extension

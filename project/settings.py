@@ -20,6 +20,9 @@ from dotenv import load_dotenv
 #  django imports
 from django.core.management.utils import get_random_secret_key
 
+# celery imports
+from celery.schedules import crontab
+
 # RCPCH imports
 from .logging_settings import (
     LOGGING,
@@ -82,7 +85,9 @@ if DEBUG is True:
     LOCAL_DEV_ADMIN_EMAIL = os.getenv("LOCAL_DEV_ADMIN_EMAIL")
     LOCAL_DEV_ADMIN_PASSWORD = os.getenv("LOCAL_DEV_ADMIN_PASSWORD")
 
-    if os.environ.get("RUN_MAIN") == "true":  # Prevent double execution during reloading
+    if (
+        os.environ.get("RUN_MAIN") == "true"
+    ):  # Prevent double execution during reloading
         import debugpy
 
         DEBUGPY_PORT = os.getenv("DEBUGPY_PORT", None)
@@ -91,12 +96,16 @@ if DEBUG is True:
         else:
             try:
                 DEBUGPY_PORT = int(DEBUGPY_PORT)  # Convert to integer
-                debugpy.listen(("0.0.0.0", DEBUGPY_PORT))  # Ensure port matches in VSCode config
+                debugpy.listen(
+                    ("0.0.0.0", DEBUGPY_PORT)
+                )  # Ensure port matches in VSCode config
                 logger.debug(
                     f"Debugging is enabled on port {DEBUGPY_PORT}, waiting for debugger to attach..."
                 )
             except ValueError:
-                logger.error(f"Invalid DEBUGPY_PORT value: {DEBUGPY_PORT}. Must be an integer.")
+                logger.error(
+                    f"Invalid DEBUGPY_PORT value: {DEBUGPY_PORT}. Must be an integer."
+                )
 
 
 # GENERAL CAPTCHA SETTINGS
@@ -118,7 +127,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
-    'django_celery_beat',
+    "django_celery_beat",
     # "django.forms",
     # django htmx
     "django_htmx",
@@ -191,7 +200,9 @@ SESSION_COOKIE_HTTPONLY = True  # cannot access session cookie on client-side us
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # session expires on browser close
 
 # Auto-logout
-if not (env_auto_logout_idle_time_seconds := os.environ.get("AUTO_LOGOUT_IDLE_TIME_SECONDS")):
+if not (
+    env_auto_logout_idle_time_seconds := os.environ.get("AUTO_LOGOUT_IDLE_TIME_SECONDS")
+):
     env_auto_logout_idle_time_seconds = 60 * 30  # Default: 30 minutes
     logger.warning(
         "ENV VAR AUTO_LOGOUT_IDLE_TIME_SECONDS MISSING: SETTING DEFAULT TIME: "
@@ -226,7 +237,9 @@ else:
 
 DATABASES = {"default": database_config}
 
-AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)  # this is default
+AUTHENTICATION_BACKENDS = (
+    "django.contrib.auth.backends.ModelBackend",
+)  # this is default
 
 
 # Password validation
@@ -293,9 +306,9 @@ PASSWORD_RESET_TIMEOUT = os.environ.get(
 
 SITE_CONTACT_EMAIL = os.environ.get("SITE_CONTACT_EMAIL")
 
-ADMINS = os.environ.get("ADMINS", '')
+ADMINS = os.environ.get("ADMINS", "")
 if ADMINS:
-    ADMINS = [e.split(":") for e in  ADMINS.split(",")]
+    ADMINS = [e.split(":") for e in ADMINS.split(",")]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -355,20 +368,19 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Europe/London"
 
-# CELERY_BEAT_SCHEDULE = {
-#     "run-daily-at-six-am": {
-#         "task": "epilepsy12.tasks.hello",
-#         "schedule": crontab(hour="6", minute=0),
-#         "options": {
-#             "expires": 15.0,
-#         },
-#     },
-#     "run-ever-10-seconds": {
-#         "task": "epilepsy12.tasks.hello",
-#         "schedule": 10,
-#         "options": {
-#             "expires": 15.0,
-#         },
-#     },
-
-# }
+CELERY_BEAT_SCHEDULE = {
+    "run-daily-at-six-am": {
+        "task": "project.npda.tasks.hello",
+        "schedule": crontab(hour="6", minute=0),
+        "options": {
+            "expires": 15.0,
+        },
+    },
+    "run-ever-10-seconds": {
+        "task": "project.npda.tasks.hello",
+        "schedule": 10,
+        "options": {
+            "expires": 15.0,
+        },
+    },
+}
